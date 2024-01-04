@@ -8,13 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use Illuminate\Support\Str;
 
 
 class ATenderController extends Controller
 {
     function store(Request $request)
     {
-
         $file_dok_tender = base64_decode($request->dok_tender, true);
         $file_dok_deskripsi_tender = base64_decode($request->dok_deskripsi_tender, true);
 
@@ -28,6 +28,7 @@ class ATenderController extends Controller
         $t->metode_pengadaan = $request->metode_pengadaan;
         $t->sistem_kualifikasi = $request->sistem_kualifikasi;
         $t->nama_tender = $request->nama_tender;
+        $t->slug = Str::of($request->nama_tender)->slug('-');
         $t->lokasi = $request->lokasi;
         $t->tgl_pendaftaran = $request->tgl_pendaftaran;
         $t->batas_pendaftaran = $request->batas_pendaftaran;
