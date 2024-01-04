@@ -7,6 +7,7 @@ use App\Models\Vendor\Tender;
 use App\Models\Vendor\TenderPeserta;
 use App\Models\Vendor\ViewPerusahaan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TenderController extends Controller
 {
