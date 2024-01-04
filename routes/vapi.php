@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendors\UserController;
 use App\Http\Controllers\Vendors\PerusahaanController;
+use App\Http\Controllers\Vendors\TenderController;
 use App\Http\Controllers\Vendors\JajaranController;
 use App\Http\Controllers\Vendors\AktaController;
 use App\Http\Controllers\Vendors\FileController;
