@@ -91,7 +91,7 @@ class ATenderController extends Controller
         $t->kbli = $request->kbli;
         $t->centang_dok_wajib = json_encode($request->centang_dok_wajib);
         if ($t->save()) {
-            return new PostResource(true, 'Tenderdsg  updated !',[]);
+            return new PostResource(true, 'Tender  updated !',[]);
         } else {
             return new PostResource(false, 'Failed Tender update !', []);
         }
