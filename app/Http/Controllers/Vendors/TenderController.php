@@ -4,10 +4,17 @@ namespace App\Http\Controllers\Vendors;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vendor\Tender;
+use App\Models\Vendor\TenderPeserta;
+use App\Models\Vendor\ViewPerusahaan;
 use Illuminate\Http\Request;
 
 class TenderController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api_vendor');
+    }
+
     public function listTender()
     {
         $data = Tender::where('metode_pengadaan', 'umum')
@@ -19,4 +26,16 @@ class TenderController extends Controller
             "data" => $data
         ], 200);
     }
+
+    public function ikot(Request $request){
+       $t= new TenderPeserta();
+       $t->perusahaan_id=ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+       $t->tender_id =$request->tender_id;
+       if($t->save()){
+        return response()->json([
+            "success" => true,
+        ], 200);
+       }
+    }
 }
+
