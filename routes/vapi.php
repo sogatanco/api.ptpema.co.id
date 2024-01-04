@@ -73,4 +73,5 @@ Route::controller(KlbiController::class)->group(function(){
 
 Route::controller(TenderController::class)->group(function(){
     Route::get('tender/list-tender', 'listTender');
+    Route::post('tender/register', 'ikot');
 });
