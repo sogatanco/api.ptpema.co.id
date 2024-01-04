@@ -69,3 +69,7 @@ Route::controller(KlbiController::class)->group(function(){
     Route::get('kbli/list', 'list');
     Route::delete('kbli/delete/{id}', 'delete');
 }); 
+
+Route::controller(TenderController::class)->group(function(){
+    Route::get('tender/list-tender', 'listTender');
+});
