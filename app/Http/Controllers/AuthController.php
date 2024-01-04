@@ -1,0 +1,146 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use JWTAuth;
+use App\Http\Resources\UserResource;
+use App\Http\Requests\UserRegisterRequest;
+use App\Models\User;
+use App\Models\Employe;
+
+class AuthController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'welcome']]);
+    }
+
+    public function register(userRegisterRequest $request): userResource
+    {
+        $data = $request->validated();
+
+        if(User::where('email', $data['email'])->count() == 1){
+            // user already exist
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "email" => [
+                        "Email already registered."
+                    ]
+                ]
+            ], 409));
+        }
+
+        $defaultRole = ["Employee"];
+
+        $user = new User($data);
+        $user->roles = $defaultRole;
+        $user->password = Hash::make($data['password']);
+
+        $user->save();
+
+        return new UserResource($user);
+
+        // $validator = Validator::make($request->all(), [
+        //     'email' => ['required' , 'email' , 'unique:users'],
+        //     'password' => ['required' , 'min:8' , 'confirmed']
+        // ]);
+
+        // if($validator->fails()){
+        //     return response()->json([
+        //         "status" => false,
+        //         "message" => $validator->errors()
+        //     ], 400);
+        // }
+
+        // $defaultRole = array("Employee");
+
+        // $user = User::create([
+        //     'email' => $request->email,
+        //     'password' => Hash::make($request->password),
+        //     'roles' => $defaultRole
+        // ]);
+
+        // return response()->json([
+        //     "message" => "User has been registered.",
+        //     "data" => $user
+        // ], 201);
+    }
+
+    public function login(Request $request) 
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => ['required', 'email'],
+            'password' => ['required']
+        ]);
+
+        if($validator->fails()){
+            throw new HttpResponseException(response([
+                "message" => $validator->errors()
+            ], 400));
+        }
+
+        // checking & generate token
+        $token = Auth::attempt(['email' => $request->email, 'password' => $request->password]);
+
+        if(!$token){
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Email or password is invalid."
+            ], 400));
+        }
+
+        $user = Auth::user();
+        $employeId = Employe::select('employe_id', 'first_name')
+                    ->where("user_id", $user->id)->first();
+        $user->employe_id = $employeId->employe_id;
+        $user->first_name = $employeId->first_name;
+        $user->roles = $user->roles;
+        $user = $user->makeHidden(["id", "email_verified_at", "created_at", "updated_at"]);
+
+        // get payload data
+        // $payload = Auth::payload();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Login success.",
+            "auth" => [
+                "user" => $user,
+                "token" => $token,
+            ]
+        ], 200);
+    }
+
+    public function logout()
+    {
+        Auth::logout();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Logout success."
+        ], 200);
+    }
+
+    public function refresh()
+    {
+        $token = Auth::refresh();
+        $user = Auth::user();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Refresh token success.",
+            "token" => $token
+        ], 200);
+    }
+
+    public function welcome()
+    {
+        return response()->json([
+            "messsage" => "Hello world!"
+        ], 200);
+    }
+}
