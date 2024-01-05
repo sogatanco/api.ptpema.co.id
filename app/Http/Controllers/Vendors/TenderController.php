@@ -51,8 +51,17 @@ class TenderController extends Controller
         if ($t->save()) {
             return response()->json([
                 "success" => true,
-                "message"=>$request->key. "file suah di upload"
+                "message"=>$request->key. "file sudah di upload"
             ], 200);
         }
+    }
+
+    public function finalIkot($id){
+        $tender=Tender::find($id);
+        return response()->json([
+            "success" => true,
+            "data"=>$tender
+        ], 200);
+    
     }
 }

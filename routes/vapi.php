@@ -75,4 +75,5 @@ Route::controller(TenderController::class)->group(function(){
     Route::get('tender/list-tender', 'listTender');
     Route::post('tender/register', 'ikot');
     Route::post('tender/upload/dokumen', 'upload');
+    Route::post('tender/final/submit', 'finalIkot');
 });
