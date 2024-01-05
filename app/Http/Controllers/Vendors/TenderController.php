@@ -88,7 +88,7 @@ class TenderController extends Controller
         $tender=Tender::find($id);
         return response()->json([
             "success" => true,
-            "data"=>$tender
+            "data"=>json_decode($tender->centang_dok_wajib)
         ], 200);
     
     }
