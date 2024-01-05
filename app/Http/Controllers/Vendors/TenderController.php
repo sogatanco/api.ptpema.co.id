@@ -20,8 +20,8 @@ class TenderController extends Controller
     public function listTender()
     {
         $data = Tender::where('metode_pengadaan', 'umum')
-                ->orWhere('metode_pengadaan', 'terbatas')
-                ->get();
+            ->orWhere('metode_pengadaan', 'terbatas')
+            ->get();
 
         return response()->json([
             "success" => true,
@@ -29,33 +29,30 @@ class TenderController extends Controller
         ], 200);
     }
 
-    public function ikot(Request $request){
-       $t= new TenderPeserta();
-       $t->perusahaan_id=ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
-       $t->tender_id =$request->tender_id;
-       if($t->save()){
-        return response()->json([
-            "success" => true,
-        ], 200);
-       }
+    public function ikot(Request $request)
+    {
+        $t = new TenderPeserta();
+        $t->perusahaan_id = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+        $t->tender_id = $request->tender_id;
+        if ($t->save()) {
+            return response()->json([
+                "success" => true,
+            ], 200);
+        }
     }
 
     public function upload(Request $request)
     {
-        $t=TenderPeserta::where('tender_id', $request->tender_id)->where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first();
-        if($request->key=='surat_penyampaian_penawaran'){
-            Storage::disk('public_vendor')->put('tender/'.$request->tender_id.'/'.ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id.'/surat_penyampaian_penawaran.pdf', base64_decode($request->file, true));
-            $t[$request->key]='tendder/'.$request->tender_id.'/'.ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id.'/surat_penyampaian_penawaran.pdf';
+        $t = TenderPeserta::where('tender_id', $request->tender_id)->where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first();
 
-            if($t->save()){
-                return response()->json([
-                    "success" => true,
-                ], 200);
-            }
+        Storage::disk('public_vendor')->put('tender/' . $request->tender_id . '/' . ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
+        $t[$request->key] = 'tender/' . $request->tender_id . '/' . ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . $request->key . '.pdf';
+
+        if ($t->save()) {
+            return response()->json([
+                "success" => true,
+                "message"=>$request->key. "file suah di upload"
+            ], 200);
         }
-
-        
     }
-
 }
-
