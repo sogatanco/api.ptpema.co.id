@@ -33,12 +33,11 @@ class TenderController extends Controller
     {
         
         if( count(TenderPeserta::where('tender_id', $request->tender_id)->where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get())>0){
-            if ($t->save()) {
+          
                 return response()->json([
                     "success" => false,
                     "message"=>"sudah terdaftar"
                 ], 409);
-            }
         }else{
             $t = new TenderPeserta();
             $t->perusahaan_id = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
