@@ -61,8 +61,16 @@ class TenderController extends Controller
        
     }
 
+    public function showTender($slug){
+        $d=Tender::where('slug', $slug)->first();
+        return response()->json([
+            "success" => true,
+            "data"=>$d
+        ], 200);
+    }
+
     public function upload(Request $request)
-    {
+    {   
         $t = TenderPeserta::where('tender_id', $request->tender_id)->where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first();
 
         Storage::disk('public_vendor')->put('tender/' . $request->tender_id . '/' . ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
