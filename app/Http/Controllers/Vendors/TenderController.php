@@ -44,7 +44,7 @@ class TenderController extends Controller
     {
         $t=TenderPeserta::where('tender_id', $request->tender_id)->where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first();
         if($request->key=='surat_penyampaian_penawaran'){
-            Storage::disk('public_vendor')->put($request->tender_id.'/'.ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id.'/surat_penyampaian_penawaran.pdf', base64_decode($request->file, true));
+            Storage::disk('public_vendor')->put('tender/'.$request->tender_id.'/'.ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id.'/surat_penyampaian_penawaran.pdf', base64_decode($request->file, true));
             $t->surat_penyampaian_penawaran=$request->tender_id.'/'.ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id.'/surat_penyampaian_penawaran.pdf';
 
             if($t->save()){
