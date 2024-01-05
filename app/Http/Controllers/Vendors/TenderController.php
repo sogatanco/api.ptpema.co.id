@@ -28,6 +28,7 @@ class TenderController extends Controller
                 $d->register=true;
                }
                $d->register=false;
+               $d->sss=TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get();
             }
 
         return response()->json([
