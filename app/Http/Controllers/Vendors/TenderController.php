@@ -71,6 +71,12 @@ class TenderController extends Controller
 
     public function upload(Request $request)
     {   
+
+        return response()->json([
+            "request" => $request->all()
+        ], 200);
+
+        
         $t = TenderPeserta::where('tender_id', $request->tender_id)->where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first();
 
         Storage::disk('public_vendor')->put('tender/' . $request->tender_id . '/' . ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
