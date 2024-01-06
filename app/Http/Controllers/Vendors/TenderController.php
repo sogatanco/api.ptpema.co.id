@@ -79,9 +79,9 @@ class TenderController extends Controller
         Storage::disk('public_vendor')->put('tender/' . $request->tender_id . '/' . ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
         $t->dok_surat_penyampaian_penawaran = 'tender/' . $request->tender_id . '/' . ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . $request->key . '.pdf';
         
-        // return response()->json([
-        //     "request" => $t
-        // ], 200);
+        return response()->json([
+            "request" => $t
+        ], 200);
         if ($t->save()) {
             return response()->json([
                 "success" => true,
