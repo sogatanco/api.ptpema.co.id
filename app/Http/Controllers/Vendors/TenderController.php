@@ -23,6 +23,16 @@ class TenderController extends Controller
             ->orWhere('metode_pengadaan', 'terbatas')
             ->get();
 
+            foreach($data as $d){
+               if(count(TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get())>0){
+                $d->register=true;
+               }else{
+                $d->register=false;
+               }
+              
+            //    $d->sss=TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get();
+            }
+
         return response()->json([
             "success" => true,
             "data" => $data
@@ -51,8 +61,16 @@ class TenderController extends Controller
        
     }
 
+    public function showTender($slug){
+        $d=Tender::where('slug', $slug)->first();
+        return response()->json([
+            "success" => true,
+            "data"=>$d
+        ], 200);
+    }
+
     public function upload(Request $request)
-    {
+    {   
         $t = TenderPeserta::where('tender_id', $request->tender_id)->where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first();
 
         Storage::disk('public_vendor')->put('tender/' . $request->tender_id . '/' . ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
@@ -70,7 +88,7 @@ class TenderController extends Controller
         $tender=Tender::find($id);
         return response()->json([
             "success" => true,
-            "data"=>$tender
+            "data"=>json_decode($tender->centang_dok_wajib)
         ], 200);
     
     }
