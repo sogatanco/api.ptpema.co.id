@@ -82,6 +82,7 @@ class ATenderController extends Controller
         $t->metode_pengadaan = $request->metode_pengadaan;
         $t->sistem_kualifikasi = $request->sistem_kualifikasi;
         $t->nama_tender = $request->nama_tender;
+        $t->slug = Str::of($request->nama_tender)->slug('-');
         $t->lokasi = $request->lokasi;
         $t->tgl_pendaftaran = $request->tgl_pendaftaran;
         $t->batas_pendaftaran = $request->batas_pendaftaran;
