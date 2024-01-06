@@ -62,7 +62,9 @@ class TenderController extends Controller
     }
 
     public function showTender($slug){
-        $d=Tender::where('slug', $slug)->first();
+        $d=Tender::where('slug', $slug)
+                ->leftJoin('tender_peserta', 'tender_peserta.tender_id', '=', 'tender.id_tender')
+                ->first();
         return response()->json([
             "success" => true,
             "data"=>$d
