@@ -114,8 +114,8 @@ class TenderController extends Controller
         if(!$tender){
             throw new HttpResponseException(response([
                 "status" => false,
-                "message" => "Data not found."
-            ], 500));
+                "message" => "Participant data not found."
+            ], 404));
         };
 
         $tender->status = 'submit_dokumen';
