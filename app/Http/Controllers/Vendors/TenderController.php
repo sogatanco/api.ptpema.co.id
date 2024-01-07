@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Vendor\Tender;
 use App\Models\Vendor\TenderPeserta;
 use App\Models\Vendor\ViewPerusahaan;
+use App\Models\Vendor\Perusahaan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
