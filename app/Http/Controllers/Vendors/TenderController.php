@@ -109,6 +109,14 @@ class TenderController extends Controller
     public function submitDokumen($idPeserta)
     {
         $tender = TenderPeserta::find($idPeserta);
+
+        if(!$tender){
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Data not found."
+            ], 500));
+        };
+
         $tender->status = 'submit_dokumen';
 
         if($tender->save()){
