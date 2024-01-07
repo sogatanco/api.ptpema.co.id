@@ -104,6 +104,23 @@ class TenderController extends Controller
             "success" => true,
             "data"=>json_decode($tender->centang_dok_wajib)
         ], 200);
-    
+    }
+
+    public function submitDokumen($idPeserta)
+    {
+        $tender = TenderPeserta::find($idPeserta);
+        $tender->status = 'submit_dokumen';
+
+        if($tender->save()){
+            return response()->json([
+                "status" => true,
+                "message" => "Tender documents have been submitted."
+            ], 200);
+        }else{
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Something went wrong."
+            ], 500));
+        };
     }
 }
