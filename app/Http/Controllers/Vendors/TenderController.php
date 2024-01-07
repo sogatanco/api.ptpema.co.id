@@ -21,10 +21,8 @@ class TenderController extends Controller
 
     public function listTender()
     {
-        $data = Tender::select('tender.*', 'tender_peserta.status as status_peserta')
-            ->where('tender.metode_pengadaan', 'umum')
+        $data = Tender::where('tender.metode_pengadaan', 'umum')
             ->orWhere('metode_pengadaan', 'terbatas')
-            ->leftJoin('tender_peserta', 'tender_peserta.tender_id', '=', 'tender.id_tender')
             ->get();
 
             foreach($data as $d){
