@@ -10,6 +10,7 @@ use App\Models\Vendor\Perusahaan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class TenderController extends Controller
 {
