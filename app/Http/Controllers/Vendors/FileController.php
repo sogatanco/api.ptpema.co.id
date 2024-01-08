@@ -25,7 +25,7 @@ class FileController extends Controller
         $doc[0]['file_name']=null;
         $doc[0]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->company_profile))){
-            $doc[0]['id']='profile';
+            $doc[0]['id']='profil';
             $doc[0]['file_name']='company_profile.pdf';
             $doc[0]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->company_profile)));
         }
