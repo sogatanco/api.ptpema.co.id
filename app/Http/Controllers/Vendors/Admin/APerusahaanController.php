@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Vendor\Perusahaan;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\Jajaran;
+use App\Models\Employe;
 use App\Models\Vendor\Akta;
 use App\Models\Vendor\Izin;
 use App\Models\Vendor\Porto;
 use App\Models\Vendor\ViewKbli;
+use App\Models\Vendor\Verifikasi;
 use App\Http\Resources\PostResource;
 use App\Mail\InfoToVendor;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -155,7 +157,22 @@ class APerusahaanController extends Controller
             'content' => $request->content
         ];
         if (Mail::to($request->email)->send(new InfoToVendor($mailData))) {
-            return new PostResource(true, 'List portofolio', $mailData);
+            return new PostResource(true, 'Sended', $mailData);
+        }
+    }
+
+    public function verif($id, Request $request){
+        $p=Perusahaan::find($id);
+        $p->status_verifikasi=$request->status;
+        if($p->save()){
+            $v=new Verifikasi();
+            $v->id_perusahaan=$id;
+            $v->status_verifikasi=$request->status;
+            $v->reviewer=Employe::employeId();
+            $v->komentar=$request->komentar;
+            if($v->save()){
+                return new PostResource(true, 'Updated Status',[]);
+            }
         }
     }
 }

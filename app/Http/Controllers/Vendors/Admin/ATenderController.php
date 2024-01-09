@@ -23,7 +23,7 @@ class ATenderController extends Controller
 
 
         $t = new Tender();
-        $t->user_id = Employe::employeId();;
+        $t->user_id = Employe::employeId();
         $t->pilihan_tender = $request->pilihan_tender;
         $t->metode_pengadaan = $request->metode_pengadaan;
         $t->sistem_kualifikasi = $request->sistem_kualifikasi;
