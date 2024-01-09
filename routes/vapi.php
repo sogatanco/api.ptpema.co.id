@@ -76,5 +76,7 @@ Route::controller(TenderController::class)->group(function(){
     Route::post('tender/register', 'ikot');
     Route::post('tender/upload/dokumen', 'upload');
     Route::post('tender/final/{id}', 'finalIkot');
+    Route::get('tender/peserta/{slug}', 'pesertaTender');
     Route::get('tender/detail/{slug}', 'showTender');
+    Route::get('tender/submit-dokumen/{idPeserta}', 'submitDokumen');
 });

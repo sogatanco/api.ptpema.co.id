@@ -251,7 +251,7 @@ class PerusahaanController extends Controller
         $userId = Auth::user()->id;
         $company = Perusahaan::where('user_id', $userId)->first();
 
-        $status = BidangUsaha::where('perusahaan_id', $company->id)->count() > 0 ? true : false;
+        $status = Kbli::where('perusahaan_id', $company->id)->count() > 0 ? true : false;
 
         return response()->json([
             "status" => true,
