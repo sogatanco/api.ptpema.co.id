@@ -22,7 +22,7 @@ class InfoToVendor extends Mailable
 
     public function build()
     {
-        return $this->subject('VENDOR MAIL')
+        return $this->subject($this->mailData['company_name'])
                     ->view('emails.vendorMail');
     }
 }
