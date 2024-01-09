@@ -13,6 +13,11 @@ use App\Models\Vendor\ViewKbli;
 use App\Http\Resources\PostResource;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Mail;
+use App\Mail\VendorMail;
+use PDO;
+
+
 
 class APerusahaanController extends Controller
 {
@@ -141,6 +146,16 @@ class APerusahaanController extends Controller
             throw new HttpResponseException(response([
                 "message" => "Something went wrong."
             ], 500));
+        }
+    }
+
+    public function sendEmail(Request $request){
+        $mailData = [
+            'link' => 'api/auth2/verif/',
+            'company_name' => 'nama_perusahaan'
+        ];
+        if (Mail::to($request->email)->send(new VendorMail($mailData))) {
+            return new PostResource(true, 'List portofolio', $mailData);
         }
     }
 }
