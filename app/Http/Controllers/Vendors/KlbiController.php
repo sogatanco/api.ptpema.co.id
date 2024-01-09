@@ -53,7 +53,15 @@ class KlbiController extends Controller
     public function list()
     {
         $data = MasterKbli::get();
-        return new PostResource(true, 'List Kbli', $data);
+        $list = [];
+        for ($i=0; $i < count($data); $i++) { 
+            $list[$i] = [
+                'value' => $data[$i]->id_kbli,
+                'label' => $data[$i]->nomor_kbli . " - " .$data[$i]->nama_kbli
+            ];
+        }
+
+        return new PostResource(true, 'List Kbli', $list);
     }
 
     public function delete($id)
