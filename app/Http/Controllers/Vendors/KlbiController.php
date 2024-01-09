@@ -55,7 +55,7 @@ class KlbiController extends Controller
         $data = MasterKbli::get();
         $list = [];
         for ($i=0; $i < count($data); $i++) { 
-            $llist[$i] = [
+            $list[$i] = [
                 'value' => $data[$i]->id_kbli,
                 'label' => $data[$i]->nomor_kbli . " - " .$data[$i]->nama_kbli
             ];
