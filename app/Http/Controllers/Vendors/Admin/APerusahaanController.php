@@ -151,8 +151,8 @@ class APerusahaanController extends Controller
 
     public function sendEmail(Request $request){
         $mailData = [
-            'link' => 'api/auth2/verif/',
-            'company_name' => 'nama_perusahaan'
+            'subject' => $request->subject,
+            'content' => $request->content
         ];
         if (Mail::to($request->email)->send(new InfoToVendor($mailData))) {
             return new PostResource(true, 'List portofolio', $mailData);
