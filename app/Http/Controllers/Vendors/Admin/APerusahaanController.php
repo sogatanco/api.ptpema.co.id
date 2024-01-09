@@ -25,30 +25,31 @@ class APerusahaanController extends Controller
 {
     function index()
     {
-        $data=ViewPerusahaan::get();
+        $data = ViewPerusahaan::get();
         return new PostResource(true, 'list data Perusahaan', $data);
     }
 
-    function show($id){
-        $data=ViewPerusahaan::where('id', $id)->first();
-        return new PostResource(true, 'Data Perusahaan '.$id, $data);
+    function show($id)
+    {
+        $data = ViewPerusahaan::where('id', $id)->first();
+        return new PostResource(true, 'Data Perusahaan ' . $id, $data);
     }
 
     public function requestList()
     {
         $data = ViewPerusahaan::where('status_verifikasi', 'review_submit')
-                ->orWhere('status_verifikasi', 'review_update')
-                ->get();
+            ->orWhere('status_verifikasi', 'review_update')
+            ->get();
 
         return new PostResource(true, 'Request data', $data);
     }
-    
+
     public function listDataUmum($companyId)
     {
         $data = ViewPerusahaan::where('id', $companyId)->first();
         return new PostResource(true, 'List data umum', $data);
     }
-    
+
     public function listJajaran($companyId)
     {
         $data['jajaran'] = Jajaran::where('perusahaan_id', $companyId)->get();
@@ -57,7 +58,7 @@ class APerusahaanController extends Controller
 
         $base64 = null;
         $filename = null;
-        if (file_exists(public_path('vendor_file/' . $struktur))){
+        if (file_exists(public_path('vendor_file/' . $struktur))) {
             $base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $struktur)));
             $filename = 'struktur.pdf';
         }
@@ -72,8 +73,8 @@ class APerusahaanController extends Controller
     {
         $listAkta = Akta::where('id_perusahaan', $companyId)->get();
 
-        for ($a=0; $a < count($listAkta); $a++) { 
-           $listAkta[$a]['file_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $listAkta[$a]->file_akta)));
+        for ($a = 0; $a < count($listAkta); $a++) {
+            $listAkta[$a]['file_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $listAkta[$a]->file_akta)));
         }
 
         return new PostResource(true, 'List akta', $listAkta);
@@ -83,8 +84,8 @@ class APerusahaanController extends Controller
     {
         $listIzin = Izin::where('perusahaan_id', $companyId)->get();
 
-        for ($i=0; $i < count($listIzin); $i++) { 
-           $listIzin[$i]['file_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $listIzin[$i]->file_izin)));
+        for ($i = 0; $i < count($listIzin); $i++) {
+            $listIzin[$i]['file_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $listIzin[$i]->file_izin)));
         }
 
         return new PostResource(true, 'List izin', $listIzin);
@@ -93,11 +94,11 @@ class APerusahaanController extends Controller
     public function listDokumen($companyId)
     {
         $data = Perusahaan::where('id', $companyId)->first();
-        
+
         $docs = [];
         $list = [
-            'company_profile', 
-            'ktp_pengurus', 
+            'company_profile',
+            'ktp_pengurus',
             'sk_kemenkumham',
             'fakta_integritas',
             'spt',
@@ -106,8 +107,8 @@ class APerusahaanController extends Controller
             'rek_koran',
         ];
 
-        for ($l=0; $l < count($list); $l++) { 
-            if (file_exists(public_path('vendor_file/' . $data[$list[$l]]))){
+        for ($l = 0; $l < count($list); $l++) {
+            if (file_exists(public_path('vendor_file/' . $data[$list[$l]]))) {
                 $item[$l] = [
                     "name" => $list[$l],
                     "base_64" => base64_encode(file_get_contents(public_path('vendor_file/' . $data[$list[$l]])))
@@ -123,7 +124,7 @@ class APerusahaanController extends Controller
     {
         $data = Porto::where('perusahaan_id', $companyId)->get();
 
-        for ($p=0; $p < count($data); $p++) {
+        for ($p = 0; $p < count($data); $p++) {
             $data[$p]['base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $data[$p]->spk)));
         }
 
@@ -142,16 +143,17 @@ class APerusahaanController extends Controller
         $status = $request->query('val');
         $updated = Perusahaan::where('id', $companyId)->update(['status_verifikasi' => $status]);
 
-        if($updated) {
+        if ($updated) {
             return new PostResource(true, 'Status updated successfully', []);
-        }else{
+        } else {
             throw new HttpResponseException(response([
                 "message" => "Something went wrong."
             ], 500));
         }
     }
 
-    public function sendEmail(Request $request){
+    public function sendEmail(Request $request)
+    {
         $mailData = [
             'subject' => $request->subject,
             'content' => $request->content
@@ -161,17 +163,33 @@ class APerusahaanController extends Controller
         }
     }
 
-    public function verif($id, Request $request){
-        $p=Perusahaan::find($id);
-        $p->status_verifikasi=$request->status;
-        if($p->save()){
-            $v=new Verifikasi();
-            $v->id_perusahaan=$id;
-            $v->status_verifikasi=$request->status;
-            $v->reviewer=Employe::employeId();
-            $v->komentar=$request->komentar;
-            if($v->save()){
-                return new PostResource(true, 'Updated Status',[]);
+    public function verif($id, Request $request)
+    {
+        $p = Perusahaan::find($id);
+        $p->status_verifikasi = $request->status;
+        if ($p->save()) {
+            $v = new Verifikasi();
+            $v->id_perusahaan = $id;
+            $v->status_verifikasi = $request->status;
+            $v->reviewer = Employe::employeId();
+            $v->komentar = $request->komentar;
+            if ($v->save()) {
+                if ($request->status == 'terverifikasi') {
+                    $mailData = [
+                        'subject' => 'CONGRATULATION',
+                        'content' => 'Perusahaan yang anda daftar terverifikasi di sistem kami. Status verifikasi ini tidak permanen dan dapat berubah suatu saat sesuai peraturan yang berlaku.'
+                    ];
+
+                }else{
+                    $mailData = [
+                        'subject' => 'MOHON MAAF, STATUS PERUSAHAAN BELUM BISA TERVERIFIKASI',
+                        'content' => $request->komentar
+                    ];
+                }
+                $em=ViewPerusahaan::where('id', $id)->first()->email;
+                if (Mail::to($em)->send(new InfoToVendor($mailData))) {
+                    return new PostResource(true, 'Updated', []);
+                }
             }
         }
     }
