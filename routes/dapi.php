@@ -64,6 +64,7 @@ Route::controller(APerusahaanController::class)->group(function(){
      Route::get('vendor/{id}/list-kbli', 'listKbli')->middleware("role:AdminVendor");
      Route::put('vendor/{id}/update-status', 'updateStatus')->middleware("role:AdminVendor");
      Route::post('vendor/sendmail', 'sendEmail')->middleware("role:AdminVendor");
+     Route::post('vendor/verifikasi/{id}', 'verif')->middleware("role:AdminVendor");
 });
 
 Route::controller(ATenderController::class)->group(function(){
@@ -71,5 +72,5 @@ Route::controller(ATenderController::class)->group(function(){
      Route::get('vendor/tender', 'index')->middleware("role:AdminVendor");
      Route::get('vendor/tender/{id}', 'show')->middleware("role:AdminVendor");
      Route::post('vendor/tender/update', 'update')->middleware("role:AdminVendor");
-     Route::post('vendor/verifikasi/{id}', 'verif')->middleware("role:AdminVendor");
+    
 });
