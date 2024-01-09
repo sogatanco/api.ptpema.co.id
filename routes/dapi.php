@@ -63,6 +63,7 @@ Route::controller(APerusahaanController::class)->group(function(){
      Route::get('vendor/{id}/list-portofolio', 'listPortofolio')->middleware("role:AdminVendor");
      Route::get('vendor/{id}/list-kbli', 'listKbli')->middleware("role:AdminVendor");
      Route::put('vendor/{id}/update-status', 'updateStatus')->middleware("role:AdminVendor");
+     Route::post('vendor/sendmail', 'sendEmail')->middleware("role:AdminVendor");
 });
 
 Route::controller(ATenderController::class)->group(function(){

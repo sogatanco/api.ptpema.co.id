@@ -99,9 +99,11 @@ class TenderController extends Controller
 
     public function finalIkot($id){
         $tender=Tender::find($id);
+        $docs=json_decode($tender->centang_dok_wajib);
+        
         return response()->json([
             "success" => true,
-            "data"=>json_decode($tender->centang_dok_wajib)
+            "data"=>$docs
         ], 200);
     }
 

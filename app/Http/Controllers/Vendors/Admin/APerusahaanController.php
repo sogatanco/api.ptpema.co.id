@@ -11,8 +11,13 @@ use App\Models\Vendor\Izin;
 use App\Models\Vendor\Porto;
 use App\Models\Vendor\ViewKbli;
 use App\Http\Resources\PostResource;
+use App\Mail\InfoToVendor;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Mail;
+use PDO;
+
+
 
 class APerusahaanController extends Controller
 {
@@ -141,6 +146,16 @@ class APerusahaanController extends Controller
             throw new HttpResponseException(response([
                 "message" => "Something went wrong."
             ], 500));
+        }
+    }
+
+    public function sendEmail(Request $request){
+        $mailData = [
+            'subject' => $request->subject,
+            'content' => $request->content
+        ];
+        if (Mail::to($request->email)->send(new InfoToVendor($mailData))) {
+            return new PostResource(true, 'List portofolio', $mailData);
         }
     }
 }
