@@ -44,8 +44,8 @@ class ATenderController extends Controller
         $t->dok_deskripsi_tender = $dok_deskripsi_tender;
 
         if ($t->save()) {
-            Storage::disk('public_vendor')->put('tender/'.$t->id_tender . '/' . $dok_tender, $file_dok_tender);
-            Storage::disk('public_vendor')->put('tender/'.$t->id_tender . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
+            Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_tender, $file_dok_tender);
+            Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
             return new PostResource(true, 'Tender Inserted !', $t);
         } else {
             return new PostResource(false, 'Failed Tender Insert !', []);
@@ -58,12 +58,18 @@ class ATenderController extends Controller
         return new PostResource(true, 'List Tender', $data);
     }
 
-    function show($id){
-        $td=Tender::where('id_tender', $id)->first();
-        $td->perusahaan_yang_ikut=TenderPeserta::where('tender_id', $id)->get();
-        foreach($td->perusahaan_yang_ikut as $p){
-            $p->detail=ViewPerusahaan::find($p->perusahaan_id);
+    function show($id)
+    {
+        $td = Tender::where('id_tender', $id)->first();
+        if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
+            $td->perusahaan_yang_ikut = TenderPeserta::where('tender_id', $id)->get();
+            foreach ($td->perusahaan_yang_ikut as $p) {
+                $p->detail = ViewPerusahaan::find($p->perusahaan_id);
+            }
+        }else{
+            $td->perusahaan_yang_ikut=[];
         }
+
         return new PostResource(true, 'Tender', $td);
     }
 
@@ -71,16 +77,16 @@ class ATenderController extends Controller
     function update(Request $request)
     {
         $t = Tender::find($request->id);
-        if($request->dok_tender!==''){
+        if ($request->dok_tender !== '') {
             $file_dok_tender = base64_decode($request->dok_tender, true);
             $dok_tender = 'dok_tender.pdf';
-            Storage::disk('public_vendor')->put('tender/'.$request->id . '/' . $dok_tender, $file_dok_tender);
+            Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $dok_tender, $file_dok_tender);
             $t->dok_tender = $dok_tender;
         }
-        if($request->dok_deskripsi_tender!==''){
+        if ($request->dok_deskripsi_tender !== '') {
             $file_dok_deskripsi_tender = base64_decode($request->dok_deskripsi_tender, true);
             $dok_deskripsi_tender = 'dok_deskripsi_tender.pdf';
-            Storage::disk('public_vendor')->put('tender/'.$request->id . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
+            Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
             $t->dok_deskripsi_tender = $dok_deskripsi_tender;
         }
 
@@ -99,11 +105,9 @@ class ATenderController extends Controller
         $t->kbli = $request->kbli;
         $t->centang_dok_wajib = json_encode($request->centang_dok_wajib);
         if ($t->save()) {
-            return new PostResource(true, 'Tender  updated !',[]);
+            return new PostResource(true, 'Tender  updated !', []);
         } else {
             return new PostResource(false, 'Failed Tender update !', []);
         }
-        
     }
-
 }
