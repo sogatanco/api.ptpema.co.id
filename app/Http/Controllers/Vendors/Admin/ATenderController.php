@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendors\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vendor\Tender;
+use App\Models\Vendor\TenderPeserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\PostResource;
@@ -58,6 +59,7 @@ class ATenderController extends Controller
 
     function show($id){
         $td=Tender::where('id_tender', $id)->first();
+        $td->perusahaan_yang_ikut=TenderPeserta::where('tender_id', $id)->get();
         return new PostResource(true, 'Tender', $td);
     }
 
