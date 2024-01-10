@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Vendor\ViewPerusahaan;
 use Illuminate\Support\Str;
 
 
@@ -60,6 +61,9 @@ class ATenderController extends Controller
     function show($id){
         $td=Tender::where('id_tender', $id)->first();
         $td->perusahaan_yang_ikut=TenderPeserta::where('tender_id', $id)->get();
+        foreach($td->perusahaan_yang_ikut as $p){
+            $p->detail=ViewPerusahaan::find($p->perusahaan_id);
+        }
         return new PostResource(true, 'Tender', $td);
     }
 
