@@ -10,6 +10,7 @@ use App\Models\Employe;
 use App\Models\Vendor\Akta;
 use App\Models\Vendor\Izin;
 use App\Models\Vendor\Porto;
+use App\Models\Vendor\Log;
 use App\Models\Vendor\ViewKbli;
 use App\Models\Vendor\Verifikasi;
 use App\Http\Resources\PostResource;
@@ -192,5 +193,9 @@ class APerusahaanController extends Controller
                 }
             }
         }
+    }
+    public function getLog($id){
+        $log=Log::where('perusahaan_id', $id)->latest()->get();
+        return new PostResource(true, 'Activities', $log);
     }
 }
