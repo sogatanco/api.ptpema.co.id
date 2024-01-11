@@ -144,7 +144,7 @@ class ATenderController extends Controller
         $t->pemenang=$request->list_peserta;
         $t->status_tender='tutup';
         if($t->save()){
-            return new PostResource(true, 'tahap 2 submit', []);
+            return new PostResource(true, 'pemenang submit', []);
         }
     }
 }
