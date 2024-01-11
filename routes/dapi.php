@@ -76,4 +76,5 @@ Route::controller(ATenderController::class)->group(function(){
      Route::post('vendor/tender/update', 'update')->middleware("role:AdminVendor");
      Route::post('vendor/tender/delete/{id}', 'deleteTender')->middleware("role:AdminVendor");
      Route::get('vendor/tender/peserta/{id}', 'showPer')->middleware("role:AdminVendor");
+     Route::post('vendor/tender/tahapdua/{id}', 'setTahap2')->middleware("role:AdminVendor");
 });
