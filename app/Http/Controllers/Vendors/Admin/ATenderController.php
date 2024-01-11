@@ -153,9 +153,7 @@ class ATenderController extends Controller
         $t2d=json_decode($t2);
         $list=[];
     //    var_dump($t2d[0]);
-    foreach($t2d as $t){
-        $list['value']=$t;
-    }
-        return new PostResource(true, 'tahap dua', $list);
+   
+        return new PostResource(true, 'tahap dua', count($t2d));
     }
 }
