@@ -206,7 +206,7 @@ class APerusahaanController extends Controller
         $list = [];
         for ($i=0; $i < count($data); $i++) { 
             $list[$i] = [
-                'value' => $data[$i]->id_kbli,
+                'value' => $data[$i]->nomor_kbli,
                 'label' => $data[$i]->nomor_kbli . " - " .$data[$i]->nama_kbli
             ];
         }
