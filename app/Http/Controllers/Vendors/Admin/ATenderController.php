@@ -154,7 +154,7 @@ class ATenderController extends Controller
         $list=[];
         for($i=0; $i<count($t2d); $i++){
             $list[$i]['value']=$t2d[$i];
-            $list[$i]['label']=ViewPerusahaan::find($t2d[$i])->bentuk_usaha.' '.ViewPerusahaan::find($t2d[$i])->nama_perusahaan;
+            $list[$i]['label']=ViewPerusahaan::find(+$t2d[$i])->bentuk_usaha.' '.ViewPerusahaan::find(+$t2d[$i])->nama_perusahaan;
         }
     //    var_dump($t2d[0]);
    
