@@ -58,6 +58,18 @@ class ATenderController extends Controller
         return new PostResource(true, 'List Tender', $data);
     }
 
+    function showPer($id)
+    {
+        $list = [];
+        $ikut = TenderPeserta::where('tender_id', $id)->get();
+        foreach ($ikut as $p) {
+            $list['value']=$p->perusahaan_id;
+            $list['label']=ViewPerusahaan::find($p->perusahaan_id)->bentuk_usaha.' '.ViewPerusahaan::find($p->perusahaan_id)->nama_perusahaan;
+        }
+
+        return new PostResource(true, 'Tender', $list);
+    }
+
     function show($id)
     {
         $td = Tender::where('id_tender', $id)->first();
