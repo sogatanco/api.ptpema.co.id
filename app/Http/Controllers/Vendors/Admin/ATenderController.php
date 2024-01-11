@@ -152,10 +152,7 @@ class ATenderController extends Controller
         $t2=Tender::find($id)->tahap_dua;
         $t2d=json_decode($t2);
         $list=[];
-       for($i=0;$i<count($t2); $i++){
-            $list['value']=$t2[$i];
-            // $List['label']=ViewPerusahaan::find(30);
-        }
+       
         return new PostResource(true, 'tahap dua', $t2d);
     }
 }
