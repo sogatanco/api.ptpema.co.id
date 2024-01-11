@@ -150,7 +150,7 @@ class ATenderController extends Controller
 
     public function getTahap2($id){
         $t2=Tender::find($id)->tahap_dua;
-        $t2=json_encode($t2);
+        $t2=json_decode($t2);
         return new PostResource(true, 'tahap dua', $t2);
     }
 }
