@@ -157,6 +157,6 @@ class ATenderController extends Controller
         }
     //    var_dump($t2d[0]);
    
-        return new PostResource(true, 'tahap dua', count($t2d));
+        return new PostResource(true, 'tahap dua', $list);
     }
 }
