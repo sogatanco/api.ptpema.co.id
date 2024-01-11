@@ -150,6 +150,6 @@ class ATenderController extends Controller
 
     public function getTahap2($id){
         $t2=Tender::find($id)->tahap_dua;
-        return new PostResource(true, 'pemenang submit', []);
+        return new PostResource(true, 'tahap dua', $t2);
     }
 }
