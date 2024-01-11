@@ -62,9 +62,9 @@ class ATenderController extends Controller
     {
         $list = [];
         $ikut = TenderPeserta::where('tender_id', $id)->where('status', 'submit_dokumen')->get();
-        foreach ($ikut as $p) {
-            $list['value']=$p->perusahaan_id;
-            $list['label']=ViewPerusahaan::find($p->perusahaan_id)->bentuk_usaha.' '.ViewPerusahaan::find($p->perusahaan_id)->nama_perusahaan;
+        for ($i=0; $i<count($ikut); $i++) {
+            $list[$i]['value']=$ikut[$i]->perusahaan_id;
+            $list[$i]['label']=ViewPerusahaan::find($ikut[$i]->perusahaan_id)->bentuk_usaha.' '.ViewPerusahaan::find($ikut[$i]->perusahaan_id)->nama_perusahaan;
         }
 
         return new PostResource(true, 'Tender', $list);
