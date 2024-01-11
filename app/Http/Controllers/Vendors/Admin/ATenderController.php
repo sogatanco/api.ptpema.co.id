@@ -110,4 +110,11 @@ class ATenderController extends Controller
             return new PostResource(false, 'Failed Tender update !', []);
         }
     }
+
+    public function deleteTender($id){
+        $t=Tender::find($id);
+        if($t->delete()){
+            return new PostResource(true, 'Tender  deleted !', []);
+        }
+    }
 }
