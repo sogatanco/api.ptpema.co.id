@@ -8,6 +8,7 @@ use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\Jajaran;
 use App\Models\Employe;
 use App\Models\Vendor\Akta;
+use App\Models\Vendor\MasterKbli;
 use App\Models\Vendor\Izin;
 use App\Models\Vendor\Porto;
 use App\Models\Vendor\Log;
@@ -198,4 +199,19 @@ class APerusahaanController extends Controller
         $log=Log::where('perusahaan_id', $id)->latest()->get();
         return new PostResource(true, 'Activities', $log);
     }
+
+    public function listKbli()
+    {
+        $data = MasterKbli::get();
+        $list = [];
+        for ($i=0; $i < count($data); $i++) { 
+            $list[$i] = [
+                'value' => $data[$i]->id_kbli,
+                'label' => $data[$i]->nomor_kbli . " - " .$data[$i]->nama_kbli
+            ];
+        }
+
+        return new PostResource(true, 'List Kbli', $list);
+    }
+
 }

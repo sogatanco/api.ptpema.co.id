@@ -66,6 +66,7 @@ Route::controller(APerusahaanController::class)->group(function(){
      Route::post('vendor/sendmail', 'sendEmail')->middleware("role:AdminVendor");
      Route::post('vendor/verifikasi/{id}', 'verif')->middleware("role:AdminVendor");
      Route::get('vendor/log/{id}', 'getLog')->middleware("role:AdminVendor");
+     Route::get('vendor/masterkbli', 'listKbli')->middleware("role:AdminVendor");
 });
 
 Route::controller(ATenderController::class)->group(function(){
