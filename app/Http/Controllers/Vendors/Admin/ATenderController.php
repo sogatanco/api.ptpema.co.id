@@ -138,4 +138,13 @@ class ATenderController extends Controller
             return new PostResource(true, 'tahap 2 submit', []);
         }
     }
+
+    public function setPemenang($id, Request $request){
+        $t=Tender::find($id);
+        $t->pemenang=$request->list_peserta;
+        $t->status_tender='tutup';
+        if($t->save()){
+            return new PostResource(true, 'tahap 2 submit', []);
+        }
+    }
 }
