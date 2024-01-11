@@ -134,7 +134,7 @@ class ATenderController extends Controller
         $t=Tender::find($id);
         $t->tahap_dua=$request->list_peserta;
         $t->status_tender='tutup';
-        if($t->save){
+        if($t->save()){
             return new PostResource(true, 'tahap 2 submit', []);
         }
     }
