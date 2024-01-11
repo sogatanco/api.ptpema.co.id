@@ -199,8 +199,8 @@ class APerusahaanController extends Controller
         $log=Log::where('perusahaan_id', $id)->latest()->get();
         return new PostResource(true, 'Activities', $log);
     }
-
-    public function listKbli()
+// list semua kbli
+    public function list()
     {
         $data = MasterKbli::get();
         $list = [];
