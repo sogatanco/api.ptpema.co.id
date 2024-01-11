@@ -61,7 +61,7 @@ class ATenderController extends Controller
     function showPer($id)
     {
         $list = [];
-        $ikut = TenderPeserta::where('tender_id', $id)->get();
+        $ikut = TenderPeserta::where('tender_id', $id)->where('status', 'submit_dokumen')->get();
         foreach ($ikut as $p) {
             $list['value']=$p->perusahaan_id;
             $list['label']=ViewPerusahaan::find($p->perusahaan_id)->bentuk_usaha.' '.ViewPerusahaan::find($p->perusahaan_id)->nama_perusahaan;
