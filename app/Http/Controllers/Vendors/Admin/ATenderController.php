@@ -156,6 +156,6 @@ class ATenderController extends Controller
             $list['value']=$t2[$i];
             // $List['label']=ViewPerusahaan::find(30);
         }
-        return new PostResource(true, 'tahap dua', $list);
+        return new PostResource(true, 'tahap dua', $t2);
     }
 }
