@@ -154,7 +154,7 @@ class ATenderController extends Controller
         $list=[];
         foreach($t2 as $t){
             $list['value']=$t;
-            // $List['label']=ViewPerusahaan::find($t)->bentuk_usaha.' '.ViewPerusahaan::find($t)->nama_perusahaan;
+            $List['label']=ViewPerusahaan::find(0+$t)->bentuk_usaha.' '.ViewPerusahaan::find(0+$t)->nama_perusahaan;
         }
         return new PostResource(true, 'tahap dua', $list);
     }
