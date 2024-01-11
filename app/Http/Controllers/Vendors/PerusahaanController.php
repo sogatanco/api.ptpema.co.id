@@ -169,12 +169,17 @@ class PerusahaanController extends Controller
     
     public function submit()
     {
-        $idUser = Auth::user()->id;
-        $userCompany = Perusahaan::where('user_id', $idUser)->first();
+        $status=ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->status_verifikasi;
+        $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
+        if($status=='register'){
+            $p->status_verifikasi='review_submit';
+        }else{
+            $p->status_verifikasi='review_update';
+        }
 
-        $statusUpdated = Perusahaan::where('user_id', $idUser)->update(['status_verifikasi' => 'review_submit']);
+        // $statusUpdated = Perusahaan::where('user_id', $idUser)->update(['status_verifikasi' => 'review_submit']);
 
-        if($statusUpdated){
+        if($p->save()){
             return response()->json([
                 "status" => true,
                 "message" => 'Status has been updated.'
