@@ -62,9 +62,9 @@ class ATenderController extends Controller
     {
         $list = [];
         $ikut = TenderPeserta::where('tender_id', $id)->where('status', 'submit_dokumen')->get();
-        for ($i=0; $i<count($ikut); $i++) {
-            $list[$i]['value']=$ikut[$i]->perusahaan_id;
-            $list[$i]['label']=ViewPerusahaan::find($ikut[$i]->perusahaan_id)->bentuk_usaha.' '.ViewPerusahaan::find($ikut[$i]->perusahaan_id)->nama_perusahaan;
+        for ($i = 0; $i < count($ikut); $i++) {
+            $list[$i]['value'] = $ikut[$i]->perusahaan_id;
+            $list[$i]['label'] = ViewPerusahaan::find($ikut[$i]->perusahaan_id)->bentuk_usaha . ' ' . ViewPerusahaan::find($ikut[$i]->perusahaan_id)->nama_perusahaan;
         }
 
         return new PostResource(true, 'Tender', $list);
@@ -78,8 +78,8 @@ class ATenderController extends Controller
             foreach ($td->perusahaan_yang_ikut as $p) {
                 $p->detail = ViewPerusahaan::find($p->perusahaan_id);
             }
-        }else{
-            $td->perusahaan_yang_ikut=[];
+        } else {
+            $td->perusahaan_yang_ikut = [];
         }
 
         return new PostResource(true, 'Tender', $td);
@@ -123,43 +123,48 @@ class ATenderController extends Controller
         }
     }
 
-    public function deleteTender($id){
-        $t=Tender::find($id);
-        if($t->delete()){
+    public function deleteTender($id)
+    {
+        $t = Tender::find($id);
+        if ($t->delete()) {
             return new PostResource(true, 'Tender  deleted !', []);
         }
     }
 
-    public function setTahap2($id, Request $request){
-        // $t=Tender::find($id);
-        // $t->tahap_dua=$request->list_peserta;
-        // $t->status_tender='tutup';
-        // if($t->save()){
-            // json_decode($request->list_peserta);
-            return new PostResource(true, 'tahap 2 submit', json_decode($request->list_peserta));
-        // }
+    public function setTahap2($id, Request $request)
+    {
+
+        $t2d = json_decode($request->list_peserta);
+        for ($i = 0; $i < count($t2d); $i++) {
+            $f = TenderPeserta::find($t2d[$i]);
+            $f->status = 'lulus_tahap_1';
+            $f->save();
+        }
+        return new PostResource(true, 'tahap 2 submit', json_decode($request->list_peserta));
     }
 
-    public function setPemenang($id, Request $request){
-        $t=Tender::find($id);
-        $t->pemenang=$request->list_peserta;
-        $t->status_tender='tutup';
-        if($t->save()){
+    public function setPemenang($id, Request $request)
+    {
+        $t = Tender::find($id);
+        $t->pemenang = $request->list_peserta;
+        $t->status_tender = 'tutup';
+        if ($t->save()) {
             return new PostResource(true, 'pemenang submit', []);
         }
     }
 
-    public function getTahap2($id){
-        $t2=Tender::find($id)->tahap_dua;
-        $t2d=json_decode($t2);
-        $list=[];
-        for($i=0; $i<count($t2d); $i++){
-            $list[$i]['value']=$t2d[$i];
-            $list[$i]['label']=ViewPerusahaan::find(+$t2d[$i])->bentuk_usaha.' '.ViewPerusahaan::find(+$t2d[$i])->nama_perusahaan;
-            $list[$i]['data']=TenderPeserta::where('perusahaan_id', $t2d[$i])->where('tender_id', $id)->first();
+    public function getTahap2($id)
+    {
+        $t2 = Tender::find($id)->tahap_dua;
+        $t2d = json_decode($t2);
+        $list = [];
+        for ($i = 0; $i < count($t2d); $i++) {
+            $list[$i]['value'] = $t2d[$i];
+            $list[$i]['label'] = ViewPerusahaan::find(+$t2d[$i])->bentuk_usaha . ' ' . ViewPerusahaan::find(+$t2d[$i])->nama_perusahaan;
+            $list[$i]['data'] = TenderPeserta::where('perusahaan_id', $t2d[$i])->where('tender_id', $id)->first();
         }
-    //    var_dump($t2d[0]);
-   
+        //    var_dump($t2d[0]);
+
         return new PostResource(true, 'tahap dua', $list);
     }
 }
