@@ -77,6 +77,8 @@ class ATenderController extends Controller
             $td->perusahaan_yang_ikut = TenderPeserta::where('tender_id', $id)->get();
             foreach ($td->perusahaan_yang_ikut as $p) {
                 $p->detail = ViewPerusahaan::find($p->perusahaan_id);
+                $p->value=ViewPerusahaan::find($p->perusahaan_id)->id;
+                $p->label=ViewPerusahaan::find($p->perusahaan_id)->bentuk_usaha.' '.ViewPerusahaan::find($p->perusahaan_id)->nama_perusahaan;
             }
         } else {
             $td->perusahaan_yang_ikut = [];
