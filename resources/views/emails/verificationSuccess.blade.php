@@ -53,7 +53,7 @@
     <img class="logo" src="https://ptpema.co.id/uploads/settings/16347907124310.PNG" alt="Your Logo">
     <h1>Email Verification Successful</h1>
     <p>Congratulations! Your email has been successfully verified.</p>
-    <a href="#">Go to Dashboard</a>
+    <a href="https://vendor.ptpema.co.id/auth/login">Go to Dashboard</a>
 </div>
 
 </body>
