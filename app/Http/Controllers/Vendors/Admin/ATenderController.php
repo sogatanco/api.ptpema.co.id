@@ -135,14 +135,15 @@ class ATenderController extends Controller
 
     public function setTahap2($id, Request $request)
     {
+        
 
-        $t2d = json_decode($request->list_peserta);
+        $t2d = $request->list_peserta;
         for ($i = 0; $i < count($t2d); $i++) {
             $f = TenderPeserta::where('perusahaan_id',$t2d[$i])->where('tender_id', $id)->first();
             $f->status = 'lulus_tahap_1';
             $f->save();
         }
-        return new PostResource(true, 'tahap 2 submit', json_decode($request->list_peserta));
+        return new PostResource(true, 'tahap 2 submit', $request->list_peserta);
     }
 
     public function setPemenang($id, Request $request)
