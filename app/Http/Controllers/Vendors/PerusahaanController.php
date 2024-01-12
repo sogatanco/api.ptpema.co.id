@@ -79,8 +79,6 @@ class PerusahaanController extends Controller
                     if (file_exists(public_path('vendor_file/' . $dataUmum->file_pvd))) {
                         $dataUmum->pvd_base64= base64_encode(file_get_contents(public_path('vendor_file/' . $dataUmum->file_pvd)));
                     }     
-                    $dataUmum->file_npwp='npwp.pdf';
-                    $dataUmum->file_pvd='pvd.pdf';
 
         return response()->json([
             "success" => true,
