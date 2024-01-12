@@ -161,8 +161,8 @@ class ATenderController extends Controller
             $d->label=ViewPerusahaan::find($d->perusahaan_id)->bentuk_usaha . ' ' . ViewPerusahaan::find($d->perusahaan_id)->nama_perusahaan;
         }
     
-        //    var_dump($t2d[0]);
-
         return new PostResource(true, 'tahap dua', $data);
     }
+
+    public function getPemenang()
 }
