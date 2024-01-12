@@ -145,9 +145,9 @@ class ATenderController extends Controller
 
     public function setPemenang($id, Request $request)
     {
-        $t = Tender::find($id);
-        $t->pemenang = $request->list_peserta;
-        $t->status_tender = 'tutup';
+    
+        $t = TenderPeserta::where('tender_id', $id)->where('perusahaan_id', $request->list_peserta)->first();
+        $t->status= 'pemenang';
         if ($t->save()) {
             return new PostResource(true, 'pemenang submit', []);
         }
