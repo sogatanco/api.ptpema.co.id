@@ -164,5 +164,5 @@ class ATenderController extends Controller
         return new PostResource(true, 'tahap dua', $data);
     }
 
-    public function getPemenang()
+ 
 }
