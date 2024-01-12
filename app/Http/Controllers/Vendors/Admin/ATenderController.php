@@ -155,16 +155,14 @@ class ATenderController extends Controller
 
     public function getTahap2($id)
     {
-        $t2 = Tender::find($id)->tahap_dua;
-        $t2d = json_decode($t2);
-        $list = [];
-        for ($i = 0; $i < count($t2d); $i++) {
-            $list[$i]['value'] = $t2d[$i];
-            $list[$i]['label'] = ViewPerusahaan::find(+$t2d[$i])->bentuk_usaha . ' ' . ViewPerusahaan::find(+$t2d[$i])->nama_perusahaan;
-            $list[$i]['data'] = TenderPeserta::where('perusahaan_id', $t2d[$i])->where('tender_id', $id)->first();
+        $data=TenderPeserta::where('tender_id', $id)->where('status', 'lulus_tahap_1')->get();
+        foreach($data as $d){
+            $d->value=$d->perusahaan_id;
+            $d->label=ViewPerusahaan::find($d->perusahaan_id)->bentuk_usaha . ' ' . ViewPerusahaan::find($d->perusahaan_id)->nama_perusahaan;
         }
+    
         //    var_dump($t2d[0]);
 
-        return new PostResource(true, 'tahap dua', $list);
+        return new PostResource(true, 'tahap dua', $data);
     }
 }
