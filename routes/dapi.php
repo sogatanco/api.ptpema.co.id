@@ -79,4 +79,5 @@ Route::controller(ATenderController::class)->group(function(){
      Route::post('vendor/tender/tahapdua/{id}', 'setTahap2')->middleware("role:AdminVendor");
      Route::post('vendor/tender/pemenang/{id}', 'setPemenang')->middleware("role:AdminVendor");
      Route::get('vendor/tender/tahapdua/{id}', 'getTahap2')->middleware("role:AdminVendor");
+     Route::post('vendor/tender/ba/{id}', 'ba')->middleware("role:AdminVendor");
 });

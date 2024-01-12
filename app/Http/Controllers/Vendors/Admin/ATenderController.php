@@ -167,5 +167,17 @@ class ATenderController extends Controller
         return new PostResource(true, 'tahap dua', $data);
     }
 
+    public function ba($id, Request $request){
+        $t=Tender::find($id);
+        Storage::disk('public_vendor')->put('tender/' . $id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
+        $t[$request->key] ='tender/' . $id . '/' . $request->key . '.pdf';
+        if ($t->save()) {
+            return response()->json([
+                "success" => true,
+                "message"=>$request->key. "file sudah di upload"
+            ], 200);
+        }
+    }
+
  
 }
