@@ -135,7 +135,8 @@ class ATenderController extends Controller
         // $t->tahap_dua=$request->list_peserta;
         // $t->status_tender='tutup';
         // if($t->save()){
-            return new PostResource(true, 'tahap 2 submit', $request->list_peserta);
+            // json_decode($request->list_peserta);
+            return new PostResource(true, 'tahap 2 submit', json_decode($request->list_peserta));
         // }
     }
 
