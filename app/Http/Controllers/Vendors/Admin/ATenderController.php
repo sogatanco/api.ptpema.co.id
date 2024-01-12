@@ -155,6 +155,7 @@ class ATenderController extends Controller
         for($i=0; $i<count($t2d); $i++){
             $list[$i]['value']=$t2d[$i];
             $list[$i]['label']=ViewPerusahaan::find(+$t2d[$i])->bentuk_usaha.' '.ViewPerusahaan::find(+$t2d[$i])->nama_perusahaan;
+            $list[$i]['data']=TenderPeserta::where('perusahaan_id', $t2d[$i])->where('tender_id', $id)->first();
         }
     //    var_dump($t2d[0]);
    
