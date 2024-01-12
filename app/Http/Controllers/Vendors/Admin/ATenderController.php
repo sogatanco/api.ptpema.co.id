@@ -136,7 +136,7 @@ class ATenderController extends Controller
 
         $t2d = json_decode($request->list_peserta);
         for ($i = 0; $i < count($t2d); $i++) {
-            $f = TenderPeserta::where('perusahaan_id',$t2d[$i])->where('tender_id', $id)->firt();
+            $f = TenderPeserta::where('perusahaan_id',$t2d[$i])->where('tender_id', $id)->first();
             $f->status = 'lulus_tahap_1';
             $f->save();
         }
