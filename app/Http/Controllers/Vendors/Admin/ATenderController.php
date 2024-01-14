@@ -84,7 +84,7 @@ class ATenderController extends Controller
                     'label' => $kbliList[$i]->nama_kbli
                 ];
 
-                array_push($kbliList, $l[$i]);
+                array_push($kblis, $l[$i]);
             }
         }
 
