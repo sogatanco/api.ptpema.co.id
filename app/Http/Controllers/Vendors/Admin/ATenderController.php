@@ -81,7 +81,7 @@ class ATenderController extends Controller
             for ($i=0; $i < count($kbliList); $i++) { 
                 $l[$i] = [
                     'value' => $kbliList[$i]->nomor_kbli,
-                    'label' => $kbliList[$i]->nama_kbli
+                    'label' =>  $kbliList[$i]->nomor_kbli ." - ". $kbliList[$i]->nama_kbli
                 ];
 
                 array_push($kblis, $l[$i]);
