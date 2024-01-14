@@ -79,7 +79,7 @@ class ATenderController extends Controller
         $td['kbli_list'] = [];
         if(count($kbliList) > 0){
             for ($i=0; $i < count($kbliList); $i++) { 
-                $td['kbli_list'][$i] = [
+                $td['kbli_list'] = [
                     'value' => $kbliList[$i]->nomor_kbli,
                     'label' => $kbliList[$i]->nama_kbli
                 ];
