@@ -76,9 +76,10 @@ class ATenderController extends Controller
         $td = Tender::where('id_tender', $id)->first();
         $kbliList = MasterKbli::whereIn('nomor_kbli', json_decode($td->kbli))->get();
 
+        $td['kbli_list'] = [];
         if(count($kbliList) > 0){
             for ($i=0; $i < count($kbliList); $i++) { 
-                $td['kbli_list'][] = [
+                $td['kbli_list'][$i] = [
                     'value' => $kbliList[$i]->nomor_kbli,
                     'label' => $kbliList[$i]->nama_kbli
                 ];
