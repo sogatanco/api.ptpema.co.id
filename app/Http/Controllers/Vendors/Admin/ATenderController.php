@@ -89,8 +89,6 @@ class ATenderController extends Controller
         }
 
         $td['kbli_list'] = $kblis;
-        
-        return new PostResource(true, 'Tender', $td);
 
         if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
             $td->perusahaan_yang_ikut = TenderPeserta::where('tender_id', $id)->get();
