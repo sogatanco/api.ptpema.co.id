@@ -74,7 +74,7 @@ class ATenderController extends Controller
     function show($id)
     {
         $td = Tender::where('id_tender', $id)->first();
-        $td['kbli_list'] = MasterKbli::whereIn('nomor_kbli', json_encode($td->kbli))->get();
+        $td['kbli_list'] = MasterKbli::whereIn('nomor_kbli', json_decode($td->kbli))->get();
         return new PostResource(true, 'Tender', $td);
 
         if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
