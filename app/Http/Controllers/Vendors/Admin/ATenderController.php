@@ -76,7 +76,7 @@ class ATenderController extends Controller
         $td = Tender::where('id_tender', $id)->first();
         $kbliList = MasterKbli::whereIn('nomor_kbli', json_decode($td->kbli))->get();
 
-        $td['kbli_list'] = [];
+        $kblis = [];
         if(count($kbliList) > 0){
             for ($i=0; $i < count($kbliList); $i++) { 
                 $l[$i] = [
@@ -84,9 +84,11 @@ class ATenderController extends Controller
                     'label' => $kbliList[$i]->nama_kbli
                 ];
 
-                array_push($td['kbli_list'], $l[$i]);
+                array_push($kbliList, $l[$i]);
             }
         }
+
+        $td['kbli_list'] = $kblis;
         
         return new PostResource(true, 'Tender', $td);
 
