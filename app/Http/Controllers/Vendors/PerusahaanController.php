@@ -97,8 +97,8 @@ class PerusahaanController extends Controller
             'hp' => ['required'],
             'alamat' => ['required'],
             'provinsi' => ['required'],
-            'file_pvd' => ['required'],
-            'file_npwp' => ['required']
+            'filePvd' => ['required'],
+            'fileNpwp' => ['required']
         ]);
 
         if($validator->fails()){
@@ -109,12 +109,12 @@ class PerusahaanController extends Controller
         }
 
         // upload file pvd
-        if($request->file_pvd !== "-"){
-            $file = base64_decode($request->file_pvd, true);
+        if($request->filePvd){
+            $file = base64_decode($request->filePvd, true);
             $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/pvd.pdf';
             if(Storage::disk('public_vendor')->put($filename, $file)){
                 $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-                $p->file_pvd=$filename;
+                $p->filePvd=$filename;
                 $p->save();
             }else{
                 return new PostResource(false, "Upload PVD Gagal", []);
@@ -122,12 +122,12 @@ class PerusahaanController extends Controller
         }
 
         // upload file npwp
-        if($request->file_npwp !== "-"){
-            $file = base64_decode($request->file_npwp, true);
+        if($request->fileNpwp){
+            $file = base64_decode($request->fileNpwp, true);
             $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/npwp.pdf';
             if(Storage::disk('public_vendor')->put($filename, $file)){
                 $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-                $p->file_npwp=$filename;
+                $p->fileNpwp=$filename;
                 $p->save();
             }else{
                 return new PostResource(false, "Upload NPWP Gagal", []);
