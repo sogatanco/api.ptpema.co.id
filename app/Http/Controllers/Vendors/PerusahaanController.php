@@ -265,6 +265,10 @@ class PerusahaanController extends Controller
     public function spda(){
         
         $data=ViewPerusahaan::where('user_id', Auth::user()->id)->first();
+        $direksi=[];
+        foreach(Jajaran::where('perusahaan_id', $data->id)->get() as $d){
+            array_push($direksi, $d->nama);
+        }
         $f['nama_perusahaan']=$data->bentuk_usaha.' '.$data->nama_perusahaan;
         $f['nomor_registrasi']=$data->nomor_registrasi;
         $f['alamat']=$data->alamat;
@@ -272,7 +276,7 @@ class PerusahaanController extends Controller
         $f['email']=$data->email;
         $f['email_alternatif']=$data->email_alternatif;
         $f['nomor_npwp']=$data->no_npwp;
-        $f['jajaran_direksi']=Jajaran::where('perusahaan_id', $data->id)->get();
+        $f['jajaran_direksi']=implode("; ",$direksi);
         return response()->json([
             "status" => true,
             "data" => $f,
