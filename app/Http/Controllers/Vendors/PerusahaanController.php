@@ -279,8 +279,7 @@ class PerusahaanController extends Controller
         $f['jajaran_direksi']=implode("; ",$direksi);
         return response()->json([
             "status" => true,
-            "data" => $f,
-            "dsg"=>$data
+            "data" => $f
         ], 200);
     }
 
