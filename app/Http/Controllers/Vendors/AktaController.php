@@ -32,7 +32,6 @@ class AktaController extends Controller
             $akt->tgl_terbit = $request->tgl_terbit;
             $akt->nama_notaris = $request->nama_notaris;
             $akt->file_akta = $filename;
-            $akt->jenis = $request->jenis;
             if ($akt->save()) {
                 return new PostResource(true, 'New Akta Inserted', []);
             } else {
