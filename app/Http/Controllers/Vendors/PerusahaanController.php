@@ -284,6 +284,7 @@ class PerusahaanController extends Controller
         $d=[];
         for($i=0;$i<count($kbli); $i++){
             $d[$i]['nomor_kbli']=MasterKbli::where('id_kbli', $kbli[$i]->id_kbli)->first()->nomor_kbli;
+            $d[$i]['judul_kbli']=MasterKbli::where('id_kbli', $kbli[$i]->id_kbli)->first()->nama_kbli;
         }
         $f['kbli']=$d;
        
