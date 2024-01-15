@@ -266,9 +266,15 @@ class PerusahaanController extends Controller
         
         $data=ViewPerusahaan::where('user_id', Auth::user()->id)->first();
         $f['nama_perusahaan']=$data->bentuk_usaha.' '.$data->nama_perusahaan;
+        $f['nomor_registrasi']=$data->nomor_registrasi;
+        $f['alamat']=$data->alamat;
+        $f['telepon']=$data->telepon;
+        $f['email']=$data->email;
+        $f['email_alternatif']=$data->email_alternatif;
         return response()->json([
             "status" => true,
-            "data" => $f
+            "data" => $f,
+            "dsg"=>$data
         ], 200);
     }
 
