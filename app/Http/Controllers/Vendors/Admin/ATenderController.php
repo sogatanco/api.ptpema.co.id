@@ -90,6 +90,14 @@ class ATenderController extends Controller
 
         $td['kbli_list'] = $kblis;
 
+        if (file_exists(public_path('vendor_file/' . $td->dok_tender))){
+            $td['dok_tender_base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_tender)));
+        }
+
+        if (file_exists(public_path('vendor_file/' . $td->dok_deskripsi_tender))){
+            $td['dok_desk_tender_base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_deskripsi_tender)));
+        }
+
         if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
             $td->perusahaan_yang_ikut = TenderPeserta::where('tender_id', $id)->get();
             foreach ($td->perusahaan_yang_ikut as $p) {
