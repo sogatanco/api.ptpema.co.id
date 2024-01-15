@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
 use App\Models\Vendor\ViewPerusahaan;
+use App\Models\Vendor\MasterKbli;
 use Illuminate\Support\Str;
 
 
@@ -73,6 +74,30 @@ class ATenderController extends Controller
     function show($id)
     {
         $td = Tender::where('id_tender', $id)->first();
+        $kbliList = MasterKbli::whereIn('nomor_kbli', json_decode($td->kbli))->get();
+
+        $kblis = [];
+        if(count($kbliList) > 0){
+            for ($i=0; $i < count($kbliList); $i++) { 
+                $l[$i] = [
+                    'value' => $kbliList[$i]->nomor_kbli,
+                    'label' =>  $kbliList[$i]->nomor_kbli ." - ". $kbliList[$i]->nama_kbli
+                ];
+
+                array_push($kblis, $l[$i]);
+            }
+        }
+
+        $td['kbli_list'] = $kblis;
+
+        if (file_exists(public_path('vendor_file/' . $td->dok_tender))){
+            $td['dok_tender_base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_tender)));
+        }
+
+        if (file_exists(public_path('vendor_file/' . $td->dok_deskripsi_tender))){
+            $td['dok_desk_tender_base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_deskripsi_tender)));
+        }
+
         if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
             $td->perusahaan_yang_ikut = TenderPeserta::where('tender_id', $id)->get();
             foreach ($td->perusahaan_yang_ikut as $p) {
@@ -86,7 +111,6 @@ class ATenderController extends Controller
 
         return new PostResource(true, 'Tender', $td);
     }
-
 
     function update(Request $request)
     {
