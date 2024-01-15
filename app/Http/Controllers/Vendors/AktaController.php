@@ -28,6 +28,7 @@ class AktaController extends Controller
             $akt = new Akta();
             $akt->id_perusahaan = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
             $akt->no_akta = $request->no_akta;
+            $akt->jenis = $request->jenis_akta;
             $akt->tgl_terbit = $request->tgl_terbit;
             $akt->nama_notaris = $request->nama_notaris;
             $akt->file_akta = $filename;
