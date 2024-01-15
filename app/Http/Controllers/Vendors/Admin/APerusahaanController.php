@@ -51,12 +51,13 @@ class APerusahaanController extends Controller
         $data = ViewPerusahaan::where('id', $companyId)->first();
         $base64Npwp = null;
         $base64Pvd = null;
-        if (file_exists(public_path('vendor_file/' . $data->file_npwp))) {
-            $base64Npwp = base64_encode(file_get_contents(public_path('vendor_file/' . $data->file_npwp)));
-        }
-
+        
         if (file_exists(public_path('vendor_file/' . $data->file_pvd))) {
             $base64Pvd = base64_encode(file_get_contents(public_path('vendor_file/' . $data->file_pvd)));
+        }
+        
+        if (file_exists(public_path('vendor_file/' . $data->file_npwp))) {
+            $base64Npwp = base64_encode(file_get_contents(public_path('vendor_file/' . $data->file_npwp)));
         }
 
         $data['base64_npwp'] = $base64Npwp; 
