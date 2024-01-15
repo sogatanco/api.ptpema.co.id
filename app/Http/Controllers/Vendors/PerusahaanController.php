@@ -272,6 +272,7 @@ class PerusahaanController extends Controller
         $f['email']=$data->email;
         $f['email_alternatif']=$data->email_alternatif;
         $f['nomor_npwp']=$data->no_npwp;
+        $f['jajaran_direksi']=Jajaran::where('perusahaan_id', $data->id)->get();
         return response()->json([
             "status" => true,
             "data" => $f,
