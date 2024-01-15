@@ -12,6 +12,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\Akta;
+use App\Models\Vendor\MasterKbli;
 use App\Models\Vendor\Izin;
 use App\Models\Vendor\Jajaran;
 use App\Models\Vendor\Kbli;
@@ -279,6 +280,11 @@ class PerusahaanController extends Controller
         $f['dewan_direksi']=implode("; ",$direksi);
         $f['dokumen']=Izin::where('perusahaan_id', $data->id)->get();
         $f['portofolio']=Porto::where('perusahaan_id', $data->id)->latest()->get();
+        foreach(Kbli::where('perusahaan_id', $data->id)->latest()->get() as $k){
+            $f['kbli']['kode_kbli']=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nomor_kbli;
+            $f['kbli']['judul_kbli']=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nama_kbli;
+        }
+       
         return response()->json([
             "status" => true,
             "data" => $f
