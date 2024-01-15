@@ -59,7 +59,6 @@ class APerusahaanController extends Controller
             $base64Pvd = base64_encode(file_get_contents(public_path('vendor_file/' . $data->file_pvd)));
         }
 
-
         $data['base64_npwp'] = $base64Npwp; 
         $data['base64_pvd'] = $base64Pvd; 
         return new PostResource(true, 'List data umum', $data);
