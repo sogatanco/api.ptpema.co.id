@@ -262,4 +262,12 @@ class PerusahaanController extends Controller
         ], 200);
     }
 
+    public function spda(){
+        $data=ViewPerusahaan::where('user_id', Auth::user()->id)->first();
+        return response()->json([
+            "status" => true,
+            "data" => $data
+        ], 200);
+    }
+
 }
