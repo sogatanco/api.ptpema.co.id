@@ -9,7 +9,7 @@ use App\Models\Vendor\Tender;
 class PublicData extends Controller
 {
     public function dataTender(){
-        $data=Tender::where('metode_pengadaan', 'umum')->latest();
+        $data=Tender::where('metode_pengadaan', 'umum')->get();
         return response()->json([
             "success" => true,
             "data" => $data
