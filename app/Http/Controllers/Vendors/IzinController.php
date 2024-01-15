@@ -30,6 +30,7 @@ class IzinController extends Controller
             $akt->tgl_terbit = $request->tgl_terbit;
             $akt->tgl_berakhir = $request->tgl_berakhir;
             $akt->file_izin = $filename;
+            $akt->keterangan = $request->keterangan;
             if ($akt->save()) {
                 return new PostResource(true, 'New Izin Inserted', []);
             } else {
