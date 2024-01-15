@@ -271,6 +271,7 @@ class PerusahaanController extends Controller
         $f['telepon']=$data->telepon;
         $f['email']=$data->email;
         $f['email_alternatif']=$data->email_alternatif;
+        $f['nomor_npwp']=$data->no_npwp;
         return response()->json([
             "status" => true,
             "data" => $f,
