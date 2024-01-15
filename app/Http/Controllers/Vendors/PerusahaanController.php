@@ -277,7 +277,8 @@ class PerusahaanController extends Controller
         $f['email_alternatif']=$data->email_alternatif;
         $f['nomor_npwp']=$data->no_npwp;
         $f['dewan_direksi']=implode("; ",$direksi);
-        $f['dokumen']=Izin::where('perusahaan_id', $data->id);
+        $f['dokumen']=Izin::where('perusahaan_id', $data->id)->get();
+        $f['portofolio']=Porto::where('perusahaan_id', $data->id)->latest()->get();
         return response()->json([
             "status" => true,
             "data" => $f
