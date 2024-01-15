@@ -283,7 +283,7 @@ class PerusahaanController extends Controller
         $f['teskbli']=Kbli::where('perusahaan_id', $data->id)->get() ;
         $kbli=Kbli::where('perusahaan_id', $data->id)->get();
         for($i=0;$i<count($kbli); $i++){
-            $f['kbli'][$i]['nomor_kbli']=$kbli[$i]->id_kbli;
+            $f['kbli']['nomor_kbli'][$i]=$kbli[$i]->id_kbli;
         }
        
         return response()->json([
