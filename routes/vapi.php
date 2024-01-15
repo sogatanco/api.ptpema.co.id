@@ -11,6 +11,7 @@ use App\Http\Controllers\Vendors\FileController;
 use App\Http\Controllers\Vendors\IzinController;
 use App\Http\Controllers\Vendors\PortoController;
 use App\Http\Controllers\Vendors\KlbiController;
+use App\Http\Controllers\Vendors\PublicData;
 
 
 Route::middleware('auth:api_vendor')->get('/uservendor', function (Request $request) {
@@ -79,4 +80,8 @@ Route::controller(TenderController::class)->group(function(){
     Route::get('tender/peserta/{slug}', 'pesertaTender');
     Route::get('tender/detail/{slug}', 'showTender');
     Route::get('tender/submit-dokumen/{idPeserta}', 'submitDokumen');
+});
+
+Route::controller(PublicData::class)->group(function(){
+    Route::get('public/tender/list');
 });
