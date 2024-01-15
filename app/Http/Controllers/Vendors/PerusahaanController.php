@@ -114,7 +114,7 @@ class PerusahaanController extends Controller
             $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/pvd.pdf';
             if(Storage::disk('public_vendor')->put($filename, $file)){
                 $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-                $p->filePvd=$filename;
+                $p->file_pvd=$filename;
                 $p->save();
             }else{
                 return new PostResource(false, "Upload PVD Gagal", []);
@@ -127,7 +127,7 @@ class PerusahaanController extends Controller
             $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/npwp.pdf';
             if(Storage::disk('public_vendor')->put($filename, $file)){
                 $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-                $p->fileNpwp=$filename;
+                $p->file_npwp=$filename;
                 $p->save();
             }else{
                 return new PostResource(false, "Upload NPWP Gagal", []);
