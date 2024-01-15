@@ -282,8 +282,8 @@ class PerusahaanController extends Controller
         $f['portofolio']=Porto::where('perusahaan_id', $data->id)->latest()->get();
         $f['teskbli']=Kbli::where('perusahaan_id', $data->id)->get() ;
         foreach(Kbli::where('perusahaan_id', $data->id)->get() as $k=>$key){
-            $f['kbli'][$key]['kode_kbli']=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nomor_kbli;
-            $f['kbli'][$key]['judul_kbli']=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nama_kbli;
+            $f['kblis'][$key]=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nomor_kbli;
+            $f['kbli'][$key]=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nama_kbli;
         }
        
         return response()->json([
