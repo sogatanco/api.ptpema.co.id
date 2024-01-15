@@ -281,9 +281,9 @@ class PerusahaanController extends Controller
         $f['dokumen']=Izin::where('perusahaan_id', $data->id)->get();
         $f['portofolio']=Porto::where('perusahaan_id', $data->id)->latest()->get();
         $f['teskbli']=Kbli::where('perusahaan_id', $data->id)->get() ;
-        foreach(Kbli::where('perusahaan_id', $data->id)->get() as $k=>$key){
-            $f['kblis'][$key]=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nomor_kbli;
-            $f['kbli'][$key]=MasterKbli::where('id_kbli', $k->id_kbli)->first()->nama_kbli;
+        $kbli=Kbli::where('perusahaan_id', $data->id)->get();
+        for($i=0;$i<count($kbli); $i++){
+            $f['kbli'][$i]->nomor_kbli=MasterKbli::where('id_kbli', $kbli[$i]->id_kbli)->first()->nomor_kbli;
         }
        
         return response()->json([
