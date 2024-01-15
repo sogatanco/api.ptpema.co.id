@@ -280,11 +280,10 @@ class PerusahaanController extends Controller
         $f['dewan_direksi']=implode("; ",$direksi);
         $f['dokumen']=Izin::where('perusahaan_id', $data->id)->get();
         $f['portofolio']=Porto::where('perusahaan_id', $data->id)->latest()->get();
-        $f['teskbli']=Kbli::where('perusahaan_id', $data->id)->get() ;
         $kbli=Kbli::where('perusahaan_id', $data->id)->get();
         $d=[];
         for($i=0;$i<count($kbli); $i++){
-            $d[$i]['nomor_kbli']=$kbli[$i]->id_kbli;
+            $d[$i]['nomor_kbli']=MasterKbli::where('id_kbli', $kbli[$i]->id_kbli)->first()->nomor_kbli;
         }
         $f['kbli']=$d;
        
