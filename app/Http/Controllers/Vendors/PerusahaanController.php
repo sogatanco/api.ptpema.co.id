@@ -12,6 +12,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\Akta;
+use App\Models\Vendor\MasterKbli;
 use App\Models\Vendor\Izin;
 use App\Models\Vendor\Jajaran;
 use App\Models\Vendor\Kbli;
@@ -263,10 +264,34 @@ class PerusahaanController extends Controller
     }
 
     public function spda(){
+        
         $data=ViewPerusahaan::where('user_id', Auth::user()->id)->first();
+        $direksi=[];
+        foreach(Jajaran::where('perusahaan_id', $data->id)->get() as $d){
+            array_push($direksi, $d->nama);
+        }
+        $f['nama_perusahaan']=$data->bentuk_usaha.' '.$data->nama_perusahaan;
+        $f['nomor_registrasi']=$data->nomor_registrasi;
+        $f['alamat']=$data->alamat;
+        $f['telepon']=$data->telepon;
+        $f['email']=$data->email;
+        $f['email_alternatif']=$data->email_alternatif;
+        $f['nomor_npwp']=$data->no_npwp;
+        $f['dewan_direksi']=implode("; ",$direksi);
+        $f['izin']=Izin::where('perusahaan_id', $data->id)->get();
+        $f['akta']=Akta::where('id_perusahaan', $data->id)->get();
+        $f['portofolio']=Porto::where('perusahaan_id', $data->id)->latest()->get();
+        $kbli=Kbli::where('perusahaan_id', $data->id)->get();
+        $d=[];
+        for($i=0;$i<count($kbli); $i++){
+            $d[$i]['nomor_kbli']=MasterKbli::where('id_kbli', $kbli[$i]->id_kbli)->first()->nomor_kbli;
+            $d[$i]['judul_kbli']=MasterKbli::where('id_kbli', $kbli[$i]->id_kbli)->first()->nama_kbli;
+        }
+        $f['kbli']=$d;
+       
         return response()->json([
             "status" => true,
-            "data" => $data
+            "data" => $f
         ], 200);
     }
 
