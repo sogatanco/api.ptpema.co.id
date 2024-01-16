@@ -97,8 +97,8 @@ class PerusahaanController extends Controller
             'hp' => ['required'],
             'alamat' => ['required'],
             'provinsi' => ['required'],
-            'filePvd' => ['required'],
-            'fileNpwp' => ['required']
+            // 'filePvd' => ['required'],
+            // 'fileNpwp' => ['required']
         ]);
 
         if($validator->fails()){
