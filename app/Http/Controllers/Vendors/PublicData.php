@@ -21,7 +21,7 @@ class PublicData extends Controller
 
     public function downloadzip($id)
     {
-        $dir = public_path('vendor_file/'.base64_decode($id));
+        $dir = public_path('vendor_file/'.(base64_decode($id)-2019));
 
         // Initialize archive object
         $zip = new ZipArchive();
