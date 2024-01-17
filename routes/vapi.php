@@ -85,5 +85,5 @@ Route::controller(TenderController::class)->group(function(){
 
 Route::controller(PublicData::class)->group(function(){
     Route::get('public/tender/list', 'dataTender');
-    Route::get('public/tender/donwnload', 'downloadzip');
+    Route::get('public/tender/donwnload/{id}', 'downloadzip');
 });
