@@ -34,6 +34,7 @@ Route::controller(PerusahaanController::class)->group(function() {
     Route::get('perusahaan/portofolio-status', 'portofolioStatus');
     Route::get('perusahaan/bidangusaha-status', 'bidangUsahaStatus');
     Route::get('perusahaan/spda', 'spda');
+    Route::get('perusahaan/donwnload', 'downloadzip');
 });
 
 Route::controller(JajaranController::class)->group(function() {
@@ -85,5 +86,5 @@ Route::controller(TenderController::class)->group(function(){
 
 Route::controller(PublicData::class)->group(function(){
     Route::get('public/tender/list', 'dataTender');
-    Route::get('public/tender/donwnload/{id}', 'downloadzip');
+
 });

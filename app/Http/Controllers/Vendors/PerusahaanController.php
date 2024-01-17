@@ -19,6 +19,9 @@ use App\Models\Vendor\Kbli;
 use App\Models\Vendor\Porto;
 use App\Http\Resources\PostResource;
 use Illuminate\Support\Facades\Storage;
+use ZipArchive;
+use  RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 
 
 class PerusahaanController extends Controller
@@ -295,6 +298,43 @@ class PerusahaanController extends Controller
             "status" => true,
             "data" => $f
         ], 200);
+    }
+
+    public function downloadzip()
+    {
+        $dir = public_path('vendor_file/'. ViewPerusahaan::where('user_id', Auth::user()->id)->first()->id);
+
+        // Initialize archive object
+        $zip = new ZipArchive();
+        $zip_name = time() . ".zip"; // Zip name
+        $zip->open($zip_name, ZipArchive::CREATE);
+
+        // Create recursive directory iterator
+        /** @var SplFileInfo[] $files */
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir), RecursiveIteratorIterator::LEAVES_ONLY);
+
+        foreach ($files as $name => $file) {
+            // Skip directories (they would be added automatically)
+            if (!$file->isDir()) {
+                // Get real and relative path for current file
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($dir) + 1);
+
+                // Add current file to archive
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+
+        $zip->close();
+
+        //then prompt user to download the zip file
+        header('Content-Type: application/zip');
+        header('Content-disposition: attachment; filename=' . $zip_name);
+        header('Content-Length: ' . filesize($zip_name));
+        readfile($zip_name);
+
+        //cleanup the zip file
+        unlink($zip_name);
     }
 
     
