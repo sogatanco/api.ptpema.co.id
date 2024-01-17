@@ -21,7 +21,7 @@ class PublicData extends Controller
 
     public function downloadzip()
     {
-        $dir = '/vendor_file/30';
+        $dir = '../../public/vendor_file/30';
 
         // Initialize archive object
         $zip = new ZipArchive();
