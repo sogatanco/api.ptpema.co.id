@@ -160,7 +160,6 @@ class ATenderController extends Controller
     public function setTahap2($id, Request $request)
     {
         
-
         $t2d = $request->list_peserta;
         for ($i = 0; $i < count($t2d); $i++) {
             $f = TenderPeserta::where('perusahaan_id',$t2d[$i])->where('tender_id', $id)->first();

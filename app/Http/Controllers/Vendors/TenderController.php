@@ -28,6 +28,7 @@ class TenderController extends Controller
             foreach($data as $d){
                if(count(TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get())>0){
                 $d->register=true;
+                $d->status_peserta=TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
                }else{
                 $d->register=false;
                }
