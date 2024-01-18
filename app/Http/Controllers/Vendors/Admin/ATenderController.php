@@ -45,7 +45,7 @@ class ATenderController extends Controller
         $t->centang_dok_wajib = json_encode($request->centang_dok_wajib);
         $t->dok_tender = $dok_tender;
         $t->dok_deskripsi_tender = $dok_deskripsi_tender;
-        $t->doc_penyampaian_penawaran = $dok_deskripsi_tender;
+        $t->doc_penyampaian_penawaran = $doc_penyampaian_penawaran;
 
         if ($t->save()) {
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_tender, $file_dok_tender);
