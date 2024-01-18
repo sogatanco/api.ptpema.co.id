@@ -24,7 +24,7 @@ class ATenderController extends Controller
 
         $dok_tender = 'dok_tender.pdf';
         $dok_deskripsi_tender = 'dok_deskripsi_tender.pdf';
-        $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.pdf';
+        $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.docx';
 
 
         $t = new Tender();
@@ -133,7 +133,7 @@ class ATenderController extends Controller
         }
         if($request->doc_penyampaian_penawaran!==''){
             $file_doc_penyampaian_penawaran = base64_decode($request->doc_penyampaian_penawaran, true);
-            $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.pdf';
+            $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.docx';
             Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
             $t->doc_penyampaian_penawaran = $doc_penyampaian_penawaran;
         }
