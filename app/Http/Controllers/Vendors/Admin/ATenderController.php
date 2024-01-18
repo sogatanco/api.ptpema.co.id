@@ -95,14 +95,14 @@ class ATenderController extends Controller
         $td['kbli_list'] = $kblis;
 
         if (file_exists(public_path('vendor_file/tender/'.$id.'/'.$td->dok_tender))) {
-            $td['dok_tender_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_tender)));
+            $td['dok_tender_base64'] = base64_encode(file_get_contents(public_path('vendor_file/tender/'.$id.'/'.$td->dok_tender)));
         }
 
         if (file_exists(public_path('vendor_file/tender/'.$id.'/'.$td->dok_deskripsi_tender))) {
-            $td['dok_desk_tender_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_deskripsi_tender)));
+            $td['dok_desk_tender_base64'] = base64_encode(file_get_contents(public_path('vendor_file/tender/'.$id.'/'.$td->dok_deskripsi_tender)));
         }
         if (file_exists(public_path('vendor_file/tender/'.$id.'/'.$td->doc_penyampaian_penawaran))) {
-            $td['doc_penyampaian_penawaran_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $td->doc_penyampaian_penawaran)));
+            $td['doc_penyampaian_penawaran_base64'] = base64_encode(file_get_contents(public_path('vendor_file/tender/'.$id.'/'.$td->doc_penyampaian_penawaran)));
         }
 
         if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
