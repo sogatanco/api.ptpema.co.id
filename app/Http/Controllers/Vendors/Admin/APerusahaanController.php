@@ -191,13 +191,13 @@ class APerusahaanController extends Controller
             if ($v->save()) {
                 if ($request->status == 'terverifikasi') {
                     $mailData = [
-                        'subject' => 'CONGRATULATION',
-                        'content' => 'Perusahaan yang anda daftar terverifikasi di sistem kami. Status verifikasi ini tidak permanen dan dapat berubah suatu saat sesuai peraturan yang berlaku.'
+                        'subject' => 'SELAMAT',
+                        'content' => 'Perusahaan anda terverifikasi. '
                     ];
 
                 }else{
                     $mailData = [
-                        'subject' => 'MOHON MAAF, STATUS PERUSAHAAN BELUM BISA TERVERIFIKASI',
+                        'subject' => 'BELUM TERVERIFIKASI',
                         'content' => $request->komentar
                     ];
                 }
