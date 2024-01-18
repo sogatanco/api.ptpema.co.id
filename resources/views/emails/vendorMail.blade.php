@@ -4,7 +4,7 @@
 
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <title>Email Verification</title>
+  <title>Email Vefikasi</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style type="text/css">
   /**
@@ -167,9 +167,9 @@
           <!-- start copy -->
           <tr>
             <td align="left" bgcolor="#ffffff" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
-              <p style="margin: 0;">Hello <?php echo $mailData['company_name']?>,</p>
-              <p style="margin: 0;">Tap the button below to confirm your email address. </p>
-              <p style="margin: 0;">If that doesn't work, copy and paste the following link in your browser:</p>
+              <p style="margin: 0;">Hai <?php echo $mailData['company_name']?>,</p>
+              <p style="margin: 0;">Klik tombol di bawah ini untuk melakukan verifikasi </p>
+              <p style="margin: 0;">Jika itu tidak berfungsi, silakan salin dan tempelkan link dibawah ini ke browser anda.</p>
               <p style="margin: 0;"><a href="<?php echo $mailData['link']?>" target="_blank"><?php echo $mailData['link']?></a></p>
             </td>
           </tr>
@@ -202,7 +202,7 @@
           <!-- start copy -->
           <tr>
             <td align="left" bgcolor="#ffffff" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; border-bottom: 3px solid #d4dadf">
-              <p style="margin: 0;">Cheers,<br> PT PEMA</p>
+              <p style="margin: 0;">Salam,<br> PT PEMA</p>
             </td>
           </tr>
           <!-- end copy -->
@@ -230,7 +230,7 @@
           <!-- start permission -->
           <tr>
             <td align="center" bgcolor="#e9ecef" style="padding: 12px 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px; color: #666;">
-              <p style="margin: 0;">You received this email because we received a request for your account verification. If you didn't request you can safely delete this email.</p>
+              <p style="margin: 0;">Anda menerima email ini dikarenakan ada permintaan verifakasi untuk sistem kami. Jika anda merasakan anda tidak melakukannya silakan dihapus.</p>
             </td>
           </tr>
           <!-- end permission -->

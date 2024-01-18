@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification Success</title>
+    <title>Verifikasi Email Berhasil</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,9 +51,9 @@
 
 <div class="container">
     <img class="logo" src="https://ptpema.co.id/uploads/settings/16347907124310.PNG" alt="Your Logo">
-    <h1>Email Verification Successful</h1>
-    <p>Congratulations! Your email has been successfully verified.</p>
-    <a href="https://vendor.ptpema.co.id/auth/login">Go to Dashboard</a>
+    <h1>Verifikasi Email Berhasil</h1>
+    <p>Verifikasi Email berhasil </p>
+    <a href="https://vendor.ptpema.co.id/auth/login">Silakan Login</a>
 </div>
 
 </body>
