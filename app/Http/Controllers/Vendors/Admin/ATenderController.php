@@ -20,9 +20,11 @@ class ATenderController extends Controller
     {
         $file_dok_tender = base64_decode($request->dok_tender, true);
         $file_dok_deskripsi_tender = base64_decode($request->dok_deskripsi_tender, true);
+        $file_doc_penyampaian_penawaran = base64_decode($request->doc_penyampaian_penawaran, true);
 
         $dok_tender = 'dok_tender.pdf';
         $dok_deskripsi_tender = 'dok_deskripsi_tender.pdf';
+        $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.pdf';
 
 
         $t = new Tender();
@@ -47,6 +49,7 @@ class ATenderController extends Controller
         if ($t->save()) {
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_tender, $file_dok_tender);
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
+            Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
             return new PostResource(true, 'Tender Inserted !', $t);
         } else {
             return new PostResource(false, 'Failed Tender Insert !', []);
@@ -126,6 +129,12 @@ class ATenderController extends Controller
             $dok_deskripsi_tender = 'dok_deskripsi_tender.pdf';
             Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
             $t->dok_deskripsi_tender = $dok_deskripsi_tender;
+        }
+        if($request->doc_penyampaian_penawaran!==''){
+            $file_doc_penyampaian_penawaran = base64_decode($request->doc_penyampaian_penawaran, true);
+            $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.pdf';
+            Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
+            $t->doc_penyampaian_penawaran = $doc_penyampaian_penawaran;
         }
 
         $t->pilihan_tender = $request->pilihan_tender;
