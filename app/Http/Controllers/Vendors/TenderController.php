@@ -31,7 +31,7 @@ class TenderController extends Controller
                 $statusPeserta = TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
                 if (count(TenderPeserta::where('tender_id', $d->id_tender)->where('status',  'pemenang')->get()) > 0) {
                     if ($statusPeserta == 'lulus_tahap_1' || $statusPeserta == 'submit_dokumen') {
-                        $d->status_peserta = 'gagal_menang';
+                        $d->status_peserta = 'gagal, coba lagi';
                     } else {
                         $d->status_peserta = $statusPeserta;
                     }
