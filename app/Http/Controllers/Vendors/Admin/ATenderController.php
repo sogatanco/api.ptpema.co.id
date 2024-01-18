@@ -39,7 +39,7 @@ class ATenderController extends Controller
         // $t->tgl_masa_sanggah = $request->tgl_masa_sanggah;
         $t->jenis_pengadaan = $request->jenis_pengadaan;
         $t->hps = $request->hps;
-        $t->kbli = json_encode($request->kbli);                  
+        $t->kbli = json_encode($request->kbli);
         $t->centang_dok_wajib = json_encode($request->centang_dok_wajib);
         $t->dok_tender = $dok_tender;
         $t->dok_deskripsi_tender = $dok_deskripsi_tender;
@@ -77,11 +77,11 @@ class ATenderController extends Controller
         $kbliList = MasterKbli::whereIn('nomor_kbli', json_decode($td->kbli))->get();
 
         $kblis = [];
-        if(count($kbliList) > 0){
-            for ($i=0; $i < count($kbliList); $i++) { 
+        if (count($kbliList) > 0) {
+            for ($i = 0; $i < count($kbliList); $i++) {
                 $l[$i] = [
                     'value' => $kbliList[$i]->nomor_kbli,
-                    'label' =>  $kbliList[$i]->nomor_kbli ." - ". $kbliList[$i]->nama_kbli
+                    'label' =>  $kbliList[$i]->nomor_kbli . " - " . $kbliList[$i]->nama_kbli
                 ];
 
                 array_push($kblis, $l[$i]);
@@ -90,20 +90,20 @@ class ATenderController extends Controller
 
         $td['kbli_list'] = $kblis;
 
-        if (file_exists(public_path('vendor_file/tender' . $td->dok_tender))){
-            $td['dok_tender_base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_tender)));
+        if (file_exists(public_path('vendor_file/tender' . $td->dok_tender))) {
+            $td['dok_tender_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_tender)));
         }
 
-        if (file_exists(public_path('vendor_file/tender' . $td->dok_deskripsi_tender))){
-            $td['dok_desk_tender_base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_deskripsi_tender)));
+        if (file_exists(public_path('vendor_file/tender' . $td->dok_deskripsi_tender))) {
+            $td['dok_desk_tender_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $td->dok_deskripsi_tender)));
         }
 
         if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
             $td->perusahaan_yang_ikut = TenderPeserta::where('tender_id', $id)->get();
             foreach ($td->perusahaan_yang_ikut as $p) {
                 $p->detail = ViewPerusahaan::find($p->perusahaan_id);
-                $p->value=ViewPerusahaan::find($p->perusahaan_id)->id;
-                $p->label=ViewPerusahaan::find($p->perusahaan_id)->bentuk_usaha.' '.ViewPerusahaan::find($p->perusahaan_id)->nama_perusahaan;
+                $p->value = ViewPerusahaan::find($p->perusahaan_id)->id;
+                $p->label = ViewPerusahaan::find($p->perusahaan_id)->bentuk_usaha . ' ' . ViewPerusahaan::find($p->perusahaan_id)->nama_perusahaan;
             }
         } else {
             $td->perusahaan_yang_ikut = [];
@@ -159,10 +159,10 @@ class ATenderController extends Controller
 
     public function setTahap2($id, Request $request)
     {
-        
+
         $t2d = $request->list_peserta;
         for ($i = 0; $i < count($t2d); $i++) {
-            $f = TenderPeserta::where('perusahaan_id',$t2d[$i])->where('tender_id', $id)->first();
+            $f = TenderPeserta::where('perusahaan_id', $t2d[$i])->where('tender_id', $id)->first();
             $f->status = 'lulus_tahap_1';
             $f->save();
         }
@@ -171,36 +171,39 @@ class ATenderController extends Controller
 
     public function setPemenang($id, Request $request)
     {
-    
+
         $t = TenderPeserta::where('tender_id', $id)->where('perusahaan_id', $request->list_peserta)->first();
-        $t->status= 'pemenang';
+        $t->status = 'pemenang';
         if ($t->save()) {
-            return new PostResource(true, 'pemenang submit', []);
+            $tender = Tender::find($id);
+            $tender->status_tender = 'tutup';
+            if ($tender->save()) {
+                return new PostResource(true, 'pemenang submit', []);
+            }
         }
     }
 
     public function getTahap2($id)
     {
-        $data=TenderPeserta::where('tender_id', $id)->where('status', 'lulus_tahap_1')->get();
-        foreach($data as $d){
-            $d->value=$d->perusahaan_id;
-            $d->label=ViewPerusahaan::find($d->perusahaan_id)->bentuk_usaha . ' ' . ViewPerusahaan::find($d->perusahaan_id)->nama_perusahaan;
+        $data = TenderPeserta::where('tender_id', $id)->where('status', 'lulus_tahap_1')->get();
+        foreach ($data as $d) {
+            $d->value = $d->perusahaan_id;
+            $d->label = ViewPerusahaan::find($d->perusahaan_id)->bentuk_usaha . ' ' . ViewPerusahaan::find($d->perusahaan_id)->nama_perusahaan;
         }
-    
+
         return new PostResource(true, 'tahap dua', $data);
     }
 
-    public function ba($id, Request $request){
-        $t=Tender::find($id);
+    public function ba($id, Request $request)
+    {
+        $t = Tender::find($id);
         Storage::disk('public_vendor')->put('tender/' . $id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
-        $t[$request->key] ='tender/' . $id . '/' . $request->key . '.pdf';
+        $t[$request->key] = 'tender/' . $id . '/' . $request->key . '.pdf';
         if ($t->save()) {
             return response()->json([
                 "success" => true,
-                "message"=>$request->key. "file sudah di upload"
+                "message" => $request->key . "file sudah di upload"
             ], 200);
         }
     }
-
- 
 }

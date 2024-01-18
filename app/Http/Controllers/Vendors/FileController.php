@@ -102,12 +102,12 @@ class FileController extends Controller
                 $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
                 $p->struktur_organisasi=$filename;
                 if($p->save()){
-                    return new PostResource(true, filesize($file).$request->whatfile." Berhasil", []);
+                    return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
                 }else{
-                    return new PostResource(false, filesize($file).$request->whatfile." Gagal", []);
+                    return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
                 }
             }else{
-                return new PostResource(false, filesize($file).$request->whatfile." Gagal", []);
+                return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
             }
         }
         else if($request->whatfile=='profil'){
