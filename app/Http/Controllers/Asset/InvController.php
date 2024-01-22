@@ -125,8 +125,9 @@ class InvController extends Controller
             // return new PostResource(false, 'sdgsg', [$this->numberToRoman(3)]);
 
             if ($db->save()) {
+                $numb=explode('-PEMA-', $db->asset_number );
                 for ($i = 1; $i <= (int)$request->amount; $i++) {
-                    AssetChild::create(['asset_number' => $db->asset_number . '-' . $i, 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
+                    AssetChild::create(['asset_number' => $numb[0].'-'.sprintf("%03d",$i ).'-PEMA-' . $numb[1], 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
                 }
                 $l = new AssetLog();
                 $l->id_asset = $db->id;
