@@ -220,10 +220,11 @@ class InvController extends Controller
     }
     function addChild(Request $request)
     {
-        $num = explode('-', AssetChild::where('id_parent', $request->id_parent)->orderBy('asset_number', 'DESC')->get()->first()->asset_number);
+        $num = explode('-PEMA-', AssetChild::where('id_parent', $request->id_parent)->orderBy('asset_number', 'DESC')->get()->first()->asset_number);
+        $numP=explode('-', $num[0]);
         $resp = Asset::find($request->id_parent)->responsible;
-        for ($i = $num[1] + 1; $i <= $num[1] + $request->amount; $i++) {
-            AssetChild::create(['asset_number' => $num[0] . '-' . $i, 'id_parent' =>  $request->id_parent, 'responsible' => $resp]);
+        for ($i = $numP[1] + 1; $i <= $numP[1] + $request->amount; $i++) {
+            AssetChild::create(['asset_number' => $numP[0] . '-' . sprintf("%03d",$i ).'-PEMA-' . $num[1], 'id_parent' =>  $request->id_parent, 'responsible' => $resp]);
         }
         $l = new AssetLog();
         $l->id_asset =  $request->id_parent;
