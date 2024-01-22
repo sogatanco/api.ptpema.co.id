@@ -113,7 +113,7 @@ class InvController extends Controller
         if (Storage::disk('public_inven')->put($image_name, $image)) {
             $db = new Asset();
             $d = strtotime($request->acquisition);
-            $db->asset_number = 'PEMA/' . $request->type . '/' . $this->numberToRoman(date('m', $d)) . '/' . date('Y', $d) . '/' . assetCat::where('code', $request->type)->first()->last_number + 1;
+            $db->asset_number =sprintf("%03d", assetCat::where('code', $request->type)->first()->last_number + 1 ). '-PEMA-' . $request->type . '-' . $this->numberToRoman(date('m', $d)) . '-' . date('Y', $d) ;
             $db->name = $request->name;
             $db->type = $request->type;
             $db->price = $request->price;
