@@ -309,7 +309,7 @@ class InvController extends Controller
             $data=AssetServis::where('request_by', Employe::employeId())->latest()->get();
         }
         foreach($data as $d){
-            $d->asset_id=AssetChild::find($d->asset_child)->asset_number;
+            $d->asset_number=AssetChild::find($d->asset_child)->asset_number;
         }
         return new PostResource(true, 'dsgsdg', $data);
     }
