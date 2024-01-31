@@ -113,7 +113,7 @@ class InvController extends Controller
         if (Storage::disk('public_inven')->put($image_name, $image)) {
             $db = new Asset();
             $d = strtotime($request->acquisition);
-            $db->asset_number = 'PEMA/' . $request->type . '/' . $this->numberToRoman(date('m', $d)) . '/' . date('Y', $d) . '/' . assetCat::where('code', $request->type)->first()->last_number + 1;
+            $db->asset_number =sprintf("%03d", assetCat::where('code', $request->type)->first()->last_number + 1 ). '-PEMA-' . $request->type . '-' . $this->numberToRoman(date('m', $d)) . '-' . date('Y', $d) ;
             $db->name = $request->name;
             $db->type = $request->type;
             $db->price = $request->price;
@@ -125,8 +125,9 @@ class InvController extends Controller
             // return new PostResource(false, 'sdgsg', [$this->numberToRoman(3)]);
 
             if ($db->save()) {
+                $numb=explode('-PEMA-', $db->asset_number );
                 for ($i = 1; $i <= (int)$request->amount; $i++) {
-                    AssetChild::create(['asset_number' => $db->asset_number . '-' . $i, 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
+                    AssetChild::create(['asset_number' => $numb[0].'-'.sprintf("%03d",$i ).'-PEMA-' . $numb[1], 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
                 }
                 $l = new AssetLog();
                 $l->id_asset = $db->id;
@@ -219,10 +220,11 @@ class InvController extends Controller
     }
     function addChild(Request $request)
     {
-        $num = explode('-', AssetChild::where('id_parent', $request->id_parent)->orderBy('asset_number', 'DESC')->get()->first()->asset_number);
+        $num = explode('-PEMA-', AssetChild::where('id_parent', $request->id_parent)->orderBy('asset_number', 'DESC')->get()->first()->asset_number);
+        $numP=explode('-', $num[0]);
         $resp = Asset::find($request->id_parent)->responsible;
-        for ($i = $num[1] + 1; $i <= $num[1] + $request->amount; $i++) {
-            AssetChild::create(['asset_number' => $num[0] . '-' . $i, 'id_parent' =>  $request->id_parent, 'responsible' => $resp]);
+        for ($i = $numP[1] + 1; $i <= $numP[1] + $request->amount; $i++) {
+            AssetChild::create(['asset_number' => $numP[0] . '-' . sprintf("%03d",$i ).'-PEMA-' . $num[1], 'id_parent' =>  $request->id_parent, 'responsible' => $resp]);
         }
         $l = new AssetLog();
         $l->id_asset =  $request->id_parent;

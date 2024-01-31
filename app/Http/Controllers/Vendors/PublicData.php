@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Vendor\Tender;
 
+
 class PublicData extends Controller
 {
     public function dataTender(){
@@ -15,4 +16,6 @@ class PublicData extends Controller
             "data" => $data
         ], 200);
     }
+
+   
 }

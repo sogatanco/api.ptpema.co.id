@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification Sent</title>
+    <title>Email Verifikasi Terkirim</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,9 +51,9 @@
 
 <div class="container">
     <img class="logo" src="https://ptpema.co.id/uploads/settings/16347907124310.PNG" alt="Your Logo">
-    <h1>Email Verification Sent</h1>
-    <p>We have sent a verification email to <?php echo $email; ?>. Please check your email and follow the instructions to verify your account.</p>
-    <a href="#">Resend Verification Email</a>
+    <h1>Email Verifikasi Sudah Dikirim</h1>
+    <p>Kami telah mengirim email verifikasi ke <?php echo $email; ?>. Silakan cek email dan ikuti intruksi untuk melakukan verifikasi.</p>
+    <a href="#">Kirim Ulang</a>
 </div>
 
 </body>
