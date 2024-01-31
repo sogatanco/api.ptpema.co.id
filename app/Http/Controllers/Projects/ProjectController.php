@@ -24,6 +24,7 @@ use App\Models\Tasks\TaskFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectController extends Controller
 {
@@ -935,6 +936,15 @@ class ProjectController extends Controller
         return response()->json([
             "status" => true,
             "data" => $data
+        ], 200);
+    } 
+
+    public function timelineData()
+    {
+        $user = Auth::user();
+
+        return response()->json([
+            "data" => $user
         ], 200);
     }
 }
