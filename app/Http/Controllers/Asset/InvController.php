@@ -257,6 +257,7 @@ class InvController extends Controller
         $data = AssetChild::where('responsible', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
         foreach ($data as $d) {
             $d->name = Asset::find($d->id_parent)->name;
+            $d->request_service=count(AssetServis::where('asset_child', $d->id)->where('status', '!=','done')->get());
             $d->location = Asset::find($d->id_parent)->location;
             $d->file = Asset::find($d->id_parent)->file;
             $d->type_name = assetCat::where('code', Asset::find($d->id_parent)->type)->first()->name;
