@@ -317,6 +317,7 @@ class InvController extends Controller
         }
         foreach ($data as $d) {
             $d->asset_number = AssetChild::find($d->asset_child)->asset_number;
+            $d->asset_name=Asset::find(AssetChild::find($d->asset_child)->id_parent)->name;
         }
         return new PostResource(true, 'dsgsdg', $data);
     }
