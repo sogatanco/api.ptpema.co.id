@@ -318,7 +318,7 @@ class InvController extends Controller
     function getRequest()
     {
         if (in_array("PicAsset", auth()->user()->roles)) {
-            $data = AssetServis::latest()->get();
+            $data = AssetServis::get();
         } else {
             $data = AssetServis::where('request_by', Employe::employeId())->latest()->get();
         }
