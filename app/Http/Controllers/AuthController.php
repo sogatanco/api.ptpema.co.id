@@ -17,7 +17,7 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'welcome']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'welcome', 'refresh']]);
     }
 
     public function register(userRegisterRequest $request): userResource
@@ -133,7 +133,10 @@ class AuthController extends Controller
         return response()->json([
             "status" => true,
             "message" => "Refresh token success.",
-            "token" => $token
+            "auth" => [
+                'user' => $user,
+                'token' => $token
+            ]
         ], 200);
     }
 
