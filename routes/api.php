@@ -66,6 +66,7 @@ Route::controller(ProjectController::class)->group(function(){
     Route::post("/project/{history_id}/bast/approval", "bastApproval")->middleware("role:Director");
     Route::get("/project/{employe_id}/total-data/", "totalDataByEmploye")->middleware("role:Staff,Manager,Director");
     Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Manager,Director");
+    Route::get("/project/timeline/list", "timelineData")->middleware("role:Staff");
 });
 
 // Task routes
