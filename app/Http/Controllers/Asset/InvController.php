@@ -306,7 +306,7 @@ class InvController extends Controller
         if(in_array("PicAsset",auth()->user()->roles)){
             $data=AssetServis::latest()->get();
         }else{
-            $data=AssetServis::latest()->get();
+            $data=AssetServis::where('request_by', Employe::employeId())->latest()->get();
         }
         return new PostResource(true, 'dsgsdg', $data);
     }
