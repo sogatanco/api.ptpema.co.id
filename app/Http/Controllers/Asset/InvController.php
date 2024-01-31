@@ -304,7 +304,14 @@ class InvController extends Controller
         $db->request_by = Employe::employeId();
         $db->status = 'submit';
         if ($db->save()) {
-            return new PostResource(true, 'success', []);
+            $l = new AssetLog();
+            $l->id_asset = AssetChild::find($request->asset_child)->id_parent;
+            $l->id_employee = Employe::employeId();
+            $l->activity = 'Request Serviece for '. AssetChild::find($request->asset_child)->asset_number;
+            if ($l->save()) {
+                return new  PostResource(true, 'success !!', []);
+            }
+            // return new PostResource(true, 'success', []);
         }
     }
 
