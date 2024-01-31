@@ -113,7 +113,7 @@ class InvController extends Controller
         if (Storage::disk('public_inven')->put($image_name, $image)) {
             $db = new Asset();
             $d = strtotime($request->acquisition);
-            $db->asset_number =sprintf("%03d", assetCat::where('code', $request->type)->first()->last_number + 1 ). '-PEMA-' . $request->type . '-' . $this->numberToRoman(date('m', $d)) . '-' . date('Y', $d) ;
+            $db->asset_number = sprintf("%03d", assetCat::where('code', $request->type)->first()->last_number + 1) . '-PEMA-' . $request->type . '-' . $this->numberToRoman(date('m', $d)) . '-' . date('Y', $d);
             $db->name = $request->name;
             $db->type = $request->type;
             $db->price = $request->price;
@@ -125,9 +125,9 @@ class InvController extends Controller
             // return new PostResource(false, 'sdgsg', [$this->numberToRoman(3)]);
 
             if ($db->save()) {
-                $numb=explode('-PEMA-', $db->asset_number );
+                $numb = explode('-PEMA-', $db->asset_number);
                 for ($i = 1; $i <= (int)$request->amount; $i++) {
-                    AssetChild::create(['asset_number' => $numb[0].'-'.sprintf("%03d",$i ).'-PEMA-' . $numb[1], 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
+                    AssetChild::create(['asset_number' => $numb[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $numb[1], 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
                 }
                 $l = new AssetLog();
                 $l->id_asset = $db->id;
@@ -221,10 +221,10 @@ class InvController extends Controller
     function addChild(Request $request)
     {
         $num = explode('-PEMA-', AssetChild::where('id_parent', $request->id_parent)->orderBy('asset_number', 'DESC')->get()->first()->asset_number);
-        $numP=explode('-', $num[0]);
+        $numP = explode('-', $num[0]);
         $resp = Asset::find($request->id_parent)->responsible;
         for ($i = $numP[1] + 1; $i <= $numP[1] + $request->amount; $i++) {
-            AssetChild::create(['asset_number' => $numP[0] . '-' . sprintf("%03d",$i ).'-PEMA-' . $num[1], 'id_parent' =>  $request->id_parent, 'responsible' => $resp]);
+            AssetChild::create(['asset_number' => $numP[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $num[1], 'id_parent' =>  $request->id_parent, 'responsible' => $resp]);
         }
         $l = new AssetLog();
         $l->id_asset =  $request->id_parent;
@@ -257,7 +257,12 @@ class InvController extends Controller
         $data = AssetChild::where('responsible', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
         foreach ($data as $d) {
             $d->name = Asset::find($d->id_parent)->name;
-            $d->request_service=count(AssetServis::where('asset_child', $d->id)->where('status', '!=','done')->get());
+            if (count(AssetServis::where('asset_child', $d->id)->where('status', '!=', 'done')->get()) > 0) {
+                $d->request_service = true;
+            } else {
+                $d->request_service = false;
+            }
+
             $d->location = Asset::find($d->id_parent)->location;
             $d->file = Asset::find($d->id_parent)->file;
             $d->type_name = assetCat::where('code', Asset::find($d->id_parent)->type)->first()->name;
@@ -303,14 +308,15 @@ class InvController extends Controller
         }
     }
 
-    function getRequest(){
-        if(in_array("PicAsset",auth()->user()->roles)){
-            $data=AssetServis::latest()->get();
-        }else{
-            $data=AssetServis::where('request_by', Employe::employeId())->latest()->get();
+    function getRequest()
+    {
+        if (in_array("PicAsset", auth()->user()->roles)) {
+            $data = AssetServis::latest()->get();
+        } else {
+            $data = AssetServis::where('request_by', Employe::employeId())->latest()->get();
         }
-        foreach($data as $d){
-            $d->asset_number=AssetChild::find($d->asset_child)->asset_number;
+        foreach ($data as $d) {
+            $d->asset_number = AssetChild::find($d->asset_child)->asset_number;
         }
         return new PostResource(true, 'dsgsdg', $data);
     }
