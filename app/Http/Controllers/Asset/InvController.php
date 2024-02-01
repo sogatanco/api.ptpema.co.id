@@ -241,7 +241,7 @@ class InvController extends Controller
         $dataImage = explode(',', $request->file);
         $image = base64_decode($dataImage[1], true);
         if($db->file==='/placeholder_asset.jpeg'){
-            $image_name = $db->file;
+            $image_name = $db->asset_number.'.png';
         }else{
             $image_name = $db->file;
         }
