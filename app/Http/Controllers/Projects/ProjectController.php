@@ -941,10 +941,11 @@ class ProjectController extends Controller
 
     public function timelineData()
     {
-        $user = Auth::user();
+        $employeId = Employe::employeId();
 
         return response()->json([
-            "data" => $user
+            "data" => $employeId
         ], 200);
     }
+
 }
