@@ -67,6 +67,7 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get("/project/{employe_id}/total-data/", "totalDataByEmploye")->middleware("role:Staff,Manager,Director");
     Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Manager,Director");
     Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff");
+    Route::delete("/project/{project_id}", "destroy")->middleware("role:Staff,Manager");
 });
 
 // Task routes
