@@ -317,11 +317,14 @@ class ProjectController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Project $project)
+    public function update(Request $request, $projectId)
     {
-        //
+        
+        $project = Project::find($projectId);
+
         return response()->json([
-            "message" => "from project update endpoint"
+            "message" => "from project update endpoint",
+            "data" => $project,
         ],200);
     }
 
