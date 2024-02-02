@@ -331,7 +331,7 @@ class ProjectController extends Controller
             'category' => $request->category
         ];
 
-        $projectUpdated = Project::where('project_id', $projectId)->update($prject);
+        $projectUpdated = Project::where('project_id', $projectId)->update($project);
 
         if($projectUpdated){
             // data stage
