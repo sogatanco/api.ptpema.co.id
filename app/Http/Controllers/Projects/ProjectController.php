@@ -319,12 +319,12 @@ class ProjectController extends Controller
      */
     public function update(Request $request, $projectId)
     {
-        
-        $project = Project::where('project_id', $projectId)->first();
+        $project = Project::where('project_id', $projectId)->update($request->all());
 
         return response()->json([
             "message" => "from project update endpoint",
             "data" => $project,
+            "request" => $request->all()
         ],200);
     }
 
