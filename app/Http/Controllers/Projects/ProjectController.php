@@ -368,10 +368,18 @@ class ProjectController extends Controller
      */
     public function destroy($projectId)
     {
-        return response()->json([
-            "data" => $projectId,
-            'message' => "from destroy endpoint"
-        ], 200);
+        $deleted = Project::where('project_d', $projectId)->delete();
+
+        if($deleted){
+            return response()->json([
+                "status" => true,
+                'message' => "Project has been deleted."
+            ], 200);
+        }else{
+            throw new HttpResponseException(response([
+                "errors" => "Something went wrong."
+            ], 500));
+        }
     }
 
     public function businessOptions()
