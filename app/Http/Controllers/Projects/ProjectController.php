@@ -246,7 +246,8 @@ class ProjectController extends Controller
                                         'start_date',
                                         'end_date',
                                         'schema',
-                                        'project_partners.name AS partner'
+                                        'partner AS partner_id',
+                                        'project_partners.name AS partner_name'
                                     )
                                     ->where(['project_id' => $projectId, 'status' => 1])
                                     ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
