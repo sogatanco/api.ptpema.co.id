@@ -240,13 +240,21 @@ class InvController extends Controller
         $db = Asset::find($request->id);
         $dataImage = explode(',', $request->file);
         $image = base64_decode($dataImage[1], true);
-        $image_name = $db->file;
+        if($db->file==='/placeholder_asset.jpeg'){
+            $image_name = '/'.$db->asset_number.'.png';
+        }else{
+            $image_name = $db->file;
+        }
+      
+
         if (Storage::disk('public_inven')->put($image_name, $image)) {
+            $db1 = Asset::find($request->id);
+            $db1->file= $image_name ;
             $l = new AssetLog();
             $l->id_asset = $request->id;
             $l->id_employee = Employe::employeId();
             $l->activity = 'Update asset image';
-            if ($l->save()) {
+            if ($l->save() && $db1->save()) {
                 return new  PostResource(true, 'Changed Succesfully !!', []);
             }
         }
