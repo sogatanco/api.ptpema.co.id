@@ -319,13 +319,46 @@ class ProjectController extends Controller
      */
     public function update(Request $request, $projectId)
     {
-        $project = Project::where('project_id', $projectId)->update($request->all());
+        // data project
+        $project = [
+            'project_number' => $request->project_number,
+            'project_name' => $request->project_name,
+            'estimated_income' => $request->estimated_income,
+            'estimated_cost' => $request->estimated_cost,
+            'base_id' => $request->base_id,
+            'level_id' => $request->level_id,
+            'business_id' => $request->business_id,
+            'category' => $request->category
+        ];
 
-        return response()->json([
-            "message" => "from project update endpoint",
-            "data" => $project,
-            "request" => $request->all()
-        ],200);
+        $projectUpdated = Project::where('project_id', $projectId)->update($prject);
+
+        if($projectUpdated){
+            // data stage
+            $stage = [
+                'desc' => $request->desc,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'partner' => $request->partner
+            ];
+
+            $stageUpdated = ProjectStage::where('stage_id', $request->stage_id)->update($stage);
+
+            if($stageUpdated){
+                return response()->json([
+                    "message" => "Project has been updated.",
+                ],200);
+            } else{
+                throw new HttpResponseException(response([
+                    "errors" => "Something went wrong."
+                ], 500));
+            }
+
+        }else{
+            throw new HttpResponseException(response([
+                "errors" => "Something went wrong."
+            ], 500));
+        }
     }
 
     /**
