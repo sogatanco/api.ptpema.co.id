@@ -368,7 +368,7 @@ class ProjectController extends Controller
      */
     public function destroy($projectId)
     {
-        $deleted = Project::where('project_d', $projectId)->delete();
+        $deleted = Project::where('project_id', $projectId)->delete();
 
         if($deleted){
             return response()->json([
