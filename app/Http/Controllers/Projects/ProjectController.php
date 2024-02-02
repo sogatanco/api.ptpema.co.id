@@ -341,7 +341,7 @@ class ProjectController extends Controller
                 'desc' => $request->desc,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
-                'partner' => $request->partner_id
+                'partner' => $request->partner
             ];
 
             $stageUpdated = ProjectStage::where('id', $request->stage_id)->update($stage);
