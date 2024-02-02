@@ -55,7 +55,7 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get("/project/business/options", 'businessOptions')->middleware("role:Employee");
     Route::get("/project/partner/options", 'partnerOptions')->middleware("role:Employee");
     Route::post("/project", 'store')->middleware("role:Staff,Manager");
-    Route::put("/project/{project_id}/update", 'update')->middleware("role:Staff, Manager");
+    Route::put("/project/{project_id}/update", 'update')->middleware("role:Manager");
     Route::get("/project/{project_id}/history", 'history')->middleware("role:Employee");
     Route::get("/project/{project_id}/members", 'members')->middleware("role:Employee");
     Route::get("/project/{project_id}/files", "files")->middleware("role:Employee");
