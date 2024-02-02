@@ -342,7 +342,7 @@ class ProjectController extends Controller
                 'partner' => $request->partner
             ];
 
-            $stageUpdated = ProjectStage::where('stage_id', $request->stage_id)->update($stage);
+            $stageUpdated = ProjectStage::where('id', $request->stage_id)->update($stage);
 
             if($stageUpdated){
                 return response()->json([
