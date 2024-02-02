@@ -320,7 +320,7 @@ class ProjectController extends Controller
     public function update(Request $request, $projectId)
     {
         
-        $project = Project::where('project_id', $projectId);
+        $project = Project::where('project_id', $projectId)->first();
 
         return response()->json([
             "message" => "from project update endpoint",
