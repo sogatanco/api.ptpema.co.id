@@ -324,6 +324,7 @@ class ProjectController extends Controller
         $project = [
             'project_number' => $request->project_number,
             'project_name' => $request->project_name,
+            'goals' => $request->goals,
             'estimated_income' => $request->estimated_income,
             'estimated_cost' => $request->estimated_cost,
             'base_id' => $request->base_id,
