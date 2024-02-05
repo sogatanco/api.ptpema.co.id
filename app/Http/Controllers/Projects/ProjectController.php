@@ -247,11 +247,9 @@ class ProjectController extends Controller
                                         'end_date',
                                         'schema',
                                         'partner AS partner_id',
-                                        'project_partners.name AS partner_name'
                                     )
                                     ->where(['project_id' => $projectId, 'status' => 1])
                                     ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
-                                    ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                                     ->first();
         }else{
             // jika category non-business
