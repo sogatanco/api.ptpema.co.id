@@ -993,16 +993,13 @@ class ProjectController extends Controller
     {
         $employeId = Employe::employeId();
 
+        // ambil semua projek
+        $projects = Project::get();
+
         return response()->json([
-            "data" => $employeId
+            "data" => $projects
         ], 200);
     }
 
-    public function timelineByEmploye()
-    {
-        return response()->json([
-            "message" => "From timeline by employe endpoint"
-        ], 200);
-    }
 
 }
