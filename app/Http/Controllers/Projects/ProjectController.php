@@ -1010,6 +1010,18 @@ class ProjectController extends Controller
             $tasks[$i] = [];
 
             for ($t=0; $t < count($projects[$i]['tasks']); $t++) { 
+
+                $bgColor[$t] = '';
+
+                if($projects[$i]['tasks'][$t]->status === 0){
+                    $bgColor[$t] = 'rgb(21, 137, 252)';
+                }elseif($projects[$i]['tasks'][$t]->status === 1){
+                    $bgColor[$t] = 'rgb(238,157,35)';
+                }else{
+                    $bgColor[$t] = 'rgb(14,183,175)';
+                }
+                
+
                 $tasks[$i][$t] = [
                     "id" => $projects[$i]['tasks'][$t]->task_id,
                     "start_date" => $projects[$i]['tasks'][$t]->start_date,
@@ -1019,7 +1031,7 @@ class ProjectController extends Controller
                     "occupancy" => 3600,
                     "subtitle" => "",
                     "description" => "",
-                    "bgColor" => ($projects[$i]['tasks'][$t]->status === 0 ? 'rgb(21, 137, 252)' : $projects[$i]['tasks'][$t]->status === 1) ? 'rgb(238,157,35)' : 'rgb(14,183,175)',
+                    "bgColor" => $bgColor[$t]
                 ];
             }
 
