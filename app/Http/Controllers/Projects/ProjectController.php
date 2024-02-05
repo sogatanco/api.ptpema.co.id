@@ -1015,6 +1015,7 @@ class ProjectController extends Controller
                     "start_date" => $projects[$i]['tasks'][$t]->start_date,
                     "end_date" => $projects[$i]['tasks'][$t]->end_date,
                     "title" => $projects[$i]['tasks'][$t]->task_title,
+                    "status" => $projects[$i]['tasks'][$t]->status,
                     "occupancy" => 3600,
                     "subtitle" => "",
                     "description" => "",
