@@ -998,7 +998,17 @@ class ProjectController extends Controller
                 ->orderBy('project_id', 'desc')
                 ->get();
 
+        $list = [];
         for ($i=0; $i < count($projects); $i++) { 
+
+            $list[$i] = [
+                "id" => $projects[$i]->project_id,
+                "label" => [
+                    "title" => $project[$i]->project_name,
+                    "subtitle" => $project[$i]->division
+                ]
+            ];
+
             // cari task by project dan employe
             $where = ['project_task_pics.project_id' => $projects[$i]->project_id, 'project_task_pics.employe_id' => $employeId];
             $projects[$i]['tasks'] = TaskPic::select('task_parent', 'task_title', 'start_date', 'end_date')
@@ -1009,7 +1019,7 @@ class ProjectController extends Controller
         }
 
         return response()->json([
-            "data" => $projects
+            "data" => $list
         ], 200);
     }
 
