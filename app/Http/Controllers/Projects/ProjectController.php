@@ -1023,7 +1023,7 @@ class ProjectController extends Controller
                     "title" => $projects[$i]->project_name,
                     "subtitle" => $projects[$i]->division
                 ],
-                "data" => $task[$i]
+                "data" => $tasks[$i]
             ];
 
         }
