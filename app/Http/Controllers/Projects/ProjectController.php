@@ -1019,15 +1019,12 @@ class ProjectController extends Controller
                 }else{
                     $bgColor[$t] = 'rgb(14,183,175)';
                 }
-
-                $startDateToTime[$t] = strtotime($projects[$i]['tasks'][$t]->start_date);
-                $endDateToTime[$t] = strtotime($projects[$i]['tasks'][$t]->end_date);
                 
 
                 $tasks[$i][$t] = [
                     "id" => $projects[$i]['tasks'][$t]->task_id,
-                    "start_date" => getDate($startDateToTime[$t]),
-                    "end_date" => getDate($endDateToTime[$t]),
+                    "start_date" => $projects[$i]['tasks'][$t]->start_date,
+                    "end_date" => $projects[$i]['tasks'][$t]->end_date,
                     "title" => $projects[$i]['tasks'][$t]->task_title,
                     "status" => $projects[$i]['tasks'][$t]->status,
                     "occupancy" => 3600,
