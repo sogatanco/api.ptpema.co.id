@@ -994,7 +994,7 @@ class ProjectController extends Controller
         $employeId = Employe::employeId();
 
         // ambil semua projek
-        $projects = Project::get();
+        $projects = Project::select('project_id', 'project_name', 'division')->get();
 
         for ($i=0; $i < count($projects); $i++) { 
             // cari task by project dan employe
