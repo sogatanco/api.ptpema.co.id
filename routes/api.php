@@ -8,6 +8,7 @@ use App\Http\Controllers\Employe\EmployeController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Task\TaskController;
 use App\Http\Controllers\Comment\CommentController;
+use App\Http\Controllers\Mitra\MitraController;
 use App\Http\Controllers\Tickets\TicketController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
@@ -105,4 +106,9 @@ Route::controller(TicketController::class)->group(function(){
     Route::get("/ticket/employe", "getTicketByEmploye")->middleware("role:Employee");
     Route::get("/ticket/manager", "getRequestByManager")->middleware("role:Manager");
     Route::post("/ticket/assign-task", "assignTask")->middleware("role:Manager");
+});
+
+// Mitra
+Route::controller(MitraController::class)->group(function(){
+    Route::get('/mitra', "index")->middleware("role:Employee");
 });
