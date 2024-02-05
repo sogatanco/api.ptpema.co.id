@@ -1005,7 +1005,7 @@ class ProjectController extends Controller
                                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
                                     ->get();
 
-            if(count($projects[$i]['tasks'] > 0)){
+            if(count($projects[$i]['tasks']) > 0){
                 array_push($list, $projects[$i]['tasks']);
             }
         }
