@@ -996,6 +996,12 @@ class ProjectController extends Controller
         // ambil semua projek
         $projects = Project::get();
 
+        for ($i=0; $i < count($projects); $i++) { 
+            // cari task by project dan employe
+            $where = ['project_id' => $projects[$i]->project_id, 'employe_id' => $employeId];
+            $project[$i]['tasks'] = TaskPic::where($where)->get();
+        }
+
         return response()->json([
             "data" => $projects
         ], 200);
