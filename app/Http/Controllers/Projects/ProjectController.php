@@ -1015,6 +1015,7 @@ class ProjectController extends Controller
                     "start_date" => $projects[$i]['tasks'][$t]->start_date,
                     "end_date" => $projects[$i]['tasks'][$t]->end_date,
                     "title" => $projects[$i]['tasks'][$t]->task_title,
+                    "occupancy" => 3600,
                     "subtitle" => "",
                     "description" => "",
                     "bgColor" => ($projects[$i]['tasks'][$t]->status === 0 ? 'rgb(21, 137, 252)' : $projects[$i]['tasks'][$t]->status === 1) ? 'rgb(238,157,35)' : 'rgb(14,183,175)',
