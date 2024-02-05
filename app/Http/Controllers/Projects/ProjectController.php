@@ -1004,8 +1004,8 @@ class ProjectController extends Controller
             $list[$i] = [
                 "id" => $projects[$i]->project_id,
                 "label" => [
-                    "title" => $project[$i]->project_name,
-                    "subtitle" => $project[$i]->division
+                    "title" => $projects[$i]->project_name,
+                    "subtitle" => $projects[$i]->division
                 ]
             ];
 
