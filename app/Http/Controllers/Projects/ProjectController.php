@@ -998,4 +998,11 @@ class ProjectController extends Controller
         ], 200);
     }
 
+    public function timelineByEmploye()
+    {
+        return response()->json([
+            "message" => "From timeline by employe endpoint"
+        ], 200);
+    }
+
 }
