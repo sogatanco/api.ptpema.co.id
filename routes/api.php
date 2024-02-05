@@ -111,5 +111,5 @@ Route::controller(TicketController::class)->group(function(){
 
 // Mitra
 Route::controller(MitraController::class)->group(function(){
-    Route::get('/mitra', "index")->middleware("role:Employee");
+    Route::get('/list-mitra', "index")->middleware("role:Employee");
 });
