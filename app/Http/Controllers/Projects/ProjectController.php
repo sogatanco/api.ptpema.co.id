@@ -1040,7 +1040,7 @@ class ProjectController extends Controller
                 "id" => $projects[$i]->project_id,
                 "label" => [
                     "title" => $projects[$i]->project_name,
-                    "subtitle" => $projects[$i]->division
+                    "subtitle" => $projects[$i]->organization_name
                 ],
                 "task" => count($projects[$i]['tasks']),
                 "data" => $tasks[$i]
