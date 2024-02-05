@@ -42,7 +42,6 @@ class Role
 
         return response()->json([
             "message" => "Unauthorized!",
-            "roles" => $roles
         ], 401);
         
     }

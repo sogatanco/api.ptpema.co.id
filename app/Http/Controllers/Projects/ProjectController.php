@@ -246,7 +246,8 @@ class ProjectController extends Controller
                                         'start_date',
                                         'end_date',
                                         'schema',
-                                        'project_partners.name AS partner'
+                                        'partner AS partner_id',
+                                        'project_partners.name AS partner_name'
                                     )
                                     ->where(['project_id' => $projectId, 'status' => 1])
                                     ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
@@ -319,21 +320,66 @@ class ProjectController extends Controller
      */
     public function update(Request $request, $projectId)
     {
-        $project = Project::where('project_id', $projectId)->update($request->all());
+        // data project
+        $project = [
+            'project_number' => $request->project_number,
+            'project_name' => $request->project_name,
+            'goals' => $request->goals,
+            'estimated_income' => $request->estimated_income,
+            'estimated_cost' => $request->estimated_cost,
+            'base_id' => $request->base_id,
+            'level_id' => $request->level_id,
+            'business_id' => $request->business_id,
+            'category' => $request->category
+        ];
 
-        return response()->json([
-            "message" => "from project update endpoint",
-            "data" => $project,
-            "request" => $request->all()
-        ],200);
+        $projectUpdated = Project::where('project_id', $projectId)->update($project);
+
+        if($projectUpdated){
+            // data stage
+            $stage = [
+                'desc' => $request->desc,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'partner' => $request->partner
+            ];
+
+            $stageUpdated = ProjectStage::where('id', $request->stage_id)->update($stage);
+
+            if($stageUpdated){
+                return response()->json([
+                    "message" => "Project has been updated.",
+                ],200);
+            } else{
+                throw new HttpResponseException(response([
+                    "errors" => "Something went wrong."
+                ], 500));
+            }
+
+        }else{
+            throw new HttpResponseException(response([
+                "errors" => "Something went wrong."
+            ], 500));
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Project $project)
+    public function destroy($projectId)
     {
-        //
+        $deleted = Project::where('project_id', $projectId)->delete();
+
+        if($deleted){
+            return response()->json([
+                "status" => true,
+                'message' => "Project has been deleted."
+            ], 200);
+        }else{
+            throw new HttpResponseException(response([
+                "errors" => "Something went wrong."
+            ], 500));
+        }
     }
 
     public function businessOptions()
@@ -882,6 +928,7 @@ class ProjectController extends Controller
 
         return response()->json([
             "message" => true,
+            "total" => count($projects),
             "data" => $projects
         ],200, [], JSON_NUMERIC_CHECK);
     }
@@ -946,9 +993,27 @@ class ProjectController extends Controller
     {
         $employeId = Employe::employeId();
 
+        // ambil semua projek
+        $projects = Project::select('project_id', 'project_name', 'division')->get();
+
+        for ($i=0; $i < count($projects); $i++) { 
+            // cari task by project dan employe
+            $where = ['project_task_pics.project_id' => $projects[$i]->project_id, 'project_task_pics.employe_id' => $employeId];
+            $tasks[$i] = TaskPic::select('task_parent', 'task_title', 'start_date', 'end_date')
+                                    ->where($where)
+                                    ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
+                                    ->get();
+
+
+            if(count($tasks[$i]) > 0){
+                $projects[$i]['tasks'] = $tasks[$i];
+            }
+        }
+
         return response()->json([
-            "data" => $employeId
+            "data" => $projects
         ], 200);
     }
+
 
 }

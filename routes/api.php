@@ -67,7 +67,8 @@ Route::controller(ProjectController::class)->group(function(){
     Route::post("/project/{history_id}/bast/approval", "bastApproval")->middleware("role:Director");
     Route::get("/project/{employe_id}/total-data/", "totalDataByEmploye")->middleware("role:Staff,Manager,Director");
     Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Manager,Director");
-    Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff");
+    Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff,Manager");
+    Route::delete("/project/{project_id}", "destroy")->middleware("role:Staff,Manager");
 });
 
 // Task routes
