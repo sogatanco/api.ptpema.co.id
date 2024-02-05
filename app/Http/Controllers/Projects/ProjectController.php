@@ -1007,13 +1007,23 @@ class ProjectController extends Controller
                                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
                                     ->get();
 
+            $tasks[$i] = [];
+
+            for ($t=0; $t < count($projects[$i]['tasks']); $t++) { 
+                $tasks[$i] = [
+                    "id" => $projects[$i]['tasks'][$t]->task_id,
+                    "start_date" => $projects[$i]['tasks'][$t]->start_date,
+                    "end_date" => $projects[$i]['tasks'][$t]->end_date,
+                ];
+            }
+
             $list[$i] = [
                 "id" => $projects[$i]->project_id,
                 "label" => [
                     "title" => $projects[$i]->project_name,
                     "subtitle" => $projects[$i]->division
                 ],
-                "data" => $projects[$i]['tasks']
+                "data" => $task[$i]
             ];
 
         }
