@@ -996,22 +996,22 @@ class ProjectController extends Controller
         // ambil semua projek
         $projects = Project::select('project_id', 'project_name', 'division')->get();
 
-        $list = [];
         for ($i=0; $i < count($projects); $i++) { 
             // cari task by project dan employe
             $where = ['project_task_pics.project_id' => $projects[$i]->project_id, 'project_task_pics.employe_id' => $employeId];
-            $projects[$i]['tasks'] = TaskPic::select('task_parent', 'task_title', 'start_date', 'end_date')
+            $tasks[$i] = TaskPic::select('task_parent', 'task_title', 'start_date', 'end_date')
                                     ->where($where)
                                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
                                     ->get();
 
-            if(count($projects[$i]['tasks']) > 0){
-                array_push($list, $projects[$i]['tasks']);
+
+            if(count($tasks[$i]) > 0){
+                $projects[$i]['tasks'] = $tasks[$i];
             }
         }
 
         return response()->json([
-            "data" => $list
+            "data" => $projects
         ], 200);
     }
 
