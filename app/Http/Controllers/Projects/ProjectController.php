@@ -1023,8 +1023,8 @@ class ProjectController extends Controller
 
                 $tasks[$i][$t] = [
                     "id" => $projects[$i]['tasks'][$t]->task_id,
-                    "start_date" => 'new Date('.$projects[$i]['tasks'][$t]->start_date.')',
-                    "end_date" => 'new Date('.$projects[$i]['tasks'][$t]->end_date.')',
+                    "start_date" => getDate($projects[$i]['tasks'][$t]->start_date),
+                    "end_date" => getDate($projects[$i]['tasks'][$t]->end_date),
                     "title" => $projects[$i]['tasks'][$t]->task_title,
                     "status" => $projects[$i]['tasks'][$t]->status,
                     "occupancy" => 3600,
