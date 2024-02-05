@@ -10,7 +10,7 @@ use App\Http\Resources\PostResource;
 class MitraController extends Controller
 {
     public function index(){
-       $data= Mitra::where('no_hp','1=', '')->get();
+       $data= Mitra::where('no_hp','!=', '')->get();
         return new PostResource(true, 'Data Mitra', $data);
     }
 }
