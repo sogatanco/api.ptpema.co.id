@@ -1002,7 +1002,7 @@ class ProjectController extends Controller
         for ($i=0; $i < count($projects); $i++) { 
             // cari task by project dan employe
             $where = ['project_task_pics.project_id' => $projects[$i]->project_id, 'project_task_pics.employe_id' => $employeId];
-            $projects[$i]['tasks'] = TaskPic::select('project_task_pics.task_id','task_parent', 'task_title', 'start_date', 'end_date')
+            $projects[$i]['tasks'] = TaskPic::select('project_task_pics.task_id','task_parent', 'task_title', 'start_date', 'end_date', 'status')
                                     ->where($where)
                                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
                                     ->get();
@@ -1014,6 +1014,10 @@ class ProjectController extends Controller
                     "id" => $projects[$i]['tasks'][$t]->task_id,
                     "start_date" => $projects[$i]['tasks'][$t]->start_date,
                     "end_date" => $projects[$i]['tasks'][$t]->end_date,
+                    "title" => $projects[$i]['tasks'][$t]->task_title,
+                    "subtitle" => "",
+                    "description" => "",
+                    "bgColor" => ($projects[$i]['tasks'][$t]->status === 0 ? 'rgb(21, 137, 252)' : $projects[$i]['tasks'][$t]->status === 1) ? 'rgb(238,157,35)' : 'rgb(14,183,175)',
                 ];
             }
 
