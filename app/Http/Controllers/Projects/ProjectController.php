@@ -994,7 +994,7 @@ class ProjectController extends Controller
         $employeId = Employe::employeId();
 
         // ambil semua projek
-        $projects = Project::select('project_id', 'project_name', 'organization.organization_name')
+        $projects = Project::select('project_id', 'project_name', 'organizations.organization_name')
                 ->join('organizations', 'organizations.organization_id', '=', 'projects.division')
                 ->orderBy('project_id', 'desc')
                 ->get();
