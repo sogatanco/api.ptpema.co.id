@@ -246,12 +246,10 @@ class ProjectController extends Controller
                                         'start_date',
                                         'end_date',
                                         'schema',
-                                        'partner AS partner_id',
-                                        'project_partners.name AS partner_name'
+                                        'partner AS partner_name',
                                     )
                                     ->where(['project_id' => $projectId, 'status' => 1])
                                     ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
-                                    ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                                     ->first();
         }else{
             // jika category non-business
@@ -994,7 +992,8 @@ class ProjectController extends Controller
         $employeId = Employe::employeId();
 
         // ambil semua projek
-        $projects = Project::select('project_id', 'project_name', 'division')
+        $projects = Project::select('project_id', 'project_name', 'organizations.organization_name')
+                ->join('organizations', 'organizations.organization_id', '=', 'projects.division')
                 ->orderBy('project_id', 'desc')
                 ->get();
 
@@ -1002,18 +1001,47 @@ class ProjectController extends Controller
         for ($i=0; $i < count($projects); $i++) { 
             // cari task by project dan employe
             $where = ['project_task_pics.project_id' => $projects[$i]->project_id, 'project_task_pics.employe_id' => $employeId];
-            $projects[$i]['tasks'] = TaskPic::select('task_parent', 'task_title', 'start_date', 'end_date')
+            $projects[$i]['tasks'] = TaskPic::select('project_task_pics.task_id','task_parent', 'task_title', 'start_date', 'end_date', 'status')
                                     ->where($where)
                                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
                                     ->get();
+
+            $tasks[$i] = [];
+
+            for ($t=0; $t < count($projects[$i]['tasks']); $t++) { 
+
+                $bgColor[$t] = '';
+
+                if($projects[$i]['tasks'][$t]->status === 0){
+                    $bgColor[$t] = 'rgb(21, 137, 252)';
+                }elseif($projects[$i]['tasks'][$t]->status === 1){
+                    $bgColor[$t] = 'rgb(238,157,35)';
+                }else{
+                    $bgColor[$t] = 'rgb(14,183,175)';
+                }
+                
+
+                $tasks[$i][$t] = [
+                    "id" => $projects[$i]['tasks'][$t]->task_id,
+                    "start_date" => $projects[$i]['tasks'][$t]->start_date,
+                    "end_date" => $projects[$i]['tasks'][$t]->end_date,
+                    "title" => $projects[$i]['tasks'][$t]->task_title,
+                    "status" => $projects[$i]['tasks'][$t]->status,
+                    "occupancy" => 3600,
+                    "subtitle" => "",
+                    "description" => "",
+                    "bgColor" => $bgColor[$t]
+                ];
+            }
 
             $list[$i] = [
                 "id" => $projects[$i]->project_id,
                 "label" => [
                     "title" => $projects[$i]->project_name,
-                    "subtitle" => $projects[$i]->division
+                    "subtitle" => $projects[$i]->organization_name
                 ],
-                "data" => $projects[$i]['tasks']
+                "task" => count($projects[$i]['tasks']),
+                "data" => $tasks[$i]
             ];
 
         }
