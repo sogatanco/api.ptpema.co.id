@@ -43,10 +43,6 @@ class TaskController extends Controller
     {
         $data = $request->validated();
 
-        return response()->json([
-            "data" => $data
-        ], 200);
-
         if($request->hasFile('files')){
             $files = $request->file('files');
         
