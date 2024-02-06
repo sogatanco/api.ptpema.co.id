@@ -22,7 +22,7 @@ Route::controller(AuthController::class)->group(function(){
     Route::get('/auth/logout', 'logout');
     Route::get('/auth/refresh', 'refresh');
     Route::get('auth/welcome/test', 'welcome');
-    Route::get('auth/change-pas', 'changePas');
+    Route::post('auth/change-pas', 'changePas');
 });
 
 Route::controller(Auth2Controller::class)->group(function(){
