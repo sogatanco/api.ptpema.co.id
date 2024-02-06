@@ -19,7 +19,7 @@ class InvController extends Controller
 
     function index()
     {
-        $data = Asset::latest()->get();
+        $data = Asset::get();
         foreach ($data as $d) {
             $member = explode(',', $d->responsible);
             $memberNew = [];
