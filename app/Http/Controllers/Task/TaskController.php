@@ -1013,4 +1013,11 @@ class TaskController extends Controller
             "data" => $listTask
         ], 200, [], JSON_NUMERIC_CHECK);
     }
+
+    public function additionalList()
+    {
+        return response()->json([
+            "message" => "From additional list endpoint"
+        ], 200);
+    }
 }
