@@ -1024,6 +1024,7 @@ class TaskController extends Controller
                     ->where('project_task_pics.employe_id', $employeId)
                     ->where('task_latest_status.division', '!=', $employeDivision->organization_id)
                     ->whereIn('task_latest_status.status', [0,1])
+                    ->limit(10)
                     ->get();
 
         return response()->json([
