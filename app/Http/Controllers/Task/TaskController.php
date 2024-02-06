@@ -1023,9 +1023,7 @@ class TaskController extends Controller
         $where2 = ['project_task_pics.employe_id' => $employeId, 'task_latest_status.status' => 1];
 
         $tasks = TaskPic::where($where1)
-                    ->orWhere($where2)
                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
-                    ->limit(10)
                     ->get();
 
         return response()->json([
