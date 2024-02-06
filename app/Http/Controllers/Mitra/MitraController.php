@@ -11,6 +11,9 @@ class MitraController extends Controller
 {
     public function index(){
        $data= Mitra::where('no_hp','!=', '')->get();
+       foreach ($data as $d){
+        $d->name=strtoupper($d->name);
+       }
         return new PostResource(true, 'Data Mitra', $data);
     }
 }
