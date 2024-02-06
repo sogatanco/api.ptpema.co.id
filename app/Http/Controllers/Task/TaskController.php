@@ -540,7 +540,7 @@ class TaskController extends Controller
                 ->first();
 
         if($request->status == 1){
-            $start_date = date("Y-m-d"); 
+            $start_date = $task->start_date; 
         }elseif($request->status >= 2 ){
             $start_date = $task->start_date;
         }else{
