@@ -1016,8 +1016,20 @@ class TaskController extends Controller
 
     public function additionalList()
     {
+
+        $employeId = Employe::employeId();
+
+        $where1 = ['project_task_pics.employe_id' => $employeId, 'task_latest_status.status' => 0];
+        $where2 = ['project_task_pics.employe_id' => $employeId, 'task_latest_status.status' => 1];
+
+        $tasks = TaskPic::where($where1)
+                    ->orWhere($where2)
+                    ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
+                    ->get();
+
         return response()->json([
-            "message" => "From additional list endpoint"
+            "status" => true,
+            "data" => $tasks
         ], 200);
     }
 }
