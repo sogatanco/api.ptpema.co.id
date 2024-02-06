@@ -165,7 +165,7 @@ class TaskController extends Controller
         if($isUpdated){
 
             TaskApproval::where('approval_id', $request->approval_id)
-                        ->update(['end_date' => $request->end_date]);
+                        ->update(['start_date' => $request->start_date, 'end_date' => $request->end_date]);
 
             $task = Task::where('task_id', $taskId)
                 ->first();
