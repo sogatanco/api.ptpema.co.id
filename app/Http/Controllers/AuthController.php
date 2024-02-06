@@ -146,4 +146,14 @@ class AuthController extends Controller
             "messsage" => "Hello world!"
         ], 200);
     }
+
+    public function changePas(Request $request){
+        $u=User::find(Auth::user()->id);
+        $u->password = Hash::make($request->newpas);
+        if($u->save()){
+            return response()->json([
+                "messsage" => "Password updated succesfully"
+            ], 200);
+        }
+    }
 }
