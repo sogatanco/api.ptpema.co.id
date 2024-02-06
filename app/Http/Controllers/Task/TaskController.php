@@ -1019,11 +1019,10 @@ class TaskController extends Controller
 
         $employeId = Employe::employeId();
 
-        $where1 = ['project_task_pics.employe_id' => $employeId, 'task_latest_status.status' => 0];
-        $where2 = ['project_task_pics.employe_id' => $employeId, 'task_latest_status.status' => 1];
 
-        $tasks = TaskPic::where($where1)
-                    ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
+        $tasks = TaskPic::join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
+                    ->where('project_task_pics.employe_id', $employeId)
+                    ->whereIn('task_latest_status.status', [0,1])
                     ->get();
 
         return response()->json([
