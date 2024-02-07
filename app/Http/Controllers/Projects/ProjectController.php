@@ -117,7 +117,7 @@ class ProjectController extends Controller
             }
         }
 
-        $filtered = array_filter($projects, $this->filterProject);
+        $filtered = array_filter($projects, 'filterProject');
 
         $total = $filtered;
 
