@@ -1039,6 +1039,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => $listTask,
+            "divisions" => $divisions
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
