@@ -14,6 +14,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Position;
 use App\Models\Employe;
+use App\Models\Organization;
 use App\Models\Notification ;
 use App\Models\Structure;
 use App\Models\Tasks\Task;
@@ -33,7 +34,22 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $projects = Project::leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+
+        $employeId = Employe::employeId();
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        $divisions = Organization::where('board_id', $employeDivision->board_id)
+                    ->get();
+
+        $divisionIds = [];
+        if(count($divisions) > 0){
+            for ($d=0; $d < count($divisions); $d++) { 
+                array_push($divisionIds, $divisions[$d]->organization_id);
+            }
+        }
+
+        $projects = Project::whereIn('division', $divisionIds)
+            ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
             ->orderBy('project_id', 'desc')
             ->limit(10)
