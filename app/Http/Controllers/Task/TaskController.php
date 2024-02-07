@@ -994,18 +994,29 @@ class TaskController extends Controller
         }
     }
 
-    public function favoriteList($employeId)
+    public function dashboardList()
     {
-        $listTask = TaskFavorite::where('project_task_favorite.employe_id', $employeId)
+        $employeId = Employe::employeId();
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        $query = $request->query('type');
+
+        if($query === 'marked'){
+            $listTask = TaskFavorite::where('project_task_favorite.employe_id', $employeId)
                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_favorite.task_id')
                     ->limit(5)
                     ->get();
 
-        for ($lt=0; $lt < count($listTask); $lt++) { 
-            $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                        ->where('task_id', $listTask[$lt]->task_id)
-                        ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
-                        ->get();
+            for ($lt=0; $lt < count($listTask); $lt++) { 
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                            ->where('task_id', $listTask[$lt]->task_id)
+                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->get();
+            }
+        }else if($query === 'done'){
+            $listTask = 'Done Tasks';
+        }else{
+            $listTask = 'Inprogress Tasks';
         }
 
         return response()->json([

@@ -88,7 +88,8 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("task/{project_id}/activities/all", 'taskByProject')->middleware("role:Manager,Director");
     Route::get("task/{employe_id}/recent/activity", 'recentTaskByEmploye')->middleware("role:Staff,Manager");
     Route::post("task/{employe_id}/{task_id}/favorite", 'addFavoriteTask')->middleware("role:Director");
-    Route::get("task/{employe_id}/favorite/list", 'favoriteList')->middleware("role:Director");
+    Route::get("task/director/dashboard/list", 'dashboardList')->middleware("role:Director");
+    Route::get("task/director/inprogress/list", 'inProgressList')->middleware("role:Director");
     Route::get("/task/employe/additional/list", 'additionalList')->middleware("role:Staff,Manager");
 });
 // Route::get("/employe", [EmployeController::class, "index"])->middleware('role:Admin');
