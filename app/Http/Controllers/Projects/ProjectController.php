@@ -52,7 +52,6 @@ class ProjectController extends Controller
             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
             ->orderBy('project_id', 'desc')
-            ->limit(10)
             ->get();
 
         // cari progress project
@@ -117,14 +116,10 @@ class ProjectController extends Controller
             }
         }
 
-        $filtered = array_filter($projects, 'filterProject');
-
-        $total = $filtered;
-
         return response()->json([
             "status" => true,
             "total" => $total,
-            "data" => $filtered
+            "data" => $projects
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
