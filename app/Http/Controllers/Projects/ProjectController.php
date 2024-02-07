@@ -52,6 +52,7 @@ class ProjectController extends Controller
             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
             ->orderBy('project_id', 'desc')
+            ->limit(10)
             ->get();
 
         // cari progress project
@@ -116,20 +117,15 @@ class ProjectController extends Controller
             }
         }
 
+        $total = $projects->count();
+
         return response()->json([
             "status" => true,
             "total" => $total,
             "data" => $projects
         ], 200, [], JSON_NUMERIC_CHECK);
     }
-
-    function filterProject($var)
-    {
-        // returns whether the input integer is odd
-        return $var->total_progress >= 10;
-    }
     
-
     /**
      * Store a newly created resource in storage.
      */
