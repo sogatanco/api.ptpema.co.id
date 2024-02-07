@@ -36,7 +36,7 @@ class ProjectController extends Controller
         $projects = Project::leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
             ->orderBy('project_id', 'desc')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         // cari progress project
