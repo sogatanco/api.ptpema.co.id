@@ -1014,9 +1014,9 @@ class TaskController extends Controller
                             ->get();
             }
         }else if($query === 'done'){
-            $listTask = 'Done Tasks';
+            $listTask = [];
         }else{
-            $listTask = 'Inprogress Tasks';
+            $listTask = [];
         }
 
         return response()->json([
