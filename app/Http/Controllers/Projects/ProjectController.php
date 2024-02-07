@@ -117,14 +117,23 @@ class ProjectController extends Controller
             }
         }
 
-        $total = $projects->count();
+        $filtered = array_filter($projects, $this->filterProject);
+
+        $total = $filtered;
 
         return response()->json([
             "status" => true,
             "total" => $total,
-            "data" => $projects
+            "data" => $filtered
         ], 200, [], JSON_NUMERIC_CHECK);
     }
+
+    function filterProject($var)
+    {
+        // returns whether the input integer is odd
+        return $var->total_progress >= 10;
+    }
+    
 
     /**
      * Store a newly created resource in storage.
