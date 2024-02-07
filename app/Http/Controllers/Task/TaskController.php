@@ -1014,7 +1014,9 @@ class TaskController extends Controller
                             ->get();
             }
         }else if($query === 'done'){
-            $listTask = [];
+            $listTask = TaskStatus::where(['division' => $employeDivision->organization_id, 'status' => 2])
+                        ->limit(5)
+                        ->get();
         }else{
             $listTask = [];
         }
