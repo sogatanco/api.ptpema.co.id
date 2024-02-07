@@ -1003,6 +1003,13 @@ class TaskController extends Controller
         $divisions = Organization::where('board_id', $employeDivision->board_id)
                     ->get();
 
+        $divisionIds = [];
+        if(count($divisions) > 0){
+            for ($d=0; $d < count($divisions); $d++) { 
+                array_push($divisionIds, $divisions[$d]->organization_id);
+            }
+        }
+
         $query = $request->query('type');
 
         if($query === 'marked'){
@@ -1032,7 +1039,7 @@ class TaskController extends Controller
             "status" => true,
             "data" => $listTask,
             "employee" => $employeDivision,
-            "divisions" => $divisions
+            "divisions" => $divisionIds
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
