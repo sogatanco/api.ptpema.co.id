@@ -1020,7 +1020,7 @@ class TaskController extends Controller
 
         }else if($query === 'done'){
             $listTask = TaskStatus::where('status', 2)
-                        ->whereIn('division', $divisions)
+                        ->whereIn('division', $divisionIds)
                         ->limit(5)
                         ->get();
         }else{
@@ -1039,7 +1039,6 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => $listTask,
-            "divisions" => $divisions
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
