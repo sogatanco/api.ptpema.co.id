@@ -1000,7 +1000,7 @@ class TaskController extends Controller
         $employeId = Employe::employeId();
         $employeDivision = Employe::getEmployeDivision($employeId);
 
-        $divisions = Organization::whereIn('board_id', $employeDivision->board_id)
+        $divisions = Organization::where('board_id', $employeDivision->board_id)
                     ->get();
 
         $query = $request->query('type');
