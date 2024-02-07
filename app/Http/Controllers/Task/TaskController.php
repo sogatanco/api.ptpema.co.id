@@ -11,6 +11,7 @@ use App\Models\Tasks\TaskStatus;
 use App\Models\Tasks\TaskFavorite;
 use App\Models\Comment\Comment;
 use App\Models\Employe;
+use App\Models\Organization;
 use App\Models\Structure;
 use App\Models\Projects\Project;
 use App\Models\Projects\ProjectStage;
@@ -999,6 +1000,9 @@ class TaskController extends Controller
         $employeId = Employe::employeId();
         $employeDivision = Employe::getEmployeDivision($employeId);
 
+        $divisions = Organization::whereIn('board_id', $employeDivision->board_id)
+                    ->get();
+
         $query = $request->query('type');
 
         if($query === 'marked'){
@@ -1027,7 +1031,8 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => $listTask,
-            "employee" => $employeDivision
+            "employee" => $employeDivision,
+            "divisions" => $divisions
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
