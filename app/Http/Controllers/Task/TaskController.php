@@ -1007,12 +1007,6 @@ class TaskController extends Controller
                     ->limit(5)
                     ->get();
 
-            for ($lt=0; $lt < count($listTask); $lt++) { 
-                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                            ->where('task_id', $listTask[$lt]->task_id)
-                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
-                            ->get();
-            }
         }else if($query === 'done'){
             $listTask = TaskStatus::where(['division' => $employeDivision->organization_id, 'status' => 2])
                         ->limit(5)
@@ -1021,9 +1015,19 @@ class TaskController extends Controller
             $listTask = [];
         }
 
+        if(count($listTask) > 0){
+            for ($lt=0; $lt < count($listTask); $lt++) { 
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                            ->where('task_id', $listTask[$lt]->task_id)
+                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->get();
+            }
+        }
+
         return response()->json([
             "status" => true,
-            "data" => $listTask
+            "data" => $listTask,
+            "employee" => $employeDivision
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
