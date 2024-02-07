@@ -1054,7 +1054,7 @@ class TaskController extends Controller
         $tasks = TaskPic::join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
                     ->where('project_task_pics.employe_id', $employeId)
                     ->where('task_latest_status.division', '!=', $employeDivision->organization_id)
-                    ->whereIn('task_latest_status.status', [0,1])
+                    ->whereIn('task_latest_status.status', [0,1,2])
                     ->limit(10)
                     ->get();
 
