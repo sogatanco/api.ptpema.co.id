@@ -1024,7 +1024,10 @@ class TaskController extends Controller
                         ->limit(5)
                         ->get();
         }else{
-            $listTask = [];
+            $listTask = TaskStatus::where('status', 1)
+                        ->where('task_progress', '>=', 50)
+                        ->limit(5)
+                        ->get();
         }
 
         if(count($listTask) > 0){
