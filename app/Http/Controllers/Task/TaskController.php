@@ -994,7 +994,7 @@ class TaskController extends Controller
         }
     }
 
-    public function dashboardList()
+    public function dashboardList(Request $request)
     {
         $employeId = Employe::employeId();
         $employeDivision = Employe::getEmployeDivision($employeId);
