@@ -1026,6 +1026,7 @@ class TaskController extends Controller
         }else{
             $listTask = TaskStatus::where('status', 1)
                         ->where('task_progress', '>=', 50)
+                        ->whereIn('division', $divisionIds)
                         ->limit(5)
                         ->get();
         }
