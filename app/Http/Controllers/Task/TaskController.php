@@ -1093,7 +1093,7 @@ class TaskController extends Controller
                             ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
                             ->get();
 
-                $isFavorite[$p] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $parent[$p]->task_id])
+                $isFavorite[$p] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $listTask[$lt]->task_id])
                             ->first();
 
                 $listTask[$lt]['isFavorite'] = $isFavorite[$p] ? true : false;
