@@ -1083,7 +1083,6 @@ class TaskController extends Controller
         }
 
         $listTask = TaskStatus::where('status', 1)
-                    // ->where('task_progress', '>=', 50)
                     ->whereIn('division', $divisionIds)
                     ->get();
 
@@ -1093,6 +1092,11 @@ class TaskController extends Controller
                             ->where('task_id', $listTask[$lt]->task_id)
                             ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
                             ->get();
+
+                $isFavorite[$p] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $parent[$p]->task_id])
+                            ->first();
+
+                $listTask[$lt]['isFavorite'] = $isFavorite[$p] ? true : false;
             }
         }
 
