@@ -52,7 +52,7 @@ Route::controller(EmployeController::class)->group(function(){
 
 // Project routes
 Route::controller(ProjectController::class)->group(function(){
-    Route::get("/project", 'index')->middleware("role:Director");
+    Route::get("/project", 'index')->middleware("role:Employee");
     Route::get("/project/{project_id}", 'show')->middleware("role:Employee");
     Route::get("/project/business/options", 'businessOptions')->middleware("role:Employee");
     Route::get("/project/partner/options", 'partnerOptions')->middleware("role:Employee");
