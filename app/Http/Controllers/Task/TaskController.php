@@ -1090,7 +1090,13 @@ class TaskController extends Controller
             for ($lt=0; $lt < count($listTask); $lt++) { 
                 $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                             ->where('task_id', $listTask[$lt]->task_id)
-                            ->selectRaw('SELECT * FROM project_task_favorite WHERE task_id = 8')
+                            ->with([
+                                'project_task_favorite' => [
+                                    'favorites' => function($q){
+                                        $q->where('employe_id', $employeId);
+                                    }
+                                ]
+                            ])
                             ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
                             ->get();
 
