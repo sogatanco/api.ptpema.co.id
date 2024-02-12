@@ -1058,11 +1058,47 @@ class TaskController extends Controller
                     ->whereIn('task_latest_status.status', [0,1,2])
                     ->limit(10)
                     ->get();
+                    
 
         return response()->json([
             "status" => true,
             "total" => count($tasks),
             "data" => $tasks
+        ], 200);
+    }
+
+    public function inProgressList()
+    {
+        $employeId = Employe::employeId();
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        $divisions = Organization::where('board_id', $employeDivision->board_id)
+                    ->get();
+
+        $divisionIds = [];
+        if(count($divisions) > 0){
+            for ($d=0; $d < count($divisions); $d++) { 
+                array_push($divisionIds, $divisions[$d]->organization_id);
+            }
+        }
+
+        $listTask = TaskStatus::where('status', 1)
+                    // ->where('task_progress', '>=', 50)
+                    ->whereIn('division', $divisionIds)
+                    ->get();
+
+        if(count($listTask) > 0){
+            for ($lt=0; $lt < count($listTask); $lt++) { 
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                            ->where('task_id', $listTask[$lt]->task_id)
+                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->get();
+            }
+        }
+
+        return response()->json([
+            "status" => true,
+            "data" => $listTask
         ], 200);
     }
 }

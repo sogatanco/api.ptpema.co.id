@@ -122,7 +122,8 @@ class ProjectController extends Controller
             "status" => true,
             "total" => $total,
             "data" => $projects,
-            'divisions' => $divisions
+            'divisions' => $divisions,
+            "testest" => "Coba development mode"
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
