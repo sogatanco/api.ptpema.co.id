@@ -1059,6 +1059,20 @@ class TaskController extends Controller
                     ->limit(10)
                     ->get();
 
+        $listTask = TaskStatus::where('status', 1)
+                    // ->where('task_progress', '>=', 50)
+                    ->whereIn('division', $divisionIds)
+                    ->get();
+
+        if(count($listTask) > 0){
+            for ($lt=0; $lt < count($listTask); $lt++) { 
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                            ->where('task_id', $listTask[$lt]->task_id)
+                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->get();
+            }
+        }
+
         return response()->json([
             "status" => true,
             "total" => count($tasks),
@@ -1068,6 +1082,19 @@ class TaskController extends Controller
 
     public function inProgressList()
     {
+        $employeId = Employe::employeId();
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        $divisions = Organization::where('board_id', $employeDivision->board_id)
+                    ->get();
+
+        $divisionIds = [];
+        if(count($divisions) > 0){
+            for ($d=0; $d < count($divisions); $d++) { 
+                array_push($divisionIds, $divisions[$d]->organization_id);
+            }
+        }
+
         return response()->json([
             "message" => "from inprogress task list"
         ], 200);
