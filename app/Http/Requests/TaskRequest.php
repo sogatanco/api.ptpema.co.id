@@ -33,6 +33,7 @@ class TaskRequest extends FormRequest
             "task_pic" => ['required'],
             "files" => [],
             "notes" => [],
+            "start_date" => ['required'],
             "end_date" => ['required']
         ];
     }

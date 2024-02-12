@@ -11,6 +11,7 @@ use App\Models\Tasks\TaskStatus;
 use App\Models\Tasks\TaskFavorite;
 use App\Models\Comment\Comment;
 use App\Models\Employe;
+use App\Models\Organization;
 use App\Models\Structure;
 use App\Models\Projects\Project;
 use App\Models\Projects\ProjectStage;
@@ -42,10 +43,6 @@ class TaskController extends Controller
     public function store(TaskRequest $request)
     {
         $data = $request->validated();
-
-        return response()->json([
-            "data" => $data
-        ], 200);
 
         if($request->hasFile('files')){
             $files = $request->file('files');
@@ -169,7 +166,7 @@ class TaskController extends Controller
         if($isUpdated){
 
             TaskApproval::where('approval_id', $request->approval_id)
-                        ->update(['end_date' => $request->end_date]);
+                        ->update(['start_date' => $request->start_date, 'end_date' => $request->end_date]);
 
             $task = Task::where('task_id', $taskId)
                 ->first();
@@ -544,7 +541,7 @@ class TaskController extends Controller
                 ->first();
 
         if($request->status == 1){
-            $start_date = date("Y-m-d"); 
+            $start_date = $task->start_date; 
         }elseif($request->status >= 2 ){
             $start_date = $task->start_date;
         }else{
@@ -998,23 +995,74 @@ class TaskController extends Controller
         }
     }
 
-    public function favoriteList($employeId)
+    public function dashboardList(Request $request)
     {
-        $listTask = TaskFavorite::where('project_task_favorite.employe_id', $employeId)
+        $employeId = Employe::employeId();
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        $divisions = Organization::where('board_id', $employeDivision->board_id)
+                    ->get();
+
+        $divisionIds = [];
+        if(count($divisions) > 0){
+            for ($d=0; $d < count($divisions); $d++) { 
+                array_push($divisionIds, $divisions[$d]->organization_id);
+            }
+        }
+
+        $query = $request->query('type');
+
+        if($query === 'marked'){
+            $listTask = TaskFavorite::where('project_task_favorite.employe_id', $employeId)
                     ->join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_favorite.task_id')
                     ->limit(5)
                     ->get();
 
-        for ($lt=0; $lt < count($listTask); $lt++) { 
-            $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                        ->where('task_id', $listTask[$lt]->task_id)
-                        ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+        }else if($query === 'done'){
+            $listTask = TaskStatus::where('status', 2)
+                        ->whereIn('division', $divisionIds)
+                        ->limit(5)
                         ->get();
+        }else{
+            $listTask = TaskStatus::where('status', 1)
+                        ->where('task_progress', '>=', 50)
+                        ->whereIn('division', $divisionIds)
+                        ->limit(5)
+                        ->get();
+        }
+
+        if(count($listTask) > 0){
+            for ($lt=0; $lt < count($listTask); $lt++) { 
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                            ->where('task_id', $listTask[$lt]->task_id)
+                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->get();
+            }
         }
 
         return response()->json([
             "status" => true,
-            "data" => $listTask
+            "data" => $listTask,
         ], 200, [], JSON_NUMERIC_CHECK);
+    }
+
+    public function additionalList()
+    {
+
+        $employeId = Employe::employeId();
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        $tasks = TaskPic::join('task_latest_status', 'task_latest_status.task_id', '=', 'project_task_pics.task_id')
+                    ->where('project_task_pics.employe_id', $employeId)
+                    ->where('task_latest_status.division', '!=', $employeDivision->organization_id)
+                    ->whereIn('task_latest_status.status', [0,1,2])
+                    ->limit(10)
+                    ->get();
+
+        return response()->json([
+            "status" => true,
+            "total" => count($tasks),
+            "data" => $tasks
+        ], 200);
     }
 }

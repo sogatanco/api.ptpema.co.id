@@ -53,7 +53,7 @@ class Employe extends Model
        return Employe::where('employees.employe_id', '=' , $employe_id)
                     ->leftJoin('positions', 'employees.position_id', '=', 'positions.position_id')
                     ->leftJoin('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-                    ->select('positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
+                    ->select('positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name', 'organizations.board_id')
                     ->first();
     }
 }
