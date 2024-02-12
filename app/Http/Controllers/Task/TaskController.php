@@ -1065,4 +1065,11 @@ class TaskController extends Controller
             "data" => $tasks
         ], 200);
     }
+
+    public function inProgressList()
+    {
+        return response()->json([
+            "message" => "from inprogress task list"
+        ], 200);
+    }
 }
