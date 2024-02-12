@@ -1098,6 +1098,7 @@ class TaskController extends Controller
 
         return response()->json([
             "status" => true,
+            "total" => count($listTask),
             "data" => $listTask
         ], 200);
     }
