@@ -172,7 +172,7 @@ class DaActivitController extends Controller
         }
 
 
-        return new PostResource(true, 'sgsdg', $alldayli);
+        return new PostResource(true, 'sgsdg', $data);
     }
 
     function changeStatus(Request $request)
