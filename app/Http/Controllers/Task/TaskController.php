@@ -1058,20 +1058,7 @@ class TaskController extends Controller
                     ->whereIn('task_latest_status.status', [0,1,2])
                     ->limit(10)
                     ->get();
-
-        $listTask = TaskStatus::where('status', 1)
-                    // ->where('task_progress', '>=', 50)
-                    ->whereIn('division', $divisionIds)
-                    ->get();
-
-        if(count($listTask) > 0){
-            for ($lt=0; $lt < count($listTask); $lt++) { 
-                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                            ->where('task_id', $listTask[$lt]->task_id)
-                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
-                            ->get();
-            }
-        }
+                    
 
         return response()->json([
             "status" => true,
@@ -1095,8 +1082,23 @@ class TaskController extends Controller
             }
         }
 
+        $listTask = TaskStatus::where('status', 1)
+                    // ->where('task_progress', '>=', 50)
+                    ->whereIn('division', $divisionIds)
+                    ->get();
+
+        if(count($listTask) > 0){
+            for ($lt=0; $lt < count($listTask); $lt++) { 
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                            ->where('task_id', $listTask[$lt]->task_id)
+                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->get();
+            }
+        }
+
         return response()->json([
-            "message" => "from inprogress task list"
+            "status" => true,
+            "data" => $listTask
         ], 200);
     }
 }
