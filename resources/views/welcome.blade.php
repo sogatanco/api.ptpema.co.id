@@ -16,6 +16,6 @@
         </style>
     </head>
     <body class="antialiased">
-        <h1 class="fw-bold text-white">HELLO WOROLD 2sgdsg</h1>
+        <h1 class="fw-bold text-white">HELLO WOROLD 2sgdsgsdgsdgsdg</h1>
     </body>
 </html>
