@@ -797,8 +797,8 @@ class TaskController extends Controller
                 )   
                 ->where($wherePhase)
                 ->join('projects', 'projects.project_id', '=', 'project_stages.project_id')
-                ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
-                ->join('organizations', 'organizations.organization_id','=', 'project_stages.division')
+                ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
+                ->leftJoin('organizations', 'organizations.organization_id','=', 'project_stages.division')
                 ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                 ->first();
 
