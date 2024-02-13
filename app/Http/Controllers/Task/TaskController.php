@@ -791,7 +791,7 @@ class TaskController extends Controller
                     'projects.project_number as project_number',
                     'projects.project_name as project_name',
                     'project_stages.schema as schema', 
-                    // 'project_phases.title as phase',
+                    'project_phases.title as phase',
                     // 'organizations.organization_name as division',
                     // 'project_partners.name as partner'
                 )   
