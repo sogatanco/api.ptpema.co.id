@@ -790,14 +790,14 @@ class TaskController extends Controller
         $fase = ProjectStage::select(
                     'projects.project_number as project_number',
                     'projects.project_name as project_name',
-                    // 'project_stages.schema as schema', 
+                    'project_stages.schema as schema', 
                     // 'project_phases.title as phase',
                     // 'organizations.organization_name as division',
                     // 'project_partners.name as partner'
                 )   
                 ->where($wherePhase)
                 ->join('projects', 'projects.project_id', '=', 'project_stages.project_id')
-                // ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
+                ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
                 // ->join('organizations', 'organizations.organization_id','=', 'project_stages.division')
                 // ->join('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                 ->first();
