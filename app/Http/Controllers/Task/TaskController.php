@@ -1110,13 +1110,15 @@ class TaskController extends Controller
     // 3 LEVEL TASK
     public function projectTaskByEmploye($projectId, $employeId)
     {
-        $data = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId])
+        $parents = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => null])
                 ->get();
+
+        
 
         return response()->json([
             "status" => true,
-            "total" => count($data),
-            "data" => $data
+            "total" => count($parents),
+            "data" => $parents
         ], 200);
     }
 }
