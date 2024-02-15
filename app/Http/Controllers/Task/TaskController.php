@@ -1117,15 +1117,14 @@ class TaskController extends Controller
             for ($l1=0; $l1 < count($level1); $l1++) { 
                 $level1[$l1]['level_2'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->task_id])
                                         ->get();
-            }
 
-            if(count($level1[$l1]->level_2) > 0){
-                for ($l2=0; $l2 < count($level1[$l1]->level_2); $l2++) { 
-                    $level1[$l1]->level_2[$l2]['level_3'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->level_2[$l2]->task_id])
-                                            ->get();
+                if(count($level1[$l1]->level_2) > 0){
+                    for ($l2=0; $l2 < count($level1[$l1]->level_2); $l2++) { 
+                        $level1[$l1]->level_2[$l2]['level_3'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->level_2[$l2]->task_id])
+                                                            ->get();
+                    }
                 }
             }
-
         }
 
         return response()->json([
