@@ -1110,10 +1110,15 @@ class TaskController extends Controller
     // 3 LEVEL TASK
     public function projectTaskByEmploye($projectId, $employeId)
     {
-        $parents = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => null])
+        $level1 = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => null])
                 ->get();
 
-        
+        if(count($level1) > 0){
+            for ($l1=0; $l1 < count($level1); $l1++) { 
+                $level1[$l1]['level_2'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->task_parent])
+                                        ->get();
+            }
+        }
 
         return response()->json([
             "status" => true,
