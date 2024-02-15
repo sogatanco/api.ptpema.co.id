@@ -1122,8 +1122,8 @@ class TaskController extends Controller
 
         return response()->json([
             "status" => true,
-            "total" => count($parents),
-            "data" => $parents
+            "total" => count($level1),
+            "data" => $level1
         ], 200);
     }
 }
