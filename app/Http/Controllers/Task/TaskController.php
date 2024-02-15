@@ -1115,7 +1115,7 @@ class TaskController extends Controller
 
         if(count($level1) > 0){
             for ($l1=0; $l1 < count($level1); $l1++) { 
-                $level1[$l1]['level_2'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->task_parent])
+                $level1[$l1]['level_2'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->task_id])
                                         ->get();
             }
         }
