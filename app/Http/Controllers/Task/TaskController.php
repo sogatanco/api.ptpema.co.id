@@ -1108,10 +1108,15 @@ class TaskController extends Controller
     }
 
     // 3 LEVEL TASK
-    public function projectTaskByEmploye()
+    public function projectTaskByEmploye($projectId, $employeId)
     {
+        $data = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId])
+                ->get();
+
         return response()->json([
-            "message" => "From list task endpoint"
+            "status" => true,
+            "total" => count($data),
+            "data" => $data
         ], 200);
     }
 }
