@@ -788,18 +788,18 @@ class TaskController extends Controller
             $wherePhase = ['project_stages.project_id' => $projectId, 'project_stages.status' => 1];
         }
         $fase = ProjectStage::select(
-                'projects.project_number as project_number',
-                'projects.project_name as project_name',
-                'project_stages.schema as schema', 
-                'project_phases.title as phase',
-                'organizations.organization_name as division',
-                'project_partners.name as partner'
+                    'projects.project_number as project_number',
+                    'projects.project_name as project_name',
+                    'project_stages.schema as schema', 
+                    'project_phases.title as phase',
+                    'organizations.organization_name as division',
+                    'project_partners.name as partner'
                 )   
                 ->where($wherePhase)
                 ->join('projects', 'projects.project_id', '=', 'project_stages.project_id')
-                ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
-                ->join('organizations', 'organizations.organization_id','=', 'project_stages.division')
-                ->join('project_partners', 'project_partners.id', '=', 'project_stages.partner')
+                ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
+                ->leftJoin('organizations', 'organizations.organization_id','=', 'project_stages.division')
+                ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                 ->first();
 
         // cari divisi active
@@ -1083,7 +1083,6 @@ class TaskController extends Controller
         }
 
         $listTask = TaskStatus::where('status', 1)
-                    // ->where('task_progress', '>=', 50)
                     ->whereIn('division', $divisionIds)
                     ->get();
 
@@ -1093,11 +1092,17 @@ class TaskController extends Controller
                             ->where('task_id', $listTask[$lt]->task_id)
                             ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
                             ->get();
+
+                $isFavorite[$lt] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $listTask[$lt]->task_id])
+                            ->first();
+
+                $listTask[$lt]['isFavorite'] = $isFavorite[$lt] ? true : false;
             }
         }
 
         return response()->json([
             "status" => true,
+            "total" => count($listTask),
             "data" => $listTask
         ], 200);
     }
