@@ -1106,4 +1106,12 @@ class TaskController extends Controller
             "data" => $listTask
         ], 200);
     }
+
+    // 3 LEVEL TASK
+    public function projectTaskByEmploye()
+    {
+        return response()->json([
+            "message" => "From list task endpoint"
+        ], 200);
+    }
 }
