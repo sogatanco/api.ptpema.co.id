@@ -1174,17 +1174,36 @@ class TaskController extends Controller
                 }
             }
 
-            // ADD LEVEL 3 TO LEVEL 2
-            for ($l2=0; $l2 < count($level2); $l2++) { 
-                 for ($l3=0; $l3 < count($level3); $l3++) { 
-                    if($level2[$l2]->task_id === $level3[$l3]->task_parent){
-                        $lev3[] = $level3[$l3];
+            if(count($level2) > 0 ){
+                // ADD LEVEL 3 TO LEVEL 2
+                for ($l2=0; $l2 < count($level2); $l2++) { 
+                    if(count($level3) > 0){
+                        for ($l3=0; $l3 < count($level3); $l3++) { 
+                            if($level2[$l2]->task_id === $level3[$l3]->task_parent){
+                                $lev3[] = $level3[$l3];
+                            }
+                         }
+        
+                        $level2[$l2]['level_3'] = $lev3;
+                    }else{
+                        $level2[$l2]['level_3'] = [];
                     }
-                 }
+               }
+               // ADD LEVEL 3 TO LEVEL 2
 
-                 $level2[$l2]['level_3'] = $lev3;
+               // ADD LEVEL 2 TO LEVEL 1
+               for ($l1=0; $l1 < count($level1); $l1++) { 
+                   for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                        if($level1[$li]->task_id === $level2[$l2s]->task_parent){
+                            $lev2 = $level2[$l2s];
+                        }
+                   }
+
+                   $level1[$li]['level_2'] = $lev2;
+               }
+               // ADD LEVEL 2 TO LEVEL 1
             }
-            // ADD LEVEL 3 TO LEVEL 2
+
 
             // for ($l1=0; $l1 < count($level1); $l1++) { 
             //     -
@@ -1232,7 +1251,6 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "level1" => $level1,
-            "level2" => $level2
         ], 200);
     }
 }
