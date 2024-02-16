@@ -1153,13 +1153,19 @@ class TaskController extends Controller
             // GET ADDITIONAL DATA TASK
 
             // DISTRIBUTE TASK
+            $level1Ids = [];
+            $level2Ids = [];
+            $level3Ids = [];
             $resultTasks = [];
             for ($tk=0; $tk < count($tasks); $tk++) { 
                 if($tasks[$tk]->task_parent === null){
+                    $level1Ids[] = $tasks[$tk]->task_id;
                     $resultTasks[$tk] = $tasks[$tk];
                 }elseif(in_array($tasks[$tk]->task_parent, $level1Ids)){
+                    $level2Ids[] = $tasks[$tk]->task_id;
                     $resultTasks[$tk]['level_2'] = $tasks[$tk];
                 }else{
+                    $level3Ids[] = $tasks[$tk]->task_id;
                     $resultTasks[$tk]['level_3'] = $tasks[$tk];
                 }
             }
