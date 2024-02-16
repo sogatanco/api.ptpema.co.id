@@ -1151,9 +1151,9 @@ class TaskController extends Controller
                 if($tasks[$p]->task_parent === null){
                     $level1Ids[] = $tasks[$p]->task_id;
                 }elseif(in_array($tasks[$p]->task_parent, $level1Ids)){
-                    $level12ds[] = $tasks[$p]->task_id;
+                    $level2Ids[] = $tasks[$p]->task_id;
                 }else{
-                    $level13ds[] = $tasks[$p]->task_id;
+                    $level3Ids[] = $tasks[$p]->task_id;
                 }
             }
             // EXTRAK LEVEL1 LEVEL3 LEVEL3
