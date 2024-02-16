@@ -1166,7 +1166,7 @@ class TaskController extends Controller
                     $resultTasks[$tk]['level_2'] = $tasks[$tk];
                 }else{
                     $level3Ids[] = $tasks[$tk]->task_id;
-                    $resultTasks[$tk]['level_2'][] = $tasks[$tk];
+                    // $resultTasks[$tk]['level_2'][] = $tasks[$tk];
                 }
             }
             // DISTRIBUTE TASK
