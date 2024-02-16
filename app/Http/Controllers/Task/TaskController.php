@@ -1143,7 +1143,6 @@ class TaskController extends Controller
             $tasks = TaskStatus::whereIn('task_id', $taskIds)
                     ->get();
 
-
             // EXTRAK LEVEL1 LEVEL3 LEVEL3
             $level1Ids = [];
             $level2Ids = [];
@@ -1151,10 +1150,13 @@ class TaskController extends Controller
 
             for ($p=0; $p < count($tasks); $p++) { 
                 if($tasks[$p]->task_parent === null){
+                    $level1Ids[] = $tasks[$p]->task_id;
                     $tasks[$p] = $tasks[$p]->task_id;
                 }elseif(in_array($tasks[$p]->task_parent, $level1Ids)){
+                    $level2Ids[] = $tasks[$p]->task_id;
                     $tasks[$p]['level_2'] = $tasks[$p]->task_id;
                 }else{
+                    $level3Ids[] = $tasks[$p]->task_id;
                     $tasks[$p]['level_3'] = $tasks[$p]->task_id;
                 }
             }
