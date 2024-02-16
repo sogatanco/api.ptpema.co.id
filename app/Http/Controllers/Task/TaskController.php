@@ -1136,11 +1136,13 @@ class TaskController extends Controller
         for ($ti=0; $ti < count($taskByPic); $ti++) { 
             $taskIds[] = $taskByPic[$ti]->task_id;
         };
+        // CHECK EMPLOYEE SEBAGAI PIC
 
         if(count($taskIds) > 0){
-            $tasks = TaskStatus::select('task_id', 'task_parent')
-                    ->whereIn('task_id', $taskIds)
+            // SEMUA TASK (L1, L2, L3)
+            $tasks = TaskStatus::whereIn('task_id', $taskIds)
                     ->get();
+
 
             // EXTRAK LEVEL1 LEVEL3 LEVEL3
             $level1Ids = [];
@@ -1149,16 +1151,15 @@ class TaskController extends Controller
 
             for ($p=0; $p < count($tasks); $p++) { 
                 if($tasks[$p]->task_parent === null){
-                    $level1Ids[] = $tasks[$p]->task_id;
+                    $tasks[$p] = $tasks[$p]->task_id;
                 }elseif(in_array($tasks[$p]->task_parent, $level1Ids)){
-                    $level2Ids[] = $tasks[$p]->task_id;
+                    $tasks[$p]['level_2'] = $tasks[$p]->task_id;
                 }else{
-                    $level3Ids[] = $tasks[$p]->task_id;
+                    $tasks[$p]['level_2'][] = $tasks[$p]->task_id;
                 }
             }
             // EXTRAK LEVEL1 LEVEL3 LEVEL3
         }
-        // CHECK EMPLOYEE SEBAGAI PIC
 
         $level1 = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => null])
                 ->get();
