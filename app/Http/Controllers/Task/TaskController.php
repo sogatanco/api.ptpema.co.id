@@ -1111,7 +1111,7 @@ class TaskController extends Controller
 
         $employeId = Employe::employeId();
 
-        // cari divisi aktif
+        // CHECK USER ADALAH DIVISI AKTIF
         $employeDivision = ProjectHistory::select('employe_id')
                         ->where(['project_id' => $projectId, 'active' => 1])
                         ->first();
@@ -1126,6 +1126,39 @@ class TaskController extends Controller
             // jika user active adalah manager
             $isMemberActive = true;
         }
+        // CHECK USER ADALAH DIVISI AKTIF
+
+        // CHECK EMPLOYEE SEBAGAI PIC
+        $taskIds = [];
+        $taskByPic = TaskPic::where(['project_id' => $projectId, 'employe_id' => $employeId])
+                    ->get();
+
+        for ($ti=0; $ti < count($taskByPic); $ti++) { 
+            $taskIds[] = $taskByPic[$ti]->task_id;
+        };
+
+        if(count($taskIds) > 0){
+            $tasks = TaskStatus::select('task_id', 'task_parent')
+                    ->whereIn('task_id', $taskIds)
+                    ->get();
+
+            // EXTRAK LEVEL1 LEVEL3 LEVEL3
+            $level1Ids = [];
+            $level2Ids = [];
+            $level3Ids = [];
+
+            for ($p=0; $p < count($tasks); $p++) { 
+                if($tasks[$p]->task_parent === null){
+                    $level1Ids[] = $tasks[$p]->task_id;
+                }elseif(in_array($tasks[$p]->task_parent, $level1Ids)){
+                    $level12ds[] = $tasks[$p]->task_id;
+                }else{
+                    $level13ds[] = $tasks[$p]->task_id;
+                }
+            }
+            // EXTRAK LEVEL1 LEVEL3 LEVEL3
+        }
+        // CHECK EMPLOYEE SEBAGAI PIC
 
         $level1 = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => null])
                 ->get();
@@ -1146,6 +1179,9 @@ class TaskController extends Controller
 
         return response()->json([
             "status" => true,
+            "level1" => $level1Ids,
+            "level2" => $level2Ids,
+            "level3" => $level3Ids,
             "total" => count($level1),
             "is_member_active" => $isMemberActive,
             "data" => $level1
