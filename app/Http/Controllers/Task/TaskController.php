@@ -1156,9 +1156,11 @@ class TaskController extends Controller
             $level1Ids = [];
             $level2Ids = [];
             $level3Ids = [];
+
             $level1 = [];
             $level2 = [];
             $level3 = [];
+
             for ($tk=0; $tk < count($tasks); $tk++) { 
                 if($tasks[$tk]->task_parent === null){
                     $level1Ids[] = $tasks[$tk]->task_id;
@@ -1171,6 +1173,16 @@ class TaskController extends Controller
                     array_push($level3, $tasks[$tk]);
                 }
             }
+
+            // ADD LEVEL 3 TO LEVEL 2
+            for ($l2=0; $l2 < count($level2); $l2++) { 
+                 for ($l3=0; $l3 < count($level3); $l3++) { 
+                    if($level2[$l2]->task_id === $level3[$l3]->task_parent){
+                        $level2[$l2]['level_3'] = $level3[$l3];
+                    }
+                 }
+            }
+            // ADD LEVEL 3 TO LEVEL 2
 
             // for ($l1=0; $l1 < count($level1); $l1++) { 
             //     -
