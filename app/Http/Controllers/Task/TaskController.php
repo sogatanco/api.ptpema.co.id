@@ -1143,12 +1143,27 @@ class TaskController extends Controller
             $tasks = TaskStatus::whereIn('task_id', $taskIds)
                     ->get();
 
+            // GET ADDITIONAL DATA TASK
             for ($ts=0; $ts < count($tasks); $ts++) { 
-               $tasks[$ts]['pic'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                            ->where('task_id', $tasks[$ts]->task_id)
-                            ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
-                            ->get();
+                $tasks[$ts]['pic'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                ->where('task_id', $tasks[$ts]->task_id)
+                ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                ->get();
             }
+            // GET ADDITIONAL DATA TASK
+
+            // DISTRIBUTE TASK
+            $resultTasks = [];
+            for ($tk=0; $tk < count($tasks); $tk++) { 
+                if($tasks[$tk]->task_parent === null){
+                    $resultTasks[$tk] = $tasks[$tk];
+                }elseif(in_array($tasks[$tk]->task_parent, $level1Ids)){
+                    $resultTasks[$tk]['level_2'] = $tasks[$tk];
+                }else{
+                    $resultTasks[$tk]['level_3'] = $tasks[$tk];
+                }
+            }
+            // DISTRIBUTE TASK
 
             // EXTRAK LEVEL1 LEVEL3 LEVEL3
             // $level1Ids = [];
@@ -1194,7 +1209,8 @@ class TaskController extends Controller
             // "level3" => $level3Ids,
             // "total" => count($level1),
             // "is_member_active" => $isMemberActive,
-            "data" => $tasks
+            "data" => $tasks,
+            "result" => $resultTasks
         ], 200);
     }
 }
