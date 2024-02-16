@@ -1156,16 +1156,17 @@ class TaskController extends Controller
             $level1Ids = [];
             $level2Ids = [];
             $level3Ids = [];
+            $resultTasks = [];
             for ($tk=0; $tk < count($tasks); $tk++) { 
                 if($tasks[$tk]->task_parent === null){
                     $level1Ids[] = $tasks[$tk]->task_id;
-                    $tasks[$tk] = $tasks[$tk];
+                    $resultTasks[$tk] = $tasks[$tk];
                 }elseif(in_array($tasks[$tk]->task_parent, $level1Ids)){
                     $level2Ids[] = $tasks[$tk]->task_id;
-                    $tasks[$tk]['level_2'] = $tasks[$tk];
+                    $resultTasks[$tk - 1]['level_2'] = $tasks[$tk];
                 }else{
                     $level3Ids[] = $tasks[$tk]->task_id;
-                    $tasks[$tk]['level_3'] = $tasks[$tk];
+                    $resultTasks[$tk - 1]['level_3'] = $tasks[$tk];
                 }
             }
             // DISTRIBUTE TASK
@@ -1214,7 +1215,8 @@ class TaskController extends Controller
             // "level3" => $level3Ids,
             // "total" => count($level1),
             // "is_member_active" => $isMemberActive,
-            "data" => $tasks
+            "data" => $tasks,
+            "result" => $resultTasks
         ], 200);
     }
 }
