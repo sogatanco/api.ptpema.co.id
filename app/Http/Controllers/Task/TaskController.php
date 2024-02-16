@@ -1199,7 +1199,7 @@ class TaskController extends Controller
                         }
                    }
 
-                   $level1[$li]['level_2'] = $lev2;
+                   $level1[$l1]['level_2'] = $lev2;
                }
                // ADD LEVEL 2 TO LEVEL 1
             }
