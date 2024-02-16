@@ -1219,7 +1219,7 @@ class TaskController extends Controller
             "status" => true,
             "level1" => $level1,
             "level2" => $level2,
-            "level2" => $level3
+            "level3" => $level3
         ], 200);
     }
 }
