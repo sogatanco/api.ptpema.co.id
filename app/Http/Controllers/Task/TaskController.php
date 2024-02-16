@@ -1153,12 +1153,29 @@ class TaskController extends Controller
             // GET ADDITIONAL DATA TASK
 
             // DISTRIBUTE TASK
+            $level1Ids = [];
+            $level2Ids = [];
+            $level3Ids = [];
             $level1 = [];
+            $level2 = [];
+            $level3 = [];
             for ($tk=0; $tk < count($tasks); $tk++) { 
                 if($tasks[$tk]->task_parent === null){
+                    $level1Ids[] = $tasks[$tk]->task_id;
                     array_push($level1, $tasks[$tk]);
+                }elseif(in_array($tasks[$tk]->task_parent, $level1Ids)){
+                    $level2Ids[] = $tasks[$tk]->task_id;
+                    array_push($level2, $tasks[$tk]);
+                }else{
+                    $level3Ids[] = $tasks[$tk]->task_id;
+                    array_push($level3, $tasks[$tk]);
                 }
             }
+
+            // for ($l1=0; $l1 < count($level1); $l1++) { 
+            //     -
+            // }
+
             // DISTRIBUTE TASK
 
             // EXTRAK LEVEL1 LEVEL3 LEVEL3
@@ -1200,7 +1217,9 @@ class TaskController extends Controller
 
         return response()->json([
             "status" => true,
-            "level1" => $level1
+            "level1" => $level1,
+            "level2" => $level2,
+            "level2" => $level3
         ], 200);
     }
 }
