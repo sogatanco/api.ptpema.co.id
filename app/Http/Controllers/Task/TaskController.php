@@ -1144,7 +1144,7 @@ class TaskController extends Controller
                     ->get();
 
             for ($ts=0; $ts < count($tasks); $ts++) { 
-               $tasks[$ts] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+               $tasks[$ts]['pic'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                             ->where('task_id', $tasks[$ts]->task_id)
                             ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                             ->get();
