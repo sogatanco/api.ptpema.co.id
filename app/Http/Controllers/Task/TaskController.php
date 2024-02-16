@@ -1178,9 +1178,11 @@ class TaskController extends Controller
             for ($l2=0; $l2 < count($level2); $l2++) { 
                  for ($l3=0; $l3 < count($level3); $l3++) { 
                     if($level2[$l2]->task_id === $level3[$l3]->task_parent){
-                        $level2[$l2]['level_3'][$l3] = $level3[$l3];
+                        $lev3[] = $level3[$l3];
                     }
                  }
+
+                 $level2[$l2]['level_3'] = $lev;
             }
             // ADD LEVEL 3 TO LEVEL 2
 
