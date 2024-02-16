@@ -1153,20 +1153,10 @@ class TaskController extends Controller
             // GET ADDITIONAL DATA TASK
 
             // DISTRIBUTE TASK
-            $level1Ids = [];
-            $level2Ids = [];
-            $level3Ids = [];
-            $resultTasks = $tasks;
+            $level1 = [];
             for ($tk=0; $tk < count($tasks); $tk++) { 
                 if($tasks[$tk]->task_parent === null){
-                    $level1Ids[] = $tasks[$tk]->task_id;
-                    $resultTasks[$tk] = $tasks[$tk];
-                }elseif(in_array($tasks[$tk]->task_parent, $level1Ids)){
-                    $level2Ids[] = $tasks[$tk]->task_id;
-                    $resultTasks[$tk]['level_2'] = $tasks[$tk];
-                }else{
-                    $level3Ids[] = $tasks[$tk]->task_id;
-                    // $resultTasks[$tk]['level_2'][] = $tasks[$tk];
+                    array_push($level1, $tasks[$tk]);
                 }
             }
             // DISTRIBUTE TASK
@@ -1191,32 +1181,26 @@ class TaskController extends Controller
             // EXTRAK LEVEL1 LEVEL3 LEVEL3
         }
 
-        $level1 = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => null])
-                ->get();
+        // $level1 = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => null])
+        //         ->get();
 
-        if(count($level1) > 0){
-            for ($l1=0; $l1 < count($level1); $l1++) { 
-                $level1[$l1]['level_2'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->task_id])
-                                        ->get();
+        // if(count($level1) > 0){
+        //     for ($l1=0; $l1 < count($level1); $l1++) { 
+        //         $level1[$l1]['level_2'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->task_id])
+        //                                 ->get();
 
-                if(count($level1[$l1]->level_2) > 0){
-                    for ($l2=0; $l2 < count($level1[$l1]->level_2); $l2++) { 
-                        $level1[$l1]->level_2[$l2]['level_3'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->level_2[$l2]->task_id])
-                                                            ->get();
-                    }
-                }
-            }
-        }
+        //         if(count($level1[$l1]->level_2) > 0){
+        //             for ($l2=0; $l2 < count($level1[$l1]->level_2); $l2++) { 
+        //                 $level1[$l1]->level_2[$l2]['level_3'] = TaskStatus::where(['project_id' => $projectId, 'employe_id' => $employeId, 'task_parent' => $level1[$l1]->level_2[$l2]->task_id])
+        //                                                     ->get();
+        //             }
+        //         }
+        //     }
+        // }
 
         return response()->json([
             "status" => true,
-            // "level1" => $level1Ids,
-            // "level2" => $level2Ids,
-            // "level3" => $level3Ids,
-            // "total" => count($level1),
-            // "is_member_active" => $isMemberActive,
-            // "data" => $tasks,
-            "result" => $resultTasks
+            "level1" => $level1
         ], 200);
     }
 }
