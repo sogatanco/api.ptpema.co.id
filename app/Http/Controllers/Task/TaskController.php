@@ -543,7 +543,7 @@ class TaskController extends Controller
         }elseif($request->status >= 2 ){
             $start_date = $task->start_date;
         }else{
-            $start_date = null;
+            $start_date = $task->start_date;
         }
 
         if($request->status === 3 || $request->status === 4){
@@ -1219,6 +1219,7 @@ class TaskController extends Controller
             "is_member_active" => $isMemberActive,
             "data" => $level1,
             "ids" => $taskIds,
+            "l3ids" => $level3Ids,
             "l2" => $level2
         ], 200, [], JSON_NUMERIC_CHECK);
     }
