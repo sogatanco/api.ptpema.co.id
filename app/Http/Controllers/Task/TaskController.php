@@ -1108,7 +1108,7 @@ class TaskController extends Controller
     // UPDATE AFTER LAUNCHING
 
     // 1. GET TASK WITH 3 LEVEL
-    public function projectTaskByEmploye($projectId, $employeId)
+    public function projectTaskByEmploye($projectId)
     {
 
         $employeId = Employe::employeId();

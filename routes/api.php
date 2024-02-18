@@ -93,7 +93,7 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("/task/employe/additional/list", 'additionalList')->middleware("role:Staff,Manager");
     
     // 3 LEVEL TASK
-    Route::get("/task/{project_id}/{employe_id}/list", 'projectTaskByEmploye')->middleware("role:Staff,Manager");
+    Route::get("/task/{project_id}/employe/list", 'projectTaskByEmploye')->middleware("role:Staff,Manager");
 });
 // Route::get("/employe", [EmployeController::class, "index"])->middleware('role:Admin');
 
