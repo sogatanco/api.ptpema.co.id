@@ -169,7 +169,7 @@ class TaskController extends Controller
                         ->update(['start_date' => $request->start_date, 'end_date' => $request->end_date]);
 
             $task = Task::where('task_id', $taskId)
-                ->first();
+                    ->first();
 
             if($task->task_parent !== null){
                 // siapa parentnya
@@ -188,7 +188,7 @@ class TaskController extends Controller
                 }
 
                 // total progress dibagi jumlah subtask
-                $totalPercentage = $totalProgress/$totalSubtask;
+                $totalPercentage = $totalProgress/$totalSubtask; 
 
                 // update ke parent
                 $parentData = [
@@ -1105,7 +1105,9 @@ class TaskController extends Controller
         ], 200);
     }
 
-    // 3 LEVEL TASK
+    // UPDATE AFTER LAUNCHING
+
+    // 1. GET TASK WITH 3 LEVEL
     public function projectTaskByEmploye($projectId, $employeId)
     {
 
@@ -1213,7 +1215,9 @@ class TaskController extends Controller
 
         return response()->json([
             "status" => true,
-            "level1" => $level1,
+            "total" => count($level1),
+            "is_member_active" => $isMemberActive,
+            "data" => $level1,
         ], 200);
     }
 }
