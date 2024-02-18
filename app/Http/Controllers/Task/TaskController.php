@@ -1219,9 +1219,7 @@ class TaskController extends Controller
             "is_member_active" => $isMemberActive,
             "data" => $level1,
             "ids" => $taskIds,
-            "l1" => $level1Ids,
-            "l2" => $level2Ids,
-            "l3" => $level3Ids,
+            "l2" => $level2
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
