@@ -133,7 +133,7 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            "project_number" => ["required", "max:20"],
+            "project_number" => ["required", "max:50"],
             "division" => ["required"],
             "project_name" => ["required", "max:255"],
             "start_date" => ["required"],
