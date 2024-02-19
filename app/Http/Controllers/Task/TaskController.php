@@ -1160,18 +1160,41 @@ class TaskController extends Controller
             }
             // GET ADDITIONAL DATA TASK
 
+            // KUMPULKAN ID TASK BERDASARKAN LEVEL
+            $level1Ids = [];
+            $level2Ids = [];
+            $level3Ids = [];
+
+            for ($t1=0; $t1 < count($tasks); $t1++) { 
+                if($tasks[$t1]->task_parent ===  null){
+                    array_push($level1Ids, $tasks[$t1]->task_id);
+                }
+            }
+
+            for ($t2=0; $t2 < count($tasks); $t2++) { 
+                if(in_array($tasks[$t2]->task_parent, $level1Ids)){
+                    array_push($level2Ids, $tasks[$t2]->task_id);
+                }
+            }
+
+            for ($t3=0; $t3 < count($tasks); $t3++) { 
+                if(in_array($tasks[$t3]->task_parent, $level2Ids)){
+                    array_push($level3Ids, $tasks[$t3]->task_id);
+                }
+            }
+            // KUMPULKAN ID TASK BERDASARKAN LEVEL
+
             $level1 = [];
             $level2 = [];
             $level3 = [];
 
             for ($tk=0; $tk < count($tasks); $tk++) { 
-                if($tasks[$tk]->task_parent === null){
+                if(in_array($tasks[$tk]->task_id, $level1Ids)){
                     array_push($level1, $tasks[$tk]);
-                }elseif(in_array($tasks[$tk]->task_parent, $taskIds)){
+                }elseif(in_array($tasks[$tk]->task_id, $level2Ids)){
                     array_push($level2, $tasks[$tk]);
                 }else{
-                    $level3Ids[] = $tasks[$tk]->task_id;
-                    array_push($level3, $tasks[$tk]);
+                    array_push($level3, $tasks[$t]);
                 }
             }
 
