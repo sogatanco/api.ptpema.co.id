@@ -1194,7 +1194,7 @@ class TaskController extends Controller
                 }elseif(in_array($tasks[$tk]->task_id, $level2Ids)){
                     array_push($level2, $tasks[$tk]);
                 }else{
-                    array_push($level3, $tasks[$t]);
+                    array_push($level3, $tasks[$tk]);
                 }
             }
 
