@@ -1176,7 +1176,8 @@ class TaskController extends Controller
                     // PARENT SEBAGAI LEVEL 1
                     array_push($level1Ids, $parents[$p]->task_id);
                 }else if($parents[$p]->parent_id !== null){
-                    // PARENT SEBAGAI LEVEL 2
+                    // PARENT SEBAGAI LEVEL 1/2
+                    array_push($level2Ids, $parents[$p]->task_id);
                     array_push($level1Ids, $parents[$p]->parent_id);
                 }
             }
