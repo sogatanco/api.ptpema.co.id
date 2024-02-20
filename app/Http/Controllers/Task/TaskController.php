@@ -1190,20 +1190,32 @@ class TaskController extends Controller
             // CHECK LEVEL1,LEVEL2,LEVEL3
 
             $allTask = array_merge($level1Ids, $level2Ids, $level3Ids);
+
+            $all = TaskStatus::whereIn('task_id', $allTask)
+                        ->get();
+        }
+
+
+        if(count($all) > 0) {
+            for ($at=0; $at < count($all); $at++) { 
+                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                                    ->where('task_id', $all[$at]->task_id)
+                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->get();
+
+                $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
+                
+                $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
+                                            ->where('task_id', $all[$at]->task_id)
+                                            ->get(); 
+            }
         }
 
 
         return response()->json([
             "status" => true,
-            // "total" => count($level1),
             "is_member_active" => $isMemberActive,
-            "subtotal" => [
-                'l1' => count($level1Ids),
-                'l2' => count($level2Ids),
-                'l3' => count($level3Ids)
-            ],
-            "total" => count($allTask),
-            "data" => $allTask
+            "data" => $all
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
