@@ -1175,8 +1175,6 @@ class TaskController extends Controller
                     array_push($level2Ids, $parents[$p]->task_id);
                 }
             }
-
-            $allTask = array_merge($levelIds, $level2Ids, $level3Ids);
             
             for ($t2=0; $t2 < count($tasks); $t2++) { 
                 if(in_array($tasks[$t2]->task_parent, $level1Ids)){
@@ -1191,7 +1189,7 @@ class TaskController extends Controller
             }
             // CHECK LEVEL1,LEVEL2,LEVEL3
 
-
+            $allTask = array_merge($level1Ids, $level2Ids, $level3Ids);
         }
 
 
