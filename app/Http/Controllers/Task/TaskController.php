@@ -1261,7 +1261,7 @@ class TaskController extends Controller
             "is_member_active" => $isMemberActive,
             "total" => count($level1),
             "data" => $level1,
-            "check" => $level1Ids
+            "check" => $level2Ids
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
