@@ -1151,9 +1151,9 @@ class TaskController extends Controller
             for ($t=0; $t < count($tasks); $t++) { 
                 if($tasks[$t]->task_parent === null){
                     // USER SEBAGAI PIC LEVEL 1
-                    array_push($levelIds, $tasks[$t]->task_id);
+                    array_push($level1Ids, $tasks[$t]->task_id);
                 }else{
-                    // ID LEVEL1 & LEVEL2
+                    // ID PARENT LEVEL1 & LEVEL2
                     array_push($parentIds, $tasks[$t]->task_parent);
                 }
             }
