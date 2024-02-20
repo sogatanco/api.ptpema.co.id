@@ -1169,7 +1169,7 @@ class TaskController extends Controller
                 if($tasks[$t1]->task_parent ===  null){
                     array_push($level1Ids, $tasks[$t1]->task_id);
                 }
-            }
+            }      
 
             for ($t2=0; $t2 < count($tasks); $t2++) { 
                 if(in_array($tasks[$t2]->task_parent, $level1Ids)){
@@ -1233,8 +1233,7 @@ class TaskController extends Controller
             "status" => true,
             "total" => count($level1),
             "is_member_active" => $isMemberActive,
-            "data" => $level1,
-            'ids' => $taskIds
+            "data" => $tasks,
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
