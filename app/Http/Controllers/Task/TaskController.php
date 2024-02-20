@@ -1182,7 +1182,11 @@ class TaskController extends Controller
             $datas = TaskStatus::whereIn('task_id', $taskIds)
                     ->get();
 
-            $tasks[1] = $datas;
+            $taskCollection = collect([$tasks, $datas]);
+
+            $collections = $taskCollection->flatten(1)
+                        ->sortBy("task_id", "DESC");
+
             // DETAIL PARENT
 
             // JIKA TASK ADALAH CHILD
@@ -1251,7 +1255,7 @@ class TaskController extends Controller
             "status" => true,
             "total" => count($level1),
             "is_member_active" => $isMemberActive,
-            "data" => $level1,
+            "data" => $collections,
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
