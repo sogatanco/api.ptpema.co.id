@@ -1149,7 +1149,7 @@ class TaskController extends Controller
             $parentIds = [];
 
             for ($t=0; $t < count($tasks); $t++) { 
-                if($taskIdsTemp[$t]->task_parent === null){
+                if($tasks[$t]->task_parent === null){
                     // USER SEBAGAI PIC LEVEL 1
                     array_push($levelIds, $tasks[$t]->task_id);
                 }else{
@@ -1199,6 +1199,7 @@ class TaskController extends Controller
             "status" => true,
             // "total" => count($level1),
             "is_member_active" => $isMemberActive,
+            "total" => count($allTask),
             "data" => $allTask
         ], 200, [], JSON_NUMERIC_CHECK);
     }
