@@ -1213,11 +1213,13 @@ class TaskController extends Controller
 
         for ($l1=0; $l1 < count($all); $l1++) { 
             if($all[$l1]->task_parent === null){
+                $lev2 = [];
                 for ($l2=0; $l2 < count($all); $l2++) { 
                     if($all[$l1]->task_id === $all[$l2]->task_parent){
-                        $all[$l1]['level_2'] = $all[$l2];
+                       $lev2 = $all[$l2];
                     }
                 }
+                $all[$l1]['level_2'] = $lev2;
             }
         }
 
