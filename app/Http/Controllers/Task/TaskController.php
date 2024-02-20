@@ -1158,6 +1158,9 @@ class TaskController extends Controller
                 }
             }
 
+            $level2Ids = [];
+            $level3Ids = [];
+
             // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
             // CARI PARENT 
             $parents = TaskStatus::whereIn('task_id', $parentIds)
@@ -1172,9 +1175,6 @@ class TaskController extends Controller
                     array_push($level2Ids, $parents[$p]->task_id);
                 }
             }
-
-            $level2Ids = [];
-            $level3Ids = [];
 
             $allTask = array_merge($levelIds, $level2Ids, $level3Ids);
             
