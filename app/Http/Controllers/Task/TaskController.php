@@ -1182,6 +1182,14 @@ class TaskController extends Controller
                     array_push($level3Ids, $tasks[$t3]->task_id);
                 }
             }
+
+            // JIKA TASK ADALAH CHILD
+            for ($c=0; $c < count($tasks); $c++) { 
+                if($tasks[$c]->task_parent !== null && !in_array($level2Ids, $tasks[$c]->task_parent) && !in_array($level3Ids, $tasks[$c]->task_parent)){
+                    array_push($level1, $tasks[$c]);
+                }
+            }
+            // JIKA TASK ADALAH CHILD
             // KUMPULKAN ID TASK BERDASARKAN LEVEL
 
             $level1 = [];
