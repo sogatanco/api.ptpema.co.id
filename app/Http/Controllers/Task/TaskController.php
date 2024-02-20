@@ -1182,7 +1182,7 @@ class TaskController extends Controller
             $datas = TaskStatus::whereIn('task_id', $taskIds)
                     ->get();
 
-            array_merge($tasks, $datas);
+            $tasks[1] = $datas;
             // DETAIL PARENT
 
             // JIKA TASK ADALAH CHILD
