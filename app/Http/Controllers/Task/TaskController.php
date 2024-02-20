@@ -1183,13 +1183,6 @@ class TaskController extends Controller
                 }
             }
 
-            // JIKA TASK ADALAH CHILD
-            for ($c=0; $c < count($tasks); $c++) { 
-                if($tasks[$c]->task_parent !== null && !in_array($tasks[$c]->task_parent, $level2Ids) && !in_array($tasks[$c]->task_parent, $level3Ids)){
-                    array_push($level1, $tasks[$c]);
-                }
-            }
-            // JIKA TASK ADALAH CHILD
             // KUMPULKAN ID TASK BERDASARKAN LEVEL
 
             $level1 = [];
@@ -1205,6 +1198,14 @@ class TaskController extends Controller
                     array_push($level3, $tasks[$tk]);
                 }
             }
+
+            // JIKA TASK ADALAH CHILD
+            for ($c=0; $c < count($tasks); $c++) { 
+                if($tasks[$c]->task_parent !== null && !in_array($tasks[$c]->task_parent, $level2Ids) && !in_array($tasks[$c]->task_parent, $level3Ids)){
+                    array_push($level1, $tasks[$c]);
+                }
+            }
+            // JIKA TASK ADALAH CHILD
 
             if(count($level2) > 0 ){
                 // ADD LEVEL 3 TO LEVEL 2
