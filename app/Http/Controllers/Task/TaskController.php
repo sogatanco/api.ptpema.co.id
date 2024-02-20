@@ -1163,7 +1163,7 @@ class TaskController extends Controller
 
             // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
             // CARI PARENT 
-            $parents = TaskStatus::whereIn('task_id', $parentIds)
+            $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
                     ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
                     ->select('task_latest_status.task_parent as parent_id', 'level1.task_id as child_id')
                     ->get();
