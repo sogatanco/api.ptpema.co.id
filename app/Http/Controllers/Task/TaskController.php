@@ -1192,7 +1192,7 @@ class TaskController extends Controller
             $allTask = array_merge($level1Ids, $level2Ids, $level3Ids);
 
             $all = TaskStatus::whereIn('task_id', $allTask)
-                        ->get();
+                    ->get();
         }
 
 
@@ -1208,6 +1208,16 @@ class TaskController extends Controller
                 $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
                                             ->where('task_id', $all[$at]->task_id)
                                             ->get(); 
+            }
+        }
+
+        for ($l1=0; $l1 < count($all); $l1++) { 
+            if($all[$l1]->task_parent === null){
+                for ($l2=0; $l2 < count($all); $l2++) { 
+                    if($all[$l1]->task_id === $all[$l2]->task_parent){
+                        $all[$l1]['level_2'] = $all[$l2];
+                    }
+                }
             }
         }
 
