@@ -1169,7 +1169,7 @@ class TaskController extends Controller
                         'task_latest_status.task_id as level_3_id', 
                         'task_latest_status.task_parent as level_3_id_parent', 
                         'level2.task_id as level_2_id', 
-                        'level2.task_parent as level_2_id_parent', 
+                        'level2.task_title as level_2_title', 
                     )
                     ->get();
 
