@@ -1259,7 +1259,8 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "is_member_active" => $isMemberActive,
-            "tasks" => $level1
+            "total" => count($level1),
+            "data" => $level1
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
