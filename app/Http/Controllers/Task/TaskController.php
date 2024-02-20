@@ -1165,7 +1165,7 @@ class TaskController extends Controller
             // CARI PARENT 
             $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
                     ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
-                    ->select('task_latest_status.task_parent as parent_id', 'level1.task_id as child_id')
+                    ->select('task_latest_status.task_id as level_2_id', 'level1.task_id as level_1_id')
                     ->get();
 
             for ($p=0; $p < count($parents); $p++) { 
