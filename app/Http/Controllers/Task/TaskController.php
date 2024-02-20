@@ -1140,28 +1140,66 @@ class TaskController extends Controller
         };
         // CHECK EMPLOYEE SEBAGAI PIC
         
-        // if(count($taskIdsTemp) > 10){
-        //     $childs = TaskStatus::whereIn('task_id', $taskIdsTemp)
-        //             ->get();
+        if(count($taskIdsTemp) > 0){
+            $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
+                    ->get();
 
-        //     // CHECK LEVEL1,LEVEL2,LEVEL3
-        //     $level1Ids = [];
-        //     $level12ds = [];
-        //     $level13ds = [];
-        //     for ($t=0; $t < count($childs); $t++) { 
-        //         if($taskIdsTemp[$t]->task_parent){
-        //             array_push($levelIds, $task)
-        //         }
-        //     }
-        //     // CHECK LEVEL1,LEVEL2,LEVEL3
-        // }
+            // CHECK LEVEL1,LEVEL2,LEVEL3
+            $level1Ids = [];
+            $parentIds = [];
+
+            for ($t=0; $t < count($tasks); $t++) { 
+                if($taskIdsTemp[$t]->task_parent === null){
+                    // USER SEBAGAI PIC LEVEL 1
+                    array_push($levelIds, $tasks[$t]->task_id);
+                }else{
+                    // ID LEVEL1 & LEVEL2
+                    array_push($parentIds, $tasks[$t]->task_parent);
+                }
+            }
+
+            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
+            // CARI PARENT 
+            $parents = TaskStatus::whereIn('task_id', $parentIds)
+                    ->get();
+
+            for ($p=0; $p < count($parents); $p++) { 
+                if($parents[$p]->task_parent === null && !in_array($parents[$p]->task_id, $level1Ids)){
+                    // PARENT SEBAGAI LEVEL 1
+                    array_push($level1Ids, $parents[$p]->task_id);
+                }else if($parents[$p]->task_parent !== null){
+                    // PARENT SEBAGAI LEVEL 2
+                    array_push($level2Ids, $parents[$p]->task_id);
+                }
+            }
+
+            $level2Ids = [];
+            $level3Ids = [];
+
+            $allTask = array_merge($levelIds, $level2Ids, $level3Ids);
+            
+            for ($t2=0; $t2 < count($tasks); $t2++) { 
+                if(in_array($tasks[$t2]->task_parent, $level1Ids)){
+                    array_push($level2Ids, $tasks[$t2]->task_id);
+                }
+            }
+
+            for ($t3=0; $t3 < count($tasks); $t3++) { 
+                if(in_array($tasks[$t3]->task_parent, $level2Ids)){
+                    array_push($level3Ids, $tasks[$t3]->task_id);
+                }
+            }
+            // CHECK LEVEL1,LEVEL2,LEVEL3
+
+
+        }
 
 
         return response()->json([
             "status" => true,
             // "total" => count($level1),
             "is_member_active" => $isMemberActive,
-            "data" => $taskIdsTemp
+            "data" => $allTask
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
