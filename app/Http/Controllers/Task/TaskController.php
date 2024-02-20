@@ -1164,20 +1164,20 @@ class TaskController extends Controller
             // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
             // CARI PARENT 
             $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
-                    ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
-                    ->select(
-                        'task_latest_status.task_id as level_2_id', 
-                        'level1.task_id as level_1_id', 
-                    )
-                    ->get();
+                        ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
+                        ->select(
+                            'task_latest_status.task_id', 
+                            'level1.task_id as parent_id', 
+                        )
+                        ->get();
 
             for ($p=0; $p < count($parents); $p++) { 
-                if($parents[$p]->task_parent === null && !in_array($parents[$p]->task_id, $level1Ids)){
+                if($parents[$p]->parent_id === null && !in_array($parents[$p]->task_id, $level1Ids)){
                     // PARENT SEBAGAI LEVEL 1
                     array_push($level1Ids, $parents[$p]->task_id);
-                }else if($parents[$p]->task_parent !== null){
+                }else if($parents[$p]->parent_id !== null){
                     // PARENT SEBAGAI LEVEL 2
-                    array_push($level2Ids, $parents[$p]->task_id);
+                    array_push($level1Ids, $parents[$p]->parent_id);
                 }
             }
             
