@@ -1197,6 +1197,11 @@ class TaskController extends Controller
             "status" => true,
             // "total" => count($level1),
             "is_member_active" => $isMemberActive,
+            "subtotal" => [
+                'l1' => count($level1Ids),
+                'l2' => count($level2Ids),
+                'l3' => count($level3Ids)
+            ],
             "total" => count($allTask),
             "data" => $allTask
         ], 200, [], JSON_NUMERIC_CHECK);
