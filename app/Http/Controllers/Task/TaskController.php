@@ -1179,7 +1179,7 @@ class TaskController extends Controller
             }
 
             // DETAIL PARENT
-            $datas = TaskStatus::whereIn('task_id', $taskIds)
+            $datas = TaskStatus::whereIn('task_id', $parentIds)
                     ->get();
 
             $taskCollection = collect([$tasks, $datas]);
@@ -1256,6 +1256,7 @@ class TaskController extends Controller
             "total" => count($level1),
             "is_member_active" => $isMemberActive,
             "data" => $collections,
+            "task" => $taskCollection,
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
