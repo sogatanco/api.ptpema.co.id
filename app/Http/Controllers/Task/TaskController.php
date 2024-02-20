@@ -1145,21 +1145,6 @@ class TaskController extends Controller
             $tasks = TaskStatus::whereIn('task_id', $taskIds)
                     ->get();
 
-            // GET ADDITIONAL DATA TASK
-            for ($ts=0; $ts < count($tasks); $ts++) { 
-                $tasks[$ts]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                                    ->where('task_id', $tasks[$ts]->task_id)
-                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
-                                    ->get();
-
-                $tasks[$ts]['comments'] = Comment::where('task_id', $tasks[$ts]->task_id)->count();
-                
-                $tasks[$ts]['files'] = TaskFile::select('file_id', 'file_name')
-                                            ->where('task_id', $tasks[$ts]->task_id)
-                                            ->get(); 
-            }
-            // GET ADDITIONAL DATA TASK
-
             // KUMPULKAN ID TASK BERDASARKAN LEVEL
             $level1Ids = [];
             $level2Ids = [];
@@ -1182,8 +1167,40 @@ class TaskController extends Controller
                     array_push($level3Ids, $tasks[$t3]->task_id);
                 }
             }
-
             // KUMPULKAN ID TASK BERDASARKAN LEVEL
+
+            // JIKA TASK ADALAH CHILD
+            $parentIds = [];
+            for ($c=0; $c < count($tasks); $c++) { 
+                if($tasks[$c]->task_parent !== null && !in_array($tasks[$c]->task_parent, $level2Ids) && !in_array($tasks[$c]->task_parent, $level3Ids)){
+                    // CARI DATA PARENT
+                    array_push($parentIds, $tasks[$c]->task_parent);
+                }
+            }
+
+            // DETAIL PARENT
+            $datas = TaskStatus::whereIn('task_id', $taskIds)
+                    ->get();
+
+            array_merge($tasks, $datas);
+            // DETAIL PARENT
+
+            // JIKA TASK ADALAH CHILD
+
+            // GET ADDITIONAL DATA TASK
+            for ($ts=0; $ts < count($tasks); $ts++) { 
+                $tasks[$ts]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                                    ->where('task_id', $tasks[$ts]->task_id)
+                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->get();
+
+                $tasks[$ts]['comments'] = Comment::where('task_id', $tasks[$ts]->task_id)->count();
+                
+                $tasks[$ts]['files'] = TaskFile::select('file_id', 'file_name')
+                                            ->where('task_id', $tasks[$ts]->task_id)
+                                            ->get(); 
+            }
+            // GET ADDITIONAL DATA TASK
 
             $level1 = [];
             $level2 = [];
@@ -1198,14 +1215,6 @@ class TaskController extends Controller
                     array_push($level3, $tasks[$tk]);
                 }
             }
-
-            // JIKA TASK ADALAH CHILD
-            for ($c=0; $c < count($tasks); $c++) { 
-                if($tasks[$c]->task_parent !== null && !in_array($tasks[$c]->task_parent, $level2Ids) && !in_array($tasks[$c]->task_parent, $level3Ids)){
-                    array_push($level1, $tasks[$c]);
-                }
-            }
-            // JIKA TASK ADALAH CHILD
 
             if(count($level2) > 0 ){
                 // ADD LEVEL 3 TO LEVEL 2
