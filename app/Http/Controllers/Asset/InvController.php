@@ -334,6 +334,7 @@ class InvController extends Controller
             $d->requester = Employe::where('employe_id', $d->request_by)->first()->first_name;
             $d->asset_number = AssetChild::find($d->asset_child)->asset_number;
             $d->asset_name = Asset::find(AssetChild::find($d->asset_child)->id_parent)->name;
+            $d->asset_id = Asset::find(AssetChild::find($d->asset_child)->id_parent)->id;
         }
         return new PostResource(true, 'dsgsdg', $data);
     }
