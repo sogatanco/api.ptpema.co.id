@@ -1211,16 +1211,48 @@ class TaskController extends Controller
             }
         }
 
-        for ($l1=0; $l1 < count($all); $l1++) { 
-            if($all[$l1]->task_parent === null){
-                $lev2 = [];
-                for ($l2=0; $l2 < count($all); $l2++) { 
-                    if($all[$l1]->task_id === $all[$l2]->task_parent){
-                       $lev2 = $all[$l2];
-                    }
-                }
-                $all[$l1]['level_2'] = $lev2;
+        $level1 = [];
+        $level2 = [];
+        $level3 = [];
+
+        for ($tk=0; $tk < count($all); $tk++) { 
+            if(in_array($all[$tk]->task_id, $level1Ids)){
+                array_push($level1, $all[$tk]);
+            }elseif(in_array($all[$tk]->task_id, $level2Ids)){
+                array_push($level2, $all[$tk]);
+            }else{
+                array_push($level3, $all[$tk]);
             }
+        }
+
+        if(count($level2) > 0 ){
+            // ADD LEVEL 3 TO LEVEL 2
+            for ($l2=0; $l2 < count($level2); $l2++) {
+                if(count($level3) > 0){
+                    $lev3 = [];
+                    for ($l3=0; $l3 < count($level3); $l3++) { 
+                        if($level2[$l2]->task_id === $level3[$l3]->task_parent){
+                            $lev3[] = $level3[$l3];
+                        }
+                     }
+    
+                    $level2[$l2]['level_3'] = $lev3;
+                }
+           }
+           // ADD LEVEL 3 TO LEVEL 2
+
+           // ADD LEVEL 2 TO LEVEL 1
+           for ($l1=0; $l1 < count($level1); $l1++) { 
+                $lev2 = [];
+                for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                        if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
+                            $lev2[] = $level2[$l2s];
+                        }
+                }
+
+                $level1[$l1]['level_2'] = $lev2;
+           }
+           // ADD LEVEL 2 TO LEVEL 1
         }
 
 
