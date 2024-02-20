@@ -1131,37 +1131,132 @@ class TaskController extends Controller
         // CHECK USER ADALAH DIVISI AKTIF
 
         // CHECK EMPLOYEE SEBAGAI PIC
-        $taskIdsTemp = [];
+        $taskIds = [];
         $taskByPic = TaskPic::where(['project_id' => $projectId, 'employe_id' => $employeId])
                     ->get();
 
         for ($ti=0; $ti < count($taskByPic); $ti++) { 
-            $taskIdsTemp[] = $taskByPic[$ti]->task_id;
+            $taskIds[] = $taskByPic[$ti]->task_id;
         };
         // CHECK EMPLOYEE SEBAGAI PIC
+
+        if(count($taskIds) > 0){
+            // SEMUA TASK (L1, L2, L3)
+            $tasks = TaskStatus::whereIn('task_id', $taskIds)
+                    ->get();
+
+            // KUMPULKAN ID TASK BERDASARKAN LEVEL
+            $level1Ids = [];
+            $level2Ids = [];
+            $level3Ids = [];
+
+            for ($t1=0; $t1 < count($tasks); $t1++) { 
+                if($tasks[$t1]->task_parent ===  null){
+                    array_push($level1Ids, $tasks[$t1]->task_id);
+                }
+            }      
+
+            for ($t2=0; $t2 < count($tasks); $t2++) { 
+                if(in_array($tasks[$t2]->task_parent, $level1Ids)){
+                    array_push($level2Ids, $tasks[$t2]->task_id);
+                }
+            }
+
+            for ($t3=0; $t3 < count($tasks); $t3++) { 
+                if(in_array($tasks[$t3]->task_parent, $level2Ids)){
+                    array_push($level3Ids, $tasks[$t3]->task_id);
+                }
+            }
+            // KUMPULKAN ID TASK BERDASARKAN LEVEL
+
+            // JIKA TASK ADALAH CHILD
+            $parentIds = [];
+            for ($c=0; $c < count($tasks); $c++) { 
+                if($tasks[$c]->task_parent !== null && !in_array($tasks[$c]->task_parent, $level2Ids) && !in_array($tasks[$c]->task_parent, $level3Ids)){
+                    // CARI DATA PARENT
+                    array_push($parentIds, $tasks[$c]->task_parent);
+                }
+            }
+
+            // DETAIL PARENT
+            $datas = TaskStatus::whereIn('task_id', $parentIds)
+                    ->get();
+
+            $taskCollection = collect([$tasks, $datas]);
+
+            $collections = $taskCollection->flatten(1)
+                        ->sortBy("task_id", "DESC");
+
+            // DETAIL PARENT
+
+            // JIKA TASK ADALAH CHILD
+
+            // GET ADDITIONAL DATA TASK
+            for ($ts=0; $ts < count($tasks); $ts++) { 
+                $tasks[$ts]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                                    ->where('task_id', $tasks[$ts]->task_id)
+                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->get();
+
+                $tasks[$ts]['comments'] = Comment::where('task_id', $tasks[$ts]->task_id)->count();
+                
+                $tasks[$ts]['files'] = TaskFile::select('file_id', 'file_name')
+                                            ->where('task_id', $tasks[$ts]->task_id)
+                                            ->get(); 
+            }
+            // GET ADDITIONAL DATA TASK
+
+            $level1 = [];
+            $level2 = [];
+            $level3 = [];
+
+            for ($tk=0; $tk < count($tasks); $tk++) { 
+                if(in_array($tasks[$tk]->task_id, $level1Ids)){
+                    array_push($level1, $tasks[$tk]);
+                }elseif(in_array($tasks[$tk]->task_id, $level2Ids)){
+                    array_push($level2, $tasks[$tk]);
+                }else{
+                    array_push($level3, $tasks[$tk]);
+                }
+            }
+
+            if(count($level2) > 0 ){
+                // ADD LEVEL 3 TO LEVEL 2
+                for ($l2=0; $l2 < count($level2); $l2++) {
+                    if(count($level3) > 0){
+                        $lev3 = [];
+                        for ($l3=0; $l3 < count($level3); $l3++) { 
+                            if($level2[$l2]->task_id === $level3[$l3]->task_parent){
+                                $lev3[] = $level3[$l3];
+                            }
+                         }
         
-        // if(count($taskIdsTemp) > 10){
-        //     $childs = TaskStatus::whereIn('task_id', $taskIdsTemp)
-        //             ->get();
+                        $level2[$l2]['level_3'] = $lev3;
+                    }
+               }
+               // ADD LEVEL 3 TO LEVEL 2
 
-        //     // CHECK LEVEL1,LEVEL2,LEVEL3
-        //     $level1Ids = [];
-        //     $level12ds = [];
-        //     $level13ds = [];
-        //     for ($t=0; $t < count($childs); $t++) { 
-        //         if($taskIdsTemp[$t]->task_parent){
-        //             array_push($levelIds, $task)
-        //         }
-        //     }
-        //     // CHECK LEVEL1,LEVEL2,LEVEL3
-        // }
+               // ADD LEVEL 2 TO LEVEL 1
+               for ($l1=0; $l1 < count($level1); $l1++) { 
+                    $lev2 = [];
+                    for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                            if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
+                                $lev2[] = $level2[$l2s];
+                            }
+                    }
 
+                    $level1[$l1]['level_2'] = $lev2;
+               }
+               // ADD LEVEL 2 TO LEVEL 1
+            }
+        }
 
         return response()->json([
             "status" => true,
             "total" => count($level1),
             "is_member_active" => $isMemberActive,
-            "data" => $taskIdsTemp
+            "data" => $collections,
+            "task" => $taskCollection,
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
