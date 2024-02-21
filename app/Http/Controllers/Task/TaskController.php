@@ -1140,6 +1140,7 @@ class TaskController extends Controller
         };
         // CHECK EMPLOYEE SEBAGAI PIC
         
+        $all = [];
         if(count($taskIdsTemp) > 0){
             $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
                     ->get();
