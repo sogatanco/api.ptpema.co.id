@@ -171,33 +171,6 @@ class TaskController extends Controller
             $task = Task::where('task_id', $taskId)
                     ->first();
 
-            if($task->task_parent !== null){
-                // siapa parentnya
-                $parent = $task->task_parent;
-
-                // jumlah subtask berapa berdasarkan parent
-                $subtaskSum = Task::where('task_parent', $parent)
-                            ->get();
-
-                // jumlahin semua progress
-                $totalProgress = 0;
-                $totalSubtask = count($subtaskSum);
-
-                for ($sum=0; $sum < $totalSubtask; $sum++) { 
-                    $totalProgress = $subtaskSum[$sum]->task_progress + $totalProgress;
-                }
-
-                // total progress dibagi jumlah subtask
-                $totalPercentage = $totalProgress/$totalSubtask; 
-
-                // update ke parent
-                $parentData = [
-                    'task_progress' => $totalPercentage,
-                ];
-
-                Task::where('task_id', $parent)->update($parentData);
-            }
-
             return response()->json([
                 "status" => true,
                 "data" => $task,
