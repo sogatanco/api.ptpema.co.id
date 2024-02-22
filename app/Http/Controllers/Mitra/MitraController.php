@@ -10,10 +10,9 @@ use App\Http\Resources\PostResource;
 class MitraController extends Controller
 {
     public function index(){
-       $data= Mitra::select('name as value', 'name as label')
-                    ->where('no_hp','!=', '')->orderBy('name', 'ASC')->get();
+       $data= Mitra::where('no_hp','!=', '')->orderBy('name', 'ASC')->get();
        foreach ($data as $d){
-        $d->name=strtoupper($d->name);
+        $d->value=strtoupper($d->name);
        }
         return new PostResource(true, 'Data Mitra', $data);
     }
