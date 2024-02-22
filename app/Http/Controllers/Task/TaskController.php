@@ -842,11 +842,11 @@ class TaskController extends Controller
     
         // CHECK EMPLOYEE SEBAGAI PIC
         $taskIdsTemp = [];
-        $taskByPic = TaskPic::where(['project_id' => $projectId, 'employe_id' => $employeId])
+        $taskByProject = TaskPic::where(['project_id' => $projectId])
                     ->get();
     
-        for ($ti=0; $ti < count($taskByPic); $ti++) { 
-            $taskIdsTemp[] = $taskByPic[$ti]->task_id;
+        for ($ti=0; $ti < count($taskByProject); $ti++) { 
+            $taskIdsTemp[] = $taskByProject[$ti]->task_id;
         };
         // CHECK EMPLOYEE SEBAGAI PIC
         
