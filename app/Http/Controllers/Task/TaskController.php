@@ -246,6 +246,22 @@ class TaskController extends Controller
         }
     }
 
+    public function deleteFile($fileId)
+    {
+        $deleted = where('file_id', $fileId)->delete();
+
+        if($deleted){
+            return response()->json([
+                "status" => true,
+                "message" => "File has been deleted."
+            ],200, [], JSON_NUMERIC_CHECK);
+        }else{
+            throw new HttpResponseException(response([
+                "error" => "Delete file failed"
+            ], 400));
+        }
+    }
+
     public function taskByEmploye($projectId)
     {
         $employeId = Employe::employeId();
