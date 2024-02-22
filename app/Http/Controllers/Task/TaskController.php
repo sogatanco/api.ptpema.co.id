@@ -204,6 +204,8 @@ class TaskController extends Controller
             return response()->json([
                 "status" => true,
                 "data" => $task,
+                "allpic" => $allPic,
+                "reqIds" => $requestPicIds,
                 "appid" => $request->approval_id,
                 "endDate" => $request->end_date
             ], 200, [], JSON_NUMERIC_CHECK);
