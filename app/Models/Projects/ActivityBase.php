@@ -9,4 +9,7 @@ class ActivityBase extends Model
 {
     use HasFactory;
     protected $table = 'activity_bases';
+    protected $fillable = [
+        'base_description'
+    ];
 }
