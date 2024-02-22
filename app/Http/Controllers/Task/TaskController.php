@@ -172,13 +172,13 @@ class TaskController extends Controller
                             ->first();
 
                 if(!$checkPic){
-                    $request->pic[$i] = [
+                    $save[$i] = [
                         'project_id' => $request->project_id,
-                        'employe_id' => $request->pic[$i]['value'],
+                        'employe_id' => $request->pic[$i]->value,
                         'task_id' => $taskId
                     ];  
         
-                    $newTaskPic = new TaskPic($request->pic[$i]);
+                    $newTaskPic = new TaskPic($save[$i]);
                     $newTaskPic->save();
                 }
             }
