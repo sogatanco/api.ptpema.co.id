@@ -773,108 +773,161 @@ class TaskController extends Controller
                 ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                 ->first();
 
-        // cari divisi active
-        $picActive = ProjectHistory::where(['project_id' => $projectId, 'active' => 1])
+        $employeId = Employe::employeId();
+
+        // CHECK USER ADALAH DIVISI AKTIF
+        $employeDivision = ProjectHistory::select('employe_id')
+                        ->where(['project_id' => $projectId, 'active' => 1])
                         ->first();
-
-        $divisionActive = Employe::getEmployeDivision($picActive->employe_id);
-
-        $whereParent = ['project_id' => $projectId, 'task_parent' => null, 'division' => $query ? +$query : $divisionActive->organization_id];
-        $parent = Task::select(
-                    'task_id',
-                    'task_parent',
-                    'task_title',
-                    'task_desc',
-                    'task_progress',
-                    'project_tasks.created_at',
-                    'employees.first_name as created_by'
-                )
-                ->where($whereParent)->orderBy('project_tasks.task_id', 'desc')
-                ->join('employees', 'employees.employe_id', '=', 'project_tasks.created_by')
-                ->get();
-        $count = count($parent);
-
-        // parent with status || get by employee
-        for ($p=0; $p < $count; $p++) { 
-
-            $whereHistory = ['task_id' => $parent[$p]->task_id];
-            $lastHistory[$p] = TaskApproval::select('employe_id','status', 'start_date', 'end_date')
-                        ->orderBy('approval_id', 'desc')
-                        ->where($whereHistory)
-                        ->first();
-
-
-            if($lastHistory[$p] !== null){
-                $parent[$p]->employe_id = $lastHistory[$p]->employe_id;
-                $parent[$p]->status = $lastHistory[$p]->status;
-                $parent[$p]->start_date = (!empty($lastHistory[$p]->start_date)) ? $lastHistory[$p]->start_date : null;
-                $parent[$p]->end_date =  $lastHistory[$p]->end_date;
-
-                $whereSubtask = ['project_id' => $projectId, 'task_parent' => $parent[$p]->task_id];
-                $subtask[$p] = Task::select(
-                                'project_tasks.task_id',
-                                'task_parent',
-                                'task_title',
-                                'task_desc',
-                                'task_progress',
-                                'project_tasks.created_at',
-                                'employees.first_name as created_by'
-                            )
-                            ->where($whereSubtask)
-                            ->join('project_task_approval', 'project_task_approval.task_id', '=', 'project_tasks.task_id')
-                            ->join('employees', 'employees.employe_id', '=', 'project_tasks.created_by')
+    
+        if($employeId !== $employeDivision->employe_id){
+            $employeCompare = Structure::select('organization_id')
+                            ->whereIn('employe_id', [$employeDivision->employe_id, $employeId])
                             ->get();
-
-                $parent[$p]->pics = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                        ->where('task_id', $parent[$p]->task_id)
-                        ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
-                        ->get();
-
-                        
-                // comments
-                $parent[$p]->comments = Comment::where('task_id', $parent[$p]->task_id)->count();
-                        
-                // file task
-                $parent[$p]->files = TaskFile::select('file_id', 'file_name')
-                        ->where('task_id', $parent[$p]->task_id)
-                        ->get();  
-
-                // jika ada di list favorite untuk direksi
-                $isFavorite[$p] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $parent[$p]->task_id])
-                                ->first();
-
-                $parent[$p]->isFavorite = $isFavorite[$p] ? true : false;
-
-                // looping subtask
-                for ($st=0; $st < count($subtask[$p]); $st++) { 
-                    // subtask comments
-                    $subtask[$p][$st]->comments = Comment::where('task_id', $subtask[$p][$st]->task_id)->count();
-
-                    // subtask pic
-                    $subtask[$p][$st]->pics = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
-                                            ->where('task_id', $subtask[$p][$st]->task_id)
-                                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
-                                            ->get();
-
-                    $subtask[$p][$st]->files = TaskFile::select('file_id', 'file_name')
-                                            ->where('task_id', $subtask[$p][$st]->task_id)
-                                            ->get(); 
-
-                    $isFavoriteSubtask[$st] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $subtask[$p][$st]->task_id])
-                                            ->first();
-            
-                    $subtask[$p][$st]->isFavorite = $isFavoriteSubtask[$st] ? true : false;
-                }
-
-                $parent[$p]->subtasks = $subtask[$p];  
-
-            }
+    
+            $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
+        } else {
+            // jika user active adalah manager
+            $isMemberActive = true;
+        }
+        // CHECK USER ADALAH DIVISI AKTIF
+    
+        // CHECK EMPLOYEE SEBAGAI PIC
+        $taskIdsTemp = [];
+        $taskByPic = TaskPic::where(['project_id' => $projectId, 'employe_id' => $employeId])
+                    ->get();
+    
+        for ($ti=0; $ti < count($taskByPic); $ti++) { 
+            $taskIdsTemp[] = $taskByPic[$ti]->task_id;
         };
+        // CHECK EMPLOYEE SEBAGAI PIC
+        
+        $all = [];
+        if(count($taskIdsTemp) > 0){
+            $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
+                    ->get();
+    
+            // CHECK LEVEL1,LEVEL2,LEVEL3
+            $level1Ids = [];
+            $parentIds = [];
+    
+            for ($t=0; $t < count($tasks); $t++) { 
+                if($tasks[$t]->task_parent === null){
+                    // USER SEBAGAI PIC LEVEL 1
+                    array_push($level1Ids, $tasks[$t]->task_id);
+                }else{
+                    // ID PARENT LEVEL1 & LEVEL2
+                    array_push($parentIds, $tasks[$t]->task_parent);
+                }
+            }
+    
+            $level2Ids = [];
+            $level3Ids = [];
+    
+            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
+            // CARI PARENT 
+            $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
+                        ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
+                        ->select(
+                            'task_latest_status.task_id', 
+                            'level1.task_id as parent_id', 
+                        )
+                        ->get();
+    
+            for ($p=0; $p < count($parents); $p++) { 
+                if($parents[$p]->parent_id === null && !in_array($parents[$p]->task_id, $level1Ids)){
+                    // PARENT SEBAGAI LEVEL 1
+                    array_push($level1Ids, $parents[$p]->task_id);
+                }else if($parents[$p]->parent_id !== null){
+                    // PARENT SEBAGAI LEVEL 1/2
+                    array_push($level2Ids, $parents[$p]->task_id);
+                    array_push($level1Ids, $parents[$p]->parent_id);
+                }
+            }
+            
+            for ($t2=0; $t2 < count($tasks); $t2++) { 
+                if(in_array($tasks[$t2]->task_parent, $level1Ids)){
+                    array_push($level2Ids, $tasks[$t2]->task_id);
+                }
+            }
+    
+            for ($t3=0; $t3 < count($tasks); $t3++) { 
+                if(in_array($tasks[$t3]->task_parent, $level2Ids)){
+                    array_push($level3Ids, $tasks[$t3]->task_id);
+                }
+            }
+            // CHECK LEVEL1,LEVEL2,LEVEL3
+    
+            $allTask = array_merge($level1Ids, $level2Ids, $level3Ids);
+    
+            $all = TaskStatus::whereIn('task_id', $allTask)
+                    ->get();
+        }
+    
+    
+        if(count($all) > 0) {
+            for ($at=0; $at < count($all); $at++) { 
+                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                                    ->where('task_id', $all[$at]->task_id)
+                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->get();
+    
+                $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
+                
+                $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
+                                            ->where('task_id', $all[$at]->task_id)
+                                            ->get(); 
+            }
+        }
+    
+        $level1 = [];
+        $level2 = [];
+        $level3 = [];
+    
+        for ($tk=0; $tk < count($all); $tk++) { 
+            if(in_array($all[$tk]->task_id, $level1Ids)){
+                array_push($level1, $all[$tk]);
+            }elseif(in_array($all[$tk]->task_id, $level2Ids)){
+                array_push($level2, $all[$tk]);
+            }else{
+                array_push($level3, $all[$tk]);
+            }
+        }
+    
+        if(count($level2) > 0 ){
+            // ADD LEVEL 3 TO LEVEL 2
+            for ($l2=0; $l2 < count($level2); $l2++) {
+                if(count($level3) > 0){
+                    $lev3 = [];
+                    for ($l3=0; $l3 < count($level3); $l3++) { 
+                        if($level2[$l2]->task_id === $level3[$l3]->task_parent){
+                            $lev3[] = $level3[$l3];
+                        }
+                     }
+        
+                    $level2[$l2]['level_3'] = $lev3;
+                }
+           }
+           // ADD LEVEL 3 TO LEVEL 2
+    
+           // ADD LEVEL 2 TO LEVEL 1
+           for ($l1=0; $l1 < count($level1); $l1++) { 
+                $lev2 = [];
+                for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                        if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
+                            $lev2[] = $level2[$l2s];
+                        }
+                }
+    
+                $level1[$l1]['level_2'] = $lev2;
+           }
+           // ADD LEVEL 2 TO LEVEL 1
+        }
 
         return response()->json([
             "total" => count($parent),
             "project" => $fase,
-            "data" => $parent,
+            "data" => $level1,
         ], 200, [], JSON_NUMERIC_CHECK);
     }
     
