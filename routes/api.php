@@ -70,6 +70,7 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Manager,Director");
     Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff,Manager");
     Route::delete("/project/{project_id}", "destroy")->middleware("role:Staff,Manager");
+    Route::post("/project/activity-base/add", "createActivityBase")->middleware("role:Staff,Manager");
 });
 
 // Task routes

@@ -1068,5 +1068,10 @@ class ProjectController extends Controller
         ], 200);
     }
 
-
+    public function createActivityBase()
+    {
+        return response()->json([
+            "message" => "from create activity base"
+        ], 200);
+    }
 }
