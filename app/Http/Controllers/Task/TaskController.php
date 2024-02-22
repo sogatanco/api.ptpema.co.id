@@ -925,7 +925,7 @@ class TaskController extends Controller
         }
 
         return response()->json([
-            "total" => count($parent),
+            "total" => count($level1),
             "project" => $fase,
             "data" => $level1,
         ], 200, [], JSON_NUMERIC_CHECK);
