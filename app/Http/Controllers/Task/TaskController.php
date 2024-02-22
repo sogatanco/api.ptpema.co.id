@@ -164,6 +164,24 @@ class TaskController extends Controller
                     ->update($data);
 
         if($isUpdated){
+            
+            for ($i=0; $i < count($request->pic); $i++) { 
+
+                $where = ['employe_id' => $request->pic[$i]->value, 'task_id' => $taskId];
+                $checkPic = TaskPic::where($where)
+                            ->first();
+
+                if(!$checkPic){
+                    $request->pic[$i] = [
+                        'project_id' => $request->project_id,
+                        'employe_id' => $request->pic[$i]['value'],
+                        'task_id' => $taskId
+                    ];  
+        
+                    $newTaskPic = new TaskPic($request->pic[$i]);
+                    $newTaskPic->save();
+                }
+            }
 
             TaskApproval::where('approval_id', $request->approval_id)
                         ->update(['start_date' => $request->start_date, 'end_date' => $request->end_date]);
