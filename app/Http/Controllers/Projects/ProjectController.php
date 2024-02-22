@@ -405,7 +405,7 @@ class ProjectController extends Controller
         $activityBase = ActivityBase::select('base_id', 'base_description')
                         ->get();
 
-        $businessPlan = BusinessPlan::select('business_id', 'business_desc')
+        $businessPlan = BusinessPlan::select('business_id as value', 'business_desc as label')
                         ->get();
 
         return response()->json([
