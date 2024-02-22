@@ -823,7 +823,7 @@ class TaskController extends Controller
                     ->first();
 
         $divisionActive = Employe::getEmployeDivision($picActive->employe_id);
-        $taskByProject = TaskPic::where(['project_id' => $projectId, 'division' => $query ? +$query : $divisionActive->organization_id])
+        $taskByProject = TaskStatus::where(['project_id' => $projectId, 'division' => $query ? +$query : $divisionActive->organization_id])
                         ->get();
     
         $taskIdsTemp = [];
