@@ -171,14 +171,14 @@ class TaskController extends Controller
             
             for ($i=0; $i < count($request->pic); $i++) { 
 
-                $where = ['employe_id' => $request->pic[$i]->value, 'task_id' => $taskId];
+                $where = ['employe_id' => $request->pic[$i]['value'], 'task_id' => $taskId];
                 $checkPic = TaskPic::where($where)
                             ->first();
 
                 if(!$checkPic){
                     $save[$i] = [
                         'project_id' => $request->project_id,
-                        'employe_id' => $request->pic[$i]->value,
+                        'employe_id' => $request->pic[$i]['value'],
                         'task_id' => $taskId
                     ];  
         
