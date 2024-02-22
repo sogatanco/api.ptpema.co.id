@@ -1068,10 +1068,22 @@ class ProjectController extends Controller
         ], 200);
     }
 
-    public function createActivityBase()
-    {
-        return response()->json([
-            "message" => "from create activity base"
-        ], 200);
+    public function createActivityBase(Request $request)
+    {   
+        if($request->activity_name){
+            $new = new ActivityBase(['base_description' => $request->activity_name]);
+            $saved = $new->save();
+
+            if($saved){
+                return response()->json([
+                    "status" => true,
+                    "message" => "Activity base has been added"
+                ], 200);
+            }
+        }else{
+            throw new HttpResponseException(response([
+                "error" => "Field cannot be empty" 
+            ], 400));
+        }
     }
 }
