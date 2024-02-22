@@ -406,6 +406,7 @@ class ProjectController extends Controller
                         ->get();
 
         $businessPlan = BusinessPlan::select('business_id as value', 'business_desc as label')
+                        ->orderBy('business_desc', 'ASC')
                         ->get();
 
         return response()->json([
