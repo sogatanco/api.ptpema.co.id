@@ -13,7 +13,7 @@ class MitraController extends Controller
        $data= Mitra::where('no_hp','!=', '')->orderBy('name', 'ASC')->get();
        foreach ($data as $d){
         $d->value=strtoupper($d->name);
-        $d->key=strtoupper($d->name);
+        $d->label=strtoupper($d->name);
        }
         return new PostResource(true, 'Data Mitra', $data);
     }
