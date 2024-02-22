@@ -179,7 +179,7 @@ class ProjectController extends Controller
         $projectData = [
             'project_number' => $request->project_number,
             'division' => $request->division,
-            'project_name' => $request->project_name,
+            'project_name' => ucwords($request->project_name),
             'goals' => $request->goals,
             'estimated_income' => $request->estimated_income,
             'estimated_cost' => $request->estimated_cost,
@@ -338,7 +338,7 @@ class ProjectController extends Controller
         // data project
         $project = [
             'project_number' => $request->project_number,
-            'project_name' => $request->project_name,
+            'project_name' =>ucwords( $request->project_name),
             'goals' => $request->goals,
             'estimated_income' => $request->estimated_income,
             'estimated_cost' => $request->estimated_cost,
