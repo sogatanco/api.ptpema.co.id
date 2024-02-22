@@ -189,11 +189,11 @@ class TaskController extends Controller
                     ->get();
             
             for ($ap=0; $ap < count($allPic); $ap++) { 
-               if(!in_array($allPic[$ap]->employe_id, $requestPicIds)){
-                // HAPUS PIC
-                TaskPic::where(['employe_id' => $allPic[$ap]->employe_id, 'task_id' => $taskId]);
-               }
-            }   
+                if(!in_array($allPic[$ap]->employe_id, $requestPicIds)){
+                 // HAPUS PIC
+                 TaskPic::where(['employe_id' => $allPic[$ap]->employe_id, 'task_id' => $taskId]);
+                }
+             } 
 
             TaskApproval::where('approval_id', $request->approval_id)
                         ->update(['start_date' => $request->start_date, 'end_date' => $request->end_date]);
