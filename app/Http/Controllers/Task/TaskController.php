@@ -160,6 +160,10 @@ class TaskController extends Controller
             'task_progress' => $request->task_progress,
         ];
 
+        return response()->json([
+            "data" => $request->all()
+        ], 200);
+
         $isUpdated = Task::where('task_id', $taskId)
                     ->update($data);
 
