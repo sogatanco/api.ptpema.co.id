@@ -163,25 +163,37 @@ class TaskController extends Controller
         $isUpdated = Task::where('task_id', $taskId)
                     ->update($data);
 
-        if($isUpdated){
-            
+        if($isUpdated){     
+
+            $requestPicIds = [];
             for ($i=0; $i < count($request->pic); $i++) { 
+                array_push($request->pic[$i]['value'], $requestPicIds);
 
                 $where = ['employe_id' => $request->pic[$i]['value'], 'task_id' => $taskId];
                 $checkPic = TaskPic::where($where)
                             ->first();
-
+        
                 if(!$checkPic){
                     $save[$i] = [
                         'project_id' => $request->project_id,
                         'employe_id' => $request->pic[$i]['value'],
                         'task_id' => $taskId
                     ];  
-        
+
                     $newTaskPic = new TaskPic($save[$i]);
                     $newTaskPic->save();
                 }
             }
+
+            $allPic = TaskPic::where('task_id', $taskId)
+                    ->get();
+            
+            for ($ap=0; $ap < count($allPic); $ap++) { 
+               if(!in_array($allPic[$ap]->employe_id, $requestPicIds)){
+                // HAPUS PIC
+                TaskPic::where(['employe_id' => $allPic[$ap]->employe_id, 'task_id' => $taskId]);
+               }
+            }   
 
             TaskApproval::where('approval_id', $request->approval_id)
                         ->update(['start_date' => $request->start_date, 'end_date' => $request->end_date]);
