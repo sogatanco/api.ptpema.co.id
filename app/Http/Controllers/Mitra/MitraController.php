@@ -10,7 +10,8 @@ use App\Http\Resources\PostResource;
 class MitraController extends Controller
 {
     public function index(){
-       $data= Mitra::where('no_hp','!=', '')->orderBy('name', 'ASC')->get();
+       $data= Mitra::select('name')
+                    ->where('no_hp','!=', '')->orderBy('name', 'ASC')->get();
        foreach ($data as $d){
         $d->value=strtoupper($d->name);
         $d->label=strtoupper($d->name);
