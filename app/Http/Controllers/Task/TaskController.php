@@ -248,7 +248,7 @@ class TaskController extends Controller
 
     public function deleteFile($fileId)
     {
-        $deleted = where('file_id', $fileId)->delete();
+        $deleted = TaskFile::where('file_id', $fileId)->delete();
 
         if($deleted){
             return response()->json([
