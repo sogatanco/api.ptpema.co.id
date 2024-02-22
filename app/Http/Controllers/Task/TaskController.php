@@ -167,7 +167,7 @@ class TaskController extends Controller
 
             $requestPicIds = [];
             for ($i=0; $i < count($request->pic); $i++) { 
-                array_push($request->pic[$i]['value'], $requestPicIds);
+                array_push($requestPicIds, $request->pic[$i]['value']);
 
                 $where = ['employe_id' => $request->pic[$i]['value'], 'task_id' => $taskId];
                 $checkPic = TaskPic::where($where)
