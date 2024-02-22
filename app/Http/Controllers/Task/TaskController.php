@@ -191,7 +191,7 @@ class TaskController extends Controller
             for ($ap=0; $ap < count($allPic); $ap++) { 
                 if(!in_array($allPic[$ap]->employe_id, $requestPicIds)){
                  // HAPUS PIC
-                 TaskPic::where(['employe_id' => $allPic[$ap]->employe_id, 'task_id' => $taskId]);
+                 TaskPic::where(['employe_id' => $allPic[$ap]->employe_id, 'task_id' => $taskId])->delete();
                 }
              } 
 
