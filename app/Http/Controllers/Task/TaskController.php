@@ -796,8 +796,6 @@ class TaskController extends Controller
 
     public function taskByProject(Request $request, $projectId)
     {  
-
-        $employeId = Employe::employeId();
         $query = $request->query('div');
 
         // fase projek
@@ -820,31 +818,16 @@ class TaskController extends Controller
                 ->leftJoin('organizations', 'organizations.organization_id','=', 'project_stages.division')
                 ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                 ->first();
+        
+        $picActive = ProjectHistory::where(['project_id' => $projectId, 'active' => 1])
+                    ->first();
 
-        $employeId = Employe::employeId();
-
-        // CHECK USER ADALAH DIVISI AKTIF
-        $employeDivision = ProjectHistory::select('employe_id')
-                        ->where(['project_id' => $projectId, 'active' => 1])
-                        ->first();
+        $divisionActive = Employe::getEmployeDivision($picActive->employe_id);
+        $taskByProject = TaskPic::where(['project_id' => $projectId, 'division' => $query ? +$query : $divisionActive->organization_id])
+                        ->get();
     
-        if($employeId !== $employeDivision->employe_id){
-            $employeCompare = Structure::select('organization_id')
-                            ->whereIn('employe_id', [$employeDivision->employe_id, $employeId])
-                            ->get();
-    
-            $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
-        } else {
-            // jika user active adalah manager
-            $isMemberActive = true;
-        }
-        // CHECK USER ADALAH DIVISI AKTIF
-    
-        // CHECK EMPLOYEE SEBAGAI PIC
         $taskIdsTemp = [];
-        $taskByProject = TaskPic::where(['project_id' => $projectId])
-                    ->get();
-    
+
         for ($ti=0; $ti < count($taskByProject); $ti++) { 
             $taskIdsTemp[] = $taskByProject[$ti]->task_id;
         };
