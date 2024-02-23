@@ -246,10 +246,12 @@ class ProjectController extends Controller
                     'activity_levels.level_desc',
                     'activity_bases.base_description', 
                     'a.first_name as created_by',
+                    'bp.business_desc'
                 )
                 ->where('projects.project_id', $projectId)
                 ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
                 ->leftJoin('activity_bases', 'activity_bases.base_id', '=', 'projects.base_id')
+                ->leftJoin('business_plan as bp', 'bp.business_id', "=", 'projects.business_id')
                 ->first();
         
         // fase saat ini 
