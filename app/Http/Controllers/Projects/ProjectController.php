@@ -1121,20 +1121,14 @@ class ProjectController extends Controller
             $proj = [];
             for ($pt=0; $pt < count($progressTask); $pt++) { 
                 if($projects[$p]->project_id === $progressTask[$pt]->project_id){
-                    $proj[] = $progressTask[$pt];
+                    $proj[] = $progressTask[$pt]->progress;
                 }
             }
 
-            $projects[$p]['task'] = $proj;
+            $projects[$p]['progress'] = array_sum($proj);
         }
 
-        // $collection = [];
-        // for ($i=0; $i < count($ids); $i++) { 
-        //     $collection[] = [
-        //         "id" => $ids[$i],
-        //         "progress" => 45
-        //     ];
-        // };
+        
 
         return response()->json([
             "status" => true,
