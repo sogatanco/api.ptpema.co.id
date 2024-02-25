@@ -858,6 +858,7 @@ class ProjectController extends Controller
         }
     }
 
+    // OLD FUNCTION projectByEmployeDivision
     public function projectByEmployeDivision($employeId)
     {
         $user = auth()->user();
@@ -879,7 +880,6 @@ class ProjectController extends Controller
 
         // project id array
         $projectIds = [];
-        $currentStages = [];
         for ($pi=0; $pi < count($projectByStage); $pi++) { 
             $projectIds[] = $projectByStage[$pi]->project_id;
         };
@@ -950,6 +950,7 @@ class ProjectController extends Controller
             "data" => $projects
         ],200, [], JSON_NUMERIC_CHECK);
     }
+    // OLD FUNCTION projectByEmployeDivision
 
     public function totalDataByEmploye($employeId)
     {
@@ -1088,5 +1089,13 @@ class ProjectController extends Controller
                 "error" => "Field cannot be empty" 
             ], 400));
         }
+    }
+
+    public function progressCollection()
+    {
+        return response()->json([
+            "status" => true,
+            "message" => "from progress collection"
+        ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
