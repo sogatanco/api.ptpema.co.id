@@ -10,6 +10,7 @@ use App\Models\Projects\ActivityBase;
 use App\Models\Projects\ActivityLevel;
 use App\Models\Projects\BusinessPlan;
 use App\Models\Projects\ProjectStage;
+use App\Models\Projects\TaskProgress;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Position;
@@ -1096,11 +1097,29 @@ class ProjectController extends Controller
         // ids = project id array
         $ids = json_decode($request->ids);
 
-        // kumpulin task
+        // kumpulin task parent
         $allTask = TaskStatus::whereIn('project_id', $ids)
                     ->where('task_parent', null)
-                    ->select('task_id', 'task_parent')
+                    ->select('task_id')
                     ->get();
+
+        $parentIds = [];
+        for ($at=0; $at < count($allTask); $at++) { 
+            array_push($parentIds, $allTask[$at]->task_id);
+        }
+
+        // ambil progres task parent
+        $progressTask = TaskProgress::whereIn('task_id', $parentIds)
+                        ->get();
+
+        // hitung total prograss setiap project
+        for ($p=0; $p < count($ids); $p++) { 
+            for ($pt=0; $pt < count($progressTask); $pt++) { 
+                if($ids[$p] === $progressTask[$pt]->project_id){
+                    $ids[$p]['task'] = $progressTask[$pt];
+                }
+            }
+        }
 
         $collection = [];
         for ($i=0; $i < count($ids); $i++) { 
@@ -1112,9 +1131,7 @@ class ProjectController extends Controller
 
         return response()->json([
             "status" => true,
-            "taskIds" => $allTask,
-            "message" => $ids,
-            "data" => $collection
+            "data" => $ids
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
