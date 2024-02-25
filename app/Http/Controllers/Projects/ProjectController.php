@@ -1099,7 +1099,7 @@ class ProjectController extends Controller
         // kumpulin task
         $allTask = TaskStatus::whereIn('project_id', $ids)
                     ->where('task_parent', null)
-                    ->selelct('task_id')
+                    ->select('task_id')
                     ->get();
 
         $collection = [];
