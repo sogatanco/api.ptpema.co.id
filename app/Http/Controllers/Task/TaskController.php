@@ -598,8 +598,8 @@ class TaskController extends Controller
         if($request->status !== 0){
 
             if($request->status !== 1){
-                 // get ProjectID
-                    $project = Task::select('project_id')
+                // get ProjectID
+                $project = Task::select('project_id')
                                 ->where('task_id', $taskId)
                                 ->first();
 
@@ -610,7 +610,7 @@ class TaskController extends Controller
                     $employeDivision = Employe::getEmployeDivision($request->employe_id);
 
                     // divisi yg punya projek
-                    $picActive = ProjectHistory::where(['project_id' => $request->project_id, 'active' => 1])
+                    $picActive = ProjectHistory::where(['project_id' => $project->project_id, 'active' => 1])
                                 ->first();
 
                     $divisionActive = Employe::getEmployeDivision($picActive->employe_id);
