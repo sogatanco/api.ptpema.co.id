@@ -1097,7 +1097,7 @@ class ProjectController extends Controller
         // ids = project id array
         $ids = json_decode($request->ids);
 
-        $projects = Projects::select('project_id')
+        $projects = Project::select('project_id')
                     ->whereIn('project_id', $ids)
                     -get();
 
