@@ -737,6 +737,8 @@ class TaskController extends Controller
 
     public function review($projectId)
     {
+        $userRoles = Auth::user()->roles;
+
         $employeId = Employe::employeId();
         
         $where =[
@@ -764,6 +766,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => $tasks,
+            "roles" => $userRoles
          ], 200, [], JSON_NUMERIC_CHECK);
         
 
