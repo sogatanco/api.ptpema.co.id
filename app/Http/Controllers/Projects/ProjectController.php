@@ -1118,15 +1118,17 @@ class ProjectController extends Controller
                         ->get();
 
         // hitung total prograss setiap project
-        for ($p=0; $p < count($projects); $p++) { 
-            $proj = [];
-            for ($pt=0; $pt < count($progressTask); $pt++) { 
-                if($projects[$p]->project_id === $progressTask[$pt]->project_id){
-                    $proj[] = $progressTask[$pt]->progress;
+        if(count($projects) > 0){
+            for ($p=0; $p < count($projects); $p++) { 
+                $proj = [];
+                for ($pt=0; $pt < count($progressTask); $pt++) { 
+                    if($projects[$p]->project_id === $progressTask[$pt]->project_id){
+                        $proj[] = $progressTask[$pt]->progress;
+                    }
                 }
+    
+                $projects[$p]['progress'] = array_sum($proj)/count($proj);
             }
-
-            $projects[$p]['progress'] = array_sum($proj)/count($proj);
         }
 
         return response()->json([
