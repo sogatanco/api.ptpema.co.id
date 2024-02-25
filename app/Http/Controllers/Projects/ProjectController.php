@@ -1094,7 +1094,7 @@ class ProjectController extends Controller
     public function progressCollection(Request $request)
     {
         // ids = project id array
-        $ids = $request->ids;
+        $ids = json_decode($request->ids);
 
         // kumpulin task
         $allTask = TaskStatus::whereIn('project_id', $ids)
