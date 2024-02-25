@@ -1125,7 +1125,7 @@ class ProjectController extends Controller
                 }
             }
 
-            $projects[$p]['progress'] = array_sum($proj);
+            $projects[$p]['progress'] = array_sum($proj)/count($proj);
         }
 
         return response()->json([
