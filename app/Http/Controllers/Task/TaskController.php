@@ -738,15 +738,27 @@ class TaskController extends Controller
 
     public function review($projectId)
     {
-        $userRoles = Auth::user()->roles;
+        $userRequest = Auth::user();
 
         $employeId = Employe::employeId();
-        
-        $where =[
-            'project_id' => $projectId,
-            'direct_atasan' => $employeId,
-            'status' => 2
-        ];
+
+        if(in_array("Manager", $userRequest->roles)){
+            // jika manager
+            $employeDivision = Employe::getEmployeDivision($employeId);
+
+            $where =[
+                'project_id' => $projectId,
+                'division' => $employeDivision->organization_id,
+                'status' => 2
+            ];
+        }else{
+            // jika direksi
+            $where =[
+                'project_id' => $projectId,
+                'direct_atasan' => $employeId,
+                'status' => 2
+            ];
+        }
         
         $tasks = TaskStatus::where($where)
                 ->get();
@@ -767,7 +779,6 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => $tasks,
-            "roles" => $userRoles
          ], 200, [], JSON_NUMERIC_CHECK);
         
 
