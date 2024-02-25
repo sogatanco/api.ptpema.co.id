@@ -575,6 +575,7 @@ class TaskController extends Controller
         }
 
         if($request->status === 3 || $request->status === 4){
+            // status done/revisi
             $statusBy  = Employe::employeId();
         }else{
             $statusBy  = $request->employe_id;
@@ -605,17 +606,37 @@ class TaskController extends Controller
                 // jika status review
                 if($request->status === 2)
                 {
-                    // get manager
-                    $structure = Structure::select('direct_atasan')
-                                ->where('employe_id', $request->employe_id)
+                    // user yg request
+                    $employeDivision = Employe::getEmployeDivision($request->employe_id);
+
+                    // divisi yg punya projek
+                    $picActive = ProjectHistory::where(['project_id' => $request->project_id, 'active' => 1])
                                 ->first();
 
-                    $manager = $structure->direct_atasan;
+                    $divisionActive = Employe::getEmployeDivision($picActive->employe_id);
+
+                    if($employeDivision->organization_id !== $divisionActive->organization_id){
+                        // jika user yg request review dari divisi lain
+
+                        // yang review adalah pic projek/puk
+                        $reviewer = $picActive->employe_id;
+                    }else{
+                        // jika user yg request review dari divisi yg punya projek
+                        // get manager/atasan
+                        $structure = Structure::select('direct_atasan')
+                                    ->where('employe_id', $request->employe_id)
+                                    ->first();
+
+                        // yang review adalah pic/direksi
+                        $reviewer = $structure->direct_atasan;
+                    }
+
+                    
 
                     // data notif
                     $NotifData = [
                         'from_employe' => $request->employe_id,
-                        'to_employe' => $manager,
+                        'to_employe' => $reviewer,
                         'project_id' => $project->project_id,
                         'task_id' => $taskId,
                         'title' => 'Project Task',
