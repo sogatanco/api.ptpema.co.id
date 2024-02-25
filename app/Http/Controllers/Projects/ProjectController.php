@@ -1091,11 +1091,13 @@ class ProjectController extends Controller
         }
     }
 
-    public function progressCollection()
+    public function progressCollection(Request $request)
     {
+        $ids = $request->ids;
+
         return response()->json([
             "status" => true,
-            "message" => "from progress collection"
+            "message" => $ids
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
