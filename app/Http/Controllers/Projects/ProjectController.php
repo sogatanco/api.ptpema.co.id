@@ -1093,7 +1093,7 @@ class ProjectController extends Controller
 
     public function progressCollection(Request $request)
     {
-        $ids = json_decode($request->ids, true) ;
+        $ids = $request->ids;
 
         $collection = [];
         for ($i=0; $i < count($ids); $i++) { 
