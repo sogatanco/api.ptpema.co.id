@@ -1093,20 +1093,20 @@ class ProjectController extends Controller
 
     public function progressCollection(Request $request)
     {
-        $ids = trim($request->ids, '&#x22;') ;
+        $ids = $request->ids ;
 
-        $collection = [];
-        for ($i=0; $i < count($ids); $i++) { 
-            $collection[] = [
-                "id" => $id[$i],
-                "progress" => 45
-            ];
-        };
+        // $collection = [];
+        // for ($i=0; $i < count($ids); $i++) { 
+        //     $collection[] = [
+        //         "id" => $id[$i],
+        //         "progress" => 45
+        //     ];
+        // };
 
         return response()->json([
             "status" => true,
             "message" => $ids,
-            "data" => $collection
+            // "data" => $collection
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
