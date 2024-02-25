@@ -1138,7 +1138,7 @@ class ProjectController extends Controller
 
         return response()->json([
             "status" => true,
-            "data" => $colls
+            "data" => $projects
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
