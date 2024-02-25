@@ -1106,7 +1106,8 @@ class ProjectController extends Controller
         return response()->json([
             "status" => true,
             "message" => $ids,
-            // "data" => $collection
+            "message" => $ids,
+            "data" => count($ids)
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
