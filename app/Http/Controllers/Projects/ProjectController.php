@@ -1095,7 +1095,8 @@ class ProjectController extends Controller
     public function progressCollection(Request $request)
     {
         // ids = project id array
-        $ids = json_decode($request->ids);
+        // $ids = json_decode($request->ids);
+        $ids = $request->ids;
 
         $projects = Project::select('project_id')
                     ->whereIn('project_id', $ids)
