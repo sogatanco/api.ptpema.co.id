@@ -1098,7 +1098,7 @@ class ProjectController extends Controller
         $collection = [];
         for ($i=0; $i < count($ids); $i++) { 
             $collection[] = [
-                "id" => $id[$i],
+                "id" => $ids[$i],
                 "progress" => 45
             ];
         };
