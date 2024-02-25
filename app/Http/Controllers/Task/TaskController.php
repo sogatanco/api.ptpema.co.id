@@ -51,7 +51,7 @@ class TaskController extends Controller
             $savedFile  = Storage::disk("public_taskfiles")->put('', $files[0]);
         }
 
-        // $employeId = Employe::employeId();
+        $employeId = Employe::employeId();
         // $employeDivision = Employe::getEmployeDivision($employeId);
 
         // ambil divisi yang punya projek dan status aktif
