@@ -1095,19 +1095,18 @@ class ProjectController extends Controller
     {
         $ids = json_decode($request->ids, true) ;
 
-        // $collection = [];
-        // for ($i=0; $i < count($ids); $i++) { 
-        //     $collection[] = [
-        //         "id" => $id[$i],
-        //         "progress" => 45
-        //     ];
-        // };
+        $collection = [];
+        for ($i=0; $i < count($ids); $i++) { 
+            $collection[] = [
+                "id" => $id[$i],
+                "progress" => 45
+            ];
+        };
 
         return response()->json([
             "status" => true,
             "message" => $ids,
-            "message" => $ids,
-            "data" => count($ids)
+            "data" => $collection
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
