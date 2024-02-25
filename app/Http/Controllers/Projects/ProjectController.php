@@ -1095,19 +1095,18 @@ class ProjectController extends Controller
     {
         $ids = $request->ids;
 
+        $collection = [];
+        for ($i=0; $i < count($ids); $i++) { 
+            $collection[] = [
+                "id" => $id[$i],
+                "progress" => 45
+            ];
+        };
+
         return response()->json([
             "status" => true,
             "message" => $ids,
-            "data" => [
-                [
-                    "id" => 1,
-                    "progress" => 45
-                ],
-                [
-                    "id" => 4,
-                    "progress" => 71
-                ],
-            ]
+            "data" => $collection
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
