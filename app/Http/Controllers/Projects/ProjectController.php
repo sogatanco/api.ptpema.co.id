@@ -1121,7 +1121,8 @@ class ProjectController extends Controller
                     $proj[] = $progressTask[$pt]->project_id;
                 }
             }
-            $colls[$p]['task'] = $proj;
+            
+            $colls[$p][] = $proj;
         }
 
         // $collection = [];
