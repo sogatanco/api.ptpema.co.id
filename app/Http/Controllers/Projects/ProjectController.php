@@ -1113,26 +1113,26 @@ class ProjectController extends Controller
                         ->get();
 
         // hitung total prograss setiap project
-        $colls = [];
-        for ($p=0; $p < count($ids); $p++) { 
-            for ($pt=0; $pt < count($progressTask); $pt++) { 
-                if($ids[$p] === $progressTask[$pt]->project_id){
-                    $colls[$p][] = $progressTask[$pt];
-                }
-            }
-        }
+        // $colls = [];
+        // for ($p=0; $p < count($ids); $p++) { 
+        //     for ($pt=0; $pt < count($progressTask); $pt++) { 
+        //         if($ids[$p] === $progressTask[$pt]->project_id){
+        //             $colls[$p][] = $progressTask[$pt];
+        //         }
+        //     }
+        // }
 
-        $collection = [];
-        for ($i=0; $i < count($ids); $i++) { 
-            $collection[] = [
-                "id" => $ids[$i],
-                "progress" => 45
-            ];
-        };
+        // $collection = [];
+        // for ($i=0; $i < count($ids); $i++) { 
+        //     $collection[] = [
+        //         "id" => $ids[$i],
+        //         "progress" => 45
+        //     ];
+        // };
 
         return response()->json([
             "status" => true,
-            "data" => $ids
+            "data" => $progressTask
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
