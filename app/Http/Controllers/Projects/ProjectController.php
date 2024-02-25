@@ -1094,7 +1094,7 @@ class ProjectController extends Controller
 
     public function progressCollection(Request $request)
     {
-        // PROGRESS PROJEK ITU BY STAGES [Status = 1]
+        // PROGRESS PROJEK ITU BY STAGES [Status = 1] INGAT!!
 
         // ids = project id array
         // $ids = json_decode($request->ids);

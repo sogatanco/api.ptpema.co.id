@@ -24,6 +24,7 @@ use App\Http\Resources\TaskResource;
 use App\Http\Requests\TaskRequest;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
