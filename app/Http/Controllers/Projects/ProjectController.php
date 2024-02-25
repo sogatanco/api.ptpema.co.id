@@ -1117,7 +1117,7 @@ class ProjectController extends Controller
         for ($p=0; $p < count($colls); $p++) { 
             for ($pt=0; $pt < count($progressTask); $pt++) { 
                 if($colls[$p] === $progressTask[$pt]->project_id){
-                    $colls[$p]['task'] = $progressTask[$pt]->project_id;
+                    $colls[$p]['task'][] = $progressTask[$pt]->project_id;
                 }
             }
         }
