@@ -1093,7 +1093,14 @@ class ProjectController extends Controller
 
     public function progressCollection(Request $request)
     {
+        // ids = project id array
         $ids = $request->ids;
+
+        // kumpulin task
+        $allTask = TaskStatus::whereIn('project_id', $ids)
+                    ->where('task_parent', null)
+                    ->selelct('task_id')
+                    ->get();
 
         $collection = [];
         for ($i=0; $i < count($ids); $i++) { 
@@ -1105,6 +1112,7 @@ class ProjectController extends Controller
 
         return response()->json([
             "status" => true,
+            "taskIds" => $allTask,
             "message" => $ids,
             "data" => $collection
         ], 200, [], JSON_NUMERIC_CHECK);
