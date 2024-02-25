@@ -1128,8 +1128,6 @@ class ProjectController extends Controller
             $projects[$p]['progress'] = array_sum($proj);
         }
 
-        
-
         return response()->json([
             "status" => true,
             "data" => $projects
