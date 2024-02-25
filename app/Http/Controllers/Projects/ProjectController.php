@@ -1115,12 +1115,13 @@ class ProjectController extends Controller
         // hitung total prograss setiap project
         $colls = $ids;
         for ($p=0; $p < count($colls); $p++) { 
+            $proj = [];
             for ($pt=0; $pt < count($progressTask); $pt++) { 
                 if($colls[$p] === $progressTask[$pt]->project_id){
-                    
-                    $colls[$p][] = $progressTask[$pt]->project_id;
+                    $proj[] = $progressTask[$pt]->project_id;
                 }
             }
+            $colls[$p]['task'] = $proj;
         }
 
         // $collection = [];
