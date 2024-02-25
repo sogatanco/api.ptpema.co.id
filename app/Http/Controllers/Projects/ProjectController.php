@@ -1097,6 +1097,10 @@ class ProjectController extends Controller
         // ids = project id array
         $ids = json_decode($request->ids);
 
+        $projects = Projects::select('project_id')
+                    ->whereIn('project_id', $ids)
+                    -get();
+
         // kumpulin task parent
         $allTask = TaskStatus::whereIn('project_id', $ids)
                     ->where('task_parent', null)
@@ -1113,16 +1117,15 @@ class ProjectController extends Controller
                         ->get();
 
         // hitung total prograss setiap project
-        $colls = $ids;
-        for ($p=0; $p < count($colls); $p++) { 
+        for ($p=0; $p < count($projects); $p++) { 
             $proj = [];
             for ($pt=0; $pt < count($progressTask); $pt++) { 
-                if($colls[$p] === $progressTask[$pt]->project_id){
+                if($projects[$p] === $progressTask[$pt]->project_id){
                     $proj[] = $progressTask[$pt]->project_id;
                 }
             }
-            
-            $colls[$p][] = $proj;
+
+            $projects[$p]['task'] = $proj;
         }
 
         // $collection = [];
