@@ -51,47 +51,54 @@ class TaskController extends Controller
             $savedFile  = Storage::disk("public_taskfiles")->put('', $files[0]);
         }
 
-        $employeId = Employe::employeId();
-        $employeDivision = Employe::getEmployeDivision($employeId);
+        // $employeId = Employe::employeId();
+        // $employeDivision = Employe::getEmployeDivision($employeId);
+
+        // ambil divisi yang punya projek dan status aktif
+        $picActive = ProjectHistory::where(['project_id' => $request->project_id, 'active' => 1])
+                    ->first();
+
+        $divisionActive = Employe::getEmployeDivision($picActive->employe_id);
 
         // save new task
-        $data['division'] = $employeDivision->organization_id;
+        $data['division'] = $divisionActive->organization_id;
         $data['created_by'] = $employeId;
         $newTask = new Task($data);
         $newTaskSaved = $newTask->save();
 
-        if($newTaskSaved){
+        // Kode jika parent simpan progress
+        // if($newTaskSaved){
             
-            $task = Task::where('task_id', $newTask->id)
-                ->first();
+        //     $task = Task::where('task_id', $newTask->id)
+        //         ->first();
 
-            if($task->task_parent !== null){
-                // siapa parentnya
-                $parent = $task->task_parent;
+        //     if($task->task_parent !== null){
+        //         // siapa parentnya
+        //         $parent = $task->task_parent;
 
-                // jumlah subtask berapa berdasarkan parent
-                $subtaskSum = Task::where('task_parent', $parent)
-                            ->get();
+        //         // jumlah subtask berapa berdasarkan parent
+        //         $subtaskSum = Task::where('task_parent', $parent)
+        //                     ->get();
 
-                // jumlahin semua progress
-                $totalProgress = 0;
-                $totalSubtask = count($subtaskSum);
+        //         // jumlahin semua progress
+        //         $totalProgress = 0;
+        //         $totalSubtask = count($subtaskSum);
 
-                for ($sum=0; $sum < $totalSubtask; $sum++) { 
-                    $totalProgress = $subtaskSum[$sum]->task_progress + $totalProgress;
-                }
+        //         for ($sum=0; $sum < $totalSubtask; $sum++) { 
+        //             $totalProgress = $subtaskSum[$sum]->task_progress + $totalProgress;
+        //         }
 
-                // total progress dibagi jumlah subtask
-                $totalPercentage = $totalProgress/$totalSubtask;
+        //         // total progress dibagi jumlah subtask
+        //         $totalPercentage = $totalProgress/$totalSubtask;
 
-                // update ke parent
-                $parentData = [
-                    'task_progress' => $totalPercentage,
-                ];
+        //         // update ke parent
+        //         $parentData = [
+        //             'task_progress' => $totalPercentage,
+        //         ];
 
-                Task::where('task_id', $parent)->update($parentData);
-            }
-        }
+        //         Task::where('task_id', $parent)->update($parentData);
+        //     }
+        // }
         
         // save filename
         if(isset($savedFile)){
