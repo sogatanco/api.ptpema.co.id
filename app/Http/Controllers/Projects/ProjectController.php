@@ -1098,27 +1098,28 @@ class ProjectController extends Controller
         // $ids = json_decode($request->ids);
         $ids = $request->ids;
 
-        $projects = Project::select('project_id')
+        // hitung total prograss setiap project
+        if(count($ids) > 0){
+
+            $projects = Project::select('project_id')
                     ->whereIn('project_id', $ids)
                     ->get();
 
-        // kumpulin task parent
-        $allTask = TaskStatus::whereIn('project_id', $ids)
+            // kumpulin task parent
+            $allTask = TaskStatus::whereIn('project_id', $ids)
                     ->where('task_parent', null)
                     ->select('task_id')
                     ->get();
 
-        $parentIds = [];
-        for ($at=0; $at < count($allTask); $at++) { 
-            array_push($parentIds, $allTask[$at]->task_id);
-        }
+            $parentIds = [];
+            for ($at=0; $at < count($allTask); $at++) { 
+                array_push($parentIds, $allTask[$at]->task_id);
+            }
 
-        // ambil progres task parent
-        $progressTask = TaskProgress::whereIn('task_id', $parentIds)
-                        ->get();
+            // ambil progres task parent
+            $progressTask = TaskProgress::whereIn('task_id', $parentIds)
+                            ->get();
 
-        // hitung total prograss setiap project
-        if(count($projects) > 0){
             for ($p=0; $p < count($projects); $p++) { 
                 $proj = [];
                 for ($pt=0; $pt < count($progressTask); $pt++) { 
@@ -1126,8 +1127,7 @@ class ProjectController extends Controller
                         $proj[] = $progressTask[$pt]->progress;
                     }
                 }
-    
-                $projects[$p]['progress'] = array_sum($proj)/count($proj);
+                $projects[$p]['progress'] = count($proj) > 0 ? array_sum($proj)/count($proj) : 0;
             }
         }
 
