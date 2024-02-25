@@ -54,6 +54,7 @@ Route::controller(EmployeController::class)->group(function(){
 Route::controller(ProjectController::class)->group(function(){
     Route::get("/project", 'index')->middleware("role:Employee");
     Route::get("/project/{project_id}", 'show')->middleware("role:Employee");
+    Route::get("/project/progress/collection", "progressCollection")->middleware("role:Employee");
     Route::get("/project/business/options", 'businessOptions')->middleware("role:Employee");
     Route::get("/project/partner/options", 'partnerOptions')->middleware("role:Employee");
     Route::post("/project", 'store')->middleware("role:Staff,Manager");
@@ -71,7 +72,6 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff,Manager");
     Route::delete("/project/{project_id}", "destroy")->middleware("role:Staff,Manager");
     Route::post("/project/activity-base/add", "createActivityBase")->middleware("role:Staff,Manager");
-    Route::get("/project/progress-collection", "progressCollection")->middleware("role:Employee");
 });
 
 // Task routes
