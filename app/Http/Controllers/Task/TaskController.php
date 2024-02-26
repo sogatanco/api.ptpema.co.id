@@ -16,6 +16,7 @@ use App\Models\Structure;
 use App\Models\Projects\Project;
 use App\Models\Projects\ProjectStage;
 use App\Models\Projects\ProjectHistory;
+use App\Models\Projects\TaskProgress;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -1315,6 +1316,13 @@ class TaskController extends Controller
                 $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
                                             ->where('task_id', $all[$at]->task_id)
                                             ->get(); 
+                if($all[$at]->task_parent === null){
+                    $taskProgress = TaskProgress::select('progress')
+                                ->where('task_id', $all[$at]->task_id)
+                                ->first(); 
+
+                    $all[$at]['task_progresss'] = $taskProgress->progress;
+                }
             }
         }
 
