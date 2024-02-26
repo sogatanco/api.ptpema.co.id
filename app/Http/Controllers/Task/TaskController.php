@@ -1226,7 +1226,7 @@ class TaskController extends Controller
 
             $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
         } else {
-            // jika user active adalah manager
+            // jika user active adalah manager  
             $isMemberActive = true;
         }
         // CHECK USER ADALAH DIVISI AKTIF
@@ -1321,7 +1321,7 @@ class TaskController extends Controller
                                 ->where('task_id', $all[$at]->task_id)
                                 ->first(); 
 
-                    $all[$at]['task_progresss'] = $taskProgress->progress;
+                    $all[$at]['task_progress'] = $taskProgress->progress;
                 }
             }
         }
