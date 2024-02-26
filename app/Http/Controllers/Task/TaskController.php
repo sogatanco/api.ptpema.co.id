@@ -1316,13 +1316,12 @@ class TaskController extends Controller
                 $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
                                             ->where('task_id', $all[$at]->task_id)
                                             ->get(); 
-                if($all[$at]->task_parent === null){
-                    $taskProgress = TaskProgress::select('progress')
+                
+                $taskProgress = TaskProgress::select('progress')
                                 ->where('task_id', $all[$at]->task_id)
                                 ->first(); 
 
-                    $all[$at]['task_progress'] = $taskProgress->progress;
-                }
+                $all[$at]['task_progress'] = $taskProgress->progress;
             }
         }
 
