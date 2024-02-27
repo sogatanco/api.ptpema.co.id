@@ -748,10 +748,9 @@ class TaskController extends Controller
             $employeDivision = Employe::getEmployeDivision($employeId);
 
             // ambil atasan langsung manager
-            $manager = Employe::where('employees.employe_id', $employeId)
-                    ->select('struktur_lengkap_oke.direct_atasan')
-                    ->join('struktur_lengkap_oke', 'struktur_lengkap_oke.employe_id', '=', 'employees.employe_id')
-                    ->first();
+            $manager = Structure::select('direct_atasan')
+                        ->where('employe_id', $employeId)
+                        ->first();
 
             $where =[
                 'task_latest_status.project_id' => $projectId,
@@ -770,7 +769,7 @@ class TaskController extends Controller
                 'direct_atasan' => $employeId,
                 'status' => 2
             ];
-            
+
             $tasks = TaskStatus::where($where)
                     ->get();
             
@@ -1380,7 +1379,6 @@ class TaskController extends Controller
            }
            // ADD LEVEL 2 TO LEVEL 1
         }
-
 
         return response()->json([
             "status" => true,

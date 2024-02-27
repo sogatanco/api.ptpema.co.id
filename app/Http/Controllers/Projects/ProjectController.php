@@ -1144,11 +1144,18 @@ class ProjectController extends Controller
         // employe sebagai manager
         $employeId = Employe::employeId();
         // key: projectId, stages active,
-        $projects = "jfjfjf";
+
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        $projects = Project::where('project_task_pic.employe_id', $employeId)
+                    ->where('projects.division', '!=', $employeDivision->organization_id)
+                    ->join('project_task_pic', 'project_task_pic.project_id', '=', 'projects.project_id')
+                    ->get();
 
         return response()->json([
             "status" => true,
-            "message" => "from assigned project endpoint"
+            "total" => count($projects),
+            "data" => $projects
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
