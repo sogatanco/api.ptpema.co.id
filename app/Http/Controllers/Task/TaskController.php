@@ -746,6 +746,7 @@ class TaskController extends Controller
         if(in_array("Manager", $userRequest->roles)){
             // jika manager
             $employeDivision = Employe::getEmployeDivision($employeId);
+            $managerDivision = $employeDivision->organization_id;
 
             $where =[
                 'project_id' => $projectId,
@@ -753,9 +754,11 @@ class TaskController extends Controller
                 'status' => 2,
             ];
 
-            $tasks = TaskStatus::where($where)
-                    ->where('direct_atasan', '!=', $employeId)
+            $tasks = TaskStatus::select('task_latest_status.*', 'project_task_pics.employe_id')
+                    ->where($where)
+                    ->join('project_task_pics', 'project_task_pics.task_id', '=', 'task_latest_status.task_id')
                     ->get();
+            
         }else{
             // jika direksi
             $where =[
@@ -763,11 +766,11 @@ class TaskController extends Controller
                 'direct_atasan' => $employeId,
                 'status' => 2
             ];
-
+            
             $tasks = TaskStatus::where($where)
                     ->get();
+            
         }
-        
         
         $taskIds = [];
         if(count($tasks) > 0) {
