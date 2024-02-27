@@ -750,8 +750,12 @@ class TaskController extends Controller
             $where =[
                 'project_id' => $projectId,
                 'division' => $employeDivision->organization_id,
-                'status' => 2
+                'status' => 2,
             ];
+
+            $tasks = TaskStatus::where($where)
+                    ->where('direct_atasan', '!=', $employeId)
+                    ->get();
         }else{
             // jika direksi
             $where =[
@@ -759,10 +763,11 @@ class TaskController extends Controller
                 'direct_atasan' => $employeId,
                 'status' => 2
             ];
+
+            $tasks = TaskStatus::where($where)
+                    ->get();
         }
         
-        $tasks = TaskStatus::where($where)
-                ->get();
         
         $taskIds = [];
         if(count($tasks) > 0) {

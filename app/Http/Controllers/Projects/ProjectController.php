@@ -1141,6 +1141,11 @@ class ProjectController extends Controller
 
     public function assignedProject()
     {
+        // employe sebagai manager
+        $employeId = Employe::employeId();
+        // key: projectId, stages active,
+        $projects = "jfjfjf";
+
         return response()->json([
             "status" => true,
             "message" => "from assigned project endpoint"
