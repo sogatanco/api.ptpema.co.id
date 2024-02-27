@@ -749,7 +749,7 @@ class TaskController extends Controller
             $managerDivision = $employeDivision->organization_id;
 
             $where =[
-                'project_id' => $projectId,
+                'task_latest_status.project_id' => $projectId,
                 'division' => $employeDivision->organization_id,
                 'status' => 2,
             ];
@@ -766,7 +766,7 @@ class TaskController extends Controller
                 'direct_atasan' => $employeId,
                 'status' => 2
             ];
-            
+
             $tasks = TaskStatus::where($where)
                     ->get();
             
