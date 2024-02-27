@@ -754,7 +754,7 @@ class TaskController extends Controller
                 'status' => 2,
             ];
 
-            $tasks = TaskStatus::select('task_latest_status.*', 'project_task_pics.employe_id')
+            $tasks = TaskStatus::select('task_latest_status.*', 'project_task_pics.employe_id as pic')
                     ->where($where)
                     ->join('project_task_pics', 'project_task_pics.task_id', '=', 'task_latest_status.task_id')
                     ->get();
