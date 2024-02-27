@@ -1138,4 +1138,12 @@ class ProjectController extends Controller
             "data" => $projects
         ], 200, [], JSON_NUMERIC_CHECK);
     }
+
+    public function assignedProject()
+    {
+        return response()->json([
+            "status" => true,
+            "message" => "from assigned project endpoint"
+        ], 200, [], JSON_NUMERIC_CHECK);
+    }
 }
