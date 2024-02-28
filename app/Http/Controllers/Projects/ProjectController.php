@@ -1147,11 +1147,19 @@ class ProjectController extends Controller
 
         $employeDivision = Employe::getEmployeDivision($employeId);
 
+        // $projects[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
+        //                                             ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
+        //                                             ->join('project_phases', 'project_phases.id','=','project_stages.phase')
+        //                                             ->first();
+
         $projects = TaskPic::where('project_task_pics.employe_id', $employeId)
                     ->join('projects', 'project_task_pics.project_id', '=', 'projects.project_id')
                     ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
                     ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
+                    ->leftJoin('project_stages', 'project_stages.project_id', '=', 'projects.project_id')
+                    ->leftJoin('project_phases', 'project_phases.id','=','project_stages.phase')
                     ->where('projects.division', '!=', $employeDivision->organization_id)
+                    ->where(['project_stages.project_id' => 'projects.ptoject_id', 'project.stages.status' => 1])
                     ->get();
 
         return response()->json([
