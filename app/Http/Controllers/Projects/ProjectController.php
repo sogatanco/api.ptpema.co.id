@@ -1159,7 +1159,7 @@ class ProjectController extends Controller
                     ->leftJoin('project_stages', 'project_stages.project_id', '=', 'projects.project_id')
                     ->leftJoin('project_phases', 'project_phases.id','=','project_stages.phase')
                     ->where('projects.division', '!=', $employeDivision->organization_id)
-                    ->where(['project_stages.project_id' => 'projects.ptoject_id', 'project_stages.status' => 1])
+                    ->where(['project_stages.project_id' => 'projects.project_id', 'project_stages.status' => 1])
                     ->get();
 
         return response()->json([
