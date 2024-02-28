@@ -1147,7 +1147,7 @@ class ProjectController extends Controller
 
         $employeDivision = Employe::getEmployeDivision($employeId);
 
-        $projects = TaskStatus::where('project_task_pics.employe_id', $employeId)
+        $projects = TaskPic::where('project_task_pics.employe_id', $employeId)
                     ->join('projects', 'project_task_pics.project_id', '=', 'projects.project_id')
                     ->where('projects.division', '!=', $employeDivision->organization_id)
                     ->get();
