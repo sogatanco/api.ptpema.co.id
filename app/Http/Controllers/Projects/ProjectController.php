@@ -1149,6 +1149,8 @@ class ProjectController extends Controller
 
         $projects = TaskPic::where('project_task_pics.employe_id', $employeId)
                     ->join('projects', 'project_task_pics.project_id', '=', 'projects.project_id')
+                    ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+                    ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
                     ->where('projects.division', '!=', $employeDivision->organization_id)
                     ->get();
 
