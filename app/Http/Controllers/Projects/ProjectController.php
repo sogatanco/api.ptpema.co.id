@@ -1153,6 +1153,68 @@ class ProjectController extends Controller
                     ->where('projects.division', '!=', $employeDivision->organization_id)
                     ->get();
 
+        if(count($projects) > 0){
+            for ($p=0; $p < count($projects); $p++) { 
+        
+                // cari pic project active
+                $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
+                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
+                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
+                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                        ->where(['project_id' => $projects[$p]->project_id, 'active' => 1])
+                        ->first();
+        
+                // cari semua task parent berdasarkan divisi yg akses
+                $allTask[$p] = Task::select('task_id', 'task_progress')
+                        ->where(['project_id' =>$projects[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
+                        ->get();
+        
+                $taskIds[$p]= [];
+                $totalProgress[$p] = [];
+        
+                // inisiasi taskid dan progress value
+                for ($tp=0; $tp < count($allTask[$p]); $tp++) { 
+                    $taskIds[$p][] = $allTask[$p][$tp]->task_id;
+                    $totalProgress[$p][] = $allTask[$p][$tp]->task_progress;
+                }
+        
+                // cari task
+                $taskList[$p] = TaskApproval::whereIn('task_id', $taskIds[$p])
+                            ->groupBy('task_id')
+                            ->orderBy('approval_id', 'desc')
+                            ->get(['task_id', TaskApproval::raw('MAX(approval_id) as approval_id')]);
+        
+                // ambil status task
+                $progress[$p] = array_sum($totalProgress[$p]);
+                $totalTask[$p] = count($allTask[$p]);
+        
+                // cari stage aktif
+                if($projects[$p]->category === 'business'){
+                    // jika category business
+                    $projects[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
+                                                    ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
+                                                    ->join('project_phases', 'project_phases.id','=','project_stages.phase')
+                                                    ->first();
+                }else{
+                    // jika category non-business
+                    $projects[$p]['current_stage'] = ProjectStage::select(
+                                                'project_stages.id AS stage_id',
+                                                'start_date',
+                                                'end_date',
+                                            )
+                                            ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
+                                            ->first();
+                }   
+        
+                $projects[$p]['total_progress'] = 0;
+                
+                if($progress[$p] > 0 && $totalTask > 0){
+                    $projects[$p]['total_progress'] = $progress[$p]/$totalTask[$p];
+                }
+            }
+        }
+            
+
         return response()->json([
             "status" => true,
             "total" => count($projects),
