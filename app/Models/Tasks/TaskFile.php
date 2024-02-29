@@ -12,5 +12,6 @@ class TaskFile extends Model
     protected $fillable = [
         'task_id',
         'file_name',
+        'employe_id'
     ];
 }
