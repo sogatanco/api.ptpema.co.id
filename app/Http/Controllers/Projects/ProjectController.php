@@ -512,8 +512,9 @@ class ProjectController extends Controller
 
         $filteredFiles = [];
         for ($i=0; $i < count($tasks); $i++) { 
-            $files[$i] = TaskFile::select('file_id',  'task_id', 'file_name', 'created_at')
+            $files[$i] = TaskFile::select('file_id',  'task_id', 'file_name', 'employees.first_name', 'created_at')
                         ->where('task_id', $tasks[$i]->task_id)
+                        ->join('employees', 'employees.employe_id', '=', 'project_task_files.employe_id')
                         ->orderBy('file_id', 'desc')
                         ->get();
 
