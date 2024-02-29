@@ -106,7 +106,8 @@ class TaskController extends Controller
         if(isset($savedFile)){
             $fileData = [
                 'task_id' => $newTask->id,
-                'file_name' => $savedFile
+                'file_name' => $savedFile,
+                'employe_id' => $employeId
             ];
             $newFile = new TaskFile($fileData);
             $newFile->save();
@@ -715,10 +716,13 @@ class TaskController extends Controller
             
         }
 
+        $employeId = Employe::employeId();
+
         if(isset($savedFile)){
             $fileData = [
                 'task_id' => $taskId,
-                'file_name' => $thefile
+                'file_name' => $thefile,
+                'employe_id' => $employeId
             ];
             $newFile = new TaskFile($fileData);
             $newFile->save();
