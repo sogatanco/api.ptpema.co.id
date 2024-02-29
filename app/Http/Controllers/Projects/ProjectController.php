@@ -507,13 +507,26 @@ class ProjectController extends Controller
 
     public function files($projectId)
     {
+
+        $employeId = Employe::employeId();
         $tasks = Task::where('project_id', $projectId)
                 ->get();
 
+        $userRoles = Auth::user()->roles;
+
+        
+
         $filteredFiles = [];
         for ($i=0; $i < count($tasks); $i++) { 
+
+            if(in_array('Manager', $userRoles)){
+                $where = ['task_id' => $tasks[$i]->task_id];
+            }else{
+                $where = ['task_id' => $tasks[$i]->task_id, 'project_task_files.employe_id' => $employeId];
+            }
+
             $files[$i] = TaskFile::select('file_id',  'task_id', 'file_name', 'employees.first_name as employee', 'project_task_files.created_at')
-                        ->where('task_id', $tasks[$i]->task_id)
+                        ->where($where)
                         ->join('employees', 'employees.employe_id', '=', 'project_task_files.employe_id')
                         ->orderBy('file_id', 'desc')
                         ->get();
