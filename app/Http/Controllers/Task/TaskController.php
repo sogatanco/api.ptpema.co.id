@@ -147,7 +147,7 @@ class TaskController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($projectId, $taskId)
+    public function show($taskId)
     {
         $where = ['project_id' => $projectId, 'task_id' => $taskId];
         $task = Task::where($where)->first();
