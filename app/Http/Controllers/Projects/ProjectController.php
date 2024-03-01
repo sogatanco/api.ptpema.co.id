@@ -514,8 +514,6 @@ class ProjectController extends Controller
 
         $userRoles = Auth::user()->roles;
 
-        
-
         $filteredFiles = [];
         for ($i=0; $i < count($tasks); $i++) { 
 
