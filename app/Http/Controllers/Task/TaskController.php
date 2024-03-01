@@ -1259,7 +1259,6 @@ class TaskController extends Controller
         $all = [];
         if(count($taskIdsTemp) > 0){
             $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
-                    ->select('task_latest_status.*', TaskStatus::raw('(SELECT COUNT(*) FROM task_latest_status as child WHERE child.task_parent = task_latest_status.task_id) AS child'))
                     ->get();
 
             // CHECK LEVEL1,LEVEL2,LEVEL3
@@ -1316,6 +1315,7 @@ class TaskController extends Controller
             $allTask = array_merge($level1Ids, $level2Ids, $level3Ids);
 
             $all = TaskStatus::whereIn('task_id', $allTask)
+                    ->select('task_latest_status.*', TaskStatus::raw('(SELECT COUNT(*) FROM task_latest_status as child WHERE child.task_parent = task_latest_status.task_id) AS child'))
                     ->get();
         }
 
