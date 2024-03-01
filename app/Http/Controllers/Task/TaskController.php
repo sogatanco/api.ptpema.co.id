@@ -149,7 +149,7 @@ class TaskController extends Controller
      */
     public function show($taskId)
     {
-        $where = ['project_id' => $projectId, 'task_id' => $taskId];
+        $where = ['task_id' => $taskId];
         $task = Task::where($where)->first();
 
         return response()->json([
