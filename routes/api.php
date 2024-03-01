@@ -80,7 +80,7 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("/task", "index");
     Route::post("/task", "store")->middleware("role:Employee");
     Route::get("/task/history/{task_id}", "taskHistory")->middleware('role:Employee');
-    Route::get("/task/{project_id}/{task_id}", "show")->middleware("role:Employee");
+    Route::get("/task/{task_id}/show", "show")->middleware("role:Employee");
     Route::patch("/task/{task_id}", "update")->middleware("role:Employee");
     Route::put("/task/{task_id}/status", "updateStatus")->middleware("role:Employee,Manager");
     Route::get("/task/{project_id}", "getTodo")->middleware("role:Employee");
