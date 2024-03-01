@@ -527,7 +527,7 @@ class ProjectController extends Controller
 
             $files[$i] = TaskFile::select('file_id',  'task_id', 'file_name', 'employees.first_name as employee', 'project_task_files.created_at')
                         ->where($where)
-                        ->join('employees', 'employees.employe_id', '=', 'project_task_files.employe_id')
+                        ->lefJoin('employees', 'employees.employe_id', '=', 'project_task_files.employe_id')
                         ->orderBy('file_id', 'DESC')
                         ->get();
 
