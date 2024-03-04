@@ -150,7 +150,7 @@ class TaskController extends Controller
     public function show($taskId)
     {
         $task = TaskStatus::where('task_latest_status.task_id', $taskId)
-                ->leftJoin('list_task_final as a', 'a.task_id', '=' , 'task_lates_status.task_id')
+                ->leftJoin('list_task_final as a', 'a.task_id', '=' , 'task_latest_status.task_id')
                 ->select('task_latest_status.*', 'a.progress')
                 ->first();
 
