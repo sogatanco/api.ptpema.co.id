@@ -150,7 +150,8 @@ class TaskController extends Controller
     public function show($taskId)
     {
         $where = ['task_id' => $taskId];
-        $task = Task::where($where)->first();
+        $task = TaskStatus::where($where)
+                ->first();
 
         return response()->json([
             "status" => true,
