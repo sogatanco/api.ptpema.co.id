@@ -154,6 +154,11 @@ class TaskController extends Controller
                 ->select('task_latest_status.*', 'a.progress')
                 ->first();
 
+        $task['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                    ->where('task_id', $taskId)
+                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                    ->get();
+
         return response()->json([
             "status" => true,
             "data" => $task
