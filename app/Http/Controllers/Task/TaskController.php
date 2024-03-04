@@ -151,6 +151,8 @@ class TaskController extends Controller
     {
         $where = ['task_id' => $taskId];
         $task = TaskStatus::where($where)
+                ->leftJoin('list_task_final as a', 'a.task_id', '=' , 'task_lates_status.task_id')
+                ->select('task_latest_status.*', 'a.progress')
                 ->first();
 
         return response()->json([
