@@ -1236,9 +1236,15 @@ class ProjectController extends Controller
 
     public function recentUpdate()
     {
+        $data = TaskStatus::SELECT('DISTINC project_id')
+                ->orderBy('approval_id', 'DESC')
+                ->limit(10)
+                ->get();
+
         return response()->json([
             "status" => true,
-            "message" => "From recent update project endpoint"
+            "message" => "From recent update project endpoint",
+            "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 }
