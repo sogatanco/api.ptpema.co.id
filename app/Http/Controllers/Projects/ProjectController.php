@@ -1237,12 +1237,12 @@ class ProjectController extends Controller
     public function recentUpdate()
     {
         $data = TaskStatus::where('division', 21)
-                ->distinct('project_id')
-                ->get();
+                ->distinct()
+                ->get(['project_id']);
 
         return response()->json([
             "status" => true,
-            "message" => "From recent update project endpoint",
+            "message" => "From recent update project endpoint sd,jbkb dsmbcbsdcsdjbc soaxhbcsodhcg shdc",
             "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
     }
