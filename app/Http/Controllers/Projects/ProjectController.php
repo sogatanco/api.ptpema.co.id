@@ -1239,7 +1239,7 @@ class ProjectController extends Controller
         $data = TaskStatus::select('task_latest_status.*')
                 ->distinct('project_id')
                 ->orderBy('approval_id', 'DESC')
-                ->limit(10)
+                ->where('division', 21)
                 ->get();
 
         return response()->json([
