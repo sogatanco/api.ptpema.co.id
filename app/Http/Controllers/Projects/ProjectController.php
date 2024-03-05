@@ -1236,7 +1236,8 @@ class ProjectController extends Controller
 
     public function recentUpdate()
     {
-        $data = TaskStatus::SELECT('DISTINC project_id')
+        $data = TaskStatus::select('task_latest_status.*')
+                ->selectRaw('distinct on (task_latest_status.project_id)')
                 ->orderBy('approval_id', 'DESC')
                 ->limit(10)
                 ->get();
