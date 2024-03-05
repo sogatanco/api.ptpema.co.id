@@ -1238,7 +1238,6 @@ class ProjectController extends Controller
     {
         $data = TaskStatus::select('project_id', 'task_id')
                 ->distinct('project_id')
-                ->orderBy('approval_id', 'DESC')
                 ->where('division', 21)
                 ->get();
 
