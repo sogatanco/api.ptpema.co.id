@@ -1238,6 +1238,8 @@ class ProjectController extends Controller
     {
         $data = TaskStatus::where('division', 21)
                 ->distinct()
+                ->orderBy('approval_id', 'DESC')
+                ->limit(10)
                 ->get(['project_id']);
 
         return response()->json([
