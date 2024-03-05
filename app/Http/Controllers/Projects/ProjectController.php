@@ -1238,12 +1238,11 @@ class ProjectController extends Controller
     {
         $data = TaskStatus::where('division', 21)
                 ->distinct()
-                ->limit(5)
                 ->get(['project_id']);
 
         return response()->json([
             "status" => true,
-            "message" => "From recent update project endpoint dfgdg",
+            "total" => count($data),
             "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
     }
