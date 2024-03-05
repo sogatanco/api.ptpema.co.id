@@ -1236,11 +1236,9 @@ class ProjectController extends Controller
 
     public function recentUpdate()
     {
-        $data = TaskStatus::select('approval_id','project_id')
-                ->orderBy('approval_id', 'DESC')
-                ->where('division', 21)
+        $data = TaskStatus::where('division', 21)
                 ->distinct()
-                // ->limit(10)
+                ->limit(5)
                 ->get(['project_id']);
 
         return response()->json([
