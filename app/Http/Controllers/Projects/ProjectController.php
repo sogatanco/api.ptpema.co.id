@@ -1239,7 +1239,7 @@ class ProjectController extends Controller
         $data = TaskStatus::select('project_id', 'task_id')
                 ->distinct()
                 ->where('division', 21)
-                ->get(['project_id']);
+                ->get();
 
         return response()->json([
             "status" => true,
