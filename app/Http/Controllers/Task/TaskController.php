@@ -862,6 +862,7 @@ class TaskController extends Controller
 
     public function taskByProject(Request $request, $projectId)
     {  
+        $userRequest = Auth::user();
         $query = $request->query('div');
 
         // fase projek
@@ -974,6 +975,17 @@ class TaskController extends Controller
                 $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
                                             ->where('task_id', $all[$at]->task_id)
                                             ->get(); 
+                                    
+                if(in_array("Director", $userRequest->roles)){
+
+                    // jika ada di list favorite untuk direksi
+                    $isFavorite[$p] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $all[$at]->task_id])
+                                    ->first();
+
+                    $all[$at]['isFavorite'] = $isFavorite[$p] ? true : false;
+                    
+                }
+                
             }
         }
     
