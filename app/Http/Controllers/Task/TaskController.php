@@ -962,8 +962,7 @@ class TaskController extends Controller
             $all = TaskStatus::whereIn('task_id', $allTask)
                     ->get();
         }
-    
-    
+
         if(count($all) > 0) {
             for ($at=0; $at < count($all); $at++) { 
                 $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')

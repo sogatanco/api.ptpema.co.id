@@ -1233,4 +1233,12 @@ class ProjectController extends Controller
             "data" => $projects
         ], 200, [], JSON_NUMERIC_CHECK);
     }
+
+    public function recentUpdate()
+    {
+        return response()->json([
+            "status" => true,
+            "message" => "From recent update project endpoint"
+        ], 200, [], JSON_NUMERIC_CHECK);
+    }
 }
