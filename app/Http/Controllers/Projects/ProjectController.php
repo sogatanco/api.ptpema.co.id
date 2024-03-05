@@ -1240,11 +1240,11 @@ class ProjectController extends Controller
                 ->distinct()
                 ->orderBy('approval_id', 'DESC')
                 ->limit(10)
-                ->get(['project_id']);
+                ->get(['approval_id','project_id']);
 
         return response()->json([
             "status" => true,
-            "message" => "From recent update project endpoint sd,jbkb dsmbcbsdcsdjbc soaxhbcsodhcg shdc",
+            "message" => "From recent update project endpoint",
             "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
     }
