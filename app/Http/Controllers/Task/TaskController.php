@@ -863,6 +863,7 @@ class TaskController extends Controller
     public function taskByProject(Request $request, $projectId)
     {  
         $userRequest = Auth::user();
+        $employeId = Employe::employeId();
         $query = $request->query('div');
 
         // fase projek
