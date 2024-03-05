@@ -1240,7 +1240,7 @@ class ProjectController extends Controller
                 ->distinct()
                 ->orderBy('approval_id', 'DESC')
                 ->limit(10)
-                ->get(['approval_id','project_id']);
+                ->get(['project_id','approval_id']);
 
         return response()->json([
             "status" => true,
