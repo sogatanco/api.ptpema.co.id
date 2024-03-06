@@ -919,55 +919,55 @@ class ProjectController extends Controller
                     ->get();
 
         if(count($somplak) > 0){
-                for ($p=0; $p < 17; $p++) { 
+                for ($p=0; $p < 1; $p++) { 
                     
                     // data dari stage yang aktif
-                    if($somplak[$p]->category === 'business'){
-                        $somplak[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
-                                                    ->where(['project_id' => $somplak[$p]->project_id, 'status' => 1])
+                    if($somplak[0]->category === 'business'){
+                        $somplak[0]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
+                                                    ->where(['project_id' => $somplak[0]->project_id, 'status' => 1])
                                                     ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
                                                     ->first();
                     }else{
-                        $somplak[$p]['current_stage'] = ProjectStage::where(['project_id' => $somplak[$p]->project_id, 'status' => 1])
+                        $somplak[0]['current_stage'] = ProjectStage::where(['project_id' => $somplak[0]->project_id, 'status' => 1])
                                                     ->first();
                     }   
 
                     // cari pic project active
-                    $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
+                    $data[0]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
                             ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
                             ->join('positions', 'positions.position_id', '=', 'employees.position_id')
                             ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-                            ->where(['project_id' => $somplak[$p]->project_id, 'active' => 1])
+                            ->where(['project_id' => $somplak[0]->project_id, 'active' => 1])
                             ->first();
 
                     // cari semua task parent berdasarkan divisi yg akses
-                    $allTask[$p] = Task::select('task_id', 'task_progress')
-                            ->where(['project_id' =>$somplak[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
+                    $allTask[0] = Task::select('task_id', 'task_progress')
+                            ->where(['project_id' =>$somplak[0]->project_id, 'task_parent' => null, 'division' => $data[0]['pic_active']->organization_id])
                             ->get();
     
-                    $taskIds[$p]= [];
-                    $totalProgress[$p] = [];
+                    $taskIds[0]= [];
+                    $totalProgress[0] = [];
     
                     // inisiasi taskid dan progress value
-                    for ($tp=0; $tp < count($allTask[$p]); $tp++) { 
-                        $taskIds[$p][] = $allTask[$p][$tp]->task_id;
-                        $totalProgress[$p][] = $allTask[$p][$tp]->task_progress;
+                    for ($tp=0; $tp < count($allTask[0]); $tp++) { 
+                        $taskIds[0][] = $allTask[0][$tp]->task_id;
+                        $totalProgress[0][] = $allTask[0][$tp]->task_progress;
                     }
     
                     // cari task
-                    $taskList[$p] = TaskApproval::whereIn('task_id', $taskIds[$p])
+                    $taskList[0] = TaskApproval::whereIn('task_id', $taskIds[0])
                                 ->groupBy('task_id')
                                 ->orderBy('approval_id', 'desc')
                                 ->get(['task_id', TaskApproval::raw('MAX(approval_id) as approval_id')]);
     
                     // ambil status task
-                    $progress[$p] = array_sum($totalProgress[$p]);
-                    $totalTask[$p] = count($allTask[$p]);
+                    $progress[0] = array_sum($totalProgress[0]);
+                    $totalTask[0] = count($allTask[0]);
     
-                    $somplak[$p]['total_progress'] = 0;
+                    $somplak[0]['total_progress'] = 0;
                     
-                    if($progress[$p] > 0 && $totalTask > 0){
-                        $somplak[$p]['total_progress'] = $progress[$p]/$totalTask[$p];
+                    if($progress[0] > 0 && $totalTask > 0){
+                        $somplak[0]['total_progress'] = $progress[0]/$totalTask[0];
                     }
                 }
         }
