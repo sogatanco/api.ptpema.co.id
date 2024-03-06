@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'dapi/*', 'vapi/*', 'sanctum/csrf-cookie', 'api', 'dapi', 'vapi'],
+    'paths' => ['api/*', 'dapi/*', 'vapi/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
@@ -25,7 +25,7 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['Access-Control-Allow-Origin'],
+    'exposed_headers' => ['*'],
 
     'max_age' => 0,
 
