@@ -977,7 +977,7 @@ class ProjectController extends Controller
             "projIds" => $projectIds,
             "total" => count($projects),
             "data" => $projects,
-            "somplak" => $somplak[0]->category
+            "somplak" => $somplak
         ],200, [], JSON_NUMERIC_CHECK);
     }
     // OLD FUNCTION projectByEmployeDivision
