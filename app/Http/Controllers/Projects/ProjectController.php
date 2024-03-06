@@ -1241,10 +1241,11 @@ class ProjectController extends Controller
                 ->where('division', 21)
                 ->groupBy('project_id')
                 ->orderBy('approval_id', 'DESC')
+                ->limit(10)
                 ->get();
 
         return response()->json([
-            "status" => "slebeww",
+            "status" => true,
             "total" => count($data),
             "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
