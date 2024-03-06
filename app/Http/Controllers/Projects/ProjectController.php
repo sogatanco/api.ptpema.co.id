@@ -907,7 +907,7 @@ class ProjectController extends Controller
         $projects = Project::whereIn('project_id', $projectIds)
                     ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
                     ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
-                    ->orderBy('project_id', 'desc')
+                    // ->orderBy('project_id', 'desc')
                     ->get();
 
         if(count($projects) > 0){
