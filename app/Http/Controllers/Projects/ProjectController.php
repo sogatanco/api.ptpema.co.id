@@ -27,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 // testing
 class ProjectController extends Controller
 {
@@ -1236,12 +1237,11 @@ class ProjectController extends Controller
 
     public function recentUpdate()
     {
-        $data = TaskStatus::select('*')
+        $data = TaskStatus::select('*', DB::raw("MAX(approval_id) as approval_id"))
                 ->where('division', 21)
-                // ->groupBy('project_id')
                 ->orderBy('approval_id', 'DESC')
-                ->get()
-                ->unique('project_id');
+                ->groupBy('project_id')
+                ->get();
 
         return response()->json([
             "status" => true,
