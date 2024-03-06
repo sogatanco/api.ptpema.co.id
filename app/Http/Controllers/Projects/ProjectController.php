@@ -919,7 +919,7 @@ class ProjectController extends Controller
                     ->get();
 
         if(count($somplak) > 0){
-                for ($p=0; $p < count($somplak); $p++) { 
+                for ($p=0; $p < 17; $p++) { 
                     
                     // data dari stage yang aktif
                     if($somplak[$p]->category === 'business'){
