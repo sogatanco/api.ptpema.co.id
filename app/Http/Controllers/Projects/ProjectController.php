@@ -900,29 +900,29 @@ class ProjectController extends Controller
 
         // project id array
         $projectIds = [];
-        $projects = [];
+        // $projects = [];
         for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) { 
             $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
 
-            $proj = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
-                        ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
-                        ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
-                        ->first();
+            // $proj = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
+            //             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+            //             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
+            //             ->first();
 
-            array_push($projects, $proj);
+            // array_push($projects, $proj);
         };
 
-        // $projects = Project::whereIn('project_id', $projectIds)
-        //             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
-        //             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
-        //             // ->orderBy('project_id', 'desc')
-        //             ->get();
+        $projects = Project::whereIn('project_id', $projectIds)
+                    ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+                    ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
+                    // ->orderBy('project_id', 'desc')
+                    ->get();
 
         if(count($projects) > 0){
                 for ($p=0; $p < count($projects); $p++) { 
                     
                     // data dari stage yang aktif
-                    if($projects[$p]['category'] === 'business'){
+                    if($projects[$p]->category === 'business'){
                         $projects[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
                                                     ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
                                                     ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
