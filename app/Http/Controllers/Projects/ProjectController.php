@@ -1237,7 +1237,14 @@ class ProjectController extends Controller
 
     public function recentUpdate()
     {
-        $data = TaskStatus::select('*')
+        $data = TaskStatus::select('*', DB::raw("MAX(project_id) as project_id"))
+                ->where('division', 21)
+                ->groupBy('project_id')
+                ->latest('updated_at')
+                ->orderBy('updated_at', 'DESC')
+                ->get();
+
+        $data = TaskStatus::select('*', DB::raw("MAX(approval_id) as approval_id"))
                 ->where('division', 21)
                 ->groupBy('project_id')
                 ->orderBy('approval_id', 'DESC')
@@ -1245,7 +1252,7 @@ class ProjectController extends Controller
                 ->get();
 
         return response()->json([
-            "status" => true,
+            "status" => "fffff",
             "total" => count($data),
             "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
