@@ -922,15 +922,15 @@ class ProjectController extends Controller
                 for ($p=0; $p < count($projects); $p++) { 
                     
                     // data dari stage yang aktif
-                    // if($projects[$p]->category === 'business'){
-                    //     $projects[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
-                    //                                 ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
-                    //                                 ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
-                    //                                 ->first();
-                    // }else{
-                    //     $projects[$p]['current_stage'] = ProjectStage::where(['project_id' => $projects[$p]->project_id, 'status' => 1])
-                    //                                 ->first();
-                    // }   
+                    if($projects[$p]['category'] === 'business'){
+                        $projects[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
+                                                    ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
+                                                    ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
+                                                    ->first();
+                    }else{
+                        $projects[$p]['current_stage'] = ProjectStage::where(['project_id' => $projects[$p]->project_id, 'status' => 1])
+                                                    ->first();
+                    }   
 
                     // cari pic project active
                     $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
