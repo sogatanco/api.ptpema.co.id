@@ -1238,9 +1238,10 @@ class ProjectController extends Controller
     {
         $data = TaskStatus::select('*')
                 ->where('division', 21)
-                ->groupBy('project_id')
+                // ->groupBy('project_id')
                 ->orderBy('approval_id', 'DESC')
-                ->get();
+                ->get()
+                ->unique('project_id');
 
         return response()->json([
             "status" => true,
