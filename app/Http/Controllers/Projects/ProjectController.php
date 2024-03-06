@@ -899,17 +899,17 @@ class ProjectController extends Controller
                         ->get();
 
         // project id array
-        $projectIds = [];
+        $somplak = [];
         // $projects = [];
         for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) { 
             $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
 
-            // $proj = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
-            //             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
-            //             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
-            //             ->first();
+            $proj = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
+                        ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+                        ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
+                        ->first();
 
-            // array_push($projects, $proj);
+            array_push($somplak, $proj);
         };
 
         $projects = Project::whereIn('project_id', $projectIds)
@@ -976,7 +976,8 @@ class ProjectController extends Controller
             "message" => true,
             "projIds" => $projectIds,
             "total" => count($projects),
-            "data" => $projects
+            "data" => $projects,
+            "somplak" => $somplak
         ],200, [], JSON_NUMERIC_CHECK);
     }
     // OLD FUNCTION projectByEmployeDivision
