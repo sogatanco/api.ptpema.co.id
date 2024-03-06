@@ -899,10 +899,10 @@ class ProjectController extends Controller
                         ->get();
 
         // project id array
-        $projectIds = [];
+        // $projectIds = [];
         $meles = [];
         for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) { 
-            $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
+            // $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
 
             $meles[] = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
                         ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
@@ -1027,7 +1027,6 @@ class ProjectController extends Controller
 
         return response()->json([
             "message" => true,
-            "projIds" => $projectIds,
             "total" => count($meles),
             "data" => $meles
         ],200, [], JSON_NUMERIC_CHECK);
