@@ -887,14 +887,22 @@ class ProjectController extends Controller
                             ->where('employe_id', $employeId)
                             ->first();
 
-        $projectByStage = ProjectStage::select('project_stages.*')
-                            ->where(['division' => $employeDivision->organization_id])
-                            ->get();
+        // $projectByStage = ProjectStage::select('project_stages.*')
+        //                     ->where(['division' => $employeDivision->organization_id])
+        //                     ->get();
+
+
+        $projectByRecentUpdate = TaskStatus::select('*', DB::raw("MAX(approval_id) as approval_id"))
+                        ->where('division', $employeDivision->organization_id)
+                        ->groupBy('project_id')
+                        ->orderBy('approval_id', 'DESC')
+                        ->limit(10)
+                        ->get();
 
         // project id array
         $projectIds = [];
-        for ($pi=0; $pi < count($projectByStage); $pi++) { 
-            $projectIds[] = $projectByStage[$pi]->project_id;
+        for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) { 
+            $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
         };
 
         $projects = Project::whereIn('project_id', $projectIds)
@@ -1237,13 +1245,6 @@ class ProjectController extends Controller
 
     public function recentUpdate()
     {
-        $data = TaskStatus::select('*', DB::raw("MAX(project_id) as project_id"))
-                ->where('division', 21)
-                ->groupBy('project_id')
-                ->latest('updated_at')
-                ->orderBy('updated_at', 'DESC')
-                ->get();
-
         $data = TaskStatus::select('*', DB::raw("MAX(approval_id) as approval_id"))
                 ->where('division', 21)
                 ->groupBy('project_id')
