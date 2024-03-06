@@ -896,7 +896,6 @@ class ProjectController extends Controller
                         ->where('division', $employeDivision->organization_id)
                         ->groupBy('project_id')
                         ->orderBy('approval_id', 'DESC')
-                        ->limit(10)
                         ->get();
 
         // project id array
