@@ -910,60 +910,60 @@ class ProjectController extends Controller
                         ->first();
         };
 
-        // if(count($meles) > 0){
-        //     for ($m=0; $m < count($meles); $m++) { 
+        if(count($meles) > 0){
+            for ($m=0; $m < count($meles); $m++) { 
 
-        //         // data dari stage yang aktif
-        //         if($meles[$m]->category === 'business'){
-        //             $meles[$m]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
-        //                                         ->where(['project_id' => $meles[$m]->project_id, 'status' => 1])
-        //                                         ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
-        //                                         ->first();
-        //         }else{
-        //             $meles[$m]['current_stage'] = ProjectStage::where(['project_id' => $meles[$m]->project_id, 'status' => 1])
-        //                                         ->first();
-        //         }   
+                // data dari stage yang aktif
+                if($meles[$m]->category === 'business'){
+                    $meles[$m]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
+                                                ->where(['project_id' => $meles[$m]->project_id, 'status' => 1])
+                                                ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
+                                                ->first();
+                }else{
+                    $meles[$m]['current_stage'] = ProjectStage::where(['project_id' => $meles[$m]->project_id, 'status' => 1])
+                                                ->first();
+                }   
 
-        //         // cari pic project active
-        //         $data[$m]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
-        //                 ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-        //                 ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-        //                 ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-        //                 ->where(['project_id' => $meles[$m]->project_id, 'active' => 1])
-        //                 ->first();
+                // cari pic project active
+                $data[$m]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
+                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
+                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
+                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                        ->where(['project_id' => $meles[$m]->project_id, 'active' => 1])
+                        ->first();
 
-        //         // cari semua task parent berdasarkan divisi yg akses
-        //         $allTask[$m] = Task::select('task_id', 'task_progress')
-        //                 ->where(['project_id' =>$meles[$m]->project_id, 'task_parent' => null, 'division' => $data[$m]['pic_active']->organization_id])
-        //                 ->get();
+                // cari semua task parent berdasarkan divisi yg akses
+                $allTask[$m] = Task::select('task_id', 'task_progress')
+                        ->where(['project_id' =>$meles[$m]->project_id, 'task_parent' => null, 'division' => $data[$m]['pic_active']->organization_id])
+                        ->get();
 
-        //         $taskIds[$m]= [];
-        //         $totalProgress[$m] = [];
+                $taskIds[$m]= [];
+                $totalProgress[$m] = [];
 
-        //         // inisiasi taskid dan progress value
-        //         for ($tp=0; $tp < count($allTask[$m]); $tp++) { 
-        //             $taskIds[$m][] = $allTask[$m][$tp]->task_id;
-        //             $totalProgress[$m][] = $allTask[$m][$tp]->task_progress;
-        //         }
+                // inisiasi taskid dan progress value
+                for ($tp=0; $tp < count($allTask[$m]); $tp++) { 
+                    $taskIds[$m][] = $allTask[$m][$tp]->task_id;
+                    $totalProgress[$m][] = $allTask[$m][$tp]->task_progress;
+                }
 
-        //         // cari task
-        //         $taskList[$m] = TaskApproval::whereIn('task_id', $taskIds[$m])
-        //                     ->groupBy('task_id')
-        //                     ->orderBy('approval_id', 'desc')
-        //                     ->get(['task_id', TaskApproval::raw('MAX(approval_id) as approval_id')]);
+                // cari task
+                $taskList[$m] = TaskApproval::whereIn('task_id', $taskIds[$m])
+                            ->groupBy('task_id')
+                            ->orderBy('approval_id', 'desc')
+                            ->get(['task_id', TaskApproval::raw('MAX(approval_id) as approval_id')]);
 
-        //         // ambil status task
-        //         $progress[$m] = array_sum($totalProgress[$m]);
-        //         $totalTask[$m] = count($allTask[$m]);
+                // ambil status task
+                $progress[$m] = array_sum($totalProgress[$m]);
+                $totalTask[$m] = count($allTask[$m]);
 
-        //         $meles[$m]['total_progress'] = 0;
+                $meles[$m]['total_progress'] = 0;
                 
-        //         if($progress[$m] > 0 && $totalTask > 0){
-        //             $meles[$m]['total_progress'] = $progress[$m]/$totalTask[$m];
-        //         }
+                if($progress[$m] > 0 && $totalTask > 0){
+                    $meles[$m]['total_progress'] = $progress[$m]/$totalTask[$m];
+                }
 
-        //     }
-        // }
+            }
+        }
 
         // $projects = Project::whereIn('project_id', $projectIds)
         //             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
