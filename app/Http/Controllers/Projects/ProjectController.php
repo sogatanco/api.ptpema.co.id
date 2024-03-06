@@ -1238,12 +1238,12 @@ class ProjectController extends Controller
     public function recentUpdate()
     {
         $data = TaskStatus::where('division', 21)
-                ->orderBy('updated_at', 'DESC')
                 ->groupBy('project_id')
+                ->select('*', DB::raw("MAX(updated_at) as updated_at"))
                 ->get();
 
         return response()->json([
-            "status" => "heheheheh",
+            "status" => true,
             "total" => count($data),
             "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
