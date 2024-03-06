@@ -892,29 +892,28 @@ class ProjectController extends Controller
         //                     ->get();
 
 
-        $projectByRecentUpdate = TaskStatus::select(
-                        'task_latest_status.project_id', 
-                        'task_latest_status.approval_id', 
-                        DB::raw("MAX(task_latest_status.updated_at) as task_updated_at"),
-                        'projects.*'
-                        )
-                        ->where('task_latest_status.division', $employeDivision->organization_id)
+        $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
+                        ->where('division', $employeDivision->organization_id)
                         ->groupBy('task_latest_status.project_id')
-                        ->orderBy('task_latest_status.updated_at', 'DESC')
-                        ->join('projects', 'projects.project_id', '=', 'task_latest_status.project_id')
+                        ->orderBy('updated_at', 'DESC')
                         ->get();
 
         // project id array
         $projectIds = [];
         for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) { 
             $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
+
+            $projects[] = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
+                        ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+                        ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
+                        ->first();
         };
 
-        $projects = Project::whereIn('project_id', $projectIds)
-                    ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
-                    ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
-                    // ->orderBy('project_id', 'desc')
-                    ->get();
+        // $projects = Project::whereIn('project_id', $projectIds)
+        //             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+        //             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
+        //             // ->orderBy('project_id', 'desc')
+        //             ->get();
 
         if(count($projects) > 0){
                 for ($p=0; $p < count($projects); $p++) { 
