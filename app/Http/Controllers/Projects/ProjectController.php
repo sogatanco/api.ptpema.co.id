@@ -1240,6 +1240,7 @@ class ProjectController extends Controller
         $data = TaskStatus::select('*', DB::raw("MAX(updated_at) as updated_at"))
                 ->where('division', 21)
                 ->groupBy('project_id')
+                ->orderBy('updated_at', 'DESC')
                 ->get();
 
         return response()->json([
