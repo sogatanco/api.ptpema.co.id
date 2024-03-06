@@ -966,6 +966,7 @@ class ProjectController extends Controller
 
         return response()->json([
             "message" => true,
+            "projIds" => $projectIds,
             "total" => count($projects),
             "data" => $projects
         ],200, [], JSON_NUMERIC_CHECK);
