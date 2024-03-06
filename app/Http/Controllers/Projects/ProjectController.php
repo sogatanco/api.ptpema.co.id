@@ -1237,9 +1237,9 @@ class ProjectController extends Controller
 
     public function recentUpdate()
     {
-        $data = TaskStatus::select('*', DB::raw("MAX(approval_id) as approval_id"))
+        $data = TaskStatus::select('*', DB::raw("MAX(updated_at) as updated_at"))
                 ->where('division', 21)
-                ->orderBy('approval_id', 'DESC')
+                ->orderBy('updated_at', 'DESC')
                 ->groupBy('project_id')
                 ->get();
 
