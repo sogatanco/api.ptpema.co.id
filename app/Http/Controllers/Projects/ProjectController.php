@@ -892,7 +892,7 @@ class ProjectController extends Controller
         //                     ->get();
 
 
-        $projectByRecentUpdate = TaskStatus::select('*', DB::raw("MAX(approval_id) as approval_id"))
+        $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(approval_id) as approval_id"))
                         ->where('division', $employeDivision->organization_id)
                         ->groupBy('project_id')
                         ->orderBy('approval_id', 'DESC')
@@ -967,6 +967,7 @@ class ProjectController extends Controller
         return response()->json([
             "message" => true,
             "projIds" => $projectIds,
+            "anunya" => $projectByRecentUpdate,
             "total" => count($projects),
             "data" => $projects
         ],200, [], JSON_NUMERIC_CHECK);
