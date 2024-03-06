@@ -898,7 +898,7 @@ class ProjectController extends Controller
                         DB::raw("MAX(task_latest_status.updated_at) as task_updated_at"),
                         'projects.*'
                         )
-                        ->where('division', $employeDivision->organization_id)
+                        ->where('task_latest_status.division', $employeDivision->organization_id)
                         ->groupBy('task_latest_status.project_id')
                         ->orderBy('task_latest_status.updated_at', 'DESC')
                         ->join('projects', 'projects.project_id', '=', 'task_latest_status.project_id')
