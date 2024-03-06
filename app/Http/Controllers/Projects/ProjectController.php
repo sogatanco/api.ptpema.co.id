@@ -900,13 +900,16 @@ class ProjectController extends Controller
 
         // project id array
         $projectIds = [];
+        $projects = [];
         for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) { 
             $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
 
-            $projects[] = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
+            $proj = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
                         ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
                         ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
                         ->first();
+
+            array_push($projects, $proj);
         };
 
         // $projects = Project::whereIn('project_id', $projectIds)
