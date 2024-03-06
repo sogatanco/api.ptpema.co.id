@@ -918,17 +918,17 @@ class ProjectController extends Controller
                     // ->orderBy('project_id', 'desc')
                     ->get();
 
-        if(count($projects) > 0){
-                for ($p=0; $p < count($projects); $p++) { 
+        if(count($somplak) > 0){
+                for ($p=0; $p < count($somplak); $p++) { 
                     
                     // data dari stage yang aktif
-                    if($projects[$p]->category === 'business'){
-                        $projects[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
-                                                    ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
+                    if($somplak[$p]->category === 'business'){
+                        $somplak[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
+                                                    ->where(['project_id' => $somplak[$p]->project_id, 'status' => 1])
                                                     ->join('project_phases', 'project_phases.id', '=', 'project_stages.phase')
                                                     ->first();
                     }else{
-                        $projects[$p]['current_stage'] = ProjectStage::where(['project_id' => $projects[$p]->project_id, 'status' => 1])
+                        $somplak[$p]['current_stage'] = ProjectStage::where(['project_id' => $somplak[$p]->project_id, 'status' => 1])
                                                     ->first();
                     }   
 
@@ -937,12 +937,12 @@ class ProjectController extends Controller
                             ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
                             ->join('positions', 'positions.position_id', '=', 'employees.position_id')
                             ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-                            ->where(['project_id' => $projects[$p]->project_id, 'active' => 1])
+                            ->where(['project_id' => $somplak[$p]->project_id, 'active' => 1])
                             ->first();
 
                     // cari semua task parent berdasarkan divisi yg akses
                     $allTask[$p] = Task::select('task_id', 'task_progress')
-                            ->where(['project_id' =>$projects[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
+                            ->where(['project_id' =>$somplak[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
                             ->get();
     
                     $taskIds[$p]= [];
@@ -964,10 +964,10 @@ class ProjectController extends Controller
                     $progress[$p] = array_sum($totalProgress[$p]);
                     $totalTask[$p] = count($allTask[$p]);
     
-                    $projects[$p]['total_progress'] = 0;
+                    $somplak[$p]['total_progress'] = 0;
                     
                     if($progress[$p] > 0 && $totalTask > 0){
-                        $projects[$p]['total_progress'] = $progress[$p]/$totalTask[$p];
+                        $somplak[$p]['total_progress'] = $progress[$p]/$totalTask[$p];
                     }
                 }
         }
