@@ -892,10 +892,16 @@ class ProjectController extends Controller
         //                     ->get();
 
 
-        $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
+        $projectByRecentUpdate = TaskStatus::select(
+                        'task_latest_status.project_id', 
+                        'task_latest_status.approval_id', 
+                        DB::raw("MAX(updated_at) as updated_at"),
+                        'projects.*'
+                        )
                         ->where('division', $employeDivision->organization_id)
                         ->groupBy('task_latest_status.project_id')
                         ->orderBy('updated_at', 'DESC')
+                        ->join('projects', 'projects.project_id', '=', 'task_latest_status.project_id')
                         ->get();
 
         // project id array
