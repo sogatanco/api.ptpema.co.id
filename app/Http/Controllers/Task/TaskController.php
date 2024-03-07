@@ -1430,7 +1430,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => [
-                "current" => $current->sub,
+                "current" => json_decode($current->sub),
                 "req" => $request->sub
             ]
         ], 200);
