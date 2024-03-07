@@ -1412,8 +1412,21 @@ class TaskController extends Controller
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
-    public function addItem($taskId) 
+    // add sub activity/task level 3
+    public function addSub(Request $request, $taskId) 
     {
+        $current = Task::where('task_id', $taskId)->first();
+
+        $subArr = [];
+        if($subArr !== null){
+            $subArr = $current->sub;
+            array_push($subArr, $request->sub);
+        }else{
+            $subArr = array_push($subArr, $request->sub);
+        }
+
+        $updated = Task::where('task_id'. $taskId)->update(['sub', $subArr]);
+
         return response()->json([
             "status" => true,
             "message" => "From add item endpoint"
