@@ -1421,7 +1421,7 @@ class TaskController extends Controller
         $subArr = [];
         if($current->sub !== null){
             $subArr = json_decode($current->sub);
-            $fullArr = $request->sub[0]['id'] = count($current->sub) + 1;
+            $fullArr = $request->sub[0]['id'] = count($subArr) + 1;
             array_push($subArr, $fullArr);
         }else{
             $subArr = $request->sub;
