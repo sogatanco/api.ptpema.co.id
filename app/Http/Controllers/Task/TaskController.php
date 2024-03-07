@@ -1429,7 +1429,7 @@ class TaskController extends Controller
 
         return response()->json([
             "status" => true,
-            "message" => "From add item endpoint"
+            "data" => $subArr
         ], 200);
     }
 }
