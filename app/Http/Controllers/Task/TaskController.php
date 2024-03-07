@@ -1427,7 +1427,7 @@ class TaskController extends Controller
             array_push($subArr, $reqSub[0]);
         }else{
             $reqSub[0]['id'] = 1;
-            $subArr = $reqSub[0];
+            $subArr = $reqSub;
         }
 
         $data = json_encode($subArr);
