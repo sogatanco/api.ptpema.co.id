@@ -926,16 +926,16 @@ class ProjectController extends Controller
 
                 // cari pic project active
                 $data[$m]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
-                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-                        ->where(['project_id' => $meles[$m]->project_id, 'active' => 1])
-                        ->first();
+                                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
+                                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
+                                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                                        ->where(['project_id' => $meles[$m]->project_id, 'active' => 1])
+                                        ->first();
 
                 // cari semua task parent berdasarkan divisi yg akses
                 $allTask[$m] = Task::select('task_id', 'task_progress')
-                        ->where(['project_id' =>$meles[$m]->project_id, 'task_parent' => null, 'division' => $data[$m]['pic_active']->organization_id])
-                        ->get();
+                                ->where(['project_id' =>$meles[$m]->project_id, 'task_parent' => null, 'division' => $data[$m]['pic_active']->organization_id])
+                                ->get();
 
                 $taskIds[$m]= [];
                 $totalProgress[$m] = [];

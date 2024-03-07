@@ -1411,4 +1411,12 @@ class TaskController extends Controller
             "data" => $level1
         ], 200, [], JSON_NUMERIC_CHECK);
     }
+
+    public function addItem($taskId) 
+    {
+        return response()->json([
+            "status" => true,
+            "message" => "From add item endpoint"
+        ], 200);
+    }
 }
