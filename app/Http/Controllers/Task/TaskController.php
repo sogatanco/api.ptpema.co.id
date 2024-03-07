@@ -1415,23 +1415,21 @@ class TaskController extends Controller
     // add sub activity/task level 3
     public function addSub(Request $request, $taskId) 
     {
-        $current = Task::where('task_id', $taskId)->first();
-
+        
         // $subArr = [];
         // if($current->sub !== null){
-        //     $subArr = $current->sub;
-        //     array_push($subArr, $request->sub);
-        // }else{
-        //     $subArr = array_push($subArr, $request->sub);
-        // }
-
-        // $updated = Task::where('task_id', $taskId)->update(['sub' => $subArr]);
-
+            //     $subArr = $current->sub;
+            //     array_push($subArr, $request->sub);
+            // }else{
+                //     $subArr = array_push($subArr, $request->sub);
+                // }
+                
+        $updated = Task::where('task_id', $taskId)->update(['sub' => json_encode($request->sub)]);
+        $current = Task::where('task_id', $taskId)->first();
+                
         return response()->json([
             "status" => true,
-            "data" => [
-                "req" => json_decode($request->sub)
-            ]
+            "data" => $current
         ], 200);
     }
 }
