@@ -1417,19 +1417,22 @@ class TaskController extends Controller
     {
         $current = Task::where('task_id', $taskId)->first();
 
-        $subArr = [];
-        if($current->sub !== null){
-            $subArr = $current->sub;
-            array_push($subArr, $request->sub);
-        }else{
-            $subArr = array_push($subArr, $request->sub);
-        }
+        // $subArr = [];
+        // if($current->sub !== null){
+        //     $subArr = $current->sub;
+        //     array_push($subArr, $request->sub);
+        // }else{
+        //     $subArr = array_push($subArr, $request->sub);
+        // }
 
-        $updated = Task::where('task_id', $taskId)->update(['sub' => $subArr]);
+        // $updated = Task::where('task_id', $taskId)->update(['sub' => $subArr]);
 
         return response()->json([
             "status" => true,
-            "data" => $subArr
+            "data" => [
+                "current" => $current->sub,
+                "req" => $request->sub
+            ]
         ], 200);
     }
 }
