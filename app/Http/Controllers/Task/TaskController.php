@@ -1418,7 +1418,7 @@ class TaskController extends Controller
         $current = Task::where('task_id', $taskId)->first();
 
         $subArr = [];
-        if($subArr !== null){
+        if($current->sub !== null){
             $subArr = $current->sub;
             array_push($subArr, $request->sub);
         }else{
