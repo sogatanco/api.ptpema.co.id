@@ -1418,11 +1418,13 @@ class TaskController extends Controller
         
         $current = Task::where('task_id', $taskId)->first();
 
+        $reqSub = $request->sub;
+
         $subArr = [];
         if($current->sub !== null){
             $subArr = json_decode($current->sub);
-            $request->sub[0]['id'] = count($subArr) + 1;
-            array_push($subArr, $request->sub);
+            $reqSub[0]['id'] = count($subArr) + 1;
+            array_push($subArr, $reqSub[0]);
         }else{
             $subArr = $request->sub;
         }
