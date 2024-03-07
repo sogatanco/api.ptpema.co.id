@@ -1416,16 +1416,19 @@ class TaskController extends Controller
     public function addSub(Request $request, $taskId) 
     {
         
-        // $subArr = [];
-        // if($current->sub !== null){
-            //     $subArr = $current->sub;
-            //     array_push($subArr, $request->sub);
-            // }else{
-                //     $subArr = array_push($subArr, $request->sub);
-                // }
-                
-        $updated = Task::where('task_id', $taskId)->update(['sub' => json_encode($request->sub)]);
         $current = Task::where('task_id', $taskId)->first();
+
+        $subArr = [];
+        if($current->sub !== null){
+            $subArr = json_decode($current->sub);
+            array_push($subArr, $request->sub);
+        }else{
+            $subArr = $request->sub;
+        }
+
+        $data = json_encode($subArr);
+                
+        $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
                 
         return response()->json([
             "status" => true,
