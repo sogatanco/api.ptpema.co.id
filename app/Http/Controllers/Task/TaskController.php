@@ -1425,7 +1425,7 @@ class TaskController extends Controller
             $subArr = array_push($subArr, $request->sub);
         }
 
-        $updated = Task::where('task_id', $taskId)->update(['sub', $subArr]);
+        $updated = Task::where('task_id', $taskId)->update(['sub' => $subArr]);
 
         return response()->json([
             "status" => true,
