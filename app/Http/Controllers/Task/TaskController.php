@@ -1457,7 +1457,7 @@ class TaskController extends Controller
             $done = [];
 
             for ($i=0; $i < count($subArr); $i++) { 
-                if($subArr[$i]->status === 'done'){
+                if($subArr[$i]->status === 'checked'){
                     array_push($done, $subArr[$i]->id);
                 }{
                     array_push($created, $subArr[$i]->id);
