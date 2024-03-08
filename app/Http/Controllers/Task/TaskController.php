@@ -1445,12 +1445,31 @@ class TaskController extends Controller
     
         $data = json_encode($request->sub);
 
+        
         $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
-                
+
         if($updated){
+
+            $current = Task::where('task_id', $task_id)->first();
+
+            $subArr = json_decode($current->sub);
+            $created = [];
+            $done = [];
+
+            for ($i=0; $i < count($subArr); $i++) { 
+                if($subArr[$i]->status === 'done'){
+                    array_push($done, $subArr[$i]->id);
+                }{
+                    array_push($created, $subArr[$i]->id);
+                }
+            }
+
+            $progress = count($done) * 100 / count($subArr);
+
             return response()->json([
                 "status" => true,
-                "message" => "Sub activity has been updated"
+                "message" => "Sub activity has been updated",
+                "progress" => $progress
             ], 200);
         }else{
             throw new HttpResponseException(response([
