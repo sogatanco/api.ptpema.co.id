@@ -1439,4 +1439,23 @@ class TaskController extends Controller
             "data" => $current
         ], 200);
     }
+
+    public function updateSub(Request $request, $taskId) 
+    {
+    
+        $data = json_encode($request->sub);
+
+        $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
+                
+        if($updated){
+            return response()->json([
+                "status" => true,
+                "message" => "Sub activity has been updated"
+            ], 200);
+        }else{
+            throw new HttpResponseException(response([
+                "error" => "Something went wrong"
+            ], 500));
+        }
+    }
 }

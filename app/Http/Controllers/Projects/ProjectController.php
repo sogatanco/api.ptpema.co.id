@@ -898,6 +898,8 @@ class ProjectController extends Controller
                         ->orderBy('updated_at', 'DESC')
                         ->get();
 
+
+        // DIEDIT NANTI
         if(count($projectByRecentUpdate) === 0){
             $projectByRecentUpdate = ProjectStage::select('project_stages.*')
                                 ->where(['division' => $employeDivision->organization_id])

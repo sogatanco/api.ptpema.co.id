@@ -100,6 +100,7 @@ Route::controller(TaskController::class)->group(function(){
     // 3 LEVEL TASK
     Route::get("/task/{project_id}/employe/list", 'projectTaskByEmploye')->middleware("role:Staff,Manager");
     Route::patch("/task/{task_id}/activity/add-sub", 'addSub')->middleware("role:Staff");
+    Route::patch("/task/{task_id}/activity/update-sub", 'updateSub')->middleware("role:Staff");
 });
 // Route::get("/employe", [EmployeController::class, "index"])->middleware('role:Admin');
 
