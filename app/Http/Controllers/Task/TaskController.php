@@ -1445,7 +1445,6 @@ class TaskController extends Controller
     
         $data = json_encode($request->sub);
 
-        
         $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
 
         if($updated){
@@ -1466,10 +1465,11 @@ class TaskController extends Controller
 
             $progress = count($done) * 100 / count($subArr);
 
+            $updated = Task::where('task_id', $taskId)->update(['task_progress' => $progress]);
+
             return response()->json([
                 "status" => true,
                 "message" => "Sub activity has been updated",
-                "progress" => $progress
             ], 200);
         }else{
             throw new HttpResponseException(response([
