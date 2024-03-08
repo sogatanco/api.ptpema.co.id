@@ -1433,11 +1433,36 @@ class TaskController extends Controller
         $data = json_encode($subArr);
                 
         $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
-                
-        return response()->json([
-            "status" => true,
-            "data" => $current
-        ], 200);
+
+        if($updated){
+            $task = Task::where('task_id', $taskId)->first();
+
+            $subArr = json_decode($task->sub);
+            $created = [];
+            $done = [];
+
+            for ($i=0; $i < count($subArr); $i++) { 
+                if($subArr[$i]->status === 'checked'){
+                    array_push($done, $subArr[$i]->id);
+                }{
+                    array_push($created, $subArr[$i]->id);
+                }
+            }
+
+            $progress = count($done) * 100 / count($subArr);
+
+            $updated = Task::where('task_id', $taskId)->update(['task_progress' => $progress]);
+
+            return response()->json([
+                "status" => true,
+                "message" => "Sub activity has been created",
+            ], 200);
+        }else{
+            throw new HttpResponseException(response([
+                "error" => "Something went wrong"
+            ], 500));
+        }
+            
     }
 
     public function updateSub(Request $request, $taskId) 
