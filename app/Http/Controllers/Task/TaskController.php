@@ -1450,7 +1450,7 @@ class TaskController extends Controller
 
         if($updated){
 
-            $current = Task::where('task_id', $task_id)->first();
+            $current = Task::where('task_id', $taskId)->first();
 
             $subArr = json_decode($current->sub);
             $created = [];
