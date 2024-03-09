@@ -1243,7 +1243,7 @@ class TaskController extends Controller
     // UPDATE AFTER LAUNCHING
 
     // 1. GET TASK WITH 3 LEVEL
-    public function projectTaskByEmploye($projectId)
+    public function projectTaskByEmployeOld($projectId)
     {
 
         $employeId = Employe::employeId();
@@ -1338,6 +1338,174 @@ class TaskController extends Controller
                     ->get();
         }
 
+        if(count($all) > 0) {
+            for ($at=0; $at < count($all); $at++) { 
+                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                                    ->where('task_id', $all[$at]->task_id)
+                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->get();
+
+                $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
+                
+                $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
+                                            ->where('task_id', $all[$at]->task_id)
+                                            ->get(); 
+                
+                $taskProgress = TaskProgress::select('progress')
+                                ->where('task_id', $all[$at]->task_id)
+                                ->first(); 
+
+                $all[$at]['task_progress'] = $taskProgress->progress;
+            }
+        }
+
+        $level1 = [];
+        $level2 = [];
+        $level3 = [];
+
+        for ($tk=0; $tk < count($all); $tk++) { 
+            if(in_array($all[$tk]->task_id, $level1Ids)){
+                array_push($level1, $all[$tk]);
+            }elseif(in_array($all[$tk]->task_id, $level2Ids)){
+                array_push($level2, $all[$tk]);
+            }else{
+                array_push($level3, $all[$tk]);
+            }
+        }
+
+        if(count($level2) > 0 ){
+            // ADD LEVEL 3 TO LEVEL 2
+            for ($l2=0; $l2 < count($level2); $l2++) {
+                if(count($level3) > 0){
+                    $lev3 = [];
+                    for ($l3=0; $l3 < count($level3); $l3++) { 
+                        if($level2[$l2]->task_id === $level3[$l3]->task_parent){
+                            $lev3[] = $level3[$l3];
+                        }
+                     }
+    
+                    $level2[$l2]['level_3'] = $lev3;
+                }
+           }
+           // ADD LEVEL 3 TO LEVEL 2
+
+           // ADD LEVEL 2 TO LEVEL 1
+           for ($l1=0; $l1 < count($level1); $l1++) { 
+                $lev2 = [];
+                for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                        if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
+                            $lev2[] = $level2[$l2s];
+                        }
+                }
+
+                $level1[$l1]['level_2'] = $lev2;
+           }
+           // ADD LEVEL 2 TO LEVEL 1
+        }
+
+        return response()->json([
+            "status" => true,
+            "is_member_active" => $isMemberActive,
+            "total" => count($level1),
+            "data" => $level1
+        ], 200, [], JSON_NUMERIC_CHECK);
+    }
+
+    // FUNGSI PENGGANTI projectTaskByEmployeOld SETELAH ADA FITUR PRINTILAN
+    public function projectTaskByEmploye($projectId)
+    {
+        $employeId = Employe::employeId();
+        $employeDivision = Employe::getEmployeDivision($employeId);
+
+        // CHECK USER ADALAH DIVISI AKTIF
+        $divisionActive = ProjectHistory::select('employe_id')
+                        ->where(['project_id' => $projectId, 'active' => 1])
+                        ->first();
+
+        if($employeId !== $divisionActive->employe_id){
+            // Jika user bukan manager
+            $employeCompare = Structure::select('organization_id')
+                            ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
+                            ->get();
+
+            $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
+        } else {
+            // jika user active adalah manager  
+            $isMemberActive = true;
+        }
+        // CHECK USER ADALAH DIVISI AKTIF
+
+        // AMBIL SEMUA TASK BY DIVISI AKTIF
+        $taskByDivision = Task::where(['project_id' => $projectId, 'division' => $employeDivision->organization_id])
+                        ->get();
+                        
+        $taskIdsTemp = [];
+        for ($ti=0; $ti < count($taskByDivision); $ti++) { 
+            $taskIdsTemp[] = $taskByDivision[$ti]->task_id;
+        };
+
+        $all = [];
+        if(count($taskIdsTemp) > 0){
+            $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
+                    ->get();
+
+            // CHECK LEVEL1,LEVEL2,LEVEL3
+            $level1Ids = [];
+            $parentIds = [];
+
+            for ($t=0; $t < count($tasks); $t++) { 
+                if($tasks[$t]->task_parent === null){
+                    // USER SEBAGAI PIC LEVEL 1
+                    array_push($level1Ids, $tasks[$t]->task_id);
+                }else{
+                    // ID PARENT LEVEL1 & LEVEL2
+                    array_push($parentIds, $tasks[$t]->task_parent);
+                }
+            }
+
+            $level2Ids = [];
+            $level3Ids = [];
+
+            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
+            // CARI PARENT 
+            $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
+                        ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
+                        ->select(
+                            'task_latest_status.task_id', 
+                            'level1.task_id as parent_id', 
+                        )
+                        ->get();
+
+            for ($p=0; $p < count($parents); $p++) { 
+                if($parents[$p]->parent_id === null && !in_array($parents[$p]->task_id, $level1Ids)){
+                    // PARENT SEBAGAI LEVEL 1
+                    array_push($level1Ids, $parents[$p]->task_id);
+                }else if($parents[$p]->parent_id !== null){
+                    // PARENT SEBAGAI LEVEL 1/2
+                    array_push($level2Ids, $parents[$p]->task_id);
+                    array_push($level1Ids, $parents[$p]->parent_id);
+                }
+            }
+            
+            for ($t2=0; $t2 < count($tasks); $t2++) { 
+                if(in_array($tasks[$t2]->task_parent, $level1Ids)){
+                    array_push($level2Ids, $tasks[$t2]->task_id);
+                }
+            }
+
+            for ($t3=0; $t3 < count($tasks); $t3++) { 
+                if(in_array($tasks[$t3]->task_parent, $level2Ids)){
+                    array_push($level3Ids, $tasks[$t3]->task_id);
+                }
+            }
+            // CHECK LEVEL1,LEVEL2,LEVEL3
+
+            $allTask = array_merge($level1Ids, $level2Ids, $level3Ids);
+
+            $all = TaskStatus::whereIn('task_id', $allTask)
+                    ->select('task_latest_status.*', TaskStatus::raw('(SELECT COUNT(*) FROM task_latest_status as child WHERE child.task_parent = task_latest_status.task_id) AS child'))
+                    ->get();
+        }
 
         if(count($all) > 0) {
             for ($at=0; $at < count($all); $at++) { 
