@@ -1478,7 +1478,7 @@ class TaskController extends Controller
 
         if($updated){
 
-           if(count($data) > 0){
+            if(count($request->sub) > 0){
                 $current = Task::where('task_id', $taskId)->first();
 
                 $subArr = json_decode($current->sub);
@@ -1495,6 +1495,7 @@ class TaskController extends Controller
 
                 $progress = count($done) * 100 / count($subArr);
            }else{
+                // JIKA SEMUA SUB DIHAPUS
                 $progress = 0;
            }
 
