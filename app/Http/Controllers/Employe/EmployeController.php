@@ -176,7 +176,7 @@ class EmployeController extends Controller
         
         $list = Employe::select('employe_id', 'first_name', 'users.roles')
                 ->join('users', 'users.id', '=', 'employees.user_id')
-                ->where('user.roles', 'like' , '%'.$like.'%')
+                ->where('users.roles', 'like' , '%'.$like.'%')
                 ->get();
 
         $total = $list->count();
