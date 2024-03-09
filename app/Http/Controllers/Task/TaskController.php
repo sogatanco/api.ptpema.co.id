@@ -1434,7 +1434,6 @@ class TaskController extends Controller
             $subArr = $reqSub;
         }
 
-
         $data = json_encode($subArr);
                 
         $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
@@ -1475,25 +1474,29 @@ class TaskController extends Controller
     
         $data = json_encode($request->sub);
 
-        $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
+        $updated = Task::where('task_id', $taskId)->update(['sub' => $data || null]);
 
         if($updated){
 
-            $current = Task::where('task_id', $taskId)->first();
+           if(count($data) > 0){
+                $current = Task::where('task_id', $taskId)->first();
 
-            $subArr = json_decode($current->sub);
-            $created = [];
-            $done = [];
+                $subArr = json_decode($current->sub);
+                $created = [];
+                $done = [];
 
-            for ($i=0; $i < count($subArr); $i++) { 
-                if($subArr[$i]->status === 'checked'){
-                    array_push($done, $subArr[$i]->id);
-                }{
-                    array_push($created, $subArr[$i]->id);
+                for ($i=0; $i < count($subArr); $i++) { 
+                    if($subArr[$i]->status === 'checked'){
+                        array_push($done, $subArr[$i]->id);
+                    }{
+                        array_push($created, $subArr[$i]->id);
+                    }
                 }
-            }
 
-            $progress = count($done) * 100 / count($subArr);
+                $progress = count($done) * 100 / count($subArr);
+           }else{
+                $progress = 0;
+           }
 
             $updated = Task::where('task_id', $taskId)->update(['task_progress' => $progress]);
 
