@@ -168,15 +168,16 @@ class EmployeController extends Controller
 
         if(in_array("Manager", $userRoles)){
             // JIKA USER ADALAH MANAGER
-            $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                    ->join('users', 'users.id','=', 'employees.user_id')
-                    ->where('users.roles', 'like', '%Manager%')
-                    ->get();
-        }else{
-            $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                ->join('users', 'users.id','=', 'employees.user_id')
-                ->get();
+            $like = 'Manager';
+        }elseif(in_array("Supervisor", $userRoles)){
+            // JIKA USER ADALAH SUPERVISOR
+            $like = 'Supervisor';
         }
+        
+        $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                ->join('users', 'users.id', '=', 'employees.user_id')
+                ->where('user.roles', 'like' , '%'.$like.'%')
+                ->get();
 
         $total = $list->count();
         $assignment = [];
