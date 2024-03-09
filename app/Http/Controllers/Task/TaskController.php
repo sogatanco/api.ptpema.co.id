@@ -1432,7 +1432,7 @@ class TaskController extends Controller
             $subArr = $reqSub;
         }
 
-        $subArr['employe_id'] = $employeId;
+        $subArr[0]['employe_id'] = $employeId;
 
         $data = json_encode($subArr);
                 
