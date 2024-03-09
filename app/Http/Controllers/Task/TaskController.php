@@ -1471,14 +1471,18 @@ class TaskController extends Controller
 
     public function updateSub(Request $request, $taskId) 
     {
-    
-        $data = json_encode($request->sub);
+        
+        if(count($request->sub) > 0){
+            $data = json_encode($request->sub);
+        }else{
+            $data = null;
+        };
 
-        $updated = Task::where('task_id', $taskId)->update(['sub' => $data || null]);
+        $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
 
         if($updated){
 
-            if(count($request->sub) > 0){
+            if($data !== null){
                 $current = Task::where('task_id', $taskId)->first();
 
                 $subArr = json_decode($current->sub);
