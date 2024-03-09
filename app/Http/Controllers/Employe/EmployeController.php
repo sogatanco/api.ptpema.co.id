@@ -10,6 +10,7 @@ use App\Models\Employe;
 use App\Models\Structure;
 use App\Models\Position;
 use App\Models\Notification;
+use Illuminate\Support\Facades\Auth;
 
 class EmployeController extends Controller
 {
@@ -162,9 +163,20 @@ class EmployeController extends Controller
 
     public function assignmentList()
     {
-        $list = Employe::select('employe_id', 'first_name', 'users.roles')
+
+        $userRoles = Auth::user()->roles;
+
+        if(in_array("Manager", $userRoles)){
+            // JIKA USER ADALAH MANAGER
+            $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                    ->join('users', 'users.id','=', 'employees.user_id')
+                    ->like('users.roles', '%Manager%')
+                    ->get();
+        }else{
+            $list = Employe::select('employe_id', 'first_name', 'users.roles')
                 ->join('users', 'users.id','=', 'employees.user_id')
                 ->get();
+        }
 
         $total = $list->count();
         $assignment = [];
