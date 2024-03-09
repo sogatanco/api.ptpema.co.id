@@ -1435,13 +1435,26 @@ class TaskController extends Controller
         }
         // CHECK USER ADALAH DIVISI AKTIF
 
-        // AMBIL SEMUA TASK BY DIVISI AKTIF
-        $taskByDivision = Task::where(['project_id' => $projectId, 'division' => $employeDivision->organization_id])
+        if($isMemberActive){
+            // JIKA USER ADALAH MEMBER DIVISI
+            // AMBIL SEMUA TASK BY DIVISI AKTIF
+            $listOfTask = Task::where(['project_id' => $projectId, 'division' => $employeDivision->organization_id])
+                            ->get();
+        }else{
+            // JIKA USER DARI DIVISI LAIN
+            // CARI ATASAN LANGSUNG
+            $directSupervisor = Structure::select('direct_atasan')
+                                ->where('employe_id', $employeId)
+                                ->first();
+
+            // CARI ATASAN SEBAGAI PIC TASK YG DI ASSIGN OLEH DIVISI AKTIF
+            $listOfTask = TaskPic::where(['project_id' => $projectId, 'employe_id' => $directSupervisor->direct_atasan])
                         ->get();
+        }
                         
         $taskIdsTemp = [];
-        for ($ti=0; $ti < count($taskByDivision); $ti++) { 
-            $taskIdsTemp[] = $taskByDivision[$ti]->task_id;
+        for ($ti=0; $ti < count($listOfTask); $ti++) { 
+            $taskIdsTemp[] = $listOfTask[$ti]->task_id;
         };
 
         $all = [];
