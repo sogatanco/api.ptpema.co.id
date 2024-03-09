@@ -1425,12 +1425,11 @@ class TaskController extends Controller
         $subArr = [];
         if($current->sub !== null){
             $subArr = json_decode($current->sub);
-            // ini gak efektif
             $reqSub[0]['id'] = uniqid();
             $reqSub[0]['employe_id'] = $employeId;
             array_push($subArr, $reqSub[0]);
         }else{
-            $reqSub[0]['id'] = 1;
+            $reqSub[0]['id'] = uniqid();
             $reqSub[0]['employe_id'] = $employeId;
             $subArr = $reqSub;
         }
