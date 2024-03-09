@@ -1415,6 +1415,8 @@ class TaskController extends Controller
     // add sub activity/task level 3
     public function addSub(Request $request, $taskId) 
     {
+
+        $employeId = Employe::employeId();
         
         $current = Task::where('task_id', $taskId)->first();
 
@@ -1429,6 +1431,8 @@ class TaskController extends Controller
             $reqSub[0]['id'] = 1;
             $subArr = $reqSub;
         }
+
+        $subArr['employe_id'] = $employeId;
 
         $data = json_encode($subArr);
                 
@@ -1502,4 +1506,5 @@ class TaskController extends Controller
             ], 500));
         }
     }
+
 }
