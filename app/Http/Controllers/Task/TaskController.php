@@ -1438,6 +1438,11 @@ class TaskController extends Controller
         }
         // CHECK USER ADALAH DIVISI AKTIF
 
+        // CARI ATASAN LANGSUNG
+        $directSupervisor = Structure::select('direct_atasan', 'level 2')
+                            ->where('employe_id', $employeId)
+                            ->first();
+
         if($isMemberActive){
             // JIKA USER ADALAH MEMBER DIVISI
             // AMBIL SEMUA TASK BY DIVISI AKTIF KECUALI ADDITIONAL TASK MILIK DIVISI LAIN
@@ -1447,12 +1452,6 @@ class TaskController extends Controller
         }else{
             // JIKA USER DARI DIVISI LAIN
             if(in_array('Staff', $userRoles)){
-
-                // CARI ATASAN LANGSUNG
-                $directSupervisor = Structure::select('direct_atasan', 'level 2')
-                                    ->where('employe_id', $employeId)
-                                    ->first();
-
                 // CARI ATASAN SEBAGAI PIC TASK YG DI ASSIGN OLEH DIVISI AKTIF
                 $where = ['project_id' => $projectId, 'employe_id' => $directSupervisor->direct_atasan];
             }else{
@@ -1600,7 +1599,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "is_member_active" => $isMemberActive,
-            "direct_supervisor" => [$directSupervisor->direct_atasan],
+            "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
             "data" => $level1
         ], 200, [], JSON_NUMERIC_CHECK);
