@@ -1439,7 +1439,7 @@ class TaskController extends Controller
         // CHECK USER ADALAH DIVISI AKTIF
 
         // CARI ATASAN LANGSUNG
-        $directSupervisor = Structure::select('direct_atasan', 'level 2')
+        $directSupervisor = Structure::select('direct_atasan')
                             ->where('employe_id', $employeId)
                             ->first();
 
