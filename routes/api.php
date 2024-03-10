@@ -58,7 +58,7 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get("/project/business/options", 'businessOptions')->middleware("role:Employee");
     Route::get("/project/partner/options", 'partnerOptions')->middleware("role:Employee");
     Route::post("/project", 'store')->middleware("role:Staff,Manager");
-    Route::patch("/project/{project_id}/update", 'update')->middleware("role:Staff,Manager");
+    Route::patch("/project/{project_id}/update", 'update')->middleware("role:Staff,Supervisor,Manager");
     Route::get("/project/{project_id}/history", 'history')->middleware("role:Employee");
     Route::get("/project/{project_id}/members", 'members')->middleware("role:Employee");
     Route::get("/project/{project_id}/files", "files")->middleware("role:Employee");
@@ -67,13 +67,13 @@ Route::controller(ProjectController::class)->group(function(){
     Route::post("/project/{history_id}/confirm", "handoverConfirm")->middleware("role:Manager");
     Route::get("/project/{project_id}/{employe_id}/bast/review", "bastReview")->middleware("role:Director");
     Route::post("/project/{history_id}/bast/approval", "bastApproval")->middleware("role:Director");
-    Route::get("/project/{employe_id}/total-data/", "totalDataByEmploye")->middleware("role:Staff,Manager,Director");
-    Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Manager,Director");
-    Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff,Manager");
-    Route::delete("/project/{project_id}", "destroy")->middleware("role:Staff,Manager");
-    Route::post("/project/activity-base/add", "createActivityBase")->middleware("role:Staff,Manager");
+    Route::get("/project/{employe_id}/total-data/", "totalDataByEmploye")->middleware("role:Staff,Supervisor,Manager,Director");
+    Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Supervisor,Manager,Director");
+    Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff,Supervisor,Manager");
+    Route::delete("/project/{project_id}", "destroy")->middleware("role:Staff,Supervisor,Manager");
+    Route::post("/project/activity-base/add", "createActivityBase")->middleware("role:Staff,Supervisor,Manager");
     Route::get("/project/manager/assigned/list", "assignedProject")->middleware("role:Manager");
-    Route::get("/project/dashboard/recent-update/list", "recentUpdate")->middleware("role:Staff,Manager");
+    Route::get("/project/dashboard/recent-update/list", "recentUpdate")->middleware("role:Staff,Supervisor,Manager");
 });
 
 // Task routes
@@ -83,22 +83,22 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("/task/history/{task_id}", "taskHistory")->middleware('role:Employee');
     Route::get("/task/{task_id}/show", "show")->middleware("role:Employee");
     Route::patch("/task/{task_id}", "update")->middleware("role:Employee");
-    Route::put("/task/{task_id}/status", "updateStatus")->middleware("role:Employee,Manager");
+    Route::put("/task/{task_id}/status", "updateStatus")->middleware("role:Employee,Supervisor,Manager");
     Route::get("/task/{project_id}", "getTodo")->middleware("role:Employee");
     Route::get("/task/{project_id}/employe/all", "taskByEmploye")->middleware("role:Employee");
     Route::delete("task/{task_id}", 'destroy')->middleware("role:Employee");
     Route::post("task/{task_id}/upload", 'upload')->middleware("role:Employee");
-    Route::get("task/{project_id}/level1/review", 'review')->middleware("role:Manager,Director");
-    Route::get("task/{project_id}/activities/all", 'taskByProject')->middleware("role:Manager,Director");
-    Route::get("task/{employe_id}/recent/activity", 'recentTaskByEmploye')->middleware("role:Staff,Manager");
+    Route::get("task/{project_id}/level1/review", 'review')->middleware("role:Supervisor,Manager,Director");
+    Route::get("task/{project_id}/activities/all", 'taskByProject')->middleware("role:Supervisor,Manager,Director");
+    Route::get("task/{employe_id}/recent/activity", 'recentTaskByEmploye')->middleware("role:Staff,Supervisor,Manager");
     Route::post("task/{employe_id}/{task_id}/favorite", 'addFavoriteTask')->middleware("role:Director");
     Route::get("task/director/dashboard/list", 'dashboardList')->middleware("role:Director");
     Route::get("task/director/inprogress/list", 'inProgressList')->middleware("role:Director");
-    Route::get("/task/employe/additional/list", 'additionalList')->middleware("role:Staff,Manager");
-    Route::delete("/task/file/delete/{file_id}", 'deleteFile')->middleware("role:Staff,Manager");
+    Route::get("/task/employe/additional/list", 'additionalList')->middleware("role:Staff,Supervisor,Manager");
+    Route::delete("/task/file/delete/{file_id}", 'deleteFile')->middleware("role:Staff,Supervisor,Manager");
     
     // 3 LEVEL TASK
-    Route::get("/task/{project_id}/employe/list", 'projectTaskByEmploye')->middleware("role:Staff,Manager");
+    Route::get("/task/{project_id}/employe/list", 'projectTaskByEmploye')->middleware("role:Staff,Supervisor,Manager");
     Route::patch("/task/{task_id}/activity/add-sub", 'addSub')->middleware("role:Staff");
     Route::patch("/task/{task_id}/activity/update-sub", 'updateSub')->middleware("role:Staff");
 });
