@@ -872,10 +872,11 @@ class ProjectController extends Controller
     }
 
     // OLD FUNCTION projectByEmployeDivision
-    public function projectByEmployeDivision($employeId)
+    public function projectByEmployeDivision(Request $request, $employeId)
     {
         $user = auth()->user();
         $empId = Employe::employeId();
+        $query = $request->query('for');
 
         if($employeId !== $empId){
             throw new HttpResponseException(response([
@@ -891,16 +892,13 @@ class ProjectController extends Controller
         //                     ->where(['division' => $employeDivision->organization_id])
         //                     ->get();
 
-
-        $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
+        if($query === 'dashboard'){
+            $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
                         ->where('division', $employeDivision->organization_id)
                         ->groupBy('task_latest_status.project_id')
                         ->orderBy('updated_at', 'DESC')
                         ->get();
-
-
-        // DIEDIT NANTI
-        if(count($projectByRecentUpdate) === 0){
+        }else{
             $projectByRecentUpdate = ProjectStage::select('project_stages.*')
                                 ->where(['division' => $employeDivision->organization_id])
                                 ->get();
