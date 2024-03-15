@@ -182,6 +182,7 @@ class EmployeController extends Controller
                 $list = Employe::select('employe_id', 'first_name', 'users.roles')
                         ->join('users', 'users.id', '=', 'employees.user_id')
                         ->where('users.roles', 'like' , '%Manager%')
+                        ->orWhere('users.roles', 'like' , '%Supervisor%')
                         ->get();
     
             }elseif(in_array("Supervisor", $userRoles)){
