@@ -171,8 +171,8 @@ class EmployeController extends Controller
             $list = Employe::select('employe_id', 'first_name', 'users.roles')
                 ->join('users', 'users.id', '=', 'employees.user_id')
                 ->where('users.roles', 'like' , '%Manager%')
-                ->where('users.roles', 'like' , '%Supervisor%')
-                ->where('users.roles', 'like' , '%Staff%')
+                ->orWhere('users.roles', 'like' , '%Supervisor%')
+                ->orWhere('users.roles', 'like' , '%Staff%')
                 ->get();
 
         }elseif(in_array("Supervisor", $userRoles)){
@@ -180,7 +180,7 @@ class EmployeController extends Controller
             $list = Employe::select('employe_id', 'first_name', 'users.roles')
                 ->join('users', 'users.id', '=', 'employees.user_id')
                 ->where('users.roles', 'like' , '%Supervisor%')
-                ->where('users.roles', 'like' , '%Staff%')
+                ->orWhere('users.roles', 'like' , '%Staff%')
                 ->get();
         }
 
