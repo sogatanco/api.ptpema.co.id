@@ -163,25 +163,35 @@ class EmployeController extends Controller
 
     public function assignmentList()
     {
-
         $userRoles = Auth::user()->roles;
+        $query = $request->query('for');
 
-        if(in_array("Manager", $userRoles)){
-            // JIKA USER ADALAH MANAGER
-            $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                ->join('users', 'users.id', '=', 'employees.user_id')
-                ->where('users.roles', 'like' , '%Manager%')
-                ->orWhere('users.roles', 'like' , '%Supervisor%')
-                ->orWhere('users.roles', 'like' , '%Staff%')
-                ->get();
+        if($query === 'subordinate'){
+            // LIST BAWAHAN AJA
+            $employeId = Employe::employeId();
 
-        }elseif(in_array("Supervisor", $userRoles)){
-            // JIKA USER ADALAH SUPERVISOR
-            $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                ->join('users', 'users.id', '=', 'employees.user_id')
-                ->where('users.roles', 'like' , '%Supervisor%')
-                ->orWhere('users.roles', 'like' , '%Staff%')
-                ->get();
+            $list = Structure::select('employe_id', 'first_name', 'users.roles')
+                    ->join('users', 'users.id', '=', 'struktur_lengkap_oke.user_id')
+                    ->where('struktur_lengkap_oke.direct_atasan', $employeId)
+                    ->get();
+        }else{
+
+            if(in_array("Manager", $userRoles)){
+                // JIKA USER ADALAH MANAGER
+                // LIST SELEVEL MANAGER
+                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                        ->join('users', 'users.id', '=', 'employees.user_id')
+                        ->where('users.roles', 'like' , '%Manager%')
+                        ->get();
+    
+            }elseif(in_array("Supervisor", $userRoles)){
+                // JIKA USER ADALAH SUPERVISOR
+                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                    ->join('users', 'users.id', '=', 'employees.user_id')
+                    ->where('users.roles', 'like' , '%Supervisor%')
+                    ->get();
+            }
+
         }
 
         $total = $list->count();
