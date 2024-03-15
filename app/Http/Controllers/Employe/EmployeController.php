@@ -164,7 +164,7 @@ class EmployeController extends Controller
     public function assignmentList(Request $request)
     {
         $userRoles = Auth::user()->roles;
-        $query = $request->query('for');
+        $query = $request->query('search');
 
         if($query === 'subordinate'){
             // LIST BAWAHAN AJA
