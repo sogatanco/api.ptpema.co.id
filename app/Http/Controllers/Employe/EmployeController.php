@@ -161,7 +161,7 @@ class EmployeController extends Controller
         ], 200);
     }
 
-    public function assignmentList()
+    public function assignmentList(Request $request)
     {
         $userRoles = Auth::user()->roles;
         $query = $request->query('for');
