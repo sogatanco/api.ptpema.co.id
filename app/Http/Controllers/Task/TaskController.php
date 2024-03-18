@@ -1465,20 +1465,29 @@ class TaskController extends Controller
         }else{
             // JIKA USER DARI DIVISI LAIN
             if(in_array('Staff', $userRoles)){
-                // CARI ATASAN SEBAGAI PIC TASK YG DI ASSIGN OLEH DIVISI AKTIF
-                $where = ['project_id' => $projectId, 'employe_id' => $directSupervisor->direct_atasan];
+                // CARI USER SEBAGAI PIC
+                $where = ['project_id' => $projectId, 'employe_id' => $employeId];
+                // ATAU CARI ATASAN SEBAGAI PIC TASK YG DI ASSIGN OLEH DIVISI AKTIF
+                $orWhere = ['project_id' => $projectId, 'employe_id' => $directSupervisor->direct_atasan];
+
+                $listOfTask = TaskPic::where($where)
+                            ->orWhere($orWhere)
+                            ->get();
             }else{
                 // JIKA USER ADALAH SUPERVISOR/MANAGER DARI DIVISI LAIN
                 $where = ['project_id' => $projectId, 'employe_id' => $employeId];
+
+                $listOfTask = TaskPic::where($where)
+                            ->get();
             }
 
-            $listOfTask = TaskPic::where($where)
-                        ->get();
         }
                         
         $taskIdsTemp = [];
         for ($ti=0; $ti < count($listOfTask); $ti++) { 
-            $taskIdsTemp[] = $listOfTask[$ti]->task_id;
+            if(!in_array($listOfTask[$ti]->task_id, $taskIdsTemp)){
+                array_push($taskIdsTemp, $listOfTask[$ti]->task_id);
+            };
         };
 
         $all = [];
