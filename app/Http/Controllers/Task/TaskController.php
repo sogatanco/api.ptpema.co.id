@@ -739,6 +739,7 @@ class TaskController extends Controller
                 "file" => [
                     "file_id" => $newFile->id,
                     "file_name" => $thefile,
+                    "employe_id" => $newFile->employe_id
                 ]
             ], 200, [], JSON_NUMERIC_CHECK);
         } else {
