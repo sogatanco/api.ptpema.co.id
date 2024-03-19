@@ -1553,7 +1553,7 @@ class TaskController extends Controller
 
                 $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
                 
-                $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
+                $all[$at]['files'] = TaskFile::select('file_id', 'file_name', 'employe_id')
                                             ->where('task_id', $all[$at]->task_id)
                                             ->get(); 
                 
