@@ -1479,7 +1479,7 @@ class TaskController extends Controller
                         ->get();
  
                 if(count($result1) > 0 && count($result2) > 0){
-                    $listOfTask = array_merge($result1.toArray(), $result2.toArray());
+                    $listOfTask = array_merge($result1->toArray(), $result2->toArray());
                 }elseif(count($result1) > 0){
                     $listOfTask = $result1;
                 }else{
