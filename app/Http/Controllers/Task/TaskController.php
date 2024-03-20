@@ -1496,6 +1496,10 @@ class TaskController extends Controller
                             ->get();
             }
         }
+
+        return response()->json([
+            "lot" => $listOfTask,
+        ], 200);
                         
         $taskIdsTemp = [];
         for ($ti=0; $ti < count($listOfTask); $ti++) { 
