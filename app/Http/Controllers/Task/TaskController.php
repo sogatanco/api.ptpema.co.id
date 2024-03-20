@@ -1478,7 +1478,13 @@ class TaskController extends Controller
                 $result2 = TaskPic::where($whereByDirectSupervisor)
                         ->get();
  
-                $listOfTask = array_merge($result1.toArray(), $result2.toArray());
+                if(count($result1) > 0 && count($result2) > 0){
+                    $listOfTask = array_merge($result1.toArray(), $result2.toArray());
+                }elseif(count($result1) > 0){
+                    $listOfTask = $result1;
+                }else{
+                    $listOfTask = $result2;
+                }
                         
             }else{
                 // JIKA USER ADALAH SUPERVISOR/MANAGER DARI DIVISI LAIN
