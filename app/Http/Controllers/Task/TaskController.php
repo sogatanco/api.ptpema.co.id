@@ -1504,11 +1504,6 @@ class TaskController extends Controller
             };
         };
 
-        return response()->json([
-            "lot" => $listOfTask,
-            "pe" => $taskIdsTemp,
-        ], 200);
-
         $all = [];
         if(count($taskIdsTemp) > 0){
             $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
