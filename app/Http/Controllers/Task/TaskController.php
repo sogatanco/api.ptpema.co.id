@@ -1482,8 +1482,10 @@ class TaskController extends Controller
                     $listOfTask = array_merge($result1->toArray(), $result2->toArray());
                 }elseif(count($result1) > 0){
                     $listOfTask = $result1;
-                }else{
+                }elseif(count($result2) > 0){
                     $listOfTask = $result2;
+                }else{
+                    $listOfTask = [];
                 }
                         
             }else{
@@ -1635,7 +1637,8 @@ class TaskController extends Controller
             "is_member_active" => $isMemberActive,
             "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
-            "data" => $level1
+            "data" => $level1,
+            'lot' => $listOfTask
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
