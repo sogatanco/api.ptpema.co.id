@@ -1499,7 +1499,7 @@ class TaskController extends Controller
                         
         $taskIdsTemp = [];
         for ($ti=0; $ti < count($listOfTask); $ti++) { 
-            if(!in_array($listOfTask[$ti]->task_id, $taskIdsTemp)){
+            if($listOfTask[$ti]->task_id && !in_array($listOfTask[$ti]->task_id, $taskIdsTemp)){
                 array_push($taskIdsTemp, $listOfTask[$ti]->task_id);
             };
         };
