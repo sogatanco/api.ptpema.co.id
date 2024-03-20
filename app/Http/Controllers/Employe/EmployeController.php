@@ -166,13 +166,13 @@ class EmployeController extends Controller
         $userRoles = Auth::user()->roles;
         $query = $request->query('search');
 
-        // if($query === 'goal' !! $query === 'target'){
-        //     // LIST EMPLOYE SE LEVEL MANAGER
-        // }else if($query === 'activity'){
-        //     // LIST EMPLOYE SE LEVEL MANAGER DAN BAWAHAN(SPV/STAFF)
-        // }else{
-        //     // sub activity
-        // }
+        if($query === 'activity'){
+            // LIST EMPLOYE SE LEVEL MANAGER
+        }else if($query === 'activity'){
+            // LIST EMPLOYE SE LEVEL MANAGER DAN BAWAHAN(SPV/STAFF)
+        }else{
+            // sub activity
+        }
 
         if($query === 'subordinate'){
             // LIST BAWAHAN AJA
@@ -182,8 +182,31 @@ class EmployeController extends Controller
                     ->join('users', 'users.id', '=', 'struktur_lengkap_oke.user_id')
                     ->where('struktur_lengkap_oke.direct_atasan', $employeId)
                     ->get();
-        }else{
 
+        }elseif($query === 'activity'){
+
+            if(in_array("Manager", $userRoles)){
+                // JIKA USER ADALAH MANAGER
+                // LIST MANAGER SUPERVISOR DAN STAFF
+                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                ->join('users', 'users.id', '=', 'employees.user_id')
+                ->where('users.roles', 'like' , '%Manager%')
+                ->orWhere('users.roles', 'like' , '%Supervisor%')
+                ->orWhere('users.roles', 'like' , '%Staff%')
+                ->get();
+                
+            }elseif(in_array("Supervisor", $userRoles)){
+                // JIKA USER ADALAH SUPERVISOR
+                // LIST SUPERVISOR DAN STAFF
+                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                    ->join('users', 'users.id', '=', 'employees.user_id')
+                    ->where('users.roles', 'like' , '%Supervisor%')
+                    ->orWhere('users.roles', 'like' , '%Staff%')
+                    ->get();
+            }
+
+        }else{
+            // LIST ASSIGN UNTUK SASARAN DAN TARGET
             if(in_array("Manager", $userRoles)){
                 // JIKA USER ADALAH MANAGER
                 // LIST SELEVEL MANAGER
@@ -200,7 +223,6 @@ class EmployeController extends Controller
                     ->where('users.roles', 'like' , '%Supervisor%')
                     ->get();
             }
-
         }
 
         $total = $list->count();
