@@ -166,6 +166,14 @@ class EmployeController extends Controller
         $userRoles = Auth::user()->roles;
         $query = $request->query('search');
 
+        // if($query === 'goal' !! $query === 'target'){
+        //     // LIST EMPLOYE SE LEVEL MANAGER
+        // }else if($query === 'activity'){
+        //     // LIST EMPLOYE SE LEVEL MANAGER DAN BAWAHAN(SPV/STAFF)
+        // }else{
+        //     // sub activity
+        // }
+
         if($query === 'subordinate'){
             // LIST BAWAHAN AJA
             $employeId = Employe::employeId();
