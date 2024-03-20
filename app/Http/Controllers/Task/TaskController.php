@@ -1496,17 +1496,18 @@ class TaskController extends Controller
                             ->get();
             }
         }
-
-        return response()->json([
-            "lot" => $listOfTask,
-        ], 200);
                         
         $taskIdsTemp = [];
         for ($ti=0; $ti < count($listOfTask); $ti++) { 
-            if($listOfTask[$ti]->task_id && !in_array($listOfTask[$ti]->task_id, $taskIdsTemp)){
-                array_push($taskIdsTemp, $listOfTask[$ti]->task_id);
+            if(!in_array($listOfTask[$ti]['task_id'], $taskIdsTemp)){
+                array_push($taskIdsTemp, $listOfTask[$ti]['task_id']);
             };
         };
+
+        return response()->json([
+            "lot" => $listOfTask,
+            "pe" => $taskIdsTemp,
+        ], 200);
 
         $all = [];
         if(count($taskIdsTemp) > 0){
