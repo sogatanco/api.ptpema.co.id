@@ -167,6 +167,7 @@ class EmployeController extends Controller
         $query = $request->query('search');
 
         if($query === 'subordinate'){
+            // LIST ASSSIGN UNTUK SUB AKTIFITAS 
             // LIST BAWAHAN AJA
             $employeId = Employe::employeId();
 
@@ -176,7 +177,7 @@ class EmployeController extends Controller
                     ->get();
 
         }elseif($query === 'activity'){
-
+            // LIST ASSIGN UNTUK AKTIFITAS
             if(in_array("Manager", $userRoles)){
                 // JIKA USER ADALAH MANAGER
                 // LIST MANAGER SUPERVISOR DAN STAFF
@@ -205,7 +206,6 @@ class EmployeController extends Controller
                 $list = Employe::select('employe_id', 'first_name', 'users.roles')
                         ->join('users', 'users.id', '=', 'employees.user_id')
                         ->where('users.roles', 'like' , '%Manager%')
-                        ->orWhere('users.roles', 'like' , '%Supervisor%')
                         ->get();
     
             }elseif(in_array("Supervisor", $userRoles)){

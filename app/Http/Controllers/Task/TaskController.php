@@ -1638,7 +1638,6 @@ class TaskController extends Controller
             "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
             "data" => $level1,
-            'lot' => $listOfTask
         ], 200, [], JSON_NUMERIC_CHECK);
     }
 
