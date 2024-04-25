@@ -40,7 +40,7 @@ class ProjectController extends Controller
         $user = auth()->user();
 
         if(in_array("Presdir", $user->roles)){
-            $divisions  = Organization::where('board_id', '>', 10)
+            $divisions  = Organization::where('organization_id', '>', 10)
                         ->get();
 
             return response()->json([
