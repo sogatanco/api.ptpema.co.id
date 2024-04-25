@@ -37,11 +37,28 @@ class ProjectController extends Controller
     public function index()
     {
 
-        $employeId = Employe::employeId();
-        $employeDivision = Employe::getEmployeDivision($employeId);
+        $user = auth()->user();
 
-        $divisions = Organization::where('board_id', $employeDivision->board_id)
-                    ->get();
+        if(in_array("Presdir", $user->roles)){
+            $divisions  = Organization::where('board_id', '>', 10)
+                        ->get();
+
+            return response()->json([
+                "message" => "presdir",
+                "divs" => $divisions
+            ], 200);
+        }else{
+            $employeId = Employe::employeId();
+            $employeDivision = Employe::getEmployeDivision($employeId);
+    
+            $divisions = Organization::where('board_id', $employeDivision->board_id)
+                        ->get();
+
+            return response()->json([
+                "message" => "Kepala Direktorat",
+                "divs" => $divisions
+            ], 200);
+        }
 
         $divisionIds = [];
         if(count($divisions) > 0){
