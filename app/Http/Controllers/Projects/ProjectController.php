@@ -43,21 +43,12 @@ class ProjectController extends Controller
             $divisions  = Organization::where('organization_id', '>', 10)
                         ->get();
 
-            return response()->json([
-                "message" => "presdir",
-                "divs" => $divisions
-            ], 200);
         }else{
             $employeId = Employe::employeId();
             $employeDivision = Employe::getEmployeDivision($employeId);
     
             $divisions = Organization::where('board_id', $employeDivision->board_id)
                         ->get();
-
-            return response()->json([
-                "message" => "Kepala Direktorat",
-                "divs" => $divisions
-            ], 200);
         }
 
         $divisionIds = [];
