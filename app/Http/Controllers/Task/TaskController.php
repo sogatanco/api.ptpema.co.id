@@ -1740,7 +1740,7 @@ class TaskController extends Controller
         }
     }
 
-    public function duplicateTask()
+    public function duplicateTask($taskId)
     {
         return response()->json([
             "message" => "From duplikat task endpoint"
