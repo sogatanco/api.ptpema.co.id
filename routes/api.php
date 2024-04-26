@@ -96,7 +96,7 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("task/director/inprogress/list", 'inProgressList')->middleware("role:Director");
     Route::get("/task/employe/additional/list", 'additionalList')->middleware("role:Staff,Supervisor,Manager");
     Route::delete("/task/file/delete/{file_id}", 'deleteFile')->middleware("role:Staff,Supervisor,Manager");
-    Route::post("/task/{taskId}/duplicate", 'duplicateTask')->middleware("role:employee");
+    Route::post("/task/{taskId}/duplicate", 'duplicateTask')->middleware("role:Employee");
     
     // 3 LEVEL TASK
     Route::get("/task/{project_id}/employe/list", 'projectTaskByEmploye')->middleware("role:Staff,Supervisor,Manager");
