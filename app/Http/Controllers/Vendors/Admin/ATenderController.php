@@ -18,6 +18,12 @@ class ATenderController extends Controller
 {
     function store(Request $request)
     {
+        $request->validate([
+            'metode_pengadaan' => 'required',
+            'sistem_kualifikasi' => 'required',
+            'nama_tender' => 'required',
+        ]);
+
         $file_dok_tender = base64_decode($request->dok_tender, true);
         $file_dok_deskripsi_tender = base64_decode($request->dok_deskripsi_tender, true);
         $file_doc_penyampaian_penawaran = base64_decode($request->doc_penyampaian_penawaran, true);
