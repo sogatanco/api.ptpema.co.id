@@ -234,7 +234,7 @@ class APerusahaanController extends Controller
 
         return response()->json([
             'status' => true,
-            'total' => count($total),
+            'total' => count($list),
             'data' => $list
         ], 200);
     }
