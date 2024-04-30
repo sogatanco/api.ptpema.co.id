@@ -20,7 +20,6 @@ class ATenderController extends Controller
     {
         $request->validate([
             'metode_pengadaan' => 'required',
-            'sistem_kualifikasi' => 'required',
             'nama_tender' => 'required',
             'lokasi' => 'required',
             'tgl_pendaftaran' => 'required',
