@@ -233,10 +233,18 @@ class APerusahaanController extends Controller
         $list = Perusahaan::select('id', 'nama_perusahaan')
                 ->where('tipe', $query)->get();
 
+        $data = [];
+        for ($i=0; $i < count($list); $i++) { 
+            $data[$i] = [
+                'value' => $list[$i]->id,
+                'label' => $list[$i]->nama_perusahaan
+            ];
+        }
+
         return response()->json([
             'status' => true,
-            'total' => count($list),
-            'data' => $list
+            'total' => count($data),
+            'data' => $data
         ], 200);
     }
 
