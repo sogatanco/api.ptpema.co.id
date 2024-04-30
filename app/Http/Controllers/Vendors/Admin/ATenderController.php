@@ -65,6 +65,18 @@ class ATenderController extends Controller
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_tender, $file_dok_tender);
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
+
+            if($t->metode_pengadaan === 'seleksi_terbatas' || $t->metode_pengadaan === 'tender_terbatas'){
+                $participants = $request->company_selected;
+                for ($i=0; $i < count($participants); $i++) { 
+                    // masukkan peserta ke table tender peserta
+                    TenderPeserta::create([
+                        'perusahaan_id' => $participants[$i]->value,
+                        'tender_id' => $t->id_tender
+                    ]);
+                }
+            }
+
             return new PostResource(true, 'Tender Inserted !', $t);
         } else {
             return new PostResource(false, 'Failed Tender Insert !', []);
