@@ -22,6 +22,14 @@ class ATenderController extends Controller
             'metode_pengadaan' => 'required',
             'sistem_kualifikasi' => 'required',
             'nama_tender' => 'required',
+            'lokasi' => 'required',
+            'tgl_pendaftaran' => 'required',
+            'batas_pendaftaran' => 'required',
+            'jenis_pengadaan' => 'required',
+            'kbli' => 'required',
+            'hps' => 'required',
+            'dok_tender' => 'required',
+            'dok_deskripsi_tender' => 'required'
         ]);
 
         $file_dok_tender = base64_decode($request->dok_tender, true);

@@ -227,4 +227,15 @@ class APerusahaanController extends Controller
         return new PostResource(true, 'List Kbli', $list);
     }
 
+    public function listCompanyForInvite()
+    {
+        $query = $request->query('type');
+        $list = Perusahaan::where('type', 'like', '%', $query)->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $list
+        ], 200);
+    }
+
 }
