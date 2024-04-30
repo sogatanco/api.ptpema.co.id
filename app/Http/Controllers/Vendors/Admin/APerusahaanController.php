@@ -230,14 +230,14 @@ class APerusahaanController extends Controller
     public function companiesToInvite(Request $request)
     {
         $query = $request->query('type');
-        $list = Perusahaan::select('id', 'nama_perusahaan')
+        $list = Perusahaan::select('id', 'bentuk_usaha', 'nama_perusahaan')
                 ->where('tipe', $query)->get();
 
         $data = [];
         for ($i=0; $i < count($list); $i++) { 
             $data[$i] = [
                 'value' => $list[$i]->id,
-                'label' => $list[$i]->nama_perusahaan
+                'label' => $list[$i]->bentuk_usaha. " " .$list[$i]->nama_perusahaan
             ];
         }
 
