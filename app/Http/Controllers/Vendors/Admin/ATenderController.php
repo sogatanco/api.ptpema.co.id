@@ -70,7 +70,7 @@ class ATenderController extends Controller
                 for ($i=0; $i < count($participants); $i++) { 
                     // masukkan peserta ke table tender peserta
                     TenderPeserta::create([
-                        'perusahaan_id' => $participants[$i]->value,
+                        'perusahaan_id' => $participants[$i]['value'],
                         'tender_id' => $t->id_tender
                     ]);
                 }
