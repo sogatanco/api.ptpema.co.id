@@ -230,10 +230,11 @@ class APerusahaanController extends Controller
     public function companiesToInvite(Request $request)
     {
         $query = $request->query('type');
-        $list = Perusahaan::where('tipe', 'like', '%' . $query . '%')->get();
+        $list = Perusahaan::where('tipe', $query)->get();
 
         return response()->json([
             'status' => true,
+            'total' => count($total),
             'data' => $list
         ], 200);
     }
