@@ -67,12 +67,28 @@ class ATenderController extends Controller
 
             if($t->metode_pengadaan === 'seleksi_terbatas' || $t->metode_pengadaan === 'tender_terbatas'){
                 $participants = $request->company_selected;
-                for ($i=0; $i < count($participants); $i++) { 
-                    // masukkan peserta ke table tender peserta
-                    TenderPeserta::create([
-                        'perusahaan_id' => $participants[$i]['value'],
-                        'tender_id' => $t->id_tender
-                    ]);
+                for ($i=0; $i < count($participants); $i++) {
+                    
+                    if($participants[$i]['value'] === 'all_vendor'){
+                        // ambil semua vendor by tipe penyedia
+                        $vendors = Perusahaan::select('id')
+                                    ->where('tipe', $request->tipe_penyedia)
+                                    ->get();
+
+                        for ($v=0; $v < count($vendors); $v++) { 
+                            // masukkan semua vendor ke table tender peserta
+                            TenderPeserta::create([
+                                'perusahaan_id' => $vendors[$v]->id,
+                                'tender_id' => $t->id_tender
+                            ]);
+                        }
+                    }else{
+                        // masukkan peserta ke table tender peserta
+                        TenderPeserta::create([
+                            'perusahaan_id' => $participants[$i]['value'],
+                            'tender_id' => $t->id_tender
+                        ]);
+                    }
                 }
             }
 
