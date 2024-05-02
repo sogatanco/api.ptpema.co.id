@@ -34,11 +34,13 @@ class ATenderController extends Controller
 
         $file_dok_tender = base64_decode($request->dok_tender, true);
         $file_dok_deskripsi_tender = base64_decode($request->dok_deskripsi_tender, true);
-        $file_doc_penyampaian_penawaran = base64_decode($request->doc_penyampaian_penawaran, true);
+        // $file_doc_penyampaian_penawaran = base64_decode($request->doc_penyampaian_penawaran, true);
+        $file_dok_untuk_vendor =  base64_decode($request->dok_untuk_vendor, true);
 
         $dok_tender = 'dok_tender.pdf';
         $dok_deskripsi_tender = 'dok_deskripsi_tender.pdf';
-        $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.docx';
+        // $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.docx';
+        $dok_untuk_vendor = 'dok_template.rar';
 
 
         $t = new Tender();
@@ -56,6 +58,7 @@ class ATenderController extends Controller
         $t->jenis_pengadaan = $request->jenis_pengadaan;
         $t->hps = $request->hps;
         $t->kbli = json_encode($request->kbli);
+        $t->dok_template = $dok_untuk_vendor;
         $t->centang_dok_wajib = json_encode($request->centang_dok_wajib);
         $t->dok_tender = $dok_tender;
         $t->dok_deskripsi_tender = $dok_deskripsi_tender;
@@ -64,7 +67,8 @@ class ATenderController extends Controller
         if ($t->save()) {
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_tender, $file_dok_tender);
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
-            Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
+            Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_untuk_vendor, $file_dok_untuk_vendor);
+            // Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
 
             if($t->metode_pengadaan === 'seleksi_terbatas' || $t->metode_pengadaan === 'tender_terbatas'){
                 $participants = $request->company_selected;
