@@ -244,6 +244,7 @@ class APerusahaanController extends Controller
         return response()->json([
             'status' => true,
             'total' => count($data),
+            'type' => $query,
             'data' => $data
         ], 200);
     }
