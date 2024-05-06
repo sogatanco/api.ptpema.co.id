@@ -50,7 +50,7 @@
 <body>
 
 <div class="container">
-    <img class="logo" src="https://ptpema.co.id/uploads/settings/16347907124310.PNG" alt="Your Logo">
+    <img class="logo" src="https://ptpema.co.id/wp-content/uploads/2023/06/cropped-Logo-Pema.png" alt="Your Logo">
     <h1>Verifikasi Email Berhasil</h1>
     <p>Verifikasi Email berhasil </p>
     <a href="https://vendor.ptpema.co.id/auth/login">Silakan Login</a>
