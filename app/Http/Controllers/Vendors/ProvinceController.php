@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Vendors;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Vendor\Province;
+use App\Models\Vendor\Province;
 
 class ProvinceController extends Controller
 {
