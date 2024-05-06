@@ -93,10 +93,6 @@ class PerusahaanController extends Controller
 
     public function store(Request $request)
     {
-        return response()->json([
-            "message" => "from store endpoint"
-        ], 200);
-
         $data = $request->all();
 
         $validator = Validator::make($request->all(), [
