@@ -40,7 +40,7 @@ class ATenderController extends Controller
         $dok_tender = 'dok_tender.pdf';
         $dok_deskripsi_tender = 'dok_deskripsi_tender.pdf';
         // $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.docx';
-        $dok_untuk_vendor = 'dok_template.rar';
+        $dok_untuk_vendor = 'template_dokumen_pengadaan.rar';
 
 
         $t = new Tender();

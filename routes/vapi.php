@@ -84,7 +84,10 @@ Route::controller(TenderController::class)->group(function(){
     Route::get('tender/submit-dokumen/{idPeserta}', 'submitDokumen');
 });
 
+Route::controller(TenderController::class)->group(function(){
+    Route::get('province', 'list');
+});
+
 Route::controller(PublicData::class)->group(function(){
     Route::get('public/tender/list', 'dataTender');
-
 });
