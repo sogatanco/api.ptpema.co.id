@@ -11,6 +11,7 @@ use App\Http\Controllers\Vendors\FileController;
 use App\Http\Controllers\Vendors\IzinController;
 use App\Http\Controllers\Vendors\PortoController;
 use App\Http\Controllers\Vendors\KlbiController;
+use App\Http\Controllers\Vendors\ProvinceController;
 use App\Http\Controllers\Vendors\PublicData;
 
 
@@ -84,7 +85,7 @@ Route::controller(TenderController::class)->group(function(){
     Route::get('tender/submit-dokumen/{idPeserta}', 'submitDokumen');
 });
 
-Route::controller(TenderController::class)->group(function(){
+Route::controller(ProvinceController::class)->group(function(){
     Route::get('province', 'list');
 });
 
