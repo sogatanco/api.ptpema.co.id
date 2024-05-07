@@ -266,4 +266,11 @@ class ATenderController extends Controller
             ], 200);
         }
     }
+
+    public function updateTenderStatus($tenderId)
+    {
+        return response()->json([
+            "message" => "from update tender status endpoint"
+        ], 200);
+    }
 }
