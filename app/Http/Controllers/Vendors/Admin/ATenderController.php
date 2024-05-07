@@ -267,8 +267,12 @@ class ATenderController extends Controller
         }
     }
 
-    public function updateTenderStatus($tenderId)
+    public function updateTenderStatus(Request $request, $tenderId)
     {
+        $tender = Tender::find($tenderId);
+        $tender->status_tender = $request->status_tender;
+        $tender->save();
+
         return response()->json([
             "message" => "from update tender status endpoint"
         ], 200);
