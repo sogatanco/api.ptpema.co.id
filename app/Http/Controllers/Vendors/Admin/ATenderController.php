@@ -274,7 +274,8 @@ class ATenderController extends Controller
         $tender->save();
 
         return response()->json([
-            "message" => "from update tender status endpoint"
+            "status" => true,
+            "message" => 'Tender updated successfully'
         ], 200);
     }
 }
