@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Vendors;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Mail\InfoToVendor;
+use Mail;
 
 class PublicUserController extends Controller
 {
