@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Vendors;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use App\Mail\InfoToVendor;
+use App\Mail\PublicMessage;
 use Mail;
 
 class PublicUserController extends Controller
@@ -19,7 +19,7 @@ class PublicUserController extends Controller
             'content' => $request->content
         ];
 
-        if (Mail::to('safrian@ptpema.co.id')->send(new InfoToVendor($mailData))) {
+        if (Mail::to('safrian@ptpema.co.id')->send(new PublicMessage($mailData))) {
             return response()->json([
                 'status' => true,
                 'message' => 'Email sended successfully'
