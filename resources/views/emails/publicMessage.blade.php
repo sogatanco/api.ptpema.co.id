@@ -4,7 +4,7 @@
 
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <title>URGENT</title>
+  <title>Public Message</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style type="text/css">
   /**
@@ -104,31 +104,6 @@
   <!-- start body -->
   <table border="0" cellpadding="0" cellspacing="0" width="100%">
 
-    <!-- start logo -->
-    <tr>
-      <td align="center" bgcolor="#e9ecef">
-        <!--[if (gte mso 9)|(IE)]>
-        <table align="center" border="0" cellpadding="0" cellspacing="0" width="600">
-        <tr>
-        <td align="center" valign="top" width="600">
-        <![endif]-->
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 800px;">
-          <tr>
-            <td align="center" valign="top" style="padding: 36px 24px;">
-              <a href="https://ptpema.co.id/" target="_blank" style="display: inline-block;">
-                <img src="https://ptpema.co.id/uploads/settings/16347907124310.PNG" alt="Logo" border="0" width="150" style=" width: 150px; max-width: 150px; min-width: 150px;">
-              </a>
-            </td>
-          </tr>
-        </table>
-        <!--[if (gte mso 9)|(IE)]>
-        </td>
-        </tr>
-        </table>
-        <![endif]-->
-      </td>
-    </tr>
-    <!-- end logo -->
 
     <!-- start hero -->
     <tr>
@@ -152,17 +127,17 @@
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
 
           <tr>
-            <td align="left" bgcolor="#ffffff" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+            <td align="left" bgcolor="#ffffff" style="padding: 12px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 12px;">
               <p style="margin: 0;">Nama : <?php echo $mailData['name']?></p>
             </td>
           </tr>
           <tr>
-            <td align="left" bgcolor="#ffffff" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+            <td align="left" bgcolor="#ffffff" style="padding: 12px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 12px;">
               <p style="margin: 0;">Email : <?php echo $mailData['email']?>,</p>
             </td>
           </tr>
           <tr>
-            <td align="left" bgcolor="#ffffff" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+            <td align="left" bgcolor="#ffffff" style="padding: 12px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 12px;">
               <p style="margin: 0;">Pesan : <?php echo $mailData['content']?>,</p>
             </td>
           </tr>
