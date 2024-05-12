@@ -28,7 +28,7 @@ class ATenderController extends Controller
             'jenis_pengadaan' => 'required',
             'kbli' => 'required',
             'hps' => 'required',
-            'dok_tender' => 'required',
+        'dok_tender' => 'required',
             'dok_deskripsi_tender' => 'required'
         ]);
 
@@ -269,6 +269,10 @@ class ATenderController extends Controller
 
     public function updateTenderStatus(Request $request, $tenderId)
     {
+        if($request->file_document){
+            $image->storeAs('public/documents', $image->hashName());
+        }
+
         $tender = Tender::find($tenderId);
         $tender->status_tender = $request->status_tender;
         $tender->save();

@@ -13,12 +13,10 @@ class PublicData extends Controller
         $data=Tender::where('metode_pengadaan', 'seleksi_umum')
             ->orWhere('metode_pengadaan', 'tender_umum')
             ->get();
-            
+
         return response()->json([
             "success" => true,
             "data" => $data
         ], 200);
-    }
-
-   
+    }   
 }
