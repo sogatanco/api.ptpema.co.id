@@ -269,8 +269,10 @@ class ATenderController extends Controller
 
     public function updateTenderStatus(Request $request, $tenderId)
     {
-        if($request->file_document){
-            $image->storeAs('public/documents', $image->hashName());
+        $fileDocument = $request->file('file_document');
+
+        if($fileDocument){
+            $fileDocument->storeAs('public/documents', $fileDocument->hashName());
         }
 
         $tender = Tender::find($tenderId);
@@ -279,7 +281,8 @@ class ATenderController extends Controller
 
         return response()->json([
             "status" => true,
-            "message" => 'Tender updated successfully'
+            "message" => 'Tender updated successfully',
+            "file" => $fileDocument
         ], 200);
     }
 }
