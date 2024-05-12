@@ -277,6 +277,7 @@ class ATenderController extends Controller
 
         $tender = Tender::find($tenderId);
         $tender->status_tender = $request->status_tender;
+        $tender->status_document = $fileDocument->hashName();
         $tender->save();
 
         return response()->json([
