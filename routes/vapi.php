@@ -13,7 +13,7 @@ use App\Http\Controllers\Vendors\PortoController;
 use App\Http\Controllers\Vendors\KlbiController;
 use App\Http\Controllers\Vendors\ProvinceController;
 use App\Http\Controllers\Vendors\PublicData;
-
+use App\Http\Controllers\Vendors\PublicUserController;
 
 Route::middleware('auth:api_vendor')->get('/uservendor', function (Request $request) {
     return $request->user();
@@ -91,4 +91,8 @@ Route::controller(ProvinceController::class)->group(function(){
 
 Route::controller(PublicData::class)->group(function(){
     Route::get('public/tender/list', 'dataTender');
+});
+
+Route::controller(PublicUserController::class)->group(function(){
+    Route::get('public/send-message', 'sendMessage');
 });
