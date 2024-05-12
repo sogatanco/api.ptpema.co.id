@@ -282,7 +282,8 @@ class ATenderController extends Controller
         return response()->json([
             "status" => true,
             "message" => 'Tender updated successfully',
-            "file" => $fileDocument
+            "file" => $fileDocument,
+            "request" => $request->all()
         ], 200);
     }
 }
