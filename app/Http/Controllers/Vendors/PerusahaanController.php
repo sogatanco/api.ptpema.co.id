@@ -153,11 +153,15 @@ class PerusahaanController extends Controller
 
         if ($savedData) {
             // simpan bentuk usaha,
-            $bidangUsahaIsCreated = BidangUsaha::where(['perusahaan_id' => $company->id, 'master_bidangusaha_id' => $request->id_bidang])->count() >= 1;
+            $bidangArray = $request->bidangArray;
 
-            if (!$bidangUsahaIsCreated) {
-                BidangUsaha::create(['master_bidangusaha_id' => $request->id_bidang, 'perusahaan_id' => $company->id]);
-            };
+            for ($b=0; $b < count($bidangArray); $b++) { 
+                $bidangUsahaIsCreated = BidangUsaha::where(['perusahaan_id' => $company->id, 'master_bidangusaha_id' => $bidangArray[$b]['id']])->count() >= 1;
+
+                if (!$bidangUsahaIsCreated) {
+                    BidangUsaha::create(['master_bidangusaha_id' => $request->id_bidang, 'perusahaan_id' => $company->id]);
+                };
+            }
 
             return response()->json([
                 "status" => true,
