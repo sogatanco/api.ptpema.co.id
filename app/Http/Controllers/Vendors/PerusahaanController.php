@@ -157,7 +157,7 @@ class PerusahaanController extends Controller
                 $bidangUsahaIsCreated = BidangUsaha::where(['perusahaan_id' => $company->id, 'master_bidangusaha_id' => $bidangArray[$b]['id']])->count() >= 1;
 
                 if (!$bidangUsahaIsCreated) {
-                    BidangUsaha::create(['master_bidangusaha_id' => $request->id_bidang, 'perusahaan_id' => $company->id]);
+                    BidangUsaha::create(['master_bidangusaha_id' => $bidangArray[$b]['id'], 'perusahaan_id' => $company->id]);
                 };
             }
 
