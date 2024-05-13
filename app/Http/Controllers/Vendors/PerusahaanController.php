@@ -93,12 +93,17 @@ class PerusahaanController extends Controller
 
     public function store(Request $request)
     {
+        return response()->json([
+            'status' => true,
+            'message' => 'oke'
+        ], 200);
+
         $data = $request->all();
 
         $validator = Validator::make($request->all(), [
             'email_alternatif' => ["required"],
             'no_npwp' => ['required'],
-            'id_bidang' => ["required"],
+            'bidangArray' => ["required"],
             'hp' => ['required'],
             'alamat' => ['required'],
             'provinsi' => ['required'],
