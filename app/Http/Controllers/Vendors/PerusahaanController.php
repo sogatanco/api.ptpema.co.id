@@ -166,7 +166,11 @@ class PerusahaanController extends Controller
                 array_push($oldBidangIds, $oldBidang[$obi]->master_bidangusaha_id);
             }
 
+            $bidangArrayIds = [];
+            
             for ($b=0; $b < count($bidangArray); $b++) { 
+
+                array_push($bidangArrayIds, $bidangArray[$b]['id']);
 
                 // jika request bidang tidak di db
                 // save bidang
@@ -174,17 +178,11 @@ class PerusahaanController extends Controller
                     BidangUsaha::create(['master_bidangusaha_id' => $bidangArray[$b]['id'], 'perusahaan_id' => $company->id]);
                 }
 
-
                 // $bidangUsahaIsCreated = BidangUsaha::where(['perusahaan_id' => $company->id, 'master_bidangusaha_id' => $bidangArray[$b]['id']])->count() >= 1;
 
                 // if (!$bidangUsahaIsCreated) {
                 //     BidangUsaha::create(['master_bidangusaha_id' => $bidangArray[$b]['id'], 'perusahaan_id' => $company->id]);
                 // };
-            }
-
-            $bidangArrayIds = [];
-            for ($bai=0; $bai < count($bidangArray); $bai++) { 
-                array_push($bidangArrayIds, $bidangArray[$bai]['id']);
             }
 
             for ($ob=0; $ob < count($oldBidang); $ob++) { 
