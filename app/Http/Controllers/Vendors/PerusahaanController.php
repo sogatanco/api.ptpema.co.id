@@ -165,7 +165,7 @@ class PerusahaanController extends Controller
 
                 // jika request bidang tidak di db
                 // save bidang
-                if(!in_array($bidangArray[$b]['id'], $oldBidang)){
+                if(!in_array($bidangArray[$b]['id'], $oldBidang.toArray())){
                     BidangUsaha::create(['master_bidangusaha_id' => $bidangArray[$b]['id'], 'perusahaan_id' => $company->id]);
                 }
 
