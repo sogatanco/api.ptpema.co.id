@@ -79,6 +79,7 @@ class PerusahaanController extends Controller
                         ->get();
 
         $dataUmum->bidang_usaha = $bidangUsaha->toArray();
+        $dataUmum->bidang_usaha2 = $bidangUsaha;
         $dataUmum->npwp_base64 = null;
         $dataUmum->pvd_base64 = null;
         if (file_exists(public_path('vendor_file/' . $dataUmum->file_npwp))) {
