@@ -75,12 +75,12 @@ class PerusahaanController extends Controller
             ->leftJoin('bidang_usaha', 'bidang_usaha.perusahaan_id', '=', 'perusahaan.id')
             ->first();
         
-        $bidangUsaha = BidangUsaha::where('perusahaan_id', $dataUmum->id)
+        $bidangUsaha = BidangUsaha::select('master_bidangusah.id_bidang', 'master_bidangusaha.nama_bidang')
+                        ->where('perusahaan_id', $dataUmum->id)
                         ->leftJoin('master_bidangusaha', 'master_bidangusaha.id_bidang', '=', 'bidang_usaha.master_bidangusaha_id')
                         ->get();
 
         $dataUmum->bidang_usaha = $bidangUsaha->toArray();
-        $dataUmum->bidang_usaha2 = $bidangUsaha;
         $dataUmum->npwp_base64 = null;
         $dataUmum->pvd_base64 = null;
         if (file_exists(public_path('vendor_file/' . $dataUmum->file_npwp))) {
