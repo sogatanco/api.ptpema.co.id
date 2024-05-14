@@ -69,13 +69,16 @@ class PerusahaanController extends Controller
             'perusahaan.provinsi',
             'perusahaan.file_npwp',
             'perusahaan.file_pvd',
-            'master_bidangusaha.id_bidang',
             'master_bidangusaha.nama_bidang'
         )
             ->where('user_id', $user->id)
             ->leftJoin('bidang_usaha', 'bidang_usaha.perusahaan_id', '=', 'perusahaan.id')
-            ->leftJoin('master_bidangusaha', 'master_bidangusaha.id_bidang', '=', 'bidang_usaha.master_bidangusaha_id')
             ->first();
+        
+        $bidangUsahaArr = BidangUsaha::where('perusahaan_id', $dataUmum->perusahaan_id)
+                        ->get();
+
+        $dataUmum->bidang_usaha = $bidangArray->toArray();
         $dataUmum->npwp_base64 = null;
         $dataUmum->pvd_base64 = null;
         if (file_exists(public_path('vendor_file/' . $dataUmum->file_npwp))) {
