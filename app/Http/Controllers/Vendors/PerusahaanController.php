@@ -184,7 +184,7 @@ class PerusahaanController extends Controller
 
             $bidangArrayIds = [];
             for ($bai=0; $bai < count($bidangArray); $bai++) { 
-                array_push($bidangArrayIds, $bidangArray[$bai]->id);
+                array_push($bidangArrayIds, $bidangArray[$bai]['id']);
             }
 
             for ($ob=0; $ob < count($oldBidang); $ob++) { 
