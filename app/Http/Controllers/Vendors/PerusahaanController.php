@@ -158,12 +158,34 @@ class PerusahaanController extends Controller
             // simpan bentuk usaha,
             $bidangArray = $request->bidangArray;
 
-            for ($b=0; $b < count($bidangArray); $b++) { 
-                $bidangUsahaIsCreated = BidangUsaha::where(['perusahaan_id' => $company->id, 'master_bidangusaha_id' => $bidangArray[$b]['id']])->count() >= 1;
+            $oldBidang = BidangUSaha::where('perusahaan_id', $company->id)
+                        ->get();
 
-                if (!$bidangUsahaIsCreated) {
+            for ($b=0; $b < count($bidangArray); $b++) { 
+
+                // jika request bidang tidak di db
+                // save bidang
+                if(!in_array($bidangArray[$b]['id'], $oldBidang)){
                     BidangUsaha::create(['master_bidangusaha_id' => $bidangArray[$b]['id'], 'perusahaan_id' => $company->id]);
-                };
+                }
+
+                
+
+                // $bidangUsahaIsCreated = BidangUsaha::where(['perusahaan_id' => $company->id, 'master_bidangusaha_id' => $bidangArray[$b]['id']])->count() >= 1;
+
+                // if (!$bidangUsahaIsCreated) {
+                //     BidangUsaha::create(['master_bidangusaha_id' => $bidangArray[$b]['id'], 'perusahaan_id' => $company->id]);
+                // };
+            }
+
+            for ($ob=0; $ob < count($oldBidang); $ob++) { 
+
+               // jika bidang di db tidak ada di request
+                // delete bidang    
+               if(!in_array($oldBidang[$ob]->master_bidangusaha_id, $bidangArray)){
+                    BidangUsaha::where(['perusahaan_id' => $company->id, 'master_bidangusaha_id' => $oldBidang[$ob]->master_bidangusaha_id])
+                                ->delete();
+               }
             }
 
             return response()->json([
