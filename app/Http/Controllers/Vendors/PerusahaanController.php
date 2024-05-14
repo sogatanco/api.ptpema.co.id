@@ -58,6 +58,7 @@ class PerusahaanController extends Controller
         $user = Auth::user();
 
         $dataUmum = Perusahaan::select(
+            'perusahaan.id',
             'perusahaan.nama_perusahaan',
             'perusahaan.nomor_registrasi',
             'perusahaan.tipe',
