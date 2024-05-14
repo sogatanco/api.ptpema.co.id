@@ -21,11 +21,10 @@ class TenderController extends Controller
 
     public function listTender()
     {
-        // $data = Tender::where('tender.metode_pengadaan', 'umum')
-        //     ->orWhere('metode_pengadaan', 'terbatas')
-        //     ->get();
-
-        $data = Tender::get();
+        $data = Tender::where('tender.metode_pengadaan', 'tender_umum')
+            ->orWhere('metode_pengadaan', 'seleksi_umum')
+            ->orderBy('id_tender', 'DESC')
+            ->get();
 
         foreach ($data as $d) {
             if (count(TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
