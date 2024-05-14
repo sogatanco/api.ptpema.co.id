@@ -74,7 +74,7 @@ class PerusahaanController extends Controller
             ->leftJoin('bidang_usaha', 'bidang_usaha.perusahaan_id', '=', 'perusahaan.id')
             ->first();
         
-        $bidangUsaha = BidangUsaha::where('perusahaan_id', $dataUmum->perusahaan_id)
+        $bidangUsaha = BidangUsaha::where('perusahaan_id', $dataUmum->id)
                         ->leftJoin('master_bidangusaha', 'master_bidangusaha.id_bidang', '=', 'bidang_usaha.master_bidangusaha_id')
                         ->get();
 
