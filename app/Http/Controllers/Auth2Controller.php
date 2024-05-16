@@ -48,6 +48,15 @@ class Auth2Controller extends Controller
             $p->bentuk_usaha = $data['bentuk_usaha'];
             $p->nama_perusahaan = $data['nama_perusahaan'];
             $p->tipe = $data['tipe'];
+
+            if($data['pilihan_pengadaan'] === 'umum'){
+                $p->status_verifikasi_umum = 'register';
+                $p->umum_updated_at = date('Y-m-d H:i:s');
+            }else{
+                $p->status_verifikasi_scm = 'register';
+                $p->scm_updated_at = date('Y-m-d H:i:s');
+            }
+
             $p->nomor_registrasi= 'PEMA-VEND-'.date('Y').'-'.date('m').'-'.rand(1000,9999);
             if ($p->save()) {
                 if($this->kirimEmail($user->id)){
