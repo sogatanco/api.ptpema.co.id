@@ -29,7 +29,7 @@ class UserRegisterRequest extends FormRequest
             'password' => ['required', 'min:8', 'max:100'],
             'bentuk_usaha'=>['required'],
             'nama_perusahaan'=>['required'],
-            'tipe'=>['required']
+            'tipe'=>['required'],
         ];
     }
 

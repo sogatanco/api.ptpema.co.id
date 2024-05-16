@@ -49,7 +49,7 @@ class Auth2Controller extends Controller
             $p->nama_perusahaan = $data['nama_perusahaan'];
             $p->tipe = $data['tipe'];
 
-            if($data['pilihan_pengadaan'] === 'umum'){
+            if($request->pilihan_pengadaan === 'umum'){
                 $p->status_verifikasi_umum = 'register';
                 $p->umum_updated_at = date('Y-m-d H:i:s');
             }else{
