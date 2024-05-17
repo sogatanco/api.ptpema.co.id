@@ -50,6 +50,7 @@ class APerusahaanController extends Controller
         }
 
         $data = Perusahaan::select('*', $field. ' AS status_verifikasi_admin')
+            ->join('users', 'users.id', '=', 'perusahaan.user_id')
             ->where($field, 'review_submit')
             ->orWhere($field, 'review_update')
             ->get();
