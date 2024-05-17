@@ -49,7 +49,7 @@ class APerusahaanController extends Controller
             $field = 'status_verifikasi_scm';
         }
 
-        $data = Perusahaan::select('perusahaan.*', $field. ' AS status_verifikasi_admin', 'users.*', 'users.id as user_id')
+        $data = Perusahaan::select('perusahaan.*', 'perusahaan.id AS perusahaan_id', $field. ' AS status_verifikasi_admin', 'users.*', 'users.id as user_id')
             ->join('users', 'users.id', '=', 'perusahaan.user_id')
             ->where($field, 'review_submit')
             ->orWhere($field, 'review_update')
