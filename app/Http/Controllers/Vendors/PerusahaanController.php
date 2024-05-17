@@ -210,7 +210,7 @@ class PerusahaanController extends Controller
     {
 
         $userId = Auth::user()->id;
-        $company = Perusahaan::find('user_id', $userId)->first();
+        $company = Perusahaan::where('user_id', $userId)->first();
 
         if($company->status_verifikasi_umum === 'register'){
             $company->status_verifikasi_umum = 'review_submit';
