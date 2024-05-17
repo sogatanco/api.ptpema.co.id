@@ -45,11 +45,17 @@ class PerusahaanController extends Controller
     {
         $userId = Auth::user()->id;
 
-        $companyStatus = Perusahaan::select('status_verifikasi')->where('user_id', $userId)->first();
+        $companyStatus = Perusahaan::select('status_verifikasi_umum', 'status_verifikasi_scm')->where('user_id', $userId)->first();
+
+        if($companyStatus->status_verifikasi_umum !== null){
+            $status = $companyStatus->status_verifikasi_umum;
+        }else{
+            $status = $companyStatus->status_verifikasi_scm;
+        }
 
         return response()->json([
             "status" => true,
-            'data' => $companyStatus,
+            'data' => $status,
         ], 200);
     }
 
