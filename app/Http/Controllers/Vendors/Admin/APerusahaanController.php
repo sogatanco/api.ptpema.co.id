@@ -49,7 +49,7 @@ class APerusahaanController extends Controller
             $field = 'status_verifikasi_scm';
         }
 
-        $data = ViewPerusahaan::where($field, 'review_submit')
+        $data = Perusahaan::where($field, 'review_submit')
             ->orWhere($field, 'review_update')
             ->get();
 
