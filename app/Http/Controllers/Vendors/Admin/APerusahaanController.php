@@ -43,7 +43,7 @@ class APerusahaanController extends Controller
 
         $userRoles = Auth::user()->roles;
 
-        if(in_array('AdminTenderUmum', $userRoles)){
+        if(in_array('AdminVendorUmum', $userRoles)){
             $field = 'status_verifikasi_umum';
         }else{
             $field = 'status_verifikasi_scm';

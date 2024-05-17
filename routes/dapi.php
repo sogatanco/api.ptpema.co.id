@@ -52,34 +52,34 @@ Route::controller(InvController::class)->group(function () {
 // vendor admin
 
 Route::controller(APerusahaanController::class)->group(function(){
-     Route::get('vendor/company', 'index')->middleware("role:AdminVendor");
-     Route::get('vendor/company/{id}', 'show')->middleware("role:AdminVendor");
-     Route::get('vendor/request-list', 'requestList')->middleware("role:AdminVendor");
-     Route::get('vendor/{id}/list-data-umum', 'listDataUmum')->middleware("role:AdminVendor");
-     Route::get('vendor/{id}/list-jajaran', 'listJajaran')->middleware("role:AdminVendor");
-     Route::get('vendor/{id}/list-akta', 'listAkta')->middleware("role:AdminVendor");
-     Route::get('vendor/{id}/list-izin', 'listIzin')->middleware("role:AdminVendor");
-     Route::get('vendor/{id}/list-dokumen', 'listDokumen')->middleware("role:AdminVendor");
-     Route::get('vendor/{id}/list-portofolio', 'listPortofolio')->middleware("role:AdminVendor");
-     Route::get('vendor/{id}/list-kbli', 'listKbli')->middleware("role:AdminVendor");
-     Route::put('vendor/{id}/update-status', 'updateStatus')->middleware("role:AdminVendor");
-     Route::post('vendor/sendmail', 'sendEmail')->middleware("role:AdminVendor");
-     Route::post('vendor/verifikasi/{id}', 'verif')->middleware("role:AdminVendor");
-     Route::get('vendor/log/{id}', 'getLog')->middleware("role:AdminVendor");
-     Route::get('vendor/masterkbli', 'list')->middleware("role:AdminVendor");
-     Route::get('vendor/companies-to-invite', 'companiesToInvite')->middleware("role:AdminVendor");
+     Route::get('vendor/company', 'index')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/company/{id}', 'show')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/request-list', 'requestList')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/{id}/list-data-umum', 'listDataUmum')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/{id}/list-jajaran', 'listJajaran')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/{id}/list-akta', 'listAkta')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/{id}/list-izin', 'listIzin')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/{id}/list-dokumen', 'listDokumen')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/{id}/list-portofolio', 'listPortofolio')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/{id}/list-kbli', 'listKbli')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::put('vendor/{id}/update-status', 'updateStatus')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/sendmail', 'sendEmail')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/verifikasi/{id}', 'verif')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/log/{id}', 'getLog')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/masterkbli', 'list')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/companies-to-invite', 'companiesToInvite')->middleware("role:AdminVendorUmum,AdminVendorScm");
 });
 
 Route::controller(ATenderController::class)->group(function(){
-     Route::post('vendor/tender', 'store')->middleware("role:AdminVendor");
-     Route::get('vendor/tender', 'index')->middleware("role:AdminVendor");
-     Route::get('vendor/tender/{id}', 'show')->middleware("role:AdminVendor");
-     Route::post('vendor/tender/update', 'update')->middleware("role:AdminVendor");
-     Route::post('vendor/tender/delete/{id}', 'deleteTender')->middleware("role:AdminVendor");
-     Route::get('vendor/tender/peserta/{id}', 'showPer')->middleware("role:AdminVendor");
-     Route::post('vendor/tender/tahapdua/{id}', 'setTahap2')->middleware("role:AdminVendor");
-     Route::post('vendor/tender/pemenang/{id}', 'setPemenang')->middleware("role:AdminVendor");
-     Route::get('vendor/tender/tahapdua/{id}', 'getTahap2')->middleware("role:AdminVendor");
-     Route::post('vendor/tender/ba/{id}', 'ba')->middleware("role:AdminVendor");
-     Route::post('vendor/tender/status-update/{id}', 'updateTenderStatus')->middleware("role:AdminVendor");
+     Route::post('vendor/tender', 'store')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/tender', 'index')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/tender/{id}', 'show')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/tender/update', 'update')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/tender/delete/{id}', 'deleteTender')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/tender/peserta/{id}', 'showPer')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/tender/tahapdua/{id}', 'setTahap2')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/tender/pemenang/{id}', 'setPemenang')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/tender/tahapdua/{id}', 'getTahap2')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/tender/ba/{id}', 'ba')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::post('vendor/tender/status-update/{id}', 'updateTenderStatus')->middleware("role:AdminVendorUmum,AdminVendorScm");
 });
