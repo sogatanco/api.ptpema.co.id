@@ -48,9 +48,9 @@ class PerusahaanController extends Controller
         $companyStatus = Perusahaan::select('status_verifikasi_umum', 'status_verifikasi_scm')->where('user_id', $userId)->first();
 
         if($companyStatus->status_verifikasi_umum !== null){
-            $status = $companyStatus->status_verifikasi_umum;
+            $status['status_verifikasi'] = $companyStatus->status_verifikasi_umum;
         }else{
-            $status = $companyStatus->status_verifikasi_scm;
+            $status['status_verifikasi'] = $companyStatus->status_verifikasi_scm;
         }
 
         return response()->json([
