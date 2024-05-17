@@ -214,8 +214,10 @@ class PerusahaanController extends Controller
 
         if($company->status_verifikasi_umum === 'register'){
             $company->status_verifikasi_umum = 'review_submit';
+            $company->umum_updated_at = date('Y-m-d H:i:s');
         }else{
             $company->status_verifikasi_scm = 'review_submit';
+            $company->scm_updated_at = date('Y-m-d H:i:s');
         }
 
         $savedSubmit = $company->save();
