@@ -271,4 +271,14 @@ class APerusahaanController extends Controller
         ], 200);
     }
 
+    public function getCompanyStatus($id)
+    {
+        $company = Perusahaan::select('status_verifikasi_umum', 'status_verifikasi_scm', 'umum_updated_at', 'scm_updated_at')->first();
+
+        return response()->json([
+            'status' => true,
+            'data' => $company
+        ], 200);
+    }
+
 }

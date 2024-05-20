@@ -68,6 +68,7 @@ Route::controller(APerusahaanController::class)->group(function(){
      Route::get('vendor/log/{id}', 'getLog')->middleware("role:AdminVendorUmum,AdminVendorScm");
      Route::get('vendor/masterkbli', 'list')->middleware("role:AdminVendorUmum,AdminVendorScm");
      Route::get('vendor/companies-to-invite', 'companiesToInvite')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/company-verify-status/{id}', 'getCompanyStatus')->middleware("role:AdminVendorUmum,AdminVendorScm");
 });
 
 Route::controller(ATenderController::class)->group(function(){
