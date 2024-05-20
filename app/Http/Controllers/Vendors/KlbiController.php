@@ -46,7 +46,18 @@ class KlbiController extends Controller
     }
 
     public function myKbli(){
+
+        $userId = Auth::user()->id;
+        $company = Perusahaan::where('user_id', $userId)->first();
+
+        if($company->status_verifikasi_umum !== null){
+            $status = $company->status_verifikasi_umum;
+        }else{
+            $status = $company->status_verifikasi_scm;
+        }
+
         $data=ViewKbli::where('perusahaan_id',ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id )->get();
+        $data->status_verifikasi = $status;
         return new PostResource(true, 'My Kbli', $data);
     }
     
