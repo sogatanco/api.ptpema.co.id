@@ -218,7 +218,7 @@ class PerusahaanController extends Controller
         $userId = Auth::user()->id;
         $company = Perusahaan::where('user_id', $userId)->first();
 
-        if($company->status_verifikasi_umum === 'register'){
+        if($company->status_verifikasi_by === 'umum'){
             $company->status_verifikasi_umum = 'review_submit';
             $company->umum_updated_at = date('Y-m-d H:i:s');
         }else{

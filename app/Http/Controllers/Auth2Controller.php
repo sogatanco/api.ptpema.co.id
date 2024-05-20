@@ -52,9 +52,11 @@ class Auth2Controller extends Controller
             if($request->pilihan_pengadaan === 'umum'){
                 $p->status_verifikasi_umum = 'register';
                 $p->umum_updated_at = date('Y-m-d H:i:s');
+                $p->status_verifikasi_by = 'umum';
             }else{
                 $p->status_verifikasi_scm = 'register';
                 $p->scm_updated_at = date('Y-m-d H:i:s');
+                $p->status_verifikasi_by = 'scm';
             }
 
             $p->nomor_registrasi= 'PEMA-VEND-'.date('Y').'-'.date('m').'-'.rand(1000,9999);

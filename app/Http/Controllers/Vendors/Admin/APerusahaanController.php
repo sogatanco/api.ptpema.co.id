@@ -199,9 +199,11 @@ class APerusahaanController extends Controller
         if(in_array('AdminVendorUmum', $userRoles)){
             $p->status_verifikasi_umum = $request->status;
             $p->umum_updated_at = date('Y-m-d H:i:s');
+            $p->status_verifikasi_by = 'umum';
         }else{
             $p->status_verifikasi_scm = $request->status;
             $p->scm_updated_at = date('Y-m-d H:i:s');
+            $p->status_verifikasi_by = 'scm';
         }
 
         if ($p->save()) {
