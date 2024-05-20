@@ -29,7 +29,7 @@ class ATenderController extends Controller
             'jenis_pengadaan' => 'required',
             'kbli' => 'required',
             'hps' => 'required',
-        'dok_tender' => 'required',
+            'dok_tender' => 'required',
             'dok_deskripsi_tender' => 'required'
         ]);
 
@@ -108,7 +108,7 @@ class ATenderController extends Controller
     {
         $userRoles = Auth::user()->roles;
 
-        $owner = in_array('AdminVendorUmum') ? 'umum' : 'scm';
+        $owner = in_array('AdminVendorUmum', $userRoles) ? 'umum' : 'scm';
 
         $tenders = Tender::where('owner', $owner)
                 ->orderBy('id_tender', 'DESC')
