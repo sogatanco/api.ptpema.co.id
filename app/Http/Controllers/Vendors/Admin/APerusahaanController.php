@@ -193,7 +193,15 @@ class APerusahaanController extends Controller
     public function verif($id, Request $request)
     {
         $p = Perusahaan::find($id);
-        $p->status_verifikasi = $request->status;
+
+        $userRoles = Auth::user()->roles;
+
+        if(in_array('AdminVendorUmum', $userRoles)){
+            $p->status_verifikasi_umum = $request->status;
+        }{
+            $p->status_verifikasi_scm = $request->status;
+        }
+
         if ($p->save()) {
             $v = new Verifikasi();
             $v->id_perusahaan = $id;

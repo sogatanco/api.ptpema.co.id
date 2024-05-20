@@ -50,7 +50,7 @@
 <body>
 
 <div class="container">
-    <img class="logo" src="https://ptpema.co.id/uploads/settings/16347907124310.PNG" alt="Your Logo">
+    <img class="logo" src="https://ptpema.co.id/wp-content/uploads/2023/06/cropped-Logo-Pema.png" alt="Your Logo">
     <h1>Email Verifikasi Sudah Dikirim</h1>
     <p>Kami telah mengirim email verifikasi ke <?php echo $email; ?>. Silakan cek email dan ikuti intruksi untuk melakukan verifikasi.</p>
     <a href="#">Kirim Ulang</a>

@@ -50,7 +50,7 @@
 <body>
 
 <div class="container">
-    <img class="logo" src="https://ptpema.co.id/uploads/settings/16347907124310.PNG" alt="Your Logo">
+    <img class="logo" src="https://ptpema.co.id/wp-content/uploads/2023/06/cropped-Logo-Pema.png" alt="Your Logo">
     <h1>Email Verification Expired</h1>
     <p>The email verification token has expired. Please request a new verification email.</p>
     <a href="<?php echo $link?>">Request Verification Email</a>
