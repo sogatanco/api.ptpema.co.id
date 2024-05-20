@@ -105,8 +105,15 @@ class ATenderController extends Controller
 
     function index()
     {
-        $data = Tender::get();
-        return new PostResource(true, 'List Tender', $data);
+        $userRoles = Auth::user()->roles;
+
+        $owner = in_array('AdminVendorUmum') ? 'umum' : 'scm';
+
+        $tenders = Tender::where('owner', $owner)
+                ->orderBy('id_tender', 'DESC')
+                ->get();
+
+        return new PostResource(true, 'List Tender', $tenders);
     }
 
     function showPer($id)
