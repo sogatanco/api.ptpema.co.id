@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Vendor\Kbli;
 use App\Models\Vendor\ViewKbli;
 use App\Models\Vendor\MasterKbli;
+use App\Models\Vendor\Perusahaan;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Http\Resources\PostResource;
 use Illuminate\Support\Facades\Storage;
