@@ -13,6 +13,7 @@ use App\Models\Employe;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\MasterKbli;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 
 class ATenderController extends Controller
