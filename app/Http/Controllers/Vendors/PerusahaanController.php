@@ -389,7 +389,10 @@ class PerusahaanController extends Controller
 
         $company = Perusahaan::select('id')->where('user_id', $userId)->first();
 
-        $kbliList = Kbli::where('perusahaan_id', $company->id)->get();
+        $kbliList = Kbli::select('master_kbli.nomor_kbli')
+                    ->leftJoin('master_kbli', 'master_kbli.id_kbli', '=', 'kbli.id_kbli')
+                    ->where('perusahaan_id', $company->id)
+                    ->get();
 
         return response()->json([ 
             'status' => true,
