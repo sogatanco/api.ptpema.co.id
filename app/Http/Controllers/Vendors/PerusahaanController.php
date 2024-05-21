@@ -387,11 +387,11 @@ class PerusahaanController extends Controller
     {
         $userId = Auth::user()->id;
 
-        $companyId = Perusahaan::select('id')->where('user_id', $userId)->first();
+        $company = Perusahaan::select('id')->where('user_id', $userId)->first();
 
-        $kbliList = Kbli::where('perusahaan_id')->get();
+        $kbliList = Kbli::where('perusahaan_id', $company->id)->get();
 
-        return response()->json([
+        return response()->json([ 
             'status' => true,
             'data' => $kbliList
         ], 200);
