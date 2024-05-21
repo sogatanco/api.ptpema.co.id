@@ -288,11 +288,14 @@ class ATenderController extends Controller
 
         if($fileDocument){
             $fileDocument->storeAs('public/documents', $fileDocument->hashName());
+            $status_document = $fileDocument->hashName();
+        }else{
+            $status_document = "";
         }
 
         $tender = Tender::find($tenderId);
         $tender->status_tender = $request->status_tender;
-        $tender->status_document = $fileDocument->hashName();
+        $tender->status_document = $status_document;
         $tender->save();
 
         return response()->json([
