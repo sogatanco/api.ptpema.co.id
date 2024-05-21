@@ -65,6 +65,13 @@ class ATenderController extends Controller
         $t->dok_deskripsi_tender = $dok_deskripsi_tender;
         // $t->doc_penyampaian_penawaran = $doc_penyampaian_penawaran;
 
+        $userRoles = Auth::user()->roles;
+        if(in_array('AdminVendorUmum', $userRoles)){
+            $t->owner = 'umum';
+        }else{
+            $t->owner = 'scm';
+        }
+
         if ($t->save()) {
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_tender, $file_dok_tender);
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
