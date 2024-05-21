@@ -64,6 +64,16 @@ return [
         'public_project' => [
             'driver' => 'local',
             'root' => public_path(). '/project',
+            'permissions' => [
+                'file' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+                'dir' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+            ]
         ],
         'public_inven' => [
             'driver' => 'local',
@@ -72,6 +82,16 @@ return [
         'public_vendor' => [
             'driver' => 'local',
             'root' => public_path(). '/vendor_file',
+            'permissions' => [
+                'file' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+                'dir' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+            ]
         ]
     ],
 
