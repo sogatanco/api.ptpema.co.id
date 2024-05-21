@@ -36,6 +36,7 @@ Route::controller(PerusahaanController::class)->group(function() {
     Route::get('perusahaan/bidangusaha-status', 'bidangUsahaStatus');
     Route::get('perusahaan/spda', 'spda');
     Route::get('perusahaan/donwnload', 'downloadzip');
+    Route::get('perusahaan/kbli-list', 'kbliList');
 });
 
 Route::controller(JajaranController::class)->group(function() {
