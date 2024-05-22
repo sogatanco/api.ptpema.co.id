@@ -87,14 +87,24 @@ class TenderController extends Controller
 
     public function pesertaTender($slug)
     {
+        // cek dulu dia udah terverifikasi belum
+        // kalau belum gak usah kirim form
         $company = Perusahaan::where('user_id', Auth::user()->id)->first();
+
         $data  = Tender::where(['tender.slug' => $slug, 'tender_peserta.perusahaan_id' => $company->id])
             ->leftJoin('tender_peserta', 'tender_peserta.tender_id', '=', 'tender.id_tender')
             ->first();
 
+        if($data->owner === 'umum'){
+            $isVerified = $data->status_verifikasi_umum === 'terverifikasi';
+        }else{
+            $isVerified = $data->status_verifikasi_scm === 'terverifikasi';
+        }
+
         return response()->json([
             "success" => true,
-            "data" => $data
+            "data" => $data,
+            'isVerified' => $isVerified
         ], 200);
     }
 
