@@ -170,7 +170,7 @@ class ATenderController extends Controller
         if (count(TenderPeserta::where('tender_id', $id)->get()) > 0) {
             $td->perusahaan_yang_ikut = TenderPeserta::where('tender_id', $id)->get();
             foreach ($td->perusahaan_yang_ikut as $p) {
-                $p->detail = ViewPerusahaan::find($p->perusahaan_id);
+                $p->detail = Perusahaan::find($p->perusahaan_id);
                 $p->value = ViewPerusahaan::find($p->perusahaan_id)->id;
                 $p->label = ViewPerusahaan::find($p->perusahaan_id)->bentuk_usaha . ' ' . ViewPerusahaan::find($p->perusahaan_id)->nama_perusahaan;
             }
@@ -290,7 +290,7 @@ class ATenderController extends Controller
             $fileDocument->storeAs('public/documents', $fileDocument->hashName());
             $status_document = $fileDocument->hashName();
         }else{
-            $status_document = "";
+            $status_document = null;
         }
 
         $tender = Tender::find($tenderId);
