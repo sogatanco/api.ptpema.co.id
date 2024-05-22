@@ -101,7 +101,7 @@ class TenderController extends Controller
             $isVerified = $company->status_verifikasi_scm === 'terverifikasi';
         }
 
-        $data = $isVerified ? $tenderForm : null;
+        $data = $isVerified ? $tender : null;
 
         return response()->json([
             "success" => true,
