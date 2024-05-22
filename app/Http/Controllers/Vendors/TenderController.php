@@ -91,14 +91,14 @@ class TenderController extends Controller
         // kalau belum gak usah kirim form
         $company = Perusahaan::where('user_id', Auth::user()->id)->first();
 
-        $tenderForm  = Tender::where(['tender.slug' => $slug, 'tender_peserta.perusahaan_id' => $company->id])
+        $tender  = Tender::where(['tender.slug' => $slug, 'tender_peserta.perusahaan_id' => $company->id])
             ->leftJoin('tender_peserta', 'tender_peserta.tender_id', '=', 'tender.id_tender')
             ->first();
 
-        if($data->owner === 'umum'){
-            $isVerified = $data->status_verifikasi_umum === 'terverifikasi';
+        if($tender->owner === 'umum'){
+            $isVerified = $company->status_verifikasi_umum === 'terverifikasi';
         }else{
-            $isVerified = $data->status_verifikasi_scm === 'terverifikasi';
+            $isVerified = $company->status_verifikasi_scm === 'terverifikasi';
         }
 
         $data = $isVerified ? $tenderForm : null;
