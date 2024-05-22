@@ -96,16 +96,14 @@ class TenderController extends Controller
             ->first();
 
         if($tender->owner === 'umum'){
-            $isVerified = $company->status_verifikasi_umum === 'terverifikasi';
+            $tender->status_verifikasi_admin = $company->status_verifikasi_umum;
         }else{
-            $isVerified = $company->status_verifikasi_scm === 'terverifikasi';
+            $tender->status_verifikasi_admin = $company->status_verifikasi_scm;
         }
-
-        $data = $isVerified ? $tender : null;
 
         return response()->json([
             "success" => true,
-            "data" => $data,
+            "data" => $tender,
         ], 200);
     }
 
