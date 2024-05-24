@@ -14,6 +14,7 @@ use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\MasterKbli;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Notification ;
 
 
 class ATenderController extends Controller
@@ -274,7 +275,27 @@ class ATenderController extends Controller
         $t = Tender::find($id);
         Storage::disk('public_vendor')->put('tender/' . $id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
         $t[$request->key] = 'tender/' . $id . '/' . $request->key . '.pdf';
+
         if ($t->save()) {
+
+            $userId = Auth::user()->id;
+            $structure =  Structure::select('direct_atasan')
+                    ->where('employe_id', $userId)
+                    ->first();
+
+            $directSupervisorId = $structure->direct_atasan;
+
+            $notifData = [
+                'from_employe' => $userId,
+                'to_employe' => $$directSupervisorId,
+                'title' => 'Berita Acara Tender',
+                'desc' => 'Permintaan approval berita acara pemenang tender',
+                'category' => 'tender',
+            ];
+
+            $newNotification = new Notification($notifData);
+            $newNotification->save();
+
             return response()->json([
                 "success" => true,
                 "message" => $request->key . "file sudah di upload"
