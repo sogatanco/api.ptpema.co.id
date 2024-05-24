@@ -100,7 +100,7 @@ class TenderController extends Controller
         }else{
             $tender->status_verifikasi_admin = $company->status_verifikasi_scm;
         }
-
+        
         return response()->json([
             "success" => true,
             "data" => $tender,

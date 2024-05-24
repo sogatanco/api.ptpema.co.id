@@ -215,7 +215,7 @@ class ATenderController extends Controller
         // $t->tgl_masa_sanggah = $request->tgl_masa_sanggah;
         $t->jenis_pengadaan = $request->jenis_pengadaan;
         $t->hps = $request->hps;
-        $t->kbli = $request->kbli;
+        $t->kbli = json_encode($request->kbli);
         $t->centang_dok_wajib = json_encode($request->centang_dok_wajib);
         if ($t->save()) {
             return new PostResource(true, 'Tender  updated !', []);
