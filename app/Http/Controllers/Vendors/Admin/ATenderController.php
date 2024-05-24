@@ -276,6 +276,7 @@ class ATenderController extends Controller
         $t = Tender::find($id);
         Storage::disk('public_vendor')->put('tender/' . $id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
         $t[$request->key] = 'tender/' . $id . '/' . $request->key . '.pdf';
+        $t['status_approval'] = 'submit';
 
         if ($t->save()) {
 
