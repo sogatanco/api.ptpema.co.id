@@ -326,4 +326,34 @@ class ATenderController extends Controller
             "message" => 'Tender updated successfully',
         ], 200);
     }
+
+    public function approvalBa()
+    {
+
+        $employeId = Employe::employeId();
+
+        $needApprovalTenders = Tender::where('status_approval', 'submit')->get();
+
+        $approvalData = []; 
+        if($needApprovalTenders){
+
+            for ($at=0; $at < count($needApprovalTenders); $at++) { 
+                $adminId = $needApprovalTenders[$at]->user_id;
+                $AdminDirectSupervisor = Structure::select('direct_atasan')
+                                ->where('employe_id', $adminId)
+                                ->first();
+
+                $directSupervisorId = $AdminDirectSupervisor->direct_atasan;
+
+                if($directSupervisorId === $employeId){
+                    array_push($needApprovalTenders[$at], $approvalData);
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $approvalData
+        ], 200);
+    }
 }
