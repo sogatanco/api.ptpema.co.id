@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Structure;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\MasterKbli;
 use Illuminate\Support\Str;
