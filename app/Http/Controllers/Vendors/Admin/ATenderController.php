@@ -288,7 +288,7 @@ class ATenderController extends Controller
 
             $notifData = [
                 'from_employe' => $employeId,
-                'to_employe' => $$directSupervisorId,
+                'to_employe' => $directSupervisorId,
                 'title' => 'Berita Acara Tender',
                 'desc' => 'Permintaan approval berita acara pemenang tender',
                 'category' => 'tender',
