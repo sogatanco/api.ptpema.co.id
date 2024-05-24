@@ -279,15 +279,15 @@ class ATenderController extends Controller
 
         if ($t->save()) {
 
-            $userId = Auth::user()->id;
+            $employeId = Employe::employeId();
             $structure =  Structure::select('direct_atasan')
-                    ->where('employe_id', $userId)
+                    ->where('employe_id', $employeId)
                     ->first();
 
             $directSupervisorId = $structure->direct_atasan;
 
             $notifData = [
-                'from_employe' => $userId,
+                'from_employe' => $employeId,
                 'to_employe' => $$directSupervisorId,
                 'title' => 'Berita Acara Tender',
                 'desc' => 'Permintaan approval berita acara pemenang tender',
