@@ -346,7 +346,7 @@ class ATenderController extends Controller
                 $directSupervisorId = $AdminDirectSupervisor->direct_atasan;
 
                 if($directSupervisorId === $employeId){
-                    array_push($needApprovalTenders[$at], $approvalData);
+                    array_push($approvalData, $needApprovalTenders[$at]);
                 }
             }
         }
