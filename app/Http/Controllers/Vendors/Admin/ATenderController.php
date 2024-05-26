@@ -276,7 +276,7 @@ class ATenderController extends Controller
         $t = Tender::find($id);
         Storage::disk('public_vendor')->put('tender/' . $id . '/' . $request->key . '.pdf', base64_decode($request->file, true));
         $t[$request->key] = 'tender/' . $id . '/' . $request->key . '.pdf';
-        $t['status_approval'] = 'submit';
+        $t['status_approval'] = $request->key === 'upload_ba_pemenang' ? 'submit_pemenang' : 'submit_tahap_2';
 
         if ($t->save()) {
 
@@ -346,6 +346,15 @@ class ATenderController extends Controller
                 $directSupervisorId = $AdminDirectSupervisor->direct_atasan;
 
                 if($directSupervisorId === $employeId){
+
+                    $where = [
+                        'tender_id' => $needApprovalTenders[$at]->tender_id,
+                        'status' => 'lulus_tahap_1',
+                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id
+                    ];
+
+                    $needApprovalTenders[$at]->winner = TenderPeserta::where($where)->first();
+
                     array_push($approvalData, $needApprovalTenders[$at]);
                 }
             }
