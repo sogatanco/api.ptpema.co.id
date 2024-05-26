@@ -332,7 +332,9 @@ class ATenderController extends Controller
 
         $employeId = Employe::employeId();
 
-        $needApprovalTenders = Tender::where('status_approval', 'submit')->get();
+        $needApprovalTenders = Tender::where('status_approval', 'submit_pemenang')
+                            ->orWhere('status_approval', 'submit_tahap_2')
+                            ->get();
 
         $approvalData = []; 
         if($needApprovalTenders){
@@ -349,17 +351,19 @@ class ATenderController extends Controller
 
                     $where1 = [
                         'tender_id' => $needApprovalTenders[$at]->tender_id,
-                        'status' => 'submit_pemenang',
-                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id
+                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
+                        'status' => 'lulus_tahap_1'
                     ];
 
-                    $where1 = [
+                    $where2 = [
                         'tender_id' => $needApprovalTenders[$at]->tender_id,
-                        'status' => 'submit_tahap_2',
-                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id
+                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
+                        'status' => 'pemenang'
                     ];
 
-                    $needApprovalTenders[$at]->winners = TenderPeserta::where($where1)->orWhere($where2)->get();
+                    $needApprovalTenders[$at]->winners = TenderPeserta::where($where1)
+                                                    ->orWhere($where2)
+                                                    ->get();
 
                     array_push($approvalData, $needApprovalTenders[$at]);
                 }
