@@ -347,13 +347,19 @@ class ATenderController extends Controller
 
                 if($directSupervisorId === $employeId){
 
-                    $where = [
+                    $where1 = [
                         'tender_id' => $needApprovalTenders[$at]->tender_id,
-                        'status' => 'lulus_tahap_1',
+                        'status' => 'submit_pemenang',
                         'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id
                     ];
 
-                    $needApprovalTenders[$at]->winner = TenderPeserta::where($where)->first();
+                    $where1 = [
+                        'tender_id' => $needApprovalTenders[$at]->tender_id,
+                        'status' => 'submit_tahap_2',
+                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id
+                    ];
+
+                    $needApprovalTenders[$at]->winners = TenderPeserta::where($where1)->orWhere($where2)->get();
 
                     array_push($approvalData, $needApprovalTenders[$at]);
                 }
