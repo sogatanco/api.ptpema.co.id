@@ -361,7 +361,7 @@ class ATenderController extends Controller
                         'status' => 'pemenang'
                     ];
 
-                    $needApprovalTenders[$at]->winners = TenderPeserta::select('perusahaan.nama_perusahaan')
+                    $needApprovalTenders[$at]->winners = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
                                                     ->leftJoin('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
                                                     ->where($where1)
                                                     ->orWhere($where2)
