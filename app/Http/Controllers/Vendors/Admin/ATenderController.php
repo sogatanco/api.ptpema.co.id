@@ -291,7 +291,7 @@ class ATenderController extends Controller
                 'from_employe' => $employeId,
                 'to_employe' => $directSupervisorId,
                 'title' => 'Berita Acara Tender',
-                'desc' => 'Permintaan approval berita acara pemenang tender',
+                'desc' => 'Permintaan approval',
                 'category' => 'tender',
             ];
 
@@ -377,4 +377,16 @@ class ATenderController extends Controller
             'data' => $approvalData
         ], 200);
     }
+
+    public function approveBaByManager(Request $request, $tenderId)
+    {
+
+        $requestStatus = $request->status_approval === 'pemenang' ? 'approved_pemenang' : 'approved_tahap_2';
+        $tenderUpdated = Tender::where('id_tender', $tenderId)->update(['status_approval' => $requestStatus]);
+
+        return response()->json([
+            'status' => true,
+            'message' => "BA has been approved"
+        ]);
+    }   
 }
