@@ -381,8 +381,7 @@ class ATenderController extends Controller
     public function approveBaByManager(Request $request, $tenderId)
     {
 
-        $requestStatus = $request->status_approval === 'pemenang' ? 'approved_pemenang' : 'approved_tahap_2';
-        $tenderUpdated = Tender::where('id_tender', $tenderId)->update(['status_approval' => $requestStatus]);
+        $tenderUpdated = Tender::where('id_tender', $tenderId)->update(['status_approval' => $request->status_approval]);
 
         return response()->json([
             'status' => true,
