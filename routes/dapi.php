@@ -84,6 +84,6 @@ Route::controller(ATenderController::class)->group(function(){
      Route::post('vendor/tender/ba/{id}', 'ba')->middleware("role:AdminVendorUmum,AdminVendorScm");
      Route::post('vendor/tender/status-update/{id}', 'updateTenderStatus')->middleware("role:AdminVendorUmum,AdminVendorScm");
      Route::get('vendor/tender/approval/ba', 'approvalBa')->middleware("role:Manager");
-     Route::post('vendor/tender/approval-ba/ba', 'approveBaByManager')->middleware("role:Manager");
+     Route::post('vendor/tender/approval-ba/ba/{id}', 'approveBaByManager')->middleware("role:Manager");
 
 });
