@@ -388,7 +388,7 @@ class ATenderController extends Controller
             $tender->catatan = $request->catatan;
         }
 
-        if($tender->status_approval === 'approve_pemenang'){
+        if($tender->status_approval === 'approved_pemenang'){
             $tender->status_tender = 'tutup';
         }
 
