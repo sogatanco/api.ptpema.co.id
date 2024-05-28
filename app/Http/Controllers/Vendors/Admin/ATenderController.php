@@ -361,12 +361,9 @@ class ATenderController extends Controller
                     //     'status' => 'pemenang'
                     // ];
 
-                    $needApprovalTenders[$at]->winners = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
+                    $needApprovalTenders[$at]->peserta = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
                                                     ->join('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
-                                                    ->where([
-                                                        'tender_peserta.tender_id' => $needApprovalTenders[$at]->tender_id,
-                                                        // 'tender_peserta.status' => 'lulus_tahap_1'
-                                                    ])
+                                                    ->where('tender_peserta.tender_id', $needApprovalTenders[$at]->tender_id)
                                                     ->get();
 
                     array_push($approvalData, $needApprovalTenders[$at]);
