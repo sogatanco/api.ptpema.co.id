@@ -349,7 +349,7 @@ class ATenderController extends Controller
 
                 if($directSupervisorId === $employeId){
 
-                    $needApprovalTenders[$at]->peserta = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
+                    $needApprovalTenders[$at]->pesertamm = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
                                                     ->join('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
                                                     ->where('tender_peserta.tender_id', $needApprovalTenders[$at]->id_tender)
                                                     ->get();
