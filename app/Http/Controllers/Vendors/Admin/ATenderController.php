@@ -349,22 +349,26 @@ class ATenderController extends Controller
 
                 if($directSupervisorId === $employeId){
 
-                    // $where1 = [
-                    //     'tender_id' => $needApprovalTenders[$at]->tender_id,
-                    //     'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
-                    //     'status' => 'lulus_tahap_1'
-                    // ];
-
-                    // $where2 = [
-                    //     'tender_id' => $needApprovalTenders[$at]->tender_id,
-                    //     'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
-                    //     'status' => 'pemenang'
-                    // ];
-
                     $needApprovalTenders[$at]->peserta = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
                                                     ->join('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
                                                     ->where('tender_peserta.tender_id', $needApprovalTenders[$at]->id_tender)
                                                     ->get();
+
+                    $needApprovalTenders[$at]->lulus_tahap_1 = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
+                                                            ->join('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
+                                                            ->where([
+                                                                'tender_peserta.tender_id' => $needApprovalTenders[$at]->id_tender,
+                                                                'tender_peserta.status' => 'lulus_tahap_1'
+                                                            ])
+                                                            ->get();
+
+                    $needApprovalTenders[$at]->pemenang = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
+                                                            ->join('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
+                                                            ->where([
+                                                                'tender_peserta.tender_id' => $needApprovalTenders[$at]->id_tender,
+                                                                'tender_peserta.status' => 'pemenang'
+                                                            ])
+                                                            ->get();
 
                     array_push($approvalData, $needApprovalTenders[$at]);
                 }
