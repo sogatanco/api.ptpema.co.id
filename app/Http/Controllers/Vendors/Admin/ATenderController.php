@@ -349,22 +349,25 @@ class ATenderController extends Controller
 
                 if($directSupervisorId === $employeId){
 
-                    $where1 = [
-                        'tender_id' => $needApprovalTenders[$at]->tender_id,
-                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
-                        'status' => 'lulus_tahap_1'
-                    ];
+                    // $where1 = [
+                    //     'tender_id' => $needApprovalTenders[$at]->tender_id,
+                    //     'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
+                    //     'status' => 'lulus_tahap_1'
+                    // ];
 
-                    $where2 = [
-                        'tender_id' => $needApprovalTenders[$at]->tender_id,
-                        'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
-                        'status' => 'pemenang'
-                    ];
+                    // $where2 = [
+                    //     'tender_id' => $needApprovalTenders[$at]->tender_id,
+                    //     'perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
+                    //     'status' => 'pemenang'
+                    // ];
 
                     $needApprovalTenders[$at]->winners = TenderPeserta::select('perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
                                                     ->leftJoin('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
-                                                    ->where($where1)
-                                                    ->orWhere($where2)
+                                                    ->where([
+                                                        'tender_peserta.tender_id' => $needApprovalTenders[$at]->tender_id,
+                                                        'tender_peserta.perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
+                                                        'tender_peserta.status' => 'lulus_tahap_1'
+                                                    ])
                                                     ->get();
 
                     array_push($approvalData, $needApprovalTenders[$at]);
