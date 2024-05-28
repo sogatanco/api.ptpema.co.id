@@ -365,7 +365,6 @@ class ATenderController extends Controller
                                                     ->leftJoin('perusahaan', 'perusahaan.id', '=', 'tender_peserta.perusahaan_id')
                                                     ->where([
                                                         'tender_peserta.tender_id' => $needApprovalTenders[$at]->tender_id,
-                                                        'tender_peserta.perusahaan_id' => $needApprovalTenders[$at]->perusahaan_id,
                                                         'tender_peserta.status' => 'lulus_tahap_1'
                                                     ])
                                                     ->get();
