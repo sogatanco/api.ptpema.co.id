@@ -186,19 +186,19 @@ class ATenderController extends Controller
     function update(Request $request)
     {
         $t = Tender::find($request->id);
-        if ($request->dok_tender !== '') {
+        if ($request->dok_tender !== null) {
             $file_dok_tender = base64_decode($request->dok_tender, true);
             $dok_tender = 'dok_tender.pdf';
             Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $dok_tender, $file_dok_tender);
             $t->dok_tender = $dok_tender;
         }
-        if ($request->dok_deskripsi_tender !== '') {
+        if ($request->dok_deskripsi_tender !== null) {
             $file_dok_deskripsi_tender = base64_decode($request->dok_deskripsi_tender, true);
             $dok_deskripsi_tender = 'dok_deskripsi_tender.pdf';
             Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $dok_deskripsi_tender, $file_dok_deskripsi_tender);
             $t->dok_deskripsi_tender = $dok_deskripsi_tender;
         }
-        if($request->doc_penyampaian_penawaran!==''){
+        if($request->doc_penyampaian_penawaran!== null){
             $file_doc_penyampaian_penawaran = base64_decode($request->doc_penyampaian_penawaran, true);
             $doc_penyampaian_penawaran = 'doc_penyampaian_penawaran.docx';
             Storage::disk('public_vendor')->put('tender/' . $request->id . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
