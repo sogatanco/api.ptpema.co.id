@@ -19,7 +19,7 @@ class NotificationController extends Controller
         $directSupervisorId = Structure::where('employe_id', $employe->employe_id)->first()->direct_atasan;
 
         $data = [
-            'actor' => $employeId,
+            'actor' => $employe->employe_id,
             'recipient' => $directSupervisorId,
             'title' => $employe->first_name . 'Membuat Task Baru',
             'category' => 'Task'
