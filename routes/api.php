@@ -10,7 +10,7 @@ use App\Http\Controllers\Task\TaskController;
 use App\Http\Controllers\Comment\CommentController;
 use App\Http\Controllers\Mitra\MitraController;
 use App\Http\Controllers\Tickets\TicketController;
-use App\Http\Controllers\Notification\NotificationController;
+use App\Http\Controllers\Notification\TestingController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -130,6 +130,6 @@ Route::controller(MitraController::class)->group(function(){
 });
 
 // Notification Testing routes
-Route::controller(NotificationController::class)->group(function(){
+Route::controller(TestingController::class)->group(function(){
     Route::post('/notification/store', "newNotification")->middleware("role:Employee");
 });
