@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Notification;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employe;
+use App\Models\Structure;
 
 class NotificationController extends Controller
 {
     public function createSubActivity($employeId)
     {
         // save notification
-        $employe = employee::where('employe_id', $employeId)->first();
+        $employe = Employe::where('employe_id', $employeId)->first();
 
         $directSupervisorId = Structure::where('employe_id', $employeId)->first()->direct_atasan;
 
