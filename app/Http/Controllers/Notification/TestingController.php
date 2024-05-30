@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Notification;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Controller\Notification\NotificationController;
+use App\Http\Controllers\Notification\NotificationController;
 use Illuminate\Support\Facades\Auth;
 
 class TestingController extends Controller
