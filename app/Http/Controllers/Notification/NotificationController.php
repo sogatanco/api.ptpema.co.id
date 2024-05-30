@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function createSubActivity()
+    public static function createSubActivity()
     {
         // save notification
         $userId = Auth::user()->id;
