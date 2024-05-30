@@ -22,7 +22,7 @@ class NotificationController extends Controller
         $data = [
             'actor' => $employe->employe_id,
             'recipient' => $directSupervisorId,
-            'title' => $employe->first_name . 'Membuat Task Baru',
+            'title' => $employe->first_name .' '. 'Membuat Task Baru',
             'category' => 'Task'
         ];
 

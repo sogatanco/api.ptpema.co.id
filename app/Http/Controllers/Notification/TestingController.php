@@ -10,10 +10,10 @@ class TestingController extends Controller
 {
     public function newNotification()
     {
-        $result  = (new NotificationController)->createSubActivity();
+        NotificationController::createSubActivity();
 
         return response()->json([
-            'data' => $result
+            'data' => "berhasil menyimpan notifikasi"
         ]);
     }
 }
