@@ -14,9 +14,9 @@ class NotificationController extends Controller
     {
         // save notification
         $userId = Auth::user()->id;
-        $employeId = Employe::where('user_id', $userId)->first();
+        $employe = Employe::where('user_id', $userId)->first();
 
-        $directSupervisorId = Structure::where('employe_id', $employeId)->first()->direct_atasan;
+        $directSupervisorId = Structure::where('employe_id', $employe->employe_id)->first()->direct_atasan;
 
         $data = [
             'actor' => $employeId,
