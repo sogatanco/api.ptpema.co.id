@@ -11,9 +11,7 @@ class TestingController extends Controller
 {
     public function newNotification()
     {
-        $userId = Auth::user()->id;
-
-        $result  = (new NotificationController)->createSubActivity($userId);
+        $result  = (new NotificationController)->createSubActivity();
 
         return response()->json([
             'data' => $result

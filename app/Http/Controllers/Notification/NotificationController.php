@@ -9,10 +9,11 @@ use App\Models\Structure;
 
 class NotificationController extends Controller
 {
-    public function createSubActivity($employeId)
+    public function createSubActivity()
     {
         // save notification
-        $employe = Employe::where('employe_id', $employeId)->first();
+        $userId = Auth::user()->id;
+        $employeId = Employe::where('user_id', $userId)->first();
 
         $directSupervisorId = Structure::where('employe_id', $employeId)->first()->direct_atasan;
 
