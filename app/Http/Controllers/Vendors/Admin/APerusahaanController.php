@@ -257,11 +257,14 @@ class APerusahaanController extends Controller
         $list = Perusahaan::select('id', 'bentuk_usaha', 'nama_perusahaan')
                 ->where('tipe', $query)->get();
 
+        $userRoles = Auth::user()->roles;
+
         $data = [];
         for ($i=0; $i < count($list); $i++) { 
             $data[$i] = [
                 'value' => $list[$i]->id,
-                'label' => $list[$i]->bentuk_usaha. " " .$list[$i]->nama_perusahaan
+                'label' => $list[$i]->bentuk_usaha. " " .$list[$i]->nama_perusahaan,
+                'isApproved' => in_array('AdminVendorUmum', $userRoles) ? $list[$i]->status_verifikasi_umum === 'terverifikasi' : $list[$i]->status_verifikasi_scm === 'terverifikasi',
             ];
         }
 
