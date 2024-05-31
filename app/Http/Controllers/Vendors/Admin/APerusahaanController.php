@@ -254,7 +254,7 @@ class APerusahaanController extends Controller
     public function companiesToInvite(Request $request)
     {
         $query = $request->query('type');
-        $list = Perusahaan::select('id', 'bentuk_usaha', 'nama_perusahaan')
+        $list = Perusahaan::select('id', 'bentuk_usaha', 'nama_perusahaan', 'status_verifikasi_umum', 'status_verifikasi_scm')
                 ->where('tipe', $query)->get();
 
         $userRoles = Auth::user()->roles;
