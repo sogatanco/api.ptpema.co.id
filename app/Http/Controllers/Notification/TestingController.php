@@ -14,10 +14,11 @@ class TestingController extends Controller
 
         $task = 99;
 
-        $comentData = Comment::select('employe_id')
+        $recipientArray = Comment::select('employe_id')
                     ->where('task_id', $task)->get();
 
-        $recipient = '20230977K';
+        $recipient = '212323434L';
+
         $entityId = 1;
         $url = 'https://www.google.com';
 
@@ -25,7 +26,7 @@ class TestingController extends Controller
 
         return response()->json([
             'message' => "sukses",
-            'comment_data' => $comentData
+            'comment_data' => $recipient->toArray()
         ]);
     }
 }
