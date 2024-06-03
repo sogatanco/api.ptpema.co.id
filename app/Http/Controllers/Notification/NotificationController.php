@@ -26,6 +26,7 @@ class NotificationController extends Controller
             'actor' => $employe->employe_id,
             'recipient' => $recipients,
             'entity_type_id' => $entityTypeId,
+            'entity_id' => $entityId,
             'url' => $url
         ];
 
