@@ -14,7 +14,8 @@ class TestingController extends Controller
 
         $task = 99;
 
-        $comentData = Comment::where('task_id', $task)->get()->employe_id;
+        $comentData = Comment::select('employe_id')
+                    ->where('task_id', $task)->get();
 
         $recipient = ['20230977K', '20230977L'];
         $entityId = 1;
