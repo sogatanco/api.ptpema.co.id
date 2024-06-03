@@ -17,7 +17,7 @@ class TestingController extends Controller
         $comentData = Comment::select('employe_id')
                     ->where('task_id', $task)->get();
 
-        $recipient = ['20230977K', '20230977L'];
+        $recipient = '20230977K';
         $entityId = 1;
         $url = 'https://www.google.com';
 
