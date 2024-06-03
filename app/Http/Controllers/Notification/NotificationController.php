@@ -30,9 +30,10 @@ class NotificationController extends Controller
                 'entity_id' => $entityId,
                 'url' => $url
             ];
+            
+            $newNotification = new Notification($data);
+            $newNotification->save();
         }
 
-        $newNotification = new Notification($data);
-        $newNotification->save();
     }
 }
