@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
 
-    public static function New($type, $recipients, $entityId, $url)
+    public static function new($type, $recipients, $entityId, $url)
     {
         $userId = Auth::user()->id;
         $employe = Employe::where('user_id', $userId)->first();

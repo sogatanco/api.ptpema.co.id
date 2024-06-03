@@ -11,14 +11,19 @@ class TestingController extends Controller
     public function newNotification()
     {
 
-        $recipient = '20230977K';
+        $task = 99;
+
+        $comentData = Comment::where('task_id', $task)->get()->employe_id;
+
+        $recipient = ['20230977K', '20230977L'];
         $entityId = 1;
         $url = 'https://www.google.com';
 
-        NotificationController::New('CREATE_PROJECT', $recipient, $entityId, $url);
+        NotificationController::new('CREATE_PROJECT', $recipient, $entityId, $url);
 
         return response()->json([
             'message' => "sukses",
+            'comment_data' => $comentData
         ]);
     }
 }
