@@ -26,6 +26,11 @@ class TenderController extends Controller
             ->orderBy('id_tender', 'DESC')
             ->get();
 
+        $tenderUndangan = TenderPeserta::select('tender.*')
+                    ->join('tender', 'tender.id_tender', '=', 'tender_peserta.tender_id')
+                    ->where('tender_peserta.perusahaan_id', Perusahaan::where('user_id', Auth::user()->id)->get()->first()->id)
+                    ->get();
+
         foreach ($data as $d) {
             if (count(TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
                 $d->register = true;
@@ -51,7 +56,8 @@ class TenderController extends Controller
 
         return response()->json([
             "success" => true,
-            "data" => $data
+            "data" => $data,
+            "undangan" => $tenderUndangan
         ], 200);
     }
 
