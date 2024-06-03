@@ -14,7 +14,7 @@ class TestingController extends Controller
 
         $task = 99;
 
-        $recipientArray = Comment::select('employe_id')
+        $recipients = Comment::select('employe_id')
                     ->where('task_id', $task)->get();
 
         $recipient = '212323434L';
@@ -26,7 +26,7 @@ class TestingController extends Controller
 
         return response()->json([
             'message' => "sukses",
-            'comment_data' => $recipient->toArray()
+            'comment_data' => $recipients->toArray()
         ]);
     }
 }
