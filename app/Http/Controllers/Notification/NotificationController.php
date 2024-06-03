@@ -26,6 +26,7 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('entity', $this->type)->first()->id;
 
+        // notification data
         $data = [
             'actor' => $employe->employe_id,
             'recipient' => $recipients,

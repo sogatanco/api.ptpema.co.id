@@ -18,7 +18,7 @@ class TestingController extends Controller
         new NotificationController('CREATE_TASK', $resipient, $entityId, $url);
 
         return response()->json([
-            'data' => "berhasil menyimpan notifikasi"
+            'data' => "testing notification"
         ]);
     }
 }
