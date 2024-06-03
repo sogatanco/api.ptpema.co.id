@@ -15,7 +15,7 @@ class TestingController extends Controller
         $entityId = 1;
         $url = 'https://www.google.com';
 
-        $notif = NotificationController::createNotification('CREATE_TASK', $resipient, $entityId, $url);
+        $notif = NotificationController::createNotification('CREATE_TASK', $recipient, $entityId, $url);
 
         return response()->json([
             'message' => "testing notification",
