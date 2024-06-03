@@ -11,7 +11,7 @@ class NotificationEntityType extends Model
     protected $table = 'notification_entity_type';
     protected $fillable = [
         'entity_id',
-        'type',
-        'message',
+        'entity_type_id',
+        'url'
     ];
 }

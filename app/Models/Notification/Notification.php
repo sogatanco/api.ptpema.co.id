@@ -12,7 +12,9 @@ class Notification extends Model
     protected $fillable = [
         'actor',
         'recipient',
-        'title',
-        'category'
+        'entity_type_id',
+        'entity_id',
+        'url',
+        'status',
     ];
 }
