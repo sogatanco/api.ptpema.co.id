@@ -11,25 +11,30 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public static function createSubActivity()
+    public function __construct($type, $recipients, $entityId, $url){
+        $this->type  = $type;
+        $this->recipients = $recipients;
+        $this->entityId = $entityId;
+        $this->url = $url;
+    }
+
+    public function create()
     {
-        // save notification
         $userId = Auth::user()->id;
         $employe = Employe::where('user_id', $userId)->first();
 
-        $directSupervisorId = Structure::where('employe_id', $employe->employe_id)->first()->direct_atasan;
+        // choose entity
+        $entityTypeId = NotificationEntityType::where('entity', $this->type)->first()->id;
 
         $data = [
             'actor' => $employe->employe_id,
-            'recipient' => $directSupervisorId,
-            'title' => $employe->first_name .' '. 'Membuat Task Baru',
-            'category' => 'Task'
+            'recipient' => $recipients,
+            'entity_type_id' => $entityTypeId,
+            'url' => $url
         ];
 
         $newNotification = new Notification($data);
         $newNotification->save();
-
-        return $newNotification;
 
     }
 }
