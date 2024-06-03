@@ -49,8 +49,7 @@ class TenderController extends Controller
 
         return response()->json([
             "success" => true,
-            "data" => $data,
-            "undangan" => $tenderUndangan
+            "data" => $data
         ], 200);
     }
 
