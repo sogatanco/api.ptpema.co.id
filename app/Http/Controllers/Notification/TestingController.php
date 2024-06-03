@@ -22,11 +22,10 @@ class TestingController extends Controller
         $entityId = 1;
         $url = 'https://www.google.com';
 
-        NotificationController::new('CREATE_PROJECT', $recipient, $entityId, $url);
+        NotificationController::new('UPDATE_TASK', $recipients, $entityId, $url);
 
         return response()->json([
             'message' => "sukses",
-            'comment_data' => $recipients->toArray()
         ]);
     }
 }

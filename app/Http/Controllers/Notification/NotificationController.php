@@ -22,13 +22,15 @@ class NotificationController extends Controller
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
         // notification data
-        $data = [
-            'actor' => $employe->employe_id,
-            'recipient' => $recipients,
-            'entity_type_id' => $entityTypeId,
-            'entity_id' => $entityId,
-            'url' => $url
-        ];
+        for ($r=0; $r < count($recipients); $r++) { 
+            $data = [
+                'actor' => $employe->employe_id,
+                'recipient' => $recipients[$r]->employe_id,
+                'entity_type_id' => $entityTypeId,
+                'entity_id' => $entityId,
+                'url' => $url
+            ];
+        }
 
         $newNotification = new Notification($data);
         $newNotification->save();
