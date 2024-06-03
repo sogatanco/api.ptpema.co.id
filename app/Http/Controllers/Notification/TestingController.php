@@ -15,11 +15,10 @@ class TestingController extends Controller
         $entityId = 1;
         $url = 'https://www.google.com';
 
-        $notif = NotificationController::createNotification('CREATE_TASK', $recipient, $entityId, $url);
+        NotificationController::New('CREATE_PROJECT', $recipient, $entityId, $url);
 
         return response()->json([
-            'message' => "testing notification",
-            'data' => $notif
+            'message' => "sukses",
         ]);
     }
 }
