@@ -11,6 +11,7 @@ use App\Http\Controllers\Comment\CommentController;
 use App\Http\Controllers\Mitra\MitraController;
 use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Notification\TestingController;
+use App\Http\Controllers\Notification\NotificationController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
