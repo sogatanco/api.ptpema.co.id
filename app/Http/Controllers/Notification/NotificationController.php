@@ -39,7 +39,16 @@ class NotificationController extends Controller
 
         $employeId = Employe::where('user_id', Auth::user()->id)->first()->employe_id;
 
-        $data = Notification::where(['recipient' => $employeId, 'status' => 0])
+        $data = Notification::select(
+                            'notifications.id', 
+                            'notifications.actor', 
+                            'notifications.created_at', 
+                            'notification_entity_type.type',
+                            'notification_entity_type.message', 
+                            'notification_entity_type.url',
+                            'notification_entity.entity',
+                            )
+                            ->where(['recipient' => $employeId, 'status' => 0])
                             ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notifications.entity_type_id')
                             ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
                             ->get();
