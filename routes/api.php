@@ -133,3 +133,8 @@ Route::controller(MitraController::class)->group(function(){
 Route::controller(TestingController::class)->group(function(){
     Route::post('/notification/store', "newNotification")->middleware("role:Employee");
 });
+
+// Notification routes
+Route::controller(NotificationController::class)->group(function(){
+    Route::get('/notification', "get")->middleware("role:Employee");
+});

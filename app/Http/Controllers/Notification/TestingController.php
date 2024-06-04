@@ -17,12 +17,9 @@ class TestingController extends Controller
         $recipients = Comment::select('employe_id')
                     ->where('task_id', $task)->get();
 
-        $recipient = '212323434L';
-
         $entityId = 1;
-        $url = 'https://www.google.com';
 
-        NotificationController::new('UPDATE_TASK', $recipients, $entityId, $url);
+        NotificationController::new('UPDATE_TASK', $recipients, $entityId);
 
         return response()->json([
             'message' => "sukses",
