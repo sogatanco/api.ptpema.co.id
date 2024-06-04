@@ -8,6 +8,7 @@ use App\Models\Employe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Models\Tasks\TaskPic;
 
 class CommentController extends Controller
 {
@@ -49,6 +50,13 @@ class CommentController extends Controller
         $saved = $newComment->save();
 
         if($saved){
+
+            // create notification to all pic of the task
+            $recipients = TaskPic::select('employe_id')
+                        ->where('task_id', $request->task_id)->get();
+                    
+            NotificationController::new('CREATE_COMMENT', $recipients, $saved->id);
+
             $employe = Employe::select('first_name')
                     ->where('employe_id', $newComment->employe_id)
                     ->first();

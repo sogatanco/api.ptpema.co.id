@@ -16,7 +16,7 @@ class TestingController extends Controller
 
         $recipients = Comment::select('employe_id')
                     ->where('task_id', $task)->get();
-
+                    
         $entityId = 1;
 
         NotificationController::new('UPDATE_TASK', $recipients, $entityId);
