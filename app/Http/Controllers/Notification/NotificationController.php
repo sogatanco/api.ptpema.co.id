@@ -46,7 +46,7 @@ class NotificationController extends Controller
                                 'notification_entity_type.message', 
                                 'notification_entity_type.url',
                                 'notification_entity.entity',
-                                'employees.employe_id AS actor'
+                                'employees.first_name AS actor'
                             )
                             ->where(['recipient' => $employeId, 'status' => 0])
                             ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notifications.entity_type_id')
