@@ -40,7 +40,7 @@ class NotificationController extends Controller
         $employeId = Employe::where('user_id', Auth::user()->id)->first()->employe_id;
 
         $data = Notification::where(['recipient' => $employeId, 'status' => 0])
-                            ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notification.entity_type_id')
+                            ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notifications.entity_type_id')
                             ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
                             ->get();
 
