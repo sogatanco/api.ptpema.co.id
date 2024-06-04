@@ -56,7 +56,7 @@ class CommentController extends Controller
             $recipients = TaskPic::select('employe_id')
                         ->where('task_id', $request->task_id)->get();
                     
-            NotificationController::new('CREATE_COMMENT', $recipients, $saved->id);
+            NotificationController::new('CREATE_COMMENT', $recipients, $newComment->id);
 
             $employe = Employe::select('first_name')
                     ->where('employe_id', $newComment->employe_id)
