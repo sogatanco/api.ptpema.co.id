@@ -41,6 +41,7 @@ class NotificationController extends Controller
 
         $data = Notification::select(
                                 'notifications.id', 
+                                'notifications.entity_id', 
                                 'notifications.created_at', 
                                 'notification_entity_type.type',
                                 'notification_entity_type.message', 
