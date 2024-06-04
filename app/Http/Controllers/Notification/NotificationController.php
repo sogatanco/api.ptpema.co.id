@@ -23,15 +23,17 @@ class NotificationController extends Controller
 
         // notification data
         for ($r=0; $r < count($recipients); $r++) { 
-            $data = [
-                'actor' => $employe->employe_id,
-                'recipient' => $recipients[$r]->employe_id,
-                'entity_type_id' => $entityTypeId,
-                'entity_id' => $entityId,
-            ];
-
-            $newNotification = new Notification($data);
-            $newNotification->save();
+            if($employe->employe_id !== $recipients[$r]->employe_id){
+                $data = [
+                    'actor' => $employe->employe_id,
+                    'recipient' => $recipients[$r]->employe_id,
+                    'entity_type_id' => $entityTypeId,
+                    'entity_id' => $entityId,
+                ];
+    
+                $newNotification = new Notification($data);
+                $newNotification->save();
+            }
         }
     }
 
