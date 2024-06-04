@@ -37,9 +37,9 @@ class NotificationController extends Controller
 
     public function get(){
 
-        $userId = Auth::user()->id;
+        $employeId = Employe::where('user_id', Auth::user()->id)->first()->employe_id;
 
-        $data = Notification::where(['recipient' => $userId, 'status' => 0])->get();
+        $data = Notification::where(['recipient' => $employeId, 'status' => 0])->get();
 
         return response()->json([
             'status' => true,
