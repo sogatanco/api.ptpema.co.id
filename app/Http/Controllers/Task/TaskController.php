@@ -128,7 +128,7 @@ class TaskController extends Controller
             $newTaskPic->save();
 
             // notif ke masing2 pic yang ditag
-            NotificationController::new('TAG_TASK', $data['task_pic'][$i]['value'], $newTask->id);
+            $resNot = NotificationController::new('TAG_TASK', $data['task_pic'][$i]['value'], $newTask->id);
         }
 
         $dataApproval = [
@@ -143,6 +143,7 @@ class TaskController extends Controller
         $newTaskApproval->save();
 
         $data = Task::taskProject($newTaskApproval->id);
+        $data->resNot = $resNot;
 
         return new TaskResource($data);
 
@@ -748,7 +749,7 @@ class TaskController extends Controller
 
             $recipients->push($directSupervisor);
 
-            NotificationController::new('UPLOAD_TASK_FILE', $recipients, $taskId);
+            $resNot = NotificationController::new('UPLOAD_TASK_FILE', $recipients, $taskId);
 
             return response()->json([
                 "status" => true,
@@ -756,7 +757,8 @@ class TaskController extends Controller
                     "file_id" => $newFile->id,
                     "file_name" => $thefile,
                     "employe_id" => $newFile->employe_id
-                ]
+                ],
+                "resNot" => $resNot
             ], 200, [], JSON_NUMERIC_CHECK);
 
         } else {
