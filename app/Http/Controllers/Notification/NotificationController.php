@@ -21,18 +21,25 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
-        // notification data
+        // list sent
+        $sent = [];
+
+        // save notification
         for ($r=0; $r < count($recipients); $r++) { 
             if($employe->employe_id !== $recipients[$r]->employe_id){
-                $data = [
-                    'actor' => $employe->employe_id,
-                    'recipient' => $recipients[$r]->employe_id,
-                    'entity_type_id' => $entityTypeId,
-                    'entity_id' => $entityId,
-                ];
+                if(!in_array($recipients[$r]->employe_id, $sent)){
+                    $data = [
+                        'actor' => $employe->employe_id,
+                        'recipient' => $recipients[$r]->employe_id,
+                        'entity_type_id' => $entityTypeId,
+                        'entity_id' => $entityId,
+                    ];
+        
+                    $newNotification = new Notification($data);
+                    $newNotification->save();
     
-                $newNotification = new Notification($data);
-                $newNotification->save();
+                    array_push($sent, $recipients[$r]->employe_id);
+                }
             }
         }
     }
