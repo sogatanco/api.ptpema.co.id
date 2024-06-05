@@ -26,6 +26,7 @@ use App\Http\Requests\TaskRequest;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Notification\NotificationController;
 
 class TaskController extends Controller
 {
@@ -734,6 +735,18 @@ class TaskController extends Controller
             $newFile = new TaskFile($fileData);
             $newFile->save();
 
+            // create notification to all pic and direct supervisor
+            $recipients = TaskPic::select('employe_id')
+                        ->where('task_id', $taskId)->get();
+
+            $directSupervisor = Structure::select('direct_atasan AS employe_id')
+                            ->where('employe_id', $employeId)
+                            ->first();
+
+            $recipients->push($directSupervisor);
+
+            NotificationController::new('CREATE_COMMENT', $recipients, $taskId);
+
             return response()->json([
                 "status" => true,
                 "file" => [
@@ -742,6 +755,7 @@ class TaskController extends Controller
                     "employe_id" => $newFile->employe_id
                 ]
             ], 200, [], JSON_NUMERIC_CHECK);
+
         } else {
             throw new HttpResponseException(response([
                 "error" => "Upload file failed."
