@@ -21,6 +21,12 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
+        if(!is_array($recipients)){
+            $recipients = [
+                'employe_id' => $recipients
+            ];
+        }
+
         // list sent
         $sent = [];
 

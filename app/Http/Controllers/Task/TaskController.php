@@ -126,6 +126,9 @@ class TaskController extends Controller
 
             $newTaskPic = new TaskPic($dataPics[$i]);
             $newTaskPic->save();
+
+            // notif ke masing2 pic yang ditag
+            NotificationController::new('TAG_TASK', $data['task_pic'][$i]['value'], $newTask->id);
         }
 
         $dataApproval = [
