@@ -70,6 +70,7 @@ class NotificationController extends Controller
                             ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
                             ->join('employees', 'employees.employe_id', '=', 'notifications.actor')
                             ->join('positions', 'positions.position_id', '=', 'employees.position_id')
+                            ->orderBy('notifications.id', 'DESC')
                             ->get();
 
         return response()->json([
