@@ -127,9 +127,13 @@ class TaskController extends Controller
             $newTaskPic = new TaskPic($dataPics[$i]);
             $newTaskPic->save();
 
-            // notif ke masing2 pic yang ditag
-            NotificationController::new('TAG_TASK', ['employe_id' => $data['task_pic'][$i]['value']], $newTask->id);
         }
+        
+        // notif ke masing2 pic yang ditag
+        $recipients = TaskPic::select('employe_id')
+                    ->where('task_id', $newTask->id)->get();
+        
+        NotificationController::new('TAG_TASK', $recipients, $newTask->id);
 
         $dataApproval = [
             'task_id' => $newTask->id,
@@ -757,7 +761,6 @@ class TaskController extends Controller
                     "file_name" => $thefile,
                     "employe_id" => $newFile->employe_id
                 ],
-                "resNot" => $resNot
             ], 200, [], JSON_NUMERIC_CHECK);
 
         } else {

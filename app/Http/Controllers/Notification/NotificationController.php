@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
 
-    public static function new($type, $recipient, $entityId)
+    public static function new($type, $recipients, $entityId)
     {
         $userId = Auth::user()->id;
         $employe = Employe::where('user_id', $userId)->first();
@@ -21,10 +21,10 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
-        if(!is_array($recipient)){
-            $recipientArray = $recipient->toArray();
+        if(!is_array($recipients)){
+            $recipientArray = $recipients->toArray();
         }else{
-            $recipientArray = $recipient;
+            $recipientArray = $recipients;
         }
 
         // list sent
@@ -48,8 +48,6 @@ class NotificationController extends Controller
                 }
             }
         }
-
-        return $recipientArray;
     }
 
     public function get(){
