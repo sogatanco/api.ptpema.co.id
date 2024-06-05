@@ -52,10 +52,16 @@ class CommentController extends Controller
 
         if($saved){
 
-            // create notification to all pic of the task
-            $recipients = TaskPic::select('employe_id')
+            // create notification to all pic of the task 
+            $pics = TaskPic::select('employe_id')
                         ->where('task_id', $request->task_id)->get();
-                    
+
+            $members = comment::select('employe_id')
+                        ->where('task_id', $request->task_id)
+                        ->get();
+
+            $recipients = array_merge($pics->toArray(), $members->toArray());
+
             NotificationController::new('CREATE_COMMENT', $recipients, $request->task_id);
 
             $employe = Employe::select('first_name')
