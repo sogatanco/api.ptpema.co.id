@@ -21,9 +21,11 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
-        if(is_array($recipient)){
+        if(is_a($recipient, 'Illuminate\Database\Eloquent\Collection')){
+            $recipientArray = $recipient->toArray();
+        }elseif(is_array($recipient)){
             $recipientArray = $recipient;
-        } else{
+        }else{
             $recipientArray = [
                 'employe_id' => $recipient
             ];
@@ -34,11 +36,11 @@ class NotificationController extends Controller
 
         // save notification
         for ($r=0; $r < count($recipientArray); $r++) { 
-            if($employe->employe_id !== $recipientArray[$r]->employe_id){
-                if(!in_array($recipientArray[$r]->employe_id, $sent)){
+            if($employe->employe_id !== $recipientArray[$r]['employe_id']){
+                if(!in_array($recipientArray[$r]['employe_id'], $sent)){
                     $data = [
                         'actor' => $employe->employe_id,
-                        'recipient' => $recipientArray[$r]->employe_id,
+                        'recipient' => $recipientArray[$r]['employe_id'],
                         'entity_type_id' => $entityTypeId,
                         'entity_id' => $entityId,
                     ];
@@ -46,7 +48,7 @@ class NotificationController extends Controller
                     $newNotification = new Notification($data);
                     $newNotification->save();
     
-                    array_push($sent, $recipientArray[$r]->employe_id);
+                    array_push($sent, $recipientArray[$r]['employe_id']);
                 }
             }
         }
