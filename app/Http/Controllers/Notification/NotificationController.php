@@ -35,25 +35,23 @@ class NotificationController extends Controller
         $sent = [];
 
         // save notification
-        // if(is_array($recipientArray)){
-        //     for ($r=0; $r < count($recipientArray); $r++) { 
-        //         if($employe->employe_id !== $recipientArray[$r]['employe_id']){
-        //             if(!in_array($recipientArray[$r]['employe_id'], $sent)){
-        //                 $data = [
-        //                     'actor' => $employe->employe_id,
-        //                     'recipient' => $recipientArray[$r]['employe_id'],
-        //                     'entity_type_id' => $entityTypeId,
-        //                     'entity_id' => $entityId,
-        //                 ];
-            
-        //                 $newNotification = new Notification($data);
-        //                 $newNotification->save();
+        for ($r=0; $r < count($recipientArray); $r++) { 
+            if($employe->employe_id !== $recipientArray[$r]['employe_id']){
+                if(!in_array($recipientArray[$r]['employe_id'], $sent)){
+                    $data = [
+                        'actor' => $employe->employe_id,
+                        'recipient' => $recipientArray[$r]['employe_id'],
+                        'entity_type_id' => $entityTypeId,
+                        'entity_id' => $entityId,
+                    ];
         
-        //                 array_push($sent, $recipientArray[$r]['employe_id']);
-        //             }
-        //         }
-        //     }
-        // }
+                    $newNotification = new Notification($data);
+                    $newNotification->save();
+    
+                    array_push($sent, $recipientArray[$r]['employe_id']);
+                }
+            }
+        }
 
         return $recipientArray;
     }

@@ -128,7 +128,7 @@ class TaskController extends Controller
             $newTaskPic->save();
 
             // notif ke masing2 pic yang ditag
-            $resNot = NotificationController::new('TAG_TASK', $data['task_pic'][$i]['value'], $newTask->id);
+            NotificationController::new('TAG_TASK', ['employe_id' => $data['task_pic'][$i]['value']], $newTask->id);
         }
 
         $dataApproval = [
@@ -143,7 +143,6 @@ class TaskController extends Controller
         $newTaskApproval->save();
 
         $data = Task::taskProject($newTaskApproval->id);
-        $data['resNot'] = $resNot;
 
         return new TaskResource($data);
 
