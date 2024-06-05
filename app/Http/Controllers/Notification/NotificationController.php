@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
 
-    public static function new($type, $recipients, $entityId)
+    public static function new($type, $recipient, $entityId)
     {
         $userId = Auth::user()->id;
         $employe = Employe::where('user_id', $userId)->first();
@@ -21,9 +21,11 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
-        if(!is_array($recipients)){
-            $recipients = [
-                'employe_id' => $recipients
+        if(is_array($recipient)){
+            $recipientArray = $recipient;
+        } else{
+            $recipientArray = [
+                'employe_id' => $recipient
             ];
         }
 
@@ -31,12 +33,12 @@ class NotificationController extends Controller
         $sent = [];
 
         // save notification
-        for ($r=0; $r < count($recipients); $r++) { 
-            if($employe->employe_id !== $recipients[$r]->employe_id){
-                if(!in_array($recipients[$r]->employe_id, $sent)){
+        for ($r=0; $r < count($recipientArray); $r++) { 
+            if($employe->employe_id !== $recipientArray[$r]->employe_id){
+                if(!in_array($recipientArray[$r]->employe_id, $sent)){
                     $data = [
                         'actor' => $employe->employe_id,
-                        'recipient' => $recipients[$r]->employe_id,
+                        'recipient' => $recipientArray[$r]->employe_id,
                         'entity_type_id' => $entityTypeId,
                         'entity_id' => $entityId,
                     ];
@@ -44,7 +46,7 @@ class NotificationController extends Controller
                     $newNotification = new Notification($data);
                     $newNotification->save();
     
-                    array_push($sent, $recipients[$r]->employe_id);
+                    array_push($sent, $recipientArray[$r]->employe_id);
                 }
             }
         }
