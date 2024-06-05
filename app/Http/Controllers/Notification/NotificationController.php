@@ -21,15 +21,7 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
-        if(is_a($recipient, 'Illuminate\Database\Eloquent\Collection')){
-            $recipientArray = $recipient->toArray();
-        }elseif(is_array($recipient)){
-            $recipientArray = $recipient;
-        }else{
-            $recipientArray = [
-                'employe_id' => $recipient
-            ];
-        }
+        $recipientArray = $recipient->toArray();
 
         // list sent
         $sent = [];
