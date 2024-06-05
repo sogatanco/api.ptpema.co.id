@@ -23,7 +23,7 @@ class NotificationController extends Controller
 
         if(!is_array($recipients)){
             if(is_string($recipients)){
-                $recipientArray = (
+                $recipientArray = array (
                     array(
                         'employe_id' => $recipients
                     )
