@@ -143,7 +143,7 @@ class TaskController extends Controller
         $newTaskApproval->save();
 
         $data = Task::taskProject($newTaskApproval->id);
-        $data->resNot = $resNot;
+        $data['resNot'] = $resNot;
 
         return new TaskResource($data);
 
