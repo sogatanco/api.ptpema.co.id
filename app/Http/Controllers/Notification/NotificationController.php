@@ -22,7 +22,15 @@ class NotificationController extends Controller
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
         if(!is_array($recipients)){
-            $recipientArray = $recipients->toArray();
+            if(is_string($recipients)){
+                $recipientArray = (
+                    array(
+                        'employe_id' => $recipients
+                    )
+                );
+            }else{
+                $recipientArray = $recipients->toArray();
+            }
         }else{
             $recipientArray = $recipients;
         }

@@ -1703,9 +1703,9 @@ class TaskController extends Controller
             $updated = Task::where('task_id', $taskId)->update(['task_progress' => $progress]);
 
             // send notification to tagged pic
-            $recipients = new ArrayObject(['employe_id' => $reqSub[0]['employe_id']]);
+            $recipient = $reqSub[0]['employe_id'];
 
-            NotificationController::new('TAG_SUB_ACTIVITY', $recipients, $taskId);
+            NotificationController::new('TAG_SUB_ACTIVITY', $recipient, $taskId);
 
             return response()->json([
                 "status" => true,
