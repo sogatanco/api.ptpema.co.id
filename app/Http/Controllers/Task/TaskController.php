@@ -745,7 +745,7 @@ class TaskController extends Controller
 
             $recipients->push($directSupervisor);
 
-            NotificationController::new('CREATE_COMMENT', $recipients, $taskId);
+            NotificationController::new('UPLOAD_TASK_FILE', $recipients, $taskId);
 
             return response()->json([
                 "status" => true,
