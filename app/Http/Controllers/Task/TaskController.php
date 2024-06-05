@@ -752,7 +752,7 @@ class TaskController extends Controller
 
             $recipients->push($directSupervisor);
 
-            $resNot = NotificationController::new('UPLOAD_TASK_FILE', $recipients, $taskId);
+            NotificationController::new('UPLOAD_TASK_FILE', $recipients, $taskId);
 
             return response()->json([
                 "status" => true,
@@ -1701,6 +1701,13 @@ class TaskController extends Controller
             $progress = count($done) * 100 / count($subArr);
 
             $updated = Task::where('task_id', $taskId)->update(['task_progress' => $progress]);
+
+            // create notification
+            $recipients = array(
+                'employe_id' => $reqSub[0]['employe_id']
+            );
+            
+            NotificationController::new('TAG_SUB_ACTIVITY', $recipients, $taskId);
 
             return response()->json([
                 "status" => true,
