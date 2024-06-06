@@ -760,7 +760,13 @@ class TaskController extends Controller
 
             $recipients->push($directSupervisor);
 
-            NotificationController::new('UPLOAD_TASK_FILE', $recipients, $taskId);
+            $projectId = Task::select('project_id')
+                        ->where('task_id', $taskId)
+                        ->first()
+                        ->project_id;
+
+
+            NotificationController::new('UPLOAD_TASK_FILE', $recipients, $projectId."/".$taskId);
 
             return response()->json([
                 "status" => true,
