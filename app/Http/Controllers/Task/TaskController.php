@@ -133,7 +133,7 @@ class TaskController extends Controller
         $recipients = TaskPic::select('employe_id')
                     ->where('task_id', $newTask->id)->get();
         
-        NotificationController::new('TAG_TASK', $recipients, $newTask->id);
+        NotificationController::new('TAG_TASK', $recipients, $request->project_id."/".$newTask->id);
 
         $dataApproval = [
             'task_id' => $newTask->id,
