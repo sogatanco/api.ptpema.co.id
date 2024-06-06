@@ -1719,7 +1719,12 @@ class TaskController extends Controller
             // send notification to tagged pic
             $recipient = $reqSub[0]['employe_id'];
 
-            NotificationController::new('TAG_SUB_ACTIVITY', $recipient, $taskId);
+            $projectId = Task::select('project_id')
+                        ->where('task_id', $taskId)
+                        ->first()
+                        ->project_id;
+
+            NotificationController::new('TAG_SUB_ACTIVITY', $recipient, $projectId."/".$taskId);
 
             return response()->json([
                 "status" => true,
