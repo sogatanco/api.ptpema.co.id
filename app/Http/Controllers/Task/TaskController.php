@@ -649,8 +649,6 @@ class TaskController extends Controller
                         $reviewer = $structure->direct_atasan;
                     }
 
-                    
-
                     // data notif
                     $NotifData = [
                         'from_employe' => $request->employe_id,
@@ -661,6 +659,9 @@ class TaskController extends Controller
                         'desc' => 'Meminta persetujuan Anda',
                         'category' => 'task',
                     ];
+
+                    // notif baru
+                    NotificationController::new('REVIEW_TASK', $reviewer, $project->project_id);
 
                 // jika status done
                 }elseif($request->status === 3){
@@ -675,6 +676,10 @@ class TaskController extends Controller
                         'desc' => 'Menyetujui task Anda',
                         'category' => 'task',
                     ];
+
+                    // notif baru
+                    NotificationController::new('APPROVED_TASK', $request->employe_id, $project->project_id);
+
                 }elseif($request->status === 4){
 
                     // data notif
@@ -687,6 +692,9 @@ class TaskController extends Controller
                         'desc' => 'Merevisi task Anda',
                         'category' => 'task',
                     ];
+
+                    // notif baru
+                    NotificationController::new('REVISED_TASK', $request->employe_id, $project->project_id);
                 }
 
                 $newNotification = new Notification($NotifData);

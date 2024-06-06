@@ -21,38 +21,40 @@ class NotificationController extends Controller
         // choose entity
         $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
 
-        if(!is_array($recipients)){
-            if(is_string($recipients)){
-                $recipientArray = array (
-                    array(
-                        'employe_id' => $recipients
-                    )
-                );
+        if($entityTypeId){
+            if(!is_array($recipients)){
+                if(is_string($recipients)){
+                    $recipientArray = array (
+                        array(
+                            'employe_id' => $recipients
+                        )
+                    );
+                }else{
+                    $recipientArray = $recipients->toArray();
+                }
             }else{
-                $recipientArray = $recipients->toArray();
+                $recipientArray = $recipients;
             }
-        }else{
-            $recipientArray = $recipients;
-        }
-
-        // list sent
-        $sent = [];
-
-        // save notification
-        for ($r=0; $r < count($recipientArray); $r++) { 
-            if($employe->employe_id !== $recipientArray[$r]['employe_id']){
-                if(!in_array($recipientArray[$r]['employe_id'], $sent)){
-                    $data = [
-                        'actor' => $employe->employe_id,
-                        'recipient' => $recipientArray[$r]['employe_id'],
-                        'entity_type_id' => $entityTypeId,
-                        'entity_id' => $entityId,
-                    ];
-        
-                    $newNotification = new Notification($data);
-                    $newNotification->save();
     
-                    array_push($sent, $recipientArray[$r]['employe_id']);
+            // list sent
+            $sent = [];
+    
+            // save notification
+            for ($r=0; $r < count($recipientArray); $r++) { 
+                if($employe->employe_id !== $recipientArray[$r]['employe_id']){
+                    if(!in_array($recipientArray[$r]['employe_id'], $sent)){
+                        $data = [
+                            'actor' => $employe->employe_id,
+                            'recipient' => $recipientArray[$r]['employe_id'],
+                            'entity_type_id' => $entityTypeId,
+                            'entity_id' => $entityId,
+                        ];
+            
+                        $newNotification = new Notification($data);
+                        $newNotification->save();
+        
+                        array_push($sent, $recipientArray[$r]['employe_id']);
+                    }
                 }
             }
         }
