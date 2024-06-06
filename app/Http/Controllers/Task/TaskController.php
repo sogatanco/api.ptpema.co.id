@@ -137,7 +137,7 @@ class TaskController extends Controller
 
         $dataApproval = [
             'task_id' => $newTask->id,
-            'employe_id' => $data['task_pic'][0]['value'],
+            'employe_id' => $data['task_pic'][0]['value'],  
             'status' => 0,
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date']

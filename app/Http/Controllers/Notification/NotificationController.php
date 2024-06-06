@@ -71,6 +71,7 @@ class NotificationController extends Controller
                                 'notification_entity_type.type',
                                 'notification_entity_type.message', 
                                 'notification_entity_type.url',
+                                'notification_entity_type.query_key',
                                 'notification_entity.entity',
                                 'employees.first_name AS actor',
                                 'positions.position_name AS position'
