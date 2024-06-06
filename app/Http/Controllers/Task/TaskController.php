@@ -661,7 +661,7 @@ class TaskController extends Controller
                     ];
 
                     // notif baru
-                    NotificationController::new('REVIEW_TASK', $reviewer, $project->project_id);
+                    NotificationController::new('REVIEW_TASK', $reviewer, $project->project_id."/".$taskId);
 
                 // jika status done
                 }elseif($request->status === 3){
@@ -678,7 +678,7 @@ class TaskController extends Controller
                     ];
 
                     // notif baru
-                    NotificationController::new('APPROVED_TASK', $request->employe_id, $project->project_id);
+                    NotificationController::new('APPROVED_TASK', $request->employe_id, $project->project_id."/".$taskId);
 
                 }elseif($request->status === 4){
 
@@ -694,7 +694,7 @@ class TaskController extends Controller
                     ];
 
                     // notif baru
-                    NotificationController::new('REVISED_TASK', $request->employe_id, $project->project_id);
+                    NotificationController::new('REVISED_TASK', $request->employe_id,  $project->project_id."/".$taskId);
                 }
 
                 $newNotification = new Notification($NotifData);
