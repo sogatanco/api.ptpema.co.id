@@ -53,7 +53,7 @@
     <img class="logo" src="https://ptpema.co.id/wp-content/uploads/2023/06/cropped-Logo-Pema.png" alt="Your Logo">
     <h1>Verifikasi Email Berhasil</h1>
     <p>Verifikasi Email berhasil </p>
-    <a href="https://vendor.ptpema.co.id/auth/login">Silakan Login</a>
+    <a href="https://ivds.ptpema.co.id/auth/login">Silakan Login</a>
 </div>
 
 </body>

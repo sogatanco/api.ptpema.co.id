@@ -11,12 +11,14 @@ use JWTAuth;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\UserRegisterRequest;
 use App\Models\UserVendor;
+use App\Models\User;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\Perusahaan;
 use Mail;
 use App\Mail\VendorMail;
 use App\Http\Resources\PostResource;
 use Config;
+use App\Http\Controllers\Notification\NotificationController;
 
 
 class Auth2Controller extends Controller
@@ -53,15 +55,28 @@ class Auth2Controller extends Controller
                 $p->status_verifikasi_umum = 'register';
                 $p->umum_updated_at = date('Y-m-d H:i:s');
                 $p->status_verifikasi_by = 'umum';
+                $whereAdminRole = 'AdminVendorUmum';
             }else{
                 $p->status_verifikasi_scm = 'register';
                 $p->scm_updated_at = date('Y-m-d H:i:s');
                 $p->status_verifikasi_by = 'scm';
+                $whereAdminRole = 'AdminVendorScm';
             }
 
             $p->nomor_registrasi= 'PEMA-VEND-'.date('Y').'-'.date('m').'-'.rand(1000,9999);
+            
             if ($p->save()) {
                 if($this->kirimEmail($user->id)){
+
+                    // create notification
+                    $recipient = User::select('employees.employe_id')
+                                ->join('employees', 'employees.user_id', '=', 'users.id')
+                                ->where('roles', 'like', '%'.$whereAdminRole.'%')
+                                ->first()
+                                ->employe_id;
+
+                    NotificationController::new('VENDOR_REGISTERED', $recipient, null);
+
                     return new UserResource($user);
                 }else{
                     throw new HttpResponseException(response([
