@@ -11,7 +11,6 @@ use App\Models\Notification\NotificationEntityType;
 use App\Models\Notification\Notification;
 use Illuminate\Support\Facades\Auth;
 
-
 class NotificationController extends Controller
 {
 
@@ -103,11 +102,12 @@ class NotificationController extends Controller
                                     'notification_entity_type.message', 
                                     'notification_entity_type.url',
                                     'notification_entity_type.query_key',
-                                    'notification_entity.entity'
+                                    'notification_entity.entity',
                                 )
                                 ->where(['recipient' => $employeId, 'status' => 0])
                                 ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notifications.entity_type_id')
                                 ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
+                                ->join(Perusahaan::tableName('perusahaan'), UserVendor::tableColumn('perusahaan.id'), '=', 'notification_entity.entity_id')
                                 ->orderBy('notifications.id', 'DESC')
                                 ->get();
             }
