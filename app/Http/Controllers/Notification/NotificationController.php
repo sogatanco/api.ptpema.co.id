@@ -49,7 +49,7 @@ class NotificationController extends Controller
     
             // save notification
             for ($r=0; $r < count($recipientArray); $r++) { 
-                if($employe->employe_id !== $recipientArray[$r]['employe_id']){
+                if($actor !== $recipientArray[$r]['employe_id']){
                     if(!in_array($recipientArray[$r]['employe_id'], $sent)){
                         $data = [
                             'actor' => $actor,
