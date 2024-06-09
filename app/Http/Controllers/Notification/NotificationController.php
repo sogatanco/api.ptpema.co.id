@@ -111,11 +111,11 @@ class NotificationController extends Controller
                                 ->get();
 
                 for ($nd=0; $nd < count($adminNotification); $nd++) { 
-                    $company = Perusahaan::select('bentuk_usaha', 'nama_perushaan')
+                    $company = Perusahaan::select('bentuk_usaha', 'nama_perusahaan')
                                 ->where('id', $adminNotification[$nd]->entity_id)
                                 ->first();
                     
-                    $adminNotification[$nd]->actor = $company->bentuk_usaha.' '.$company->nama_perushaan;
+                    $adminNotification[$nd]->actor = $company->bentuk_usaha.' '.$company->nama_perusahaan;
                 }
             }
 
