@@ -6,22 +6,30 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employe;
 use App\Models\Structure;
+use App\Models\Vendor\Perusahaan;
 use App\Models\Notification\NotificationEntityType;
 use App\Models\Notification\Notification;
 use Illuminate\Support\Facades\Auth;
+
 
 class NotificationController extends Controller
 {
 
     public static function new($type, $recipients, $entityId)
     {
-        $userId = Auth::user()->id;
-        $employe = Employe::where('user_id', $userId)->first();
-
         // choose entity
-        $entityTypeId = NotificationEntityType::where('type', $type)->first()->id;
+        $entityType = NotificationEntityType::select('notification_entity_type.id', 'notification_entity.entity')
+                    ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
+                    ->where('type', $type)->first();
 
-        if($entityTypeId){
+        if($entityType->entity === 'VENDOR'){
+           $actor = $entityId;
+        }else{
+            $userId = Auth::user()->id;
+            $actor = Employe::where('user_id', $userId)->first()->employe_id;
+        }
+
+        if($entityType->id){
             if(!is_array($recipients)){
                 if(is_string($recipients)){
                     $recipientArray = array (
@@ -44,9 +52,9 @@ class NotificationController extends Controller
                 if($employe->employe_id !== $recipientArray[$r]['employe_id']){
                     if(!in_array($recipientArray[$r]['employe_id'], $sent)){
                         $data = [
-                            'actor' => $employe->employe_id,
+                            'actor' => $actor,
                             'recipient' => $recipientArray[$r]['employe_id'],
-                            'entity_type_id' => $entityTypeId,
+                            'entity_type_id' => $entityType->id,
                             'entity_id' => $entityId,
                         ];
             
