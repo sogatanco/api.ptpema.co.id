@@ -112,10 +112,11 @@ class NotificationController extends Controller
                                 ->get();
             }
 
+            $data = array_merge($employeNotification->toArray(), $adminNotification->toArray());
+
         return response()->json([
             'status' => true,
-            'data' => $employeNotification,
-            'adminNotification' => $adminNotification
+            'data' => $data
         ], 200);
     }
 }
