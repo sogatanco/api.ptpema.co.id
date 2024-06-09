@@ -72,7 +72,7 @@ class NotificationController extends Controller
 
         $employeId = Employe::where('user_id', Auth::user()->id)->first()->employe_id;
 
-        $data = Notification::select(
+        $employeNotification = Notification::select(
                                 'notifications.id', 
                                 'notifications.entity_id', 
                                 'notifications.created_at', 
@@ -92,9 +92,30 @@ class NotificationController extends Controller
                             ->orderBy('notifications.id', 'DESC')
                             ->get();
 
+            $userRoles = Auth::user()->roles;
+
+            if(in_array('AdminVendorScm', $userRoles) || in_array('AdminVendorUmum', $userRoles)){
+                $adminNotification = Notification::select(
+                                    'notifications.id', 
+                                    'notifications.entity_id', 
+                                    'notifications.created_at', 
+                                    'notification_entity_type.type',
+                                    'notification_entity_type.message', 
+                                    'notification_entity_type.url',
+                                    'notification_entity_type.query_key',
+                                    'notification_entity.entity'
+                                )
+                                ->where(['recipient' => $employeId, 'status' => 0])
+                                ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notifications.entity_type_id')
+                                ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
+                                ->orderBy('notifications.id', 'DESC')
+                                ->get();
+            }
+
         return response()->json([
             'status' => true,
-            'data' => $data
+            'data' => $employeNotification,
+            'adminNotification' => $adminNotification
         ], 200);
     }
 }
