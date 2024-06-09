@@ -220,7 +220,6 @@ class PerusahaanController extends Controller
         $userId = Auth::user()->id;
         $company = Perusahaan::where('user_id', $userId)->first();
         
-
         if($company->status_verifikasi_by === 'umum'){
             $company->status_verifikasi_umum = 'review_submit';
             $company->umum_updated_at = date('Y-m-d H:i:s');
@@ -242,11 +241,7 @@ class PerusahaanController extends Controller
                         ->first()
                         ->employe_id;
 
-            $userId = Auth::user()->id;
-
-            $companyId = Perusahaan::select('id')->where('user_id', $userId)->first()->id;
-
-            NotificationController::new('VENDOR_REVIEW_SUBMIT', $recipient, $p->id);
+            NotificationController::new('VENDOR_REVIEW_SUBMIT', $recipient, $company->id);
 
             return response()->json([
                 "status" => true,
