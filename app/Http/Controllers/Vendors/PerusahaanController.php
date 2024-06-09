@@ -17,6 +17,7 @@ use App\Models\Vendor\Izin;
 use App\Models\Vendor\Jajaran;
 use App\Models\Vendor\Kbli;
 use App\Models\Vendor\Porto;
+use App\Models\User;
 use App\Http\Resources\PostResource;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
@@ -217,18 +218,35 @@ class PerusahaanController extends Controller
 
         $userId = Auth::user()->id;
         $company = Perusahaan::where('user_id', $userId)->first();
+        
 
         if($company->status_verifikasi_by === 'umum'){
             $company->status_verifikasi_umum = 'review_submit';
             $company->umum_updated_at = date('Y-m-d H:i:s');
+            $adminRole = 'AdminVendorUmum';
         }else{
             $company->status_verifikasi_scm = 'review_submit';
             $company->scm_updated_at = date('Y-m-d H:i:s');
+            $adminRole = 'AdminVendorScm';
         }
 
         $savedSubmit = $company->save();
 
         if ($savedSubmit) {
+
+            // create notification to admin
+            $recipient = User::select('employees.employe_id')
+                        ->join('employees', 'employees.user_id', '=', 'users.id')
+                        ->where('roles', 'like', '%'.$adminRole.'%')
+                        ->first()
+                        ->employe_id;
+
+            $userId = Auth::user()->id;
+
+            $companyId = Perusahaan::select('id')->where('user_id', $userId)->first()->id;
+
+            NotificationController::new('VENDOR_REVIEW_SUBMIT', $recipient, $p->id);
+
             return response()->json([
                 "status" => true,
                 "message" => 'Status has been updated.'
