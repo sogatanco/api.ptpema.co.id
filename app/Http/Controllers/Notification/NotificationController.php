@@ -107,9 +107,16 @@ class NotificationController extends Controller
                                 ->where(['recipient' => $employeId, 'status' => 0])
                                 ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notifications.entity_type_id')
                                 ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
-                                ->join('DB_DATABASE_2.perusahaan AS perusahaan', 'perusahaan.id', '=', 'notification_entity.entity_id')
                                 ->orderBy('notifications.id', 'DESC')
                                 ->get();
+
+                for ($nd=0; $nd < count($adminNotification); $nd++) { 
+                    $company = Perusahaan::select('bentuk_usaha', 'nama_perushaan')
+                                ->where('id', $entityId)
+                                ->first();
+                    
+                    $adminNotification[$nd]->actor = $company->bentuk_usaha.' '.$company->nama_perushaan;
+                }
             }
 
             $data = array_merge($employeNotification->toArray(), $adminNotification->toArray());
