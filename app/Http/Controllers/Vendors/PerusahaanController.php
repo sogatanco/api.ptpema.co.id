@@ -7,6 +7,7 @@ use App\Models\Vendor\MasterBidangUsaha;
 use App\Models\Vendor\Perusahaan;
 use App\Models\Vendor\BidangUsaha;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Notification\NotificationController;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
