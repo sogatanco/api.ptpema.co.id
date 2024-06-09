@@ -75,7 +75,7 @@ class Auth2Controller extends Controller
                                 ->first()
                                 ->employe_id;
 
-                    NotificationController::new('VENDOR_REGISTERED', $recipient, $user->id);
+                    NotificationController::new('VENDOR_REGISTERED', $recipient, $p->id);
 
                     return new UserResource($user);
                 }else{
