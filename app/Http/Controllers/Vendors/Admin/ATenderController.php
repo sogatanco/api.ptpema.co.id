@@ -295,7 +295,7 @@ class ATenderController extends Controller
                         ->where('employe_id', $adminId)
                         ->first()->direct_atasan;
 
-            NotificationController::new('TENDER_BA_SUBMITTED', $recipient, $t->id_tender);
+            NotificationController::new('TENDER_BA_SUBMITTED', $recipient, null);
 
             return response()->json([
                 "success" => true,
