@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Vendors\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Notification\NotificationController;
 use App\Models\Vendor\Tender;
 use App\Models\Vendor\TenderPeserta;
 use App\Models\Vendor\Perusahaan;
