@@ -225,6 +225,7 @@ class APerusahaanController extends Controller
                         'content' => $request->komentar
                     ];
                 }
+                
                 $em=ViewPerusahaan::where('id', $id)->first()->email;
                 if (Mail::to($em)->send(new InfoToVendor($mailData))) {
                     return new PostResource(true, 'Updated', []);
