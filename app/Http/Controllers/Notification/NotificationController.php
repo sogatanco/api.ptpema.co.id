@@ -117,9 +117,12 @@ class NotificationController extends Controller
                     
                     $adminNotification[$nd]->actor = $company->bentuk_usaha.' '.$company->nama_perusahaan;
                 }
+
+                $data = array_merge($employeNotification->toArray(), $adminNotification->toArray());
+            }else{
+                $data = $employeNotification;
             }
 
-            $data = array_merge($employeNotification->toArray(), $adminNotification->toArray());
 
         return response()->json([
             'status' => true,
