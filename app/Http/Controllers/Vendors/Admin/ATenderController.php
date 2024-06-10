@@ -108,6 +108,7 @@ class ATenderController extends Controller
             }
 
             // create notification to direct supervisor
+            $adminId = Employe::employeId();
             $recipient = Structure::select('direct_atasan')
                         ->where('employe_id', $adminId)
                         ->first()->direct_atasan;
