@@ -330,6 +330,14 @@ class ATenderController extends Controller
         $tender->status_document = $status_document;
         $tender->save();
 
+        // create notification to manager
+        $adminId = Employe::employeId();
+        $recipient = Structure::select('direct_atasan')
+                    ->where('employe_id', $adminId)
+                    ->first()->direct_atasan;
+
+        NotificationController::new('TENDER_STATUS_CHANGED', $recipient, $tender->id_tender);
+
         return response()->json([
             "status" => true,
             "message" => 'Tender updated successfully',
