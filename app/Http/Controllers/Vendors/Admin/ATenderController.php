@@ -289,23 +289,13 @@ class ATenderController extends Controller
 
         if ($t->save()) {
 
-            $employeId = Employe::employeId();
-            $structure =  Structure::select('direct_atasan')
-                    ->where('employe_id', $employeId)
-                    ->first();
+            // create notification to manager
+            $adminId = Employe::employeId();
+            $recipient = Structure::select('direct_atasan')
+                        ->where('employe_id', $adminId)
+                        ->first()->direct_atasan;
 
-            $directSupervisorId = $structure->direct_atasan;
-
-            $notifData = [
-                'from_employe' => $employeId,
-                'to_employe' => $directSupervisorId,
-                'title' => 'Berita Acara Tender',
-                'desc' => 'Permintaan approval',
-                'category' => 'tender',
-            ];
-
-            $newNotification = new Notification($notifData);
-            $newNotification->save();
+            NotificationController::new('TENDER_BA_SUBMITTED', $recipient, $t->id_tender);
 
             return response()->json([
                 "success" => true,
