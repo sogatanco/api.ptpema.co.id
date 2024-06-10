@@ -107,6 +107,13 @@ class ATenderController extends Controller
                 }
             }
 
+            // create notification to direct supervisor
+            $recipient = Structure::select('direct_atasan')
+                        ->where('employe_id', $adminId)
+                        ->first()->direct_atasan;
+
+            NotificationController::new('TENDER_CREATED', $recipient, $t->id_tender);
+
             return new PostResource(true, 'Tender Inserted !', $t);
         } else {
             return new PostResource(false, 'Failed Tender Insert !', []);
