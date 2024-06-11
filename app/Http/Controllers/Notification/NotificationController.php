@@ -132,7 +132,7 @@ class NotificationController extends Controller
 
     public function delete($id)
     {
-        $notification = Notfication::find($id);
+        $notification = Notification::find($id);
         $notification->delete();
 
         return response()->json([
