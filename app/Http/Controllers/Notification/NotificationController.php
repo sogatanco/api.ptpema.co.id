@@ -129,4 +129,15 @@ class NotificationController extends Controller
             'data' => $data
         ], 200);
     }
+
+    public function delete($id)
+    {
+        $notification = Notfication::find($id);
+        $notification->delete();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Notification has been deleted"
+        ], 200);
+    }
 }

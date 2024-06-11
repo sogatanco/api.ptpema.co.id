@@ -138,4 +138,5 @@ Route::controller(TestingController::class)->group(function(){
 // Notification routes
 Route::controller(NotificationController::class)->group(function(){
     Route::get('/notification', "get")->middleware("role:Employee");
+    Route::delete('/notification/{id}, "delete')->middleware("role:Employee");
 });

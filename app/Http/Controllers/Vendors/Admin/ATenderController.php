@@ -396,13 +396,23 @@ class ATenderController extends Controller
         
         if($tender->status_approval === 'revisi_pemenang' || $tender->status_approval === 'revisi_tahap_2'){
             $tender->catatan = $request->catatan;
+            $notifType = 'TENDER_BA_REVISED';
         }
-
+        
         if($tender->status_approval === 'approved_pemenang'){
             $tender->status_tender = 'tutup';
+            $notifType = 'TENDER_BA_APPROVED';
         }
 
         $tender->save();
+
+        // create notification to admin
+        $directSupervisorId = Employe::employeId();
+        $adminId = Structure::where('direct_atasan', $directSupervisorId)
+                ->where('roles', 'like', '%AdminVendor%')
+                ->first()->employe_id;
+
+        NotificationController::new($notifType, $adminId, $tender->id_tender);
 
         return response()->json([
             'status' => true,
