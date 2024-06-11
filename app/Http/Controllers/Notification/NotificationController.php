@@ -110,15 +110,20 @@ class NotificationController extends Controller
                                 ->orderBy('notifications.id', 'DESC')
                                 ->get();
 
-                for ($nd=0; $nd < count($adminNotification); $nd++) { 
-                    $company = Perusahaan::select('bentuk_usaha', 'nama_perusahaan')
-                                ->where('id', $adminNotification[$nd]->entity_id)
-                                ->first();
-                    
-                    $adminNotification[$nd]->actor = $company->bentuk_usaha.' '.$company->nama_perusahaan;
+                if(count($adminNotification) > 0){
+                    for ($nd=0; $nd < count($adminNotification); $nd++) { 
+                        $company = Perusahaan::select('bentuk_usaha', 'nama_perusahaan')
+                                    ->where('id', $adminNotification[$nd]->entity_id)
+                                    ->first();
+                        
+                        $adminNotification[$nd]->actor = $company->bentuk_usaha.' '.$company->nama_perusahaan;
+                    }
+    
+                    $data = array_merge($employeNotification->toArray(), $adminNotification->toArray());
+                }else{
+                    $data = $employeNotification;
                 }
 
-                $data = array_merge($employeNotification->toArray(), $adminNotification->toArray());
             }else{
                 $data = $employeNotification;
             }
