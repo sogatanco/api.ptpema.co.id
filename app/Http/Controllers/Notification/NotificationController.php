@@ -104,7 +104,9 @@ class NotificationController extends Controller
                                     'notification_entity_type.query_key',
                                     'notification_entity.entity',
                                 )
-                                ->where(['recipient' => $employeId, 'status' => 0])
+                                ->where(['notifications.recipient' => $employeId, 'notifications.status' => 0])
+                                ->where('notification_entity.entity', 'like', '%VENDOR%')
+                                ->where('notification_entity.entity', 'like', '%TENDER%')
                                 ->join('notification_entity_type', 'notification_entity_type.id', '=', 'notifications.entity_type_id')
                                 ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
                                 ->orderBy('notifications.id', 'DESC')
@@ -131,7 +133,8 @@ class NotificationController extends Controller
 
         return response()->json([
             'status' => true,
-            'data' => $data
+            'data' => $data,
+            'geblek' => $adminNotification
         ], 200);
     }
 
