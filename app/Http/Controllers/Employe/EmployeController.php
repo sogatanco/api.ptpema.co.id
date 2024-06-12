@@ -165,8 +165,14 @@ class EmployeController extends Controller
     {
         $userRoles = Auth::user()->roles;
         $query = $request->query('search');
+        if($query === 'all'){
 
-        if($query === 'subordinate'){
+            $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                    ->join('users', 'users.id', '=', 'employees.user_id')
+                    ->where('employe_active', 1)
+                    ->get();
+
+        }elseif($query === 'subordinate'){
             // LIST ASSSIGN UNTUK SUB AKTIFITAS 
             // LIST BAWAHAN AJA
             $employeId = Employe::employeId();
