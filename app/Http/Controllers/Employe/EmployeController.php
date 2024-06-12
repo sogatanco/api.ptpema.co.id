@@ -173,7 +173,7 @@ class EmployeController extends Controller
                     ->get();
 
         }elseif($query === 'subordinate'){
-            // LIST ASSSIGN UNTUK SUB AKTIFITAS 
+            // LIST ASSIGN UNTUK SUB AKTIFITAS 
             // LIST BAWAHAN AJA
             $employeId = Employe::employeId();
 
