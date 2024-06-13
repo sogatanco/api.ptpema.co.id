@@ -21,29 +21,44 @@ class TenderController extends Controller
 
     public function listTender()
     {
-        $data = Tender::orderBy('id_tender', 'DESC')
-            ->get();
+        $tenderUmum = Tender::where('metode_pengadaan', 'seleksi_umum')
+                    ->orWhere('metode_pengadaan', 'tender_umum')
+                    ->orderBy('id_tender', 'DESC')
+                    ->get();
+        
+        $tenderUndangan = TenderPeserta::select('tender_peserta.tender_id', 'tender.*')
+                        ->join('tender', 'tender.id_tender', '=', 'tender_peserta.tender_id')
+                        ->where('tender_peserta.perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)
+                        ->get();
+        $data = [];
+        if(count($tenderUmum) > 0 && count($tenderUndangan) > 0){
+            $data = array_merge($tenderUmum->toArray(), $tenderUndangan->toArray());
+        }else if(count($tenderUmum)> 0){
+            $data = $tenderUmum->toArray();
+        }else{
+            $data = $tenderUndangan->toArray();
+        }
 
         foreach ($data as $d) {
-            if (count(TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
-                $d->register = true;
-                $statusPeserta = TenderPeserta::where('tender_id', $d->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
-                if (count(TenderPeserta::where('tender_id', $d->id_tender)->where('status',  'pemenang')->get()) > 0) {
+            if (count(TenderPeserta::where('tender_id', $d['id_tender'])->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
+                $d['register'] = true;
+                $statusPeserta = TenderPeserta::where('tender_id', $d['id_tender'])->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
+                if (count(TenderPeserta::where('tender_id', $d['id_tender'])->where('status',  'pemenang')->get()) > 0) {
                     if ($statusPeserta == 'lulus_tahap_1' || $statusPeserta == 'submit_dokumen') {
-                        $d->status_peserta = 'gagal, coba lagi';
+                        $d['status_peserta'] = 'gagal, coba lagi';
                     } else {
-                        $d->status_peserta = $statusPeserta;
+                        $d['status_peserta'] = $statusPeserta;
                     }
-                } else if(count(TenderPeserta::where('tender_id', $d->id_tender)->where('status',  'lulus_tahap_1')->get()) > 0){
+                } else if(count(TenderPeserta::where('tender_id', $d['id_tender'])->where('status',  'lulus_tahap_1')->get()) > 0){
                     if ($statusPeserta == 'submit_dokumen') {
-                        $d->status_peserta = 'tidak lulus tahap 1';
+                        $d['status_peserta'] = 'tidak lulus tahap 1';
                     } else {
-                        $d->status_peserta = $statusPeserta;
+                        $d['status_peserta'] = $statusPeserta;
                     }
                 }
             } else {
-                $d->register = false;
-                $d->status_peserta = '';
+                $d['register'] = false;
+                $d['status_peserta'] = '';
             }
         }
 
