@@ -41,30 +41,32 @@ class TenderController extends Controller
 
         foreach ($data as $d) {
             if (count(TenderPeserta::where('tender_id', $d['id_tender'])->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
-                $d->register = true;
+                $d['register'] = true;
                 $statusPeserta = TenderPeserta::where('tender_id', $d['id_tender'])->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
                 if (count(TenderPeserta::where('tender_id', $d['id_tender'])->where('status',  'pemenang')->get()) > 0) {
                     if ($statusPeserta == 'lulus_tahap_1' || $statusPeserta == 'submit_dokumen') {
-                        $d->status_peserta = 'gagal, coba lagi';
+                        $d['status_peserta'] = 'gagal, coba lagi';
                     } else {
-                        $d->status_peserta = $statusPeserta;
+                        $d['status_peserta'] = $statusPeserta;
                     }
                 } else if(count(TenderPeserta::where('tender_id', $d['id_tender'])->where('status',  'lulus_tahap_1')->get()) > 0){
                     if ($statusPeserta == 'submit_dokumen') {
-                        $d->status_peserta = 'tidak lulus tahap 1';
+                        $d['status_peserta'] = 'tidak lulus tahap 1';
                     } else {
-                        $d->status_peserta = $statusPeserta;
+                        $d['status_peserta'] = $statusPeserta;
                     }
                 }
             } else {
-                $d->register = false;
-                $d->status_peserta = '';
+                $d['register'] = false;
+                $d['status_peserta'] = '';
             }
         }
 
         return response()->json([
             "success" => true,
-            "data" => $data
+            "data" => $data,
+            "tender_umum" => $tenderUmum,
+            "tender_peserta" => $tenderUndangan
         ], 200);
     }
 
