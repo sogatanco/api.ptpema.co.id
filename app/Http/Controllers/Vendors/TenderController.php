@@ -21,52 +21,40 @@ class TenderController extends Controller
 
     public function listTender()
     {
-        $tenderUmum = Tender::where('metode_pengadaan', 'seleksi_umum')
-                    ->orWhere('metode_pengadaan', 'tender_umum')
-                    ->orderBy('id_tender', 'DESC')
-                    ->get();
-        
-        $tenderUndangan = TenderPeserta::select('tender_peserta.tender_id', 'tender.*')
-                        ->join('tender', 'tender.id_tender', '=', 'tender_peserta.tender_id')
-                        ->where('tender_peserta.perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)
-                        ->get();
-        $data = [];
-        if(count($tenderUmum) > 0 && count($tenderUndangan) > 0){
-            $data = array_merge($tenderUmum->toArray(), $tenderUndangan->toArray());
-        }else if(count($tenderUmum)> 0){
-            $data = $tenderUmum->toArray();
-        }else{
-            $data = $tenderUndangan->toArray();
-        }
+        $tenders = Tender::orderBy('id_tender', 'DESC')->get();
 
-        foreach ($data as $d) {
-            if (count(TenderPeserta::where('tender_id', $d['id_tender'])->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
-                $d['register'] = true;
-                $statusPeserta = TenderPeserta::where('tender_id', $d['id_tender'])->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
-                if (count(TenderPeserta::where('tender_id', $d['id_tender'])->where('status',  'pemenang')->get()) > 0) {
+        $data = [];
+        for ($t=0; $t < count($tenders); $t++) { 
+            if (count(TenderPeserta::where('tender_id', $tenders[$t]->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
+                $tenders[$t]['register'] = true;
+                $statusPeserta = TenderPeserta::where('tender_id', $tenders[$t]->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
+                if (count(TenderPeserta::where('tender_id', $tenders[$t]->id_tender)->where('status',  'pemenang')->get()) > 0) {
                     if ($statusPeserta == 'lulus_tahap_1' || $statusPeserta == 'submit_dokumen') {
-                        $d['status_peserta'] = 'gagal, coba lagi';
+                        $tenders[$t]['status_peserta'] = 'gagal, coba lagi';
                     } else {
-                        $d['status_peserta'] = $statusPeserta;
+                        $tenders[$t]['status_peserta'] = $statusPeserta;
                     }
-                } else if(count(TenderPeserta::where('tender_id', $d['id_tender'])->where('status',  'lulus_tahap_1')->get()) > 0){
+                } else if(count(TenderPeserta::where('tender_id', $tenders[$t]->id_tender)->where('status',  'lulus_tahap_1')->get()) > 0){
                     if ($statusPeserta == 'submit_dokumen') {
-                        $d['status_peserta'] = 'tidak lulus tahap 1';
+                        $tenders[$t]['status_peserta'] = 'tidak lulus tahap 1';
                     } else {
-                        $d['status_peserta'] = $statusPeserta;
+                        $tenders[$t]['status_peserta'] = $statusPeserta;
                     }
                 }
+                array_push($data, $tenders[$t]);
             } else {
-                $d['register'] = false;
-                $d['status_peserta'] = '';
+                if($tenders[$t]->metode_pengadaan == 'seleksi_umum' || $tenders[$t]->metode_pengadaan == 'tender_umum'){
+                    $tenders[$t]['register'] = false;
+                    $tenders[$t]['status_peserta'] = '';
+
+                    array_push($data, $tenders[$t]);
+                }
             }
         }
 
         return response()->json([
             "success" => true,
-            "data" => $data,
-            "tender_umum" => $tenderUmum,
-            "tender_peserta" => $tenderUndangan
+            "data" => $data
         ], 200);
     }
 
