@@ -343,13 +343,15 @@ class PerusahaanController extends Controller
         $kbli = Kbli::where('perusahaan_id', $data->id)
                 ->join('master_kbli', 'master_kbli.id_kbli', '=', 'kbli.id_kbli')
                 ->get();
+        $nib = Izin::where('perusahaan_id', $data->id)->get();
 
         $data = [
             'spda' => $spda,
             'data' => [
                 'jajaran' => $jajaran,
                 'akta' => $akta,
-                'kbli' => $kbli
+                'kbli' => $kbli,
+                'nib' => $nib
             ]
         ];
 
