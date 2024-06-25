@@ -340,12 +340,16 @@ class PerusahaanController extends Controller
 
         $jajaran = Jajaran::where('perusahaan_id', $data->id)->get();
         $akta = Akta::where('id_perusahaan', $data->id)->get();
+        $kbli = Kbli::where('perusahaa_id', $data->id)
+                ->join('master_kbli', 'master_kbli.id_kbli', '=', 'kbli.id_kbli')
+                ->get();
 
         $data = [
             'spda' => $spda,
             'data' => [
                 'jajaran' => $jajaran,
-                'akta' => $akta
+                'akta' => $akta,
+                'kbli' => $kbli
             ]
         ];
 
