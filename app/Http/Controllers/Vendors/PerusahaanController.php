@@ -338,7 +338,8 @@ class PerusahaanController extends Controller
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->get();
         
-        $bidangUsaha = BidangUsaha::where('perusahaan_id', $data->id)
+        $bidangUsaha = BidangUsaha::select('nama_bidang')
+                    ->where('perusahaan_id', $data->id)
                     ->join('master_bidangusaha', 'master_bidangusaha.id_bidang', '=', 'bidang_usaha.master_bidangusaha_id')
                     ->get();
         $jajaran = Jajaran::where('perusahaan_id', $data->id)->get();
