@@ -334,8 +334,7 @@ class PerusahaanController extends Controller
         $data = ViewPerusahaan::where('user_id', Auth::user()->id)->first();
 
         $spda = Spda::where('id_perusahaan', $data->id)
-                ->where('status', 1)
-                ->first();
+                ->get();
 
         // $direksi = [];
         // foreach (Jajaran::where('perusahaan_id', $data->id)->get() as $d) {
