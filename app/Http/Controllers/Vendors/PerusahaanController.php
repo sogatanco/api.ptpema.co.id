@@ -342,7 +342,9 @@ class PerusahaanController extends Controller
 
         $data = [
             'spda' => $spda,
-            'jajaran' => $jajaran
+            'data' => [
+                'jajaran' => $jajaran
+            ]
         ];
 
         // $direksi = [];
