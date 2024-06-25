@@ -339,11 +339,13 @@ class PerusahaanController extends Controller
                 ->get();
 
         $jajaran = Jajaran::where('perusahaan_id', $data->id)->get();
+        $akta = Akta::where('id_perusahaan', $data->id)->get();
 
         $data = [
             'spda' => $spda,
             'data' => [
-                'jajaran' => $jajaran
+                'jajaran' => $jajaran,
+                'akta' => $akta
             ]
         ];
 
