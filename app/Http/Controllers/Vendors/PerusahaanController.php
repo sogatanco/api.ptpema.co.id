@@ -367,7 +367,7 @@ class PerusahaanController extends Controller
 
     public function generateSpda($spdaId)
     {
-        $spda = Spda::where('id', $spdaId)
+        $spda = Spda::where('spda.id', $spdaId)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->first();
 
