@@ -9,6 +9,7 @@ use App\Models\Vendor\Jajaran;
 use App\Models\Employe;
 use App\Models\Vendor\Akta;
 use App\Models\Vendor\MasterKbli;
+use App\Models\Vendor\Spda;
 use App\Models\Vendor\Izin;
 use App\Models\Vendor\Porto;
 use App\Models\Vendor\Log;
@@ -218,6 +219,15 @@ class APerusahaanController extends Controller
                         'subject' => 'SELAMAT',
                         'content' => 'Perusahaan anda terverifikasi. '
                     ];
+
+                    // save spda
+                    $newSpda = new Spda();
+                    $newSpda->id_perusahaan = $id;
+                    $newSpda->nomor = '????/????/????';
+                    $newSpda->mulai_berlaku = '2024-02-28';
+                    $newSpda->berakhir = '2024-03-28';
+                    $newSpda->status = 1;
+                    $newSpda->save();
 
                 }else{
                     $mailData = [
