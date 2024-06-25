@@ -338,6 +338,13 @@ class PerusahaanController extends Controller
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->get();
 
+        $jajaran = Jajaran::where('perusahaan_id', $data->id)->get();
+
+        $data = [
+            'spda' => $spda,
+            'jajaran' => $jajaran
+        ];
+
         // $direksi = [];
         // foreach (Jajaran::where('perusahaan_id', $data->id)->get() as $d) {
         //     array_push($direksi, $d->nama);
@@ -363,7 +370,7 @@ class PerusahaanController extends Controller
 
         return response()->json([
             "status" => true,
-            "data" => $spda
+            "data" => $data
         ], 200);
     }
 
