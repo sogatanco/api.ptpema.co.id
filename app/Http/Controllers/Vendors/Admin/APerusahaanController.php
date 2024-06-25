@@ -221,13 +221,11 @@ class APerusahaanController extends Controller
                     ];
 
                     // check spda
-                    $spda = Spda::select('spda.berakhir', 'spda.status', 'perusahaan.nomor_registrasi')
-                            ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
-                            ->where('spda.id_perusahaan', $id)
+                    $spda = Spda::where('spda.id_perusahaan', $id)
                             ->where('spda.status', 1)
                             ->first();
 
-                    $nomorSpda = 'SPDA/'.$spda->nomor_registrasi.'/';
+                    $nomorSpda = 'SPDA/'.$p->nomor_registrasi.'/';
 
                     if(!$spda){
 
