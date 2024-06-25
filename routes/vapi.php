@@ -35,6 +35,7 @@ Route::controller(PerusahaanController::class)->group(function() {
     Route::get('perusahaan/portofolio-status', 'portofolioStatus');
     Route::get('perusahaan/bidangusaha-status', 'bidangUsahaStatus');
     Route::get('perusahaan/spda', 'spda');
+    Route::get('perusahaan/generate-spda/{spdaId}', 'generateSpda');
     Route::get('perusahaan/donwnload', 'downloadzip');
     Route::get('perusahaan/kbli-list', 'kbliList');
 });

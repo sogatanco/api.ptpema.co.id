@@ -365,6 +365,18 @@ class PerusahaanController extends Controller
         ], 200);
     }
 
+    public function generateSpda($spdaId)
+    {
+        $spda = Spda::where('id', $spdaId)
+                ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
+                ->first();
+
+        return response()->json([
+            "status" => true,
+            "data" => $spda
+        ], 200);
+    }
+
     public function downloadzip()
     {
         $dir = public_path('vendor_file/'. ViewPerusahaan::where('user_id', Auth::user()->id)->first()->id);
