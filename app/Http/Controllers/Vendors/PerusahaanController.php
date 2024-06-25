@@ -337,7 +337,10 @@ class PerusahaanController extends Controller
                 ->where('id_perusahaan', $data->id)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->get();
-
+        
+        $bidangUsaha = BidangUsaha::where('perusahaan_id', $data->id)
+                    ->join('master_bidangusaha', 'master_bidangusaha.id_bidang', '=', 'bidang_usaha.master_bidangusaha_id')
+                    ->get();
         $jajaran = Jajaran::where('perusahaan_id', $data->id)->get();
         $akta = Akta::where('id_perusahaan', $data->id)->get();
         $kbli = Kbli::where('perusahaan_id', $data->id)
@@ -348,6 +351,7 @@ class PerusahaanController extends Controller
         $data = [
             'spda' => $spda,
             'data' => [
+                'bidangUsaha' => $bidangUsaha,
                 'jajaran' => $jajaran,
                 'akta' => $akta,
                 'kbli' => $kbli,
