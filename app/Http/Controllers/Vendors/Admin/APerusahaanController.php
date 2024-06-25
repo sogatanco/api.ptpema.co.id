@@ -239,7 +239,7 @@ class APerusahaanController extends Controller
                         $newSpda->status = 1;
                         $newSpda->save();
 
-                    }elseif($spda->berakhir > date("Y-m-d")){
+                    }elseif($spda->berakhir < date("Y-m-d")){
 
                         // update old spda
                         $spda->status = 0;
