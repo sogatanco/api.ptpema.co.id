@@ -342,11 +342,18 @@ class PerusahaanController extends Controller
                     ->where('perusahaan_id', $data->id)
                     ->join('master_bidangusaha', 'master_bidangusaha.id_bidang', '=', 'bidang_usaha.master_bidangusaha_id')
                     ->get();
-        $jajaran = Jajaran::where('perusahaan_id', $data->id)->get();
+
+        $jajaran = Jajaran::select('nama', 'jabatan')
+                    ->where('perusahaan_id', $data->id)
+                    ->get();
+
         $akta = Akta::where('id_perusahaan', $data->id)->get();
-        $kbli = Kbli::where('perusahaan_id', $data->id)
+
+        $kbli = Kbli::select('nomor_kbli', 'nama_kbli')
+                ->where('perusahaan_id', $data->id)
                 ->join('master_kbli', 'master_kbli.id_kbli', '=', 'kbli.id_kbli')
                 ->get();
+                
         $nib = Izin::where('perusahaan_id', $data->id)->get();
 
         $data = [
