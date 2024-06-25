@@ -220,14 +220,46 @@ class APerusahaanController extends Controller
                         'content' => 'Perusahaan anda terverifikasi. '
                     ];
 
-                    // save spda
-                    $newSpda = new Spda();
-                    $newSpda->id_perusahaan = $id;
-                    $newSpda->nomor = '????/????/????';
-                    $newSpda->mulai_berlaku = '2024-02-28';
-                    $newSpda->berakhir = '2024-03-28';
-                    $newSpda->status = 1;
-                    $newSpda->save();
+                    // check spda
+                    $spda = Spda::select('spda.berakhir', 'spda.status', 'perusahaan.nomor_registrasi')
+                            ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
+                            ->where('spda.id_perusahaan', $id)
+                            ->where('spda.status', 1)
+                            ->first();
+
+                    $nomorSpda = 'SPDA/'.$spda->nomor_registrasi.'/';
+
+                    if(!$spda){
+
+                        // save spda
+                        $newSpda = new Spda();
+                        $newSpda->id_perusahaan = $id;
+                        $newSpda->nomor = $nomorSpda.'1';
+                        $newSpda->mulai_berlaku = date('Y-m-d');
+                        $fiveYears = 365 * 5;
+                        $newSpda->berakhir =  date('Y-m-d',strtotime(date("Y-m-d", mktime()) . " + ".$fiveYears." day"));
+                        $newSpda->status = 1;
+                        $newSpda->save();
+
+                    }elseif($spda->berakhir > date("Y-m-d")){
+
+                        // update old spda
+                        $spda->status = 0;
+                        $spda->save();
+
+                        $countSpda = Spda::where('id_perusahaan', $id)
+                                    ->count();
+
+                        // save spda
+                        $newSpda = new Spda();
+                        $newSpda->id_perusahaan = $id;
+                        $newSpda->nomor = $nomorSpda.$countSpda+1;
+                        $newSpda->mulai_berlaku = date('Y-m-d');
+                        $fiveYears = 365 * 5;
+                        $newSpda->berakhir =  date('Y-m-d',strtotime(date("Y-m-d", mktime()) . " + ".$fiveYears." day"));
+                        $newSpda->status = 1;
+                        $newSpda->save();
+                    }
 
                 }else{
                     $mailData = [
