@@ -235,7 +235,7 @@ class APerusahaanController extends Controller
                         $newSpda->nomor = $nomorSpda.'1';
                         $newSpda->mulai_berlaku = date('Y-m-d');
                         $fiveYears = 365 * 5;
-                        $newSpda->berakhir =  date('Y-m-d',strtotime(date("Y-m-d", mktime()) . " + ".$fiveYears." day"));
+                        $newSpda->berakhir =  date('Y-m-d', strtotime('+5 years'));;
                         $newSpda->status = 1;
                         $newSpda->save();
 
