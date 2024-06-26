@@ -347,15 +347,15 @@ class PerusahaanController extends Controller
                     ->where('perusahaan_id', $data->id)
                     ->get();
 
-        $akta = Akta::select('no_akta', 'tgl_terbit', 'jenis')
+        $akta = Akta::select('id_akta', 'no_akta', 'tgl_terbit', 'jenis')
                 ->where('id_perusahaan', $data->id)->get();
 
-        $kbli = Kbli::select('nomor_kbli', 'nama_kbli')
+        $kbli = Kbli::select('id', 'nomor_kbli', 'nama_kbli')
                 ->where('perusahaan_id', $data->id)
                 ->join('master_kbli', 'master_kbli.id_kbli', '=', 'kbli.id_kbli')
                 ->get();
 
-        $nib = Izin::select('nomor', 'tgl_terbit', 'tgl_berakhir', 'keterangan')
+        $nib = Izin::select('id_izin','nomor', 'tgl_terbit', 'tgl_berakhir', 'keterangan')
                 ->where('perusahaan_id', $data->id)->get();
 
         $data = [
