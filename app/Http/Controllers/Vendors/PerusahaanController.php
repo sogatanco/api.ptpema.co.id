@@ -333,7 +333,7 @@ class PerusahaanController extends Controller
 
         $data = ViewPerusahaan::where('user_id', Auth::user()->id)->first();
 
-        $spda = Spda::select('spda.*', 'spda.id AS id_spda', 'perusahaan.id AS id_perusahaan', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan', 'perusahaan.alamat', 'perusahaan.no_npwp','perusahaan.provinsi', 'perusahaan.email_alternatif', 'perusahaan.hp')
+        $spda = Spda::select('spda.*', 'spda.id AS id_spda', 'perusahaan.id AS id_perusahaan', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan', 'perusahaan.alamat', 'perusahaan.no_npwp','perusahaan.provinsi', 'perusahaan.email_alternatif', 'perusahaan.hp', 'perusahaan.nomor_registrasi')
                 ->where('id_perusahaan', $data->id)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->get();
