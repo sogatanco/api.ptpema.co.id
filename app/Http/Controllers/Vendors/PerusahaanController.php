@@ -333,7 +333,7 @@ class PerusahaanController extends Controller
 
         $data = ViewPerusahaan::where('user_id', Auth::user()->id)->first();
 
-        $spda = Spda::select('spda.*', 'perusahaan.*', 'spda.id AS id_spda', 'perusahaan.id AS id_perusahaan')
+        $spda = Spda::select('spda.*', 'spda.id AS id_spda', 'perusahaan.id AS id_perusahaan', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan', 'perusahaan.alamat', 'perusahaan.provinsi', 'perusahaan.email_alternatif', 'perusahaan.hp', '')
                 ->where('id_perusahaan', $data->id)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->get();
@@ -347,14 +347,16 @@ class PerusahaanController extends Controller
                     ->where('perusahaan_id', $data->id)
                     ->get();
 
-        $akta = Akta::where('id_perusahaan', $data->id)->get();
+        $akta = Akta::select('no_akta', 'tgl_terbit', 'jenis')
+                ->where('id_perusahaan', $data->id)->get();
 
         $kbli = Kbli::select('nomor_kbli', 'nama_kbli')
                 ->where('perusahaan_id', $data->id)
                 ->join('master_kbli', 'master_kbli.id_kbli', '=', 'kbli.id_kbli')
                 ->get();
-                
-        $nib = Izin::where('perusahaan_id', $data->id)->get();
+
+        $nib = Izin::select('nomor', 'tgl_terbit', 'tgl_berakhir', 'keterangan')
+                ->where('perusahaan_id', $data->id)->get();
 
         $data = [
             'spda' => $spda,
