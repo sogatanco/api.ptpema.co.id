@@ -31,7 +31,8 @@ class PerusahaanController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api_vendor');
+        $this->middleware('auth:api_vendor', ['except' => ['spdaStatus']]);
+
     }
 
     public function listBidangUsaha()

@@ -15,6 +15,8 @@ use App\Http\Controllers\Vendors\ProvinceController;
 use App\Http\Controllers\Vendors\PublicData;
 use App\Http\Controllers\Vendors\PublicUserController;
 
+
+
 Route::middleware('auth:api_vendor')->get('/uservendor', function (Request $request) {
     return $request->user();
 });
