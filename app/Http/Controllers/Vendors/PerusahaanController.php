@@ -340,7 +340,7 @@ class PerusahaanController extends Controller
 
         if(count($spda) > 0) {
             for ($i=0; $i < count($spda); $i++) { 
-                $spda[$i]['key'] = base64_decode($spda[$i]->id_spda);
+                $spda[$i]['key'] = base64_encode($spda[$i]->id_spda);
             }
         }
         
