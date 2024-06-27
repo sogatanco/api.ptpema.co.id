@@ -337,6 +337,12 @@ class PerusahaanController extends Controller
                 ->where('id_perusahaan', $data->id)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->get();
+
+        if(count($spda) > 0) {
+            for ($i=0; $i < count($spda); $i++) { 
+                $spda[$i]['key'] = base64_decode($spda[$i]['id_spda']);
+            }
+        }
         
         $bidangUsaha = BidangUsaha::select('nama_bidang')
                     ->where('perusahaan_id', $data->id)
