@@ -406,10 +406,12 @@ class PerusahaanController extends Controller
                 ->where('id', $spdaIdDecode)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->first();
+        
+        $data = $spda ? $spda : null;
 
         return response()->json([
             "status" => true,
-            "data" => $spda
+            "data" => $data
         ], 200);
     }
 
