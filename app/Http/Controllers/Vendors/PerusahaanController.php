@@ -409,7 +409,7 @@ class PerusahaanController extends Controller
     {
         $spdaIdDecode = base64_decode($spdaId);
 
-        $data = [];
+        $data = null;
         if($spdaIdDecode) {
             $data = Spda::select('spda.*', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
                 ->where('spda.id', $spdaIdDecode)
