@@ -412,7 +412,7 @@ class PerusahaanController extends Controller
         $data = [];
         if($spdaIdDecode) {
             $data = Spda::select('spda.*', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
-                ->where('id', $spdaIdDecode)
+                ->where('spda.id', $spdaIdDecode)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->first();
         }
