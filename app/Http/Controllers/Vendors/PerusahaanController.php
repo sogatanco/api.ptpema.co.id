@@ -398,16 +398,11 @@ class PerusahaanController extends Controller
         ], 200);
     }
 
-    public function generateSpda($spdaId)
+    public function spdaStatus($spdaId)
     {
-        $spda = Spda::select('spda.*', 'perusahaan.id AS id_perusahaan', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan', 'perusahaan.nomor_registrasi')
-                ->where('spda.id', $spdaId)
-                ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
-                ->first();
-
         return response()->json([
             "status" => true,
-            "data" => $spda
+            "data" => "from spda status"
         ], 200);
     }
 
