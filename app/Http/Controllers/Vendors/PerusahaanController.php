@@ -400,9 +400,11 @@ class PerusahaanController extends Controller
 
     public function spdaStatus($spdaId)
     {
+        $new_id = str_replace(range(0, 9), range('z', 'q'), $spdaId);
+
         return response()->json([
             "status" => true,
-            "data" => "from spda status"
+            "data" => $new_id
         ], 200);
     }
 
