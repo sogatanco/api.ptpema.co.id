@@ -400,11 +400,16 @@ class PerusahaanController extends Controller
 
     public function spdaStatus($spdaId)
     {
-        $new_id = base64_encode($spdaId);
+        $spdaIdDecode = base64_decode($spdaId);
+
+        $spda = Spda::select('spda.*', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
+                ->where('id', $spdaIdDecode)
+                ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
+                ->first();
 
         return response()->json([
             "status" => true,
-            "data" => $new_id
+            "data" => $spda
         ], 200);
     }
 
