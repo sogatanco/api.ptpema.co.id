@@ -398,17 +398,19 @@ class PerusahaanController extends Controller
         ], 200);
     }
 
+    
     public function spdaStatus($spdaId)
     {
         $spdaIdDecode = base64_decode($spdaId);
 
-        $spda = Spda::select('spda.*', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
+        $data = [];
+        if($spdaIdDecode) {
+            $data = Spda::select('spda.*', 'perusahaan.bentuk_usaha', 'perusahaan.nama_perusahaan')
                 ->where('id', $spdaIdDecode)
                 ->join('perusahaan', 'perusahaan.id', '=', 'spda.id_perusahaan')
                 ->first();
+        }
         
-        $data = $spda ? $spda : null;
-
         return response()->json([
             "status" => true,
             "data" => $data
