@@ -341,7 +341,7 @@ class PerusahaanController extends Controller
 
         if(count($spda) > 0) {
             for ($i=0; $i < count($spda); $i++) { 
-                $spda[$i]['key'] = base64_encode($spda[$i]->id_spda * 120);
+                $spda[$i]['key'] = base64_encode($spda[$i]->id_spda);
             }
         }
         
@@ -408,7 +408,7 @@ class PerusahaanController extends Controller
     
     public function spdaStatus($spdaId)
     {
-        $spdaIdDecode = base64_decode($spdaId) / 120;
+        $spdaIdDecode = base64_decode($spdaId);
 
         $data = null;
         if($spdaIdDecode) {
