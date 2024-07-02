@@ -95,7 +95,7 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        $userData = Employe::select('employe_id', 'first_name')
+        $userData = Employe::select('employe_id', 'first_name', 'employe_active')
                     ->where("user_id", $user->id)->first();
 
         if($userData->employe_active == 0){
