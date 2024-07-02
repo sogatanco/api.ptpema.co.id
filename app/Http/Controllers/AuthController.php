@@ -95,10 +95,18 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        $employeId = Employe::select('employe_id', 'first_name')
+        $userData = Employe::select('employe_id', 'first_name')
                     ->where("user_id", $user->id)->first();
-        $user->employe_id = $employeId->employe_id;
-        $user->first_name = $employeId->first_name;
+
+        if($userData->employe_active == 0){
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Your account has been deactivated."
+            ], 400));
+        }
+
+        $user->employe_id = $userData->employe_id;
+        $user->first_name = $userData->first_name;
         $user->roles = $user->roles;
         $user = $user->makeHidden(["id", "email_verified_at", "created_at", "updated_at"]);
 
