@@ -49,7 +49,6 @@ class ATenderController extends Controller
 
         $t = new Tender();
         $t->user_id = Employe::employeId();
-        $t->pilihan_tender = $request->pilihan_tender;
         $t->metode_pengadaan = $request->metode_pengadaan;
         $t->sistem_kualifikasi = $request->sistem_kualifikasi;
         $t->nama_tender = $request->nama_tender;
@@ -71,8 +70,10 @@ class ATenderController extends Controller
         $userRoles = Auth::user()->roles;
         if(in_array('AdminVendorUmum', $userRoles)){
             $t->owner = 'umum';
+            $t->pilihan_tender = 'internal divisi umum';
         }else{
             $t->owner = 'scm';
+            $t->pilihan_tender = 'eksternal project';
         }
 
         if ($t->save()) {
@@ -81,7 +82,7 @@ class ATenderController extends Controller
             Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $dok_untuk_vendor, $file_dok_untuk_vendor);
             // Storage::disk('public_vendor')->put('tender/' . $t->id_tender . '/' . $doc_penyampaian_penawaran, $file_doc_penyampaian_penawaran);
 
-            if($t->metode_pengadaan === 'seleksi_terbatas' || $t->metode_pengadaan === 'tender_terbatas'){
+            if($t->metode_pengadaan !== 'seleksi_umum' || $t->metode_pengadaan !== 'tender_umum'){
                 $participants = $request->company_selected;
                 for ($i=0; $i < count($participants); $i++) {
                     
