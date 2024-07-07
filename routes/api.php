@@ -12,6 +12,7 @@ use App\Http\Controllers\Mitra\MitraController;
 use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Notification\TestingController;
 use App\Http\Controllers\Notification\NotificationController;
+use App\Http\Controllers\Client\ClientController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -35,7 +36,6 @@ Route::controller(Auth2Controller::class)->group(function(){
     Route::get('/auth2/resend/{id}', 'kirimEmail');
     Route::get('/auth2/verif/{id}', 'verifEmail');
 });
-
 
 // Employee Routes
 Route::controller(EmployeController::class)->group(function(){
@@ -139,4 +139,9 @@ Route::controller(TestingController::class)->group(function(){
 Route::controller(NotificationController::class)->group(function(){
     Route::get('/notification', "get")->middleware("role:Employee");
     Route::delete('/notification/{id}', "delete")->middleware("role:Employee");
+});
+
+// client routes
+Route::controller(ClientController::class)->group(function(){
+    Route::get('/client', "index");
 });
