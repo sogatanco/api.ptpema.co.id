@@ -13,19 +13,25 @@ class ClientController extends Controller
         $query = $request->query('id');
         $token = $request->bearerToken();
 
-        // if($token){
-            
-        // }else{
-        //     throw new HttpResponseException(response([
-        //         "status" => false,
-        //         "message" => "Unauthenticated."
-        //     ]))
-        // }
-
-        return response()->json([
-            "status" => true,
-            "message" => $token,
-            "data" => $query
-        ], 200);
+        if($query){
+            $isValid = true;
+            if($isValid){
+                return response()->json([
+                    "status" => true,
+                    "message" => $token,
+                    "data" => $query
+                ], 200);
+            }else{
+                throw new HttpResponseException(response([
+                    "status" => false,
+                    "message" => "Unauthenticated"
+                ]));
+            }
+        }else{
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Bad Request"
+            ], 400));
+        }
     }
 }
