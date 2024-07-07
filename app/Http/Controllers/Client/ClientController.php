@@ -10,7 +10,7 @@ class ClientController extends Controller
     public function index(Request $request)
     {
 
-        $userRequest = $request->headers();
+        $userRequest = $request->bearerToken();
 
         return response()->json([
             "status" => true,
