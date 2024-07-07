@@ -14,8 +14,8 @@ class ClientController extends Controller
         $token = $request->bearerToken();
 
         if($query){
-            $isValid = true;
-            if($isValid){
+            $client = Client::where('id', $query)->first();
+            if($client && $client->client_secret == $token){
                 return response()->json([
                     "status" => true,
                     "message" => $token,
@@ -25,7 +25,7 @@ class ClientController extends Controller
                 throw new HttpResponseException(response([
                     "status" => false,
                     "message" => "Unauthenticated"
-                ]));
+                ], 401));
             }
         }else{
             throw new HttpResponseException(response([
