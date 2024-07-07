@@ -15,7 +15,7 @@ class ClientController extends Controller
         $token = $request->bearerToken();
 
         if($query){
-            $client = Client::where('id', $query)->first();
+            $client = Client::where('client_id', $query)->first();
             if($client && $client->client_secret == $token){
                 return response()->json([
                     "status" => true,
