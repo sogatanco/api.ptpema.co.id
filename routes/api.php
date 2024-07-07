@@ -144,4 +144,5 @@ Route::controller(NotificationController::class)->group(function(){
 // client routes
 Route::controller(ClientController::class)->group(function(){
     Route::get('/client', "index")->middleware("client");
+    Route::get('/client/employees', "employees")->middleware("client");
 });
