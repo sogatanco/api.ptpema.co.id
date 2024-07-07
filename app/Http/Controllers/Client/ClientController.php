@@ -7,11 +7,14 @@ use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+
+        $userRequest = $request->headers();
+
         return response()->json([
             "status" => true,
-            "message" => "from client controller"
+            "message" => $userRequest
         ], 200);
     }
 }
