@@ -24,7 +24,7 @@ class ClientController extends Controller
 
         return response()->json([
             "status" => true,
-            "message" => $userRequest,
+            "message" => $token,
             "data" => $query
         ], 200);
     }
