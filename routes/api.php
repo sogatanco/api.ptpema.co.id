@@ -26,6 +26,8 @@ Route::controller(AuthController::class)->group(function(){
     Route::get('/auth/refresh', 'refresh');
     Route::get('auth/welcome/test', 'welcome');
     Route::post('auth/change-pas', 'changePas');
+    Route::post('auth/forgot-password', 'forgotPassword');
+    Route::post('auth/new-password', 'newPassword');
 });
 
 Route::controller(Auth2Controller::class)->group(function(){
@@ -145,4 +147,5 @@ Route::controller(NotificationController::class)->group(function(){
 Route::controller(ClientController::class)->group(function(){
     Route::get('/client', "index")->middleware("client");
     Route::get('/client/employees', "employees")->middleware("client");
+    Route::post('/client/employees/store', "store")->middleware("client");
 });

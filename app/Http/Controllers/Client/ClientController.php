@@ -26,4 +26,12 @@ class ClientController extends Controller
             "data" => $list
         ], 200);
     }
+
+    public function store(Request $request)
+    {
+        return response()->json([
+            "status" => true,
+            "data" => $request->all()
+        ], 200);
+    }
 }
