@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employe;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ClientController extends Controller
 {
@@ -29,9 +30,18 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
+        $newEmploye = Employe::create($request->all());
+
+        if(!$newEmploye) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Failed to create new employe."
+            ], 500));
+        }
+
         return response()->json([
             "status" => true,
-            "data" => $request->all()
+            "message" => "New employe has been created.",
         ], 200);
     }
 }
