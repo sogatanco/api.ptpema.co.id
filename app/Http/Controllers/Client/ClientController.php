@@ -33,10 +33,10 @@ class ClientController extends Controller
         $newEmploye = Employe::create($request->all());
 
         if(!$newEmploye) {
-            throw new HttpResponseException(response([
+            return response()->json([
                 "status" => false,
                 "message" => "Failed to create new employe."
-            ], 500));
+            ]);
         }
 
         $employeId = $request->employe_id;
