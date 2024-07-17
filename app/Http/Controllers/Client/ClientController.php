@@ -38,11 +38,13 @@ class ClientController extends Controller
         //         "message" => "Failed to create new employe."
         //     ], 500));
         // }
+        $employeId = $request->employe_id;
 
         return response()->json([
             "status" => true,
             // "message" => "New employe has been created.",
-            "data" => $request->all()
+            "data" => $request->all(),
+            "employe_id" => $employeId
         ], 200);
     }
 }
