@@ -48,7 +48,7 @@ class ClientController extends Controller
         $newUser->roles = ["Employee"];
 
         if($newUser->save()){
-            $newEmploye = new Employe($request->all());
+            $newEmploye = new Employe();
             $newEmploye->employe_id = $request->employe_id;
             $newEmploye->user_id = $newUser->id;
             $newEmploye->position_id = $request->position_id;
