@@ -91,4 +91,15 @@ class ClientController extends Controller
             ], 500));
         }
     }
+
+    public function positions()
+    {
+        $list = Position::get();
+        $total = $list->count();
+        return response()->json([
+            "status" => true,
+            "total" => $total,
+            "data" => $list
+        ], 200);
+    }
 }
