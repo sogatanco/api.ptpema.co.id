@@ -35,6 +35,8 @@ class ClientController extends Controller
         // create employe as user
         $newUser = new User();
         $newUser->email = $request->email;
+        $newUser->password = bcrypt("asdasdasd");
+        $newUser->role = ["Employee"];
         $newUser->save();
 
         // $newEmploye = Employe::create($request->all());
