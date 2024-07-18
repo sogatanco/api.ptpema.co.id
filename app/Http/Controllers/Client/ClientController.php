@@ -69,10 +69,9 @@ class ClientController extends Controller
             ], 200);
 
         }else{
-            return response()->json([
-                "status" => false,
+            throw new HttpResponseException(response([
                 "message" => "Failed to create new employe."
-            ], 500);
+            ], 500));
         }
     }
 }
