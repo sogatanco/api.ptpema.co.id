@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employe;
+use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ClientController extends Controller
@@ -30,20 +31,24 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
-        $newEmploye = Employe::create($request->all());
 
-        if(!$newEmploye) {
-            return response()->json([
-                "status" => false,
-                "message" => "Failed to create new employe."
-            ]);
-        }
+        // create employe as user
+        $newUser = new User();
+        $newUser->email = $request->email;
+        $newUser->save();
 
-        $employeId = $request->employe_id;
+        // $newEmploye = Employe::create($request->all());
+
+        // if(!$newEmploye) {
+        //     return response()->json([
+        //         "status" => false,
+        //         "message" => "Failed to create new employe."
+        //     ]);
+        // }
+
 
         return response()->json([
             "status" => true,
-            // "message" => "New employe has been created.",
             "data" => $request->all(),
             "employe_id" => $employeId
         ], 200);
