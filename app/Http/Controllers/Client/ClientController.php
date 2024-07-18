@@ -43,6 +43,13 @@ class ClientController extends Controller
             $newEmploye = new Employe();
             $newEmploye->user_id = $newUser->id;
             $newEmploye->first_name = $request->first_name;
+            $newEmploye->last_name = $request->last_name;
+            $newEmploye->gender = $request->gender;
+            $newEmploye->religion = $request->religion;
+            $newEmploye->birthday = $request->birthday;
+            $newEmploye->birthday_place = $request->birthday_place;
+            $newEmploye->marital_status = $request->marital_status;
+            $newEmploye->img = $request->img;
             $newEmploye->save();
 
             return response()->json([
