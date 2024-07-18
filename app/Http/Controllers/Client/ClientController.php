@@ -49,8 +49,7 @@ class ClientController extends Controller
 
         return response()->json([
             "status" => true,
-            "data" => $request->all(),
-            "employe_id" => $employeId
+            "data" => "success",
         ], 200);
     }
 }
