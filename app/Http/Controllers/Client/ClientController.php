@@ -57,6 +57,14 @@ class ClientController extends Controller
         $newUser->password = Hash::make('asdasdasd');
         $newUser->roles = ["Employee"];
 
+        $fileName = null;
+        if($request->hasFile('img')){
+            $file = $request->file('img');
+            $file->storeAs('public/profile', $file->hashName());
+
+            $fileName = $file->hashName();
+        }
+
         if($newUser->save()){
             $newEmploye = new Employe();
             $newEmploye->employe_id = $request->employe_id;
@@ -70,7 +78,7 @@ class ClientController extends Controller
             $newEmploye->birthday = $request->birthday;
             $newEmploye->birthday_place = $request->birthday_place;
             $newEmploye->marital_status = $request->marital_status;
-            $newEmploye->img = $request->img;
+            $newEmploye->img = $fileName;
             $newEmploye->employe_active = 1;
 
             if($newEmploye->save()){
