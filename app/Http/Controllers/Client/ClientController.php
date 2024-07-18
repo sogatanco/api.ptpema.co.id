@@ -34,10 +34,17 @@ class ClientController extends Controller
     {
 
         $userIsExist = User::where('email', $request->email)->count();
+        $employeIsExist = Employe::where('employe_id', $request->employe_id)->count();
 
         if($userIsExist > 0){
             throw new HttpResponseException(response([
                 "message" => "Email already registered."
+            ], 409));
+        }
+
+        if($employeIsExist > 0){
+            throw new HttpResponseException(response([
+                "message" => "Employe ID already registered."
             ], 409));
         }
 
@@ -62,7 +69,7 @@ class ClientController extends Controller
             $newEmploye->marital_status = $request->marital_status;
             $newEmploye->img = $request->img;
             $newEmploye->employe_active = 1;
-            
+
             if($newEmploye->save()){
                 return response()->json([
                     "status" => true,
