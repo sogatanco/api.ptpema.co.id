@@ -38,21 +38,23 @@ class ClientController extends Controller
         $newUser->email = $request->email;
         $newUser->password = Hash::make('asdasdasd');
         $newUser->roles = ["Employee"];
-        $newUser->save();
 
-        // $newEmploye = Employe::create($request->all());
+        if($newUser->save()){
+            $newEmploye = new Employe();
+            $newEmploye->user_id = $newUser->id;
+            $newEmploye->first_name = $request->first_name;
+            $newEmploye->save();
 
-        // if(!$newEmploye) {
-        //     return response()->json([
-        //         "status" => false,
-        //         "message" => "Failed to create new employe."
-        //     ]);
-        // }
+            return response()->json([
+                "status" => true,
+                "data" => "Success to create new employe.",
+            ], 200);
 
-
-        return response()->json([
-            "status" => true,
-            "data" => "success",
-        ], 200);
+        }else{
+            return response()->json([
+                "status" => false,
+                "message" => "Failed to create new employe."
+            ], 500);
+        }
     }
 }
