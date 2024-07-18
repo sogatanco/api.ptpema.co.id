@@ -38,12 +38,14 @@ class ClientController extends Controller
 
         if($userIsExist > 0){
             throw new HttpResponseException(response([
+                "status" => false,
                 "message" => "Email already registered."
             ], 409));
         }
-
+        
         if($employeIsExist > 0){
             throw new HttpResponseException(response([
+                "status" => false,
                 "message" => "Employe ID already registered."
             ], 409));
         }
@@ -77,12 +79,14 @@ class ClientController extends Controller
                 ], 200);
             }else{
                 throw new HttpResponseException(response([
+                    "status" => false,
                     "message" => "Failed to create new employe."
                 ], 500));
             }
-
+            
         }else{
             throw new HttpResponseException(response([
+                "status" => false,
                 "message" => "Failed to create new user."
             ], 500));
         }
