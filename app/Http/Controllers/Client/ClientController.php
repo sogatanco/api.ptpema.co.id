@@ -50,6 +50,7 @@ class ClientController extends Controller
             $newEmploye->birthday_place = $request->birthday_place;
             $newEmploye->marital_status = $request->marital_status;
             $newEmploye->img = $request->img;
+            $newEmploye->active = 1;
             $newEmploye->save();
 
             return response()->json([
