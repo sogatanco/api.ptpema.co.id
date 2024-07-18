@@ -62,8 +62,7 @@ class ClientController extends Controller
             $newEmploye->marital_status = $request->marital_status;
             $newEmploye->img = $request->img;
             $newEmploye->employe_active = 1;
-            $newEmploye->save();
-
+            
             if($newEmploye->save()){
                 return response()->json([
                     "status" => true,
