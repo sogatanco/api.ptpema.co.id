@@ -95,7 +95,8 @@ class ClientController extends Controller
 
     public function positions()
     {
-        $list = Position::get();
+        $list = Position::select('position_id', 'position_name')
+                ->get();
         $total = $list->count();
         return response()->json([
             "status" => true,
