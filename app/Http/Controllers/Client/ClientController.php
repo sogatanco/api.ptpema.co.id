@@ -41,6 +41,7 @@ class ClientController extends Controller
 
         if($newUser->save()){
             $newEmploye = new Employe();
+            $newEmploye->employe_id = $request->employe_id;
             $newEmploye->user_id = $newUser->id;
             $newEmploye->first_name = $request->first_name;
             $newEmploye->last_name = $request->last_name;
