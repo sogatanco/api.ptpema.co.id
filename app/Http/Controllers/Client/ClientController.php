@@ -64,14 +64,20 @@ class ClientController extends Controller
             $newEmploye->employe_active = 1;
             $newEmploye->save();
 
-            return response()->json([
-                "status" => true,
-                "data" => "Success to create new employe.",
-            ], 200);
+            if($newEmploye->save()){
+                return response()->json([
+                    "status" => true,
+                    "data" => "Success to create new employe.",
+                ], 200);
+            }else{
+                throw new HttpResponseException(response([
+                    "message" => "Failed to create new employe."
+                ], 500));
+            }
 
         }else{
             throw new HttpResponseException(response([
-                "message" => "Failed to create new employe."
+                "message" => "Failed to create new user."
             ], 500));
         }
     }
