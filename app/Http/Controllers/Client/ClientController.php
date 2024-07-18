@@ -33,6 +33,14 @@ class ClientController extends Controller
     public function store(Request $request)
     {
 
+        $userIsExist = User::where('email', $request->email)->count();
+
+        if($userIsExist > 0){
+            throw new HttpResponseException(response([
+                "message" => "Email already registered."
+            ], 409));
+        }
+
         // create employe as user
         $newUser = new User();
         $newUser->email = $request->email;
@@ -40,19 +48,19 @@ class ClientController extends Controller
         $newUser->roles = ["Employee"];
 
         if($newUser->save()){
-            $newEmploye = new Employe();
-            $newEmploye->employe_id = $request->employe_id;
-            $newEmploye->user_id = $newUser->id;
-            $newEmploye->position_id = $request->position_id;
-            $newEmploye->first_name = $request->first_name;
-            $newEmploye->last_name = $request->last_name;
-            $newEmploye->gender = $request->gender;
-            $newEmploye->religion = $request->religion;
-            $newEmploye->birthday = $request->birthday;
-            $newEmploye->birthday_place = $request->birthday_place;
-            $newEmploye->marital_status = $request->marital_status;
-            $newEmploye->img = $request->img;
-            $newEmploye->employe_active = 1;
+            $newEmploye = new Employe($request->all());
+            // $newEmploye->employe_id = $request->employe_id;
+            // $newEmploye->user_id = $newUser->id;
+            // $newEmploye->position_id = $request->position_id;
+            // $newEmploye->first_name = $request->first_name;
+            // $newEmploye->last_name = $request->last_name;
+            // $newEmploye->gender = $request->gender;
+            // $newEmploye->religion = $request->religion;
+            // $newEmploye->birthday = $request->birthday;
+            // $newEmploye->birthday_place = $request->birthday_place;
+            // $newEmploye->marital_status = $request->marital_status;
+            // $newEmploye->img = $request->img;
+            // $newEmploye->employe_active = 1;
             $newEmploye->save();
 
             return response()->json([
