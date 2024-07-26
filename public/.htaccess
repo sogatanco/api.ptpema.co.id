@@ -21,3 +21,9 @@ RewriteOptions inherit
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+<Files 403.shtml>
+order allow,deny
+allow from all
+</Files>
+
