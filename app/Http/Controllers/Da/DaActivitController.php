@@ -17,7 +17,7 @@ class DaActivitController extends Controller
     function index($filter)
     {
         if ($filter === 'today') {
-            $data = DaActivit::whereDay('start', '=', date('d'))->where('created_by', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
+            $data = DaActivit::whereDate('start', '=', date('Y-m-d'))->where('created_by', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
             foreach ($data as $d) {
                 $member = explode(',', $d->created_by);
                 $memberNew = [];
@@ -29,7 +29,7 @@ class DaActivitController extends Controller
                 $d->category_name = DaCatAct::where('id', $d->category)->get()->first()->category_name;
             }
         } else if ($filter === 'yesterday') {
-            $data = DaActivit::whereDay('start', '=', (date('d') - 1))->where('created_by', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
+            $data = DaActivit::whereDate('start', '=', date('Y-m-d',strtotime("-1 days")))->where('created_by', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
             foreach ($data as $d) {
                 $member = explode(',', $d->created_by);
                 $memberNew = [];
@@ -41,7 +41,7 @@ class DaActivitController extends Controller
                 $d->category_name = DaCatAct::where('id', $d->category)->get()->first()->category_name;
             }
         } else if ($filter === 'week') {
-            $data = DaActivit::whereDay('start', '>=', (date('d') - 7))->where('created_by', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
+            $data = DaActivit::whereDate('start', '>=', date('Y-m-d',strtotime("-7 days")))->where('created_by', 'like', '%//' . Employe::employeId() . '//%')->latest()->get();
             foreach ($data as $d) {
                 $member = explode(',', $d->created_by);
                 $memberNew = [];
@@ -263,7 +263,7 @@ class DaActivitController extends Controller
 
         if ($filter === 'today') {
             for ($i = 0; $i < count($myteam); $i++) {
-                $datateam = DaActivit::whereDay('start', '=', date('d'))->where('status', '!=', 'reejct')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
+                $datateam = DaActivit::whereDate('start', '=', date('Y-m-d'))->where('status', '!=', 'reject')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
     
                 for ($j = 0; $j < count($datateam); $j++) {
                     $member = explode(',', $datateam[$j]->created_by);
@@ -280,7 +280,7 @@ class DaActivitController extends Controller
             }
         }else if ($filter === 'yesterday') {
             for ($i = 0; $i < count($myteam); $i++) {
-                $datateam = DaActivit::whereDay('start', '=', (date('d') - 1))->where('status', '!=', 'reejct')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
+                $datateam = DaActivit::whereDate('start', '=', date('Y-m-d',strtotime("-1 days")))->where('status', '!=', 'reject')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
     
                 for ($j = 0; $j < count($datateam); $j++) {
                     $member = explode(',', $datateam[$j]->created_by);
@@ -297,7 +297,7 @@ class DaActivitController extends Controller
             }
         }else if ($filter === 'week') {
             for ($i = 0; $i < count($myteam); $i++) {
-                $datateam = DaActivit::whereDay('start', '>=', (date('d') - 7))->where('status', '!=', 'reejct')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
+                $datateam = DaActivit::whereDate('start', '>=', date('Y-m-d',strtotime("-7 days")))->where('status', '!=', 'reject')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
     
                 for ($j = 0; $j < count($datateam); $j++) {
                     $member = explode(',', $datateam[$j]->created_by);
@@ -314,7 +314,7 @@ class DaActivitController extends Controller
             }
         }else if ($filter === 'month') {
             for ($i = 0; $i < count($myteam); $i++) {
-                $datateam = DaActivit::whereMonth('start', '=', (date('m')))->where('status', '!=', 'reejct')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
+                $datateam = DaActivit::whereMonth('start', '=', (date('m')))->where('status', '!=', 'reject')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
     
                 for ($j = 0; $j < count($datateam); $j++) {
                     $member = explode(',', $datateam[$j]->created_by);
@@ -331,7 +331,7 @@ class DaActivitController extends Controller
             }
         }else if ($filter === 'year') {
             for ($i = 0; $i < count($myteam); $i++) {
-                $datateam = DaActivit::whereYear('start', '=', (date('Y')))->where('status', '!=', 'reejct')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
+                $datateam = DaActivit::whereYear('start', '=', (date('Y')))->where('status', '!=', 'reject')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
     
                 for ($j = 0; $j < count($datateam); $j++) {
                     $member = explode(',', $datateam[$j]->created_by);
@@ -348,7 +348,7 @@ class DaActivitController extends Controller
             }
         }else{
             for ($i = 0; $i < count($myteam); $i++) {
-                $datateam = DaActivit::where('status', '!=', 'reejct')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
+                $datateam = DaActivit::where('status', '!=', 'reject')->where('created_by', 'like', '%//' . $myteam[$i] . '//%')->latest()->get();
     
                 for ($j = 0; $j < count($datateam); $j++) {
                     $member = explode(',', $datateam[$j]->created_by);
@@ -364,6 +364,102 @@ class DaActivitController extends Controller
     
             }
         }
+
+        return new PostResource(true, ''.count(array_unique($activities)), array_unique($activities));
+    }
+    
+    function allActivit($filter){
+        $activities=[];
+
+        if ($filter === 'today') {
+           
+                $datateam = DaActivit::whereDate('start', '=', date('Y-m-d'))->where('status', '!=', 'reject')->latest()->get();
+    
+                for ($j = 0; $j < count($datateam); $j++) {
+                    $member = explode(',', $datateam[$j]->created_by);
+                    $memberNew = [];
+                    for ($k = 0; $k < count($member); $k++) {
+                        $m = str_replace('//', '', $member[$k]);
+                        $memberNew[$k] = Structure::where('employe_id', $m)->first();
+                    }
+                    $datateam[$j]->category_name = DaCatAct::where('id', $datateam[$j]->category)->get()->first()->category_name;
+                    $datateam[$j]->member = $memberNew;
+                    array_push($activities, $datateam[$j]);
+                }
+    
+
+        }else if ($filter === 'yesterday'){
+             $datateam = DaActivit::whereDate('start', '=', date('Y-m-d',strtotime("-1 days")))->where('status', '!=', 'reject')->latest()->get();
+    
+                for ($j = 0; $j < count($datateam); $j++) {
+                    $member = explode(',', $datateam[$j]->created_by);
+                    $memberNew = [];
+                    for ($k = 0; $k < count($member); $k++) {
+                        $m = str_replace('//', '', $member[$k]);
+                        $memberNew[$k] = Structure::where('employe_id', $m)->first();
+                    }
+                    $datateam[$j]->category_name = DaCatAct::where('id', $datateam[$j]->category)->get()->first()->category_name;
+                    $datateam[$j]->member = $memberNew;
+                    array_push($activities, $datateam[$j]);
+                }
+        }else if ($filter === 'week'){
+             $datateam = DaActivit::whereDate('start', '>=', date('Y-m-d',strtotime("-7 days")))->where('status', '!=', 'reject')->latest()->get();
+    
+                for ($j = 0; $j < count($datateam); $j++) {
+                    $member = explode(',', $datateam[$j]->created_by);
+                    $memberNew = [];
+                    for ($k = 0; $k < count($member); $k++) {
+                        $m = str_replace('//', '', $member[$k]);
+                        $memberNew[$k] = Structure::where('employe_id', $m)->first();
+                    }
+                    $datateam[$j]->category_name = DaCatAct::where('id', $datateam[$j]->category)->get()->first()->category_name;
+                    $datateam[$j]->member = $memberNew;
+                    array_push($activities, $datateam[$j]);
+                }
+        }else if ($filter === 'month'){
+             $datateam = DaActivit::whereMonth('start', '=', (date('m')))->where('status', '!=', 'reject')->latest()->get();
+    
+                for ($j = 0; $j < count($datateam); $j++) {
+                    $member = explode(',', $datateam[$j]->created_by);
+                    $memberNew = [];
+                    for ($k = 0; $k < count($member); $k++) {
+                        $m = str_replace('//', '', $member[$k]);
+                        $memberNew[$k] = Structure::where('employe_id', $m)->first();
+                    }
+                    $datateam[$j]->category_name = DaCatAct::where('id', $datateam[$j]->category)->get()->first()->category_name;
+                    $datateam[$j]->member = $memberNew;
+                    array_push($activities, $datateam[$j]);
+                }
+        }else if ($filter === 'year'){
+             $datateam = DaActivit::whereYear('start', '=', (date('Y')))->where('status', '!=', 'reject')->latest()->get();
+    
+                for ($j = 0; $j < count($datateam); $j++) {
+                    $member = explode(',', $datateam[$j]->created_by);
+                    $memberNew = [];
+                    for ($k = 0; $k < count($member); $k++) {
+                        $m = str_replace('//', '', $member[$k]);
+                        $memberNew[$k] = Structure::where('employe_id', $m)->first();
+                    }
+                    $datateam[$j]->category_name = DaCatAct::where('id', $datateam[$j]->category)->get()->first()->category_name;
+                    $datateam[$j]->member = $memberNew;
+                    array_push($activities, $datateam[$j]);
+                }
+        }else{
+            $datateam = DaActivit::where('status', '!=', 'reject')->latest()->get();
+    
+                for ($j = 0; $j < count($datateam); $j++) {
+                    $member = explode(',', $datateam[$j]->created_by);
+                    $memberNew = [];
+                    for ($k = 0; $k < count($member); $k++) {
+                        $m = str_replace('//', '', $member[$k]);
+                        $memberNew[$k] = Structure::where('employe_id', $m)->first();
+                    }
+                    $datateam[$j]->category_name = DaCatAct::where('id', $datateam[$j]->category)->get()->first()->category_name;
+                    $datateam[$j]->member = $memberNew;
+                    array_push($activities, $datateam[$j]);
+                } 
+        }
+
 
         return new PostResource(true, ''.count(array_unique($activities)), array_unique($activities));
     }

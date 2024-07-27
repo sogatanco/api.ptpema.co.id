@@ -19,6 +19,8 @@ Route::controller(DaActController::class)->group(function () {
      Route::get('/activities', 'index')->middleware("role:Employee");
 });
 
+
+
 Route::controller(DaActivitController::class)->group(function () {
      Route::post('/activit', 'store')->middleware("role:Employee");
      Route::get('/myactivity/{filter}', 'index')->middleware("role:Employee");
@@ -28,6 +30,7 @@ Route::controller(DaActivitController::class)->group(function () {
      Route::get('mustreview', 'getReview')->middleware("role:Employee");
      Route::post('mustreview/review', 'changeStatus')->middleware("role:Employee");
      Route::get('myteam/activities/{filter}', 'getTeamAct')->middleware("role:Employee");
+     Route::get('all/activities/{filter}', 'allActivit')->middleware("role:AllDaily");
 });
 
 Route::controller(InvCat::class)->group(function () {
@@ -40,13 +43,16 @@ Route::controller(InvController::class)->group(function () {
      Route::post('inven/update', 'updateAsset')->middleware("role:PicAsset");
      Route::post('inven/child/update', 'uChild')->middleware("role:PicAsset");
      Route::get('inven', 'index')->middleware("role:PicAsset");
-     Route::get('inven/{id}', 'show')->middleware("role:PicAsset");
+     Route::get('inven/{id}', 'show');
      Route::post('inven/child/del', 'deleteChild')->middleware("role:PicAsset");
      Route::post('inven/child/add', 'addChild')->middleware("role:PicAsset");
      Route::post('inven/update/image', 'changeImage')->middleware("role:PicAsset");
      Route::get('inv/onme', 'getAssetOnMe')->middleware("role:Employee");
      Route::post('inv/rservice', 'requestService')->middleware("role:Employee");
      Route::get('inv/getrservice', 'getRequest')->middleware("role:Employee");
+     Route::post('inven/service/update', 'updateStatus')->middleware("role:PicAsset");
+     Route::post('inven/service/upload', 'uploadBukti')->middleware("role:PicAsset");
+     Route::post('inven/service/done', 'doneService')->middleware("role:PicAsset");
 });
 
 // vendor admin
