@@ -3,12 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <title>Laravel</title>
-
-        
+        <title>Laravel</title>        
     </head>
     <body class="antialiased">
-        <h1 class="fw-bold text-white">Welcome dwahyu</h1>
+        <h1 class="fw-bold text-white">Welcome dev</h1>
     </body>
 </html>
