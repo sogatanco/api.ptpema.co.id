@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pihaks', function (Blueprint $table) {
+        Schema::connection('mysql4')->create('pihaks', function (Blueprint $table) {
             $table->id();
+            $table->string('pihak_name');
             $table->timestamps();
         });
     }
@@ -22,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pihaks');
+        Schema::onnection('mysql4')->dropIfExists('pihaks');
     }
 };
