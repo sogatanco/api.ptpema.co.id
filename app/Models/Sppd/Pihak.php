@@ -8,5 +8,4 @@ use Illuminate\Database\Eloquent\Model;
 class Pihak extends Model
 {
     protected $connection = 'mysql4';
-    use HasFactory;
 }
