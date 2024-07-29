@@ -12,7 +12,7 @@ class JenisSppdSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::connection('mysql4')->table('jenis_sppds')->insert(
+        DB::connection('mysql4')->table('jenis_sppds')->insert([
             [
                 'jenis_sppd' => 'Perjalan Dinas Khusus',
             ],
@@ -25,6 +25,6 @@ class JenisSppdSeeder extends Seeder
             [
                 'jenis_sppd' => 'Perjalanan Dinas Tidak Terencana Biasa',
             ]
-        );
+        ]);
     }
 }
