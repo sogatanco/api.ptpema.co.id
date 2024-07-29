@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * 
      * Run the migrations.
      */
     public function up(): void
@@ -23,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::onnection('mysql4')->dropIfExists('pihaks');
+        Schema::connection('mysql4')->dropIfExists('pihaks');
     }
 };
