@@ -8,6 +8,7 @@ use App\Http\Controllers\Da\DaActController;
 use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
 use App\Http\Controllers\Asset\InvController;
+use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 
@@ -92,4 +93,12 @@ Route::controller(ATenderController::class)->group(function(){
      Route::get('vendor/tender/approval/ba', 'approvalBa')->middleware("role:Manager");
      Route::post('vendor/tender/approval-ba/ba/{id}', 'approveBaByManager')->middleware("role:Manager");
 
+});
+
+// SPPD
+
+Route::controller(StaticDataController::class)->group(function(){
+     Route::get('sppd/static/category', 'getCategory')->middleware("role:Employee");
+     Route::get('sppd/static/pihak', 'getPihak')->middleware("role:Employee");
+     Route::get('sppd/static/jenis', 'getJenis')->middleware("role:Employee");
 });
