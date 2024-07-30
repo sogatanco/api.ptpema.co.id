@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('klasifikasi_bisnis', function (Blueprint $table) {
+        Schema::connection('mysql4')->create('klasifikasi_bisnis', function (Blueprint $table) {
             $table->id();
             $table->string('k_bisnis');
             $table->timestamps();
