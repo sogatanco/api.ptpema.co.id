@@ -101,4 +101,5 @@ Route::controller(StaticDataController::class)->group(function(){
      Route::get('sppd/static/category', 'getCategori')->middleware("role:Employee");
      Route::get('sppd/static/pihak', 'getPihak')->middleware("role:Employee");
      Route::get('sppd/static/jenis', 'getJenis')->middleware("role:Employee");
+     Route::get('sppd/static/dasar', 'getDasar')->middleware("role:Employee");
 });
