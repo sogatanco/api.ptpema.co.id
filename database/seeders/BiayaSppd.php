@@ -29,6 +29,7 @@ class BiayaSppd extends Seeder
                 'id_category' => 2,
                 'tiket' => 500000,
                 'um' => 500000,
+                'us' => 00000,
                 'tr' => 500000,
                 'hotel' => 0
             ],
@@ -387,8 +388,7 @@ class BiayaSppd extends Seeder
                 'us' => 0,
                 'tr' => 0,
                 'hotel' => 0
-            ]
-
+            ],
 
         ]);
     }
