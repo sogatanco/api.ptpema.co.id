@@ -33,18 +33,6 @@ class GolonganSppd extends Seeder
                 'sign'=> 'Maincom'
             ],
             [
-                'golongan' => 'Presdir',
-                'id_pihak' => 1,
-                'paraf' => 'Commissioner',
-                'sign'=> 'Maincom'
-            ],
-            [
-                'golongan' => 'Director',
-                'id_pihak' => 1,
-                'paraf' => 'Director_UNK',
-                'sign'=> 'Presdir'
-            ],
-            [
                 'golongan' => 'Director',
                 'id_pihak' => 1,
                 'paraf' => 'Director_UNK',
@@ -98,6 +86,13 @@ class GolonganSppd extends Seeder
                 'paraf' => 'Director',
                 'sign'=> 'Presdir'
             ],
+            [
+                'golongan' => 'Supporting',
+                'id_pihak' => 1,
+                'paraf' => 'Manager',
+                'sign'=> 'Director'
+            ],
+            
             
         ]);
 
