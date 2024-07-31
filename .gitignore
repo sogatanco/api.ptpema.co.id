@@ -2,7 +2,11 @@
 /node_modules
 /public/build
 /public/hot
-/public/storage
+/public/inven
+/public/project
+/public/taskfiles
+/public/vendor
+/public/vendor_files
 /storage/*.key
 /vendor
 .env

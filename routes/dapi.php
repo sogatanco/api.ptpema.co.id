@@ -8,6 +8,7 @@ use App\Http\Controllers\Da\DaActController;
 use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
 use App\Http\Controllers\Asset\InvController;
+use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 
@@ -19,6 +20,8 @@ Route::controller(DaActController::class)->group(function () {
      Route::get('/activities', 'index')->middleware("role:Employee");
 });
 
+
+
 Route::controller(DaActivitController::class)->group(function () {
      Route::post('/activit', 'store')->middleware("role:Employee");
      Route::get('/myactivity/{filter}', 'index')->middleware("role:Employee");
@@ -28,6 +31,7 @@ Route::controller(DaActivitController::class)->group(function () {
      Route::get('mustreview', 'getReview')->middleware("role:Employee");
      Route::post('mustreview/review', 'changeStatus')->middleware("role:Employee");
      Route::get('myteam/activities/{filter}', 'getTeamAct')->middleware("role:Employee");
+     Route::get('all/activities/{filter}', 'allActivit')->middleware("role:AllDaily");
 });
 
 Route::controller(InvCat::class)->group(function () {
@@ -40,13 +44,16 @@ Route::controller(InvController::class)->group(function () {
      Route::post('inven/update', 'updateAsset')->middleware("role:PicAsset");
      Route::post('inven/child/update', 'uChild')->middleware("role:PicAsset");
      Route::get('inven', 'index')->middleware("role:PicAsset");
-     Route::get('inven/{id}', 'show')->middleware("role:PicAsset");
+     Route::get('inven/{id}', 'show');
      Route::post('inven/child/del', 'deleteChild')->middleware("role:PicAsset");
      Route::post('inven/child/add', 'addChild')->middleware("role:PicAsset");
      Route::post('inven/update/image', 'changeImage')->middleware("role:PicAsset");
      Route::get('inv/onme', 'getAssetOnMe')->middleware("role:Employee");
      Route::post('inv/rservice', 'requestService')->middleware("role:Employee");
      Route::get('inv/getrservice', 'getRequest')->middleware("role:Employee");
+     Route::post('inven/service/update', 'updateStatus')->middleware("role:PicAsset");
+     Route::post('inven/service/upload', 'uploadBukti')->middleware("role:PicAsset");
+     Route::post('inven/service/done', 'doneService')->middleware("role:PicAsset");
 });
 
 // vendor admin
@@ -86,4 +93,13 @@ Route::controller(ATenderController::class)->group(function(){
      Route::get('vendor/tender/approval/ba', 'approvalBa')->middleware("role:Manager,Director");
      Route::post('vendor/tender/approval-ba/ba/{id}', 'approveBaByManager')->middleware("role:Manager");
 
+});
+
+// SPPD
+
+Route::controller(StaticDataController::class)->group(function(){
+     Route::get('sppd/static/category', 'getCategori')->middleware("role:Employee");
+     Route::get('sppd/static/pihak', 'getPihak')->middleware("role:Employee");
+     Route::get('sppd/static/jenis', 'getJenis')->middleware("role:Employee");
+     Route::get('sppd/static/dasar', 'getDasar')->middleware("role:Employee");
 });
