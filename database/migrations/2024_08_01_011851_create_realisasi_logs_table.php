@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql4')->create('master_times', function (Blueprint $table) {
+        Schema::connection('mysql4')->create('realisasi_logs', function (Blueprint $table) {
             $table->id();
-            $table->time('start');
-            $table->time('end');
-            $table->float('rate_pergi');
-            $table->float('rate_pulang');
-            $table->smallInteger('ketetapan');
+            $table->string('realisasi_id');
+            $table->string('employe_id');
+            $table->string('activity');
             $table->timestamps();
         });
     }
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('master_times');
+        Schema::dropIfExists('realisasi_logs');
     }
 };
