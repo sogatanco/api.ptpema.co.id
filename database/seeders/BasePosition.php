@@ -15,6 +15,9 @@ class BasePosition extends Seeder
     {
         DB::table('base_positions')->insert([
             [
+                'base_name' => 'Supporting Staff',
+            ],
+            [
                 'base_name' => 'Komisaris Utama',
             ],
             [
