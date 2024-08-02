@@ -16,15 +16,15 @@ class StaticDataController extends Controller
 {
     public function getPihak(){
         $data=Pihak::all();
+        foreach ($data as $d) {
+            $d->base_penomoran=PenomoranSppd::where('id_pihak', $d->id)->get();
+            $d->base_golongan=GolonganSppd::where('id_pihak', $d->id)->get();
+        }
         return new PostResource(true, 'data pihak', $data);
     }
 
     public function getCategori(){
         $data=CategoriSppd::all();
-        foreach ($data as $d) {
-            $d->base_penomoran=PenomoranSppd::where('id_pihak', $d->id)->first();
-            $d->base_golongan=GolonganSppd::where('id_pihak', $d->id)->first();
-        }
         return new PostResource(true, 'data pihak', $data);
     }
 
