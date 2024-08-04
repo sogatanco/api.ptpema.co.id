@@ -11,6 +11,7 @@ use App\Models\Sppd\DasarSppd;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\GolonganSppd;
 use App\Http\Resources\PostResource;
+use App\Models\Structure;
 
 class StaticDataController extends Controller
 {
@@ -25,16 +26,21 @@ class StaticDataController extends Controller
 
     public function getCategori(){
         $data=CategoriSppd::all();
-        return new PostResource(true, 'data pihak', $data);
+        return new PostResource(true, 'data categori', $data);
     }
 
     public function getJenis(){
         $data=JenisSppd::all();
-        return new PostResource(true, 'data pihak', $data);
+        return new PostResource(true, 'data jenis', $data);
     }
 
     public function getDasar(){
         $data=DasarSppd::all();
-        return new PostResource(true, 'data pihak', $data);
+        return new PostResource(true, 'data dasar', $data);
+    }
+
+    public function getDeatailEmployee($employeeID){
+        $employee=Structure::where('employe_id',$employeeID)->first();
+        return new PostResource(true, 'data employee', $employee);
     }
 }
