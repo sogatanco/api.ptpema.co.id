@@ -22,7 +22,10 @@ class ClientController extends Controller
 
     public function employees()
     {
-        $list = Employe::get();
+        $list = Employe::select('employees.*', 'users.email')
+                ->join('users', 'users.id', '=', 'employees.user_id')
+                ->get();
+
         $total = $list->count();
         return response()->json([
             "status" => true,
