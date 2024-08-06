@@ -7,5 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class SumberBiaya extends Model
 {
-    use HasFactory;
+    protected $connection='mysql4';
 }
