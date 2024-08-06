@@ -11,6 +11,7 @@ use App\Models\Sppd\DasarSppd;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\GolonganSppd;
 use App\Http\Resources\PostResource;
+use App\Models\Sppd\KlasifikasiBisnis;
 use App\Models\Structure;
 
 class StaticDataController extends Controller
@@ -42,5 +43,10 @@ class StaticDataController extends Controller
     public function getDeatailEmployee($employeeID){
         $employee=Structure::where('employe_id',$employeeID)->first();
         return new PostResource(true, 'data employee', $employee);
+    }
+
+    public function getKlasifikasiBisnis(){
+        $data=KlasifikasiBisnis::all();
+        return new PostResource(true, 'data klasifikasi bisnis', $data);
     }
 }
