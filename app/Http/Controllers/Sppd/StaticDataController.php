@@ -12,6 +12,7 @@ use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\GolonganSppd;
 use App\Http\Resources\PostResource;
 use App\Models\Sppd\KlasifikasiBisnis;
+use App\Models\Sppd\SumberBiaya;
 use App\Models\Structure;
 
 class StaticDataController extends Controller
@@ -48,5 +49,10 @@ class StaticDataController extends Controller
     public function getKlasifikasiBisnis(){
         $data=KlasifikasiBisnis::all();
         return new PostResource(true, 'data klasifikasi bisnis', $data);
+    }
+
+    public function getSumber(){
+        $data=SumberBiaya::all();
+        return new PostResource(true, 'data sumber biaya', $data);
     }
 }
