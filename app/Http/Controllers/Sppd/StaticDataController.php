@@ -12,8 +12,10 @@ use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\GolonganSppd;
 use App\Http\Resources\PostResource;
 use App\Models\Sppd\KlasifikasiBisnis;
+use App\Models\Sppd\Renbis;
 use App\Models\Sppd\SumberBiaya;
 use App\Models\Structure;
+use Illuminate\Support\Facades\Redis;
 
 class StaticDataController extends Controller
 {
@@ -54,5 +56,10 @@ class StaticDataController extends Controller
     public function getSumber(){
         $data=SumberBiaya::all();
         return new PostResource(true, 'data sumber biaya', $data);
+    }
+
+    public function getRenbis(){    
+        $data=Renbis::all();
+        return new PostResource(true, 'data renbis', $data);
     }
 }
