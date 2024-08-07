@@ -27,7 +27,7 @@ class PengajuanController extends Controller
         $sppd->ketetapan =
             $sppd->submitted_by = Employe::employeId();
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
-        $tujuans = $request->tujuan_sppd;
+        $tujuans =json_decode( $request->tujuan_sppd, true);
         if ($sppd->save()) {
             for ($i = 0; $i < count($tujuans); $i++) {
                 TujuanSppd::create([
