@@ -8,9 +8,11 @@ use App\Http\Controllers\Da\DaActController;
 use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
 use App\Http\Controllers\Asset\InvController;
-use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
+
+use App\Http\Controllers\Sppd\StaticDataController;
+use App\Http\Controllers\Sppd\PengajuanController;
 
 Route::controller(DaCatController::class)->group(function () {
      Route::get('/categories', 'index')->middleware("role:Employee");
@@ -106,4 +108,8 @@ Route::controller(StaticDataController::class)->group(function(){
      Route::get('sppd/static/klasifikasi', 'getKlasifikasiBisnis')->middleware("role:Employee");
      Route::get('sppd/static/sumber', 'getSumber')->middleware("role:Employee");
      Route::get('sppd/static/renbis', 'getRenbis')->middleware("role:Employee");
+});
+
+Route::controller(PengajuanController::class)->group(function(){
+     Route::post('sppd/pengajuan', 'store')->middleware("role:Employee");
 });
