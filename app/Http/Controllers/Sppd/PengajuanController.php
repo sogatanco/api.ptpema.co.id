@@ -13,6 +13,6 @@ class PengajuanController extends Controller
 {
 
     public function store(Request $request){
-        return new PostResource(true, 'SPPD Inserted Succesfully',$request);
+        return new PostResource(true, 'SPPD Inserted Succesfully',$request->all());
     }   
 }
