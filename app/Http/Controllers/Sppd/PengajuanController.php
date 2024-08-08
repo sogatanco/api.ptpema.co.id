@@ -31,6 +31,7 @@ class PengajuanController extends Controller
         $tujuans = $request->tujuan_sppd;
         
         if ($sppd->save()) {
+            $file_undangan='-';
             for ($i = 0; $i < count($tujuans); $i++) {
                 if($tujuans[$i]['file_undangan']!=='-'){
                     $file=base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
