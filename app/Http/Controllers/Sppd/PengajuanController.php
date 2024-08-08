@@ -33,12 +33,14 @@ class PengajuanController extends Controller
         if ($sppd->save()) {
             for ($i = 0; $i < count($tujuans); $i++) {
                 if($tujuans[$i]['file_undangan']!=='-'){
-                    $file=base64_decode($tujuans[$i]['file_undangan'], true);
-                    $fileName='undangan/'.$sppd->id.'/undangan-'.$i.'.pdf';
+                    $file=base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
+                    $fileName='undangan/'.$sppd->id.'/undangan-'.($i+1).'.pdf';
                     if(Storage::disk('public_sppd')->put($fileName, $file)){
                         $file_undangan=$fileName;
+                    }else{
+                        $file_undangan='-';
                     }
-                    $file_undangan='-';
+                    
                 }
                 TujuanSppd::insert([
                     'id_sppd' => $sppd->id,
