@@ -60,7 +60,7 @@ class PengajuanController extends Controller
                     'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali']))
                 ]);
             }
-            return new PostResource(true, 'success', $tujuans[0]['jenis_sppd']);
+            return new PostResource(true, 'success', $tujuans);
         }
         // return new PostResource(true, unique_random('documents', 'doc_id', 40), $request->all());
     }
