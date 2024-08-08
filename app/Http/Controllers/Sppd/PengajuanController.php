@@ -29,26 +29,26 @@ class PengajuanController extends Controller
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
         $tujuans = $request->tujuan_sppd;
         if ($sppd->save()) {
-            for ($i = 0; $i < count($tujuans); $i++) {
-                TujuanSppd::insert([
-                    'id_sppd' => $sppd->id,
-                    'jenis_sppd' => $tujuans[$i]->jenis_sppd,
-                    'dasar' => $tujuans[$i]->dasar_sppd,
-                    'klasifikasi' => $tujuans[$i]->klasifikasi,
-                    'sumber'=>$tujuans[$i]->sumber_biaya,
-                    'rkap'=>$tujuans[$i]->renbis,
-                    'p_tiket' => $tujuans[$i]->p_tiket,
-                    'p_um' => $tujuans[$i]->p_um,
-                    'p_tl' => $tujuans[$i]->p_tl,
-                    'p_us' => $tujuans[$i]->p_us,
-                    'p_hotel' => $tujuans[$i]->p_hotel,
-                    'kategori'=>$tujuans[$i]->kategori_sppd,
-                    'detail_tujuan' => $tujuans[$i]->detail_tujuan,
-                    'tugas' => $tujuans[$i]->tugas_sppd,
-                    'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]->waktu_berangkat)),
-                    'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]->waktu_kembali))
-                ]);
-            }
+        //     for ($i = 0; $i < count($tujuans); $i++) {
+        //         TujuanSppd::insert([
+        //             'id_sppd' => $sppd->id,
+        //             'jenis_sppd' => $tujuans[$i]->jenis_sppd,
+        //             'dasar' => $tujuans[$i]->dasar_sppd,
+        //             'klasifikasi' => $tujuans[$i]->klasifikasi,
+        //             'sumber'=>$tujuans[$i]->sumber_biaya,
+        //             'rkap'=>$tujuans[$i]->renbis,
+        //             'p_tiket' => $tujuans[$i]->p_tiket,
+        //             'p_um' => $tujuans[$i]->p_um,
+        //             'p_tl' => $tujuans[$i]->p_tl,
+        //             'p_us' => $tujuans[$i]->p_us,
+        //             'p_hotel' => $tujuans[$i]->p_hotel,
+        //             'kategori'=>$tujuans[$i]->kategori_sppd,
+        //             'detail_tujuan' => $tujuans[$i]->detail_tujuan,
+        //             'tugas' => $tujuans[$i]->tugas_sppd,
+        //             'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]->waktu_berangkat)),
+        //             'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]->waktu_kembali))
+        //         ]);
+        //     }
             return new PostResource(true, $tujuans[0]->jenis_sppd, [count($tujuans)]);
         }
         // return new PostResource(true, unique_random('documents', 'doc_id', 40), $request->all());
