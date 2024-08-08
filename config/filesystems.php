@@ -79,6 +79,10 @@ return [
             'driver' => 'local',
             'root' => public_path(). '/inven',
         ],
+        'public_sppd' => [
+            'driver' => 'local',
+            'root' => public_path(). '/sppd',
+        ],
         'public_vendor' => [
             'driver' => 'local',
             'root' => public_path(). '/vendor_file',
