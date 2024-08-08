@@ -10,6 +10,7 @@ use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
+use Illuminate\Support\Facades\Storage;
 
 
 class PengajuanController extends Controller
@@ -18,7 +19,7 @@ class PengajuanController extends Controller
     public function store(Request $request)
     {
         $sppd = new Sppd();
-        $sppd->nomor_sppd = ((PenomoranSppd::find($request->nomor)->last_number) + 1) . '/PEMA/ST-' . PenomoranSppd::find($request->nomor)->kode . '/' . $this->getRomawi(date('m')) . '/' . date('m') . '/' . date('Y');
+        $sppd->nomor_sppd = ((PenomoranSppd::find($request->nomor)->last_number) + 1) . '/PEMA/ST-' . PenomoranSppd::find($request->nomor)->kode . '/' . $this->getRomawi(date('m')) . '/' . date('Y');
         $sppd->nomor_dokumen = unique_random('documents', 'doc_id', 40);
         $sppd->employe_id = $request->employe_id;
         $sppd->nama = $request->name;
@@ -28,12 +29,22 @@ class PengajuanController extends Controller
         $sppd->submitted_by = Employe::employeId();
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
         $tujuans = $request->tujuan_sppd;
+        
         if ($sppd->save()) {
             for ($i = 0; $i < count($tujuans); $i++) {
+                if($tujuans[$i]['file_undangan']!=='-'){
+                    $file=base64_decode($tujuans[$i]['file_undangan'], true);
+                    $fileName='undangan/'.$sppd->id.'/undangan-'.$i.'.pdf';
+                    if(Storage::disk('public_sppd')->put($fileName, $file)){
+                        $file_undangan=$fileName;
+                    }
+                    $file_undangan='-';
+                }
                 TujuanSppd::insert([
                     'id_sppd' => $sppd->id,
                     'jenis_sppd' => $tujuans[$i]['jenis_sppd'],
                     'dasar' => $tujuans[$i]['dasar_sppd'],
+                    'file_undangan'=>$file_undangan,
                     'klasifikasi' => $tujuans[$i]['klasifikasi'],
                     'sumber'=>$tujuans[$i]['sumber_biaya'],
                     'rkap'=>$tujuans[$i]['renbis'],
