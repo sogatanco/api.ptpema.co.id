@@ -23,11 +23,6 @@ class ClientController extends Controller
     public function employees()
     {
 
-        return response()->json([
-            "status" => "Tesss",
-        ], 200);
-
-
         $list = Employe::select('employees.*', 'users.email', 'users.password')
                 ->join('users', 'users.id', '=', 'employees.user_id')
                 ->get();
