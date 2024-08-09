@@ -23,7 +23,7 @@ class ClientController extends Controller
     public function employees()
     {
 
-        $list = Employe::select('employees.*', 'users.email', 'users.password', 'positions.position_name')
+        $list = Employe::select('employees.*', 'users.email', 'users.as_pic', 'positions.position_name')
                 ->join('users', 'users.id', '=', 'employees.user_id')
                 ->leftJoin('positions', 'employees.position_id', '=', 'positions.position_id')
                 ->get();
