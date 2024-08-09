@@ -7,5 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class KlasifikasiBisnis extends Model
 {
-    use HasFactory;
+    protected $connection='mysql4';
 }
