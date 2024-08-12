@@ -148,5 +148,5 @@ Route::controller(ClientController::class)->group(function(){
     Route::get('/client', "index")->middleware("client");
     Route::get('/client/employees', "employees")->middleware("client");
     Route::post('/client/employees/store', "store")->middleware("client");
-    Route::get('/client/positions', "positions")->middleware("client");
+    Route::get('/client/structure', "stucture")->middleware("client");
 });

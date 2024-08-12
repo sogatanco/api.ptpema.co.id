@@ -106,15 +106,13 @@ class ClientController extends Controller
         }
     }
 
-    public function positions()
+    public function stucture()
     {
-        $list = Position::select('position_id', 'position_name')
-                ->get();
-        $total = $list->count();
+        $structure = Structure::all();
+
         return response()->json([
             "status" => true,
-            "total" => $total,
-            "data" => $list
+            'message' => $structure
         ], 200);
     }
 }

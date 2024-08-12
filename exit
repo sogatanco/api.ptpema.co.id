@@ -1,0 +1,313 @@
+[33mcommit 819c3a4ddd933550f0bb1d90c4ed4120f8de1f36[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: unknown <hello.safrian@gmail.com>
+Date:   Fri Aug 9 15:03:45 2024 +0700
+
+    update get employees
+
+[33mcommit 45756ac4896a7e7d73b26642e76fe3a35c123a01[m
+Author: unknown <hello.safrian@gmail.com>
+Date:   Fri Aug 9 15:01:21 2024 +0700
+
+    update get employees
+
+[33mcommit 5862391bb1787189683ad9add4007e42249ff173[m
+Author: unknown <hello.safrian@gmail.com>
+Date:   Fri Aug 9 14:44:09 2024 +0700
+
+    update get employees
+
+[33mcommit bdd2d7ff3177e527890a0fe05fd8132fbc5521ab[m
+Author: unknown <hello.safrian@gmail.com>
+Date:   Fri Aug 9 12:05:41 2024 +0700
+
+    testing get employees
+
+[33mcommit 6665d9c873ce2ff0a3659d5d1c3d8ef40e6c3e2c[m
+Merge: 4d58a26 a203eae
+Author: unknown <hello.safrian@gmail.com>
+Date:   Fri Aug 9 11:56:45 2024 +0700
+
+    Merge branch 'main' of https://github.com/sogatanco/api.ptpema.co.id
+
+[33mcommit 4d58a2620243fb3beef6fe073668f2bf99518d56[m
+Author: unknown <hello.safrian@gmail.com>
+Date:   Fri Aug 9 11:56:34 2024 +0700
+
+    testing get employees
+
+[33mcommit a203eae3d8c954e81cd8904674747be95d5ebe3c[m
+Merge: f3f29c0 dc1f88c
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 11:46:10 2024 +0700
+
+    Merge pull request #59 from sogatanco/sppd
+    
+    sprintf
+
+[33mcommit dc1f88cfbd4541aa65b4e7dcd16636d4e7f3e140[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 11:45:19 2024 +0700
+
+    sprintf
+
+[33mcommit f3f29c086c64fd40f522548bb26d9225e2071996[m
+Merge: 11a7263 dfc2778
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 11:20:52 2024 +0700
+
+    Merge pull request #58 from sogatanco/sppd
+    
+    fix undangan
+
+[33mcommit dfc2778ec22b4de76b7329c92fbbd15a6f1b4c03[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 11:20:03 2024 +0700
+
+    fix undangan
+
+[33mcommit 11a7263e97aa78aa65586b8399b364620b9f413e[m
+Merge: 3a84074 02dec98
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 11:17:55 2024 +0700
+
+    Merge pull request #57 from sogatanco/sppd
+    
+    sdgdsg
+
+[33mcommit 02dec984e6b5bf784de641616a1d6b926100b02e[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 11:17:17 2024 +0700
+
+    sdgdsg
+
+[33mcommit 3a8407442f1e96024b6701ffac2995ca09219ed7[m
+Merge: ea5dc4e 7178b5a
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 11:09:30 2024 +0700
+
+    Merge pull request #56 from sogatanco/sppd
+    
+    undangan
+
+[33mcommit 7178b5a391b81b7e195eb613f1366ef0598d82d8[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 10:49:28 2024 +0700
+
+    undangan
+
+[33mcommit ea5dc4ed8a06bc944d2ace48cd238e5e50e2c00b[m
+Merge: e9c3d5e 9603e76
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 10:44:19 2024 +0700
+
+    Merge pull request #55 from sogatanco/sppd
+    
+    perbaikan
+
+[33mcommit 9603e76c7d968686c313fe9108b8a468fc352a13[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 10:43:40 2024 +0700
+
+    perbaikan
+
+[33mcommit e9c3d5efa863002b1633132221ef30df92a500c9[m
+Merge: ad30495 a4c5703
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 10:34:47 2024 +0700
+
+    Merge pull request #54 from sogatanco/sppd
+    
+    sgsdg
+
+[33mcommit a4c57033e368a1999f79799b7600ea78bc154bfb[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 10:34:17 2024 +0700
+
+    sgsdg
+
+[33mcommit ad304955e8a3254db2b3b5c2368aae2bd7cfc242[m
+Merge: 4bbd88f f82f53d
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 10:22:20 2024 +0700
+
+    Merge pull request #53 from sogatanco/sppd
+    
+    sgdsg
+
+[33mcommit f82f53d55c0ad8a2aef47806dcefe86d06675036[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 10:21:17 2024 +0700
+
+    sgdsg
+
+[33mcommit 4bbd88ff4012ba77aa7ab4f5e87e207601501e9d[m
+Merge: aee1508 f9425dc
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 09:38:01 2024 +0700
+
+    Merge pull request #52 from sogatanco/sppd
+    
+    sdgsdg
+
+[33mcommit f9425dcadfd40df0fc0e0cd5eab7e867f7f2f66a[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 09:37:29 2024 +0700
+
+    sdgsdg
+
+[33mcommit aee1508b0f11749aaffbb634e0be4e50a7fab307[m
+Merge: 56487d4 d199d1c
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 09:33:11 2024 +0700
+
+    Merge pull request #51 from sogatanco/sppd
+    
+    sdgdg
+
+[33mcommit d199d1cbdd20804e51455f21a493b7af49465f0d[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 09:32:28 2024 +0700
+
+    sdgdg
+
+[33mcommit 56487d4eb93f3cc46319fd6f72e59e65121cbf4b[m
+Merge: ddceefc a0fe85b
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 09:30:25 2024 +0700
+
+    Merge pull request #50 from sogatanco/sppd
+    
+    sdggds
+
+[33mcommit a0fe85b37003fac354c9f5073943c22a08f805a5[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 09:29:35 2024 +0700
+
+    sdggds
+
+[33mcommit ddceefc061c5b466034769b99e040e4ac053d03d[m
+Merge: ffcfee1 2241c39
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 09:25:00 2024 +0700
+
+    Merge pull request #49 from sogatanco/sppd
+    
+    tet
+
+[33mcommit 2241c39d1828c296949bc5d07928cadcc84f7ad7[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 09:24:20 2024 +0700
+
+    tet
+
+[33mcommit ffcfee1d02a9a5f2c1e05e0fe99e6c6e2604fa53[m
+Merge: 0ae0fcc a52259b
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 09:18:09 2024 +0700
+
+    Merge pull request #48 from sogatanco/sppd
+    
+    sdgsgd
+
+[33mcommit a52259b10eb0a6dcefea3f9a83e1df93dcfbde42[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 09:17:19 2024 +0700
+
+    sdgsgd
+
+[33mcommit 0ae0fcc897ceaf1a058d6bbdc7d2940682c75223[m
+Merge: 99dcf83 e0977b1
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 08:19:50 2024 +0700
+
+    Merge pull request #47 from sogatanco/sppd
+    
+    sdgsgd
+
+[33mcommit e0977b1e1950e2b193e89c78a5020a260f288276[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 08:19:10 2024 +0700
+
+    sdgsgd
+
+[33mcommit 99dcf8369f884a855f3015d90e900ef8974c1d12[m
+Merge: acd3375 31797b2
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 08:18:09 2024 +0700
+
+    Merge pull request #46 from sogatanco/sppd
+    
+    sgsdg
+
+[33mcommit 31797b2c85ed232b8dc2a7509630da351de80006[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 08:17:12 2024 +0700
+
+    sgsdg
+
+[33mcommit acd3375b33bc9ad648709c78cc777963d2f241c7[m
+Merge: 577fdd3 6c03d70
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Thu Aug 8 08:12:03 2024 +0700
+
+    Merge pull request #45 from sogatanco/sppd
+    
+    test
+
+[33mcommit 6c03d700cd1ebf6d3924d33c506b1d0a62a68dfc[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Thu Aug 8 08:11:05 2024 +0700
+
+    test
+
+[33mcommit 577fdd319326f3c48fc09ceb012f6e6a3c482d8f[m
+Merge: ede71a0 8244c08
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Wed Aug 7 22:18:47 2024 +0700
+
+    Merge pull request #44 from sogatanco/sppd
+    
+    yesy
+
+[33mcommit 8244c08ddc46511216bd0c57f4aa908e93396494[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Wed Aug 7 22:17:18 2024 +0700
+
+    yesy
+
+[33mcommit ede71a08352cb6989395f2d5b6b0e68ed9c31378[m
+Merge: 6976175 2a0d213
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Wed Aug 7 22:12:59 2024 +0700
+
+    Merge pull request #43 from sogatanco/sppd
+    
+    add tujuan sppd
+
+[33mcommit 2a0d213a4320d1a8e7a197ba6dffae19cb19e6f5[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Wed Aug 7 22:12:03 2024 +0700
+
+    add tujuan sppd
+
+[33mcommit 6976175163b8479790f4bdf1308365ac6a37b6c0[m
+Merge: 2ddd9d7 d9732ac
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Wed Aug 7 22:07:51 2024 +0700
+
+    Merge pull request #42 from sogatanco/sppd
+    
+    add tujuan sppd
+
+[33mcommit d9732ac2be0ae0f7835436af7405ad5e066faef7[m
+Author: sogatanco <adeliapucha46@gmail.com>
+Date:   Wed Aug 7 22:04:47 2024 +0700
+
+    add tujuan sppd
+
+[33mcommit 2ddd9d7a90f4a6ddaa183c6a4620a3cc08ef3f9a[m
+Merge: dfffd40 1cd06a9
+Author: Sogata & Co <wahyudi98.ww@gmail.com>
+Date:   Wed Aug 7 21:29:25 2024 +0700
+
+    Merge pull request 
