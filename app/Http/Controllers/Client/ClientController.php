@@ -113,7 +113,8 @@ class ClientController extends Controller
 
         return response()->json([
             "status" => true,
-            'message' => $structure
+            'total' => count($structure),
+            'data' => $structure 
         ], 200);
     }
 }
