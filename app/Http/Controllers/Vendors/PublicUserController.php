@@ -19,7 +19,7 @@ class PublicUserController extends Controller
             'content' => $request->content
         ];
 
-        if (Mail::to('pemasaran@ptpema.co.id')->send(new PublicMessage($mailData))) {
+        if (Mail::to('pemasaran@pema.co.id')->send(new PublicMessage($mailData))) {
             return response()->json([
                 'status' => true,
                 'message' => 'Email sended successfully'
