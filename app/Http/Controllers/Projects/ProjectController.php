@@ -1339,6 +1339,7 @@ class ProjectController extends Controller
         $structure = Structure::all();  
         return response()->json([
             "status" => true,
+            "total" => count($structure),
             "data" => $structure
         ], 200, [], JSON_NUMERIC_CHECK);
     }
