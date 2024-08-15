@@ -153,6 +153,6 @@ Route::controller(ClientController::class)->group(function(){
 
 // check struckture
 Route::controller(ProjectController::class)->group(function(){
-    Route::get('/project/check-structure', "checkStructure");
+    Route::get('/project/structure/check/exist/is-true', "checkStructure");
 });
 
