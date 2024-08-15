@@ -150,3 +150,9 @@ Route::controller(ClientController::class)->group(function(){
     Route::post('/client/employees/store', "store")->middleware("client");
     Route::get('/client/structure', "stucture")->middleware("client");
 });
+
+// check struckture
+Route::controller(ProjectController::class)->group(function(){
+    Route::get('/project/check-structure', "checkStructure");
+});
+

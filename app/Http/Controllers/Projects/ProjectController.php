@@ -1332,4 +1332,14 @@ class ProjectController extends Controller
             "data" => $data
         ], 200, [], JSON_NUMERIC_CHECK);
     }
+
+
+    public function checkStructure()
+    {
+        $structure = Structure::all();  
+        return response()->json([
+            "status" => true,
+            "data" => $structure
+        ], 200, [], JSON_NUMERIC_CHECK);
+    }
 }
