@@ -11,6 +11,7 @@ use App\Models\Employe;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Sppd\ListSppd;
 
 
 class PengajuanController extends Controller
@@ -64,6 +65,11 @@ class PengajuanController extends Controller
             }
             return new PostResource(true, 'success', []);
         }
+    }
+
+    function getSubmitted(){
+        $data=ListSppd::where('submitted_by', Employe::employeId())->latest();
+        return new PostResource(true, 'data sppd', $data);
     }
 
     function getRomawi($bln)
