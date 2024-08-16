@@ -69,7 +69,7 @@ class PengajuanController extends Controller
 
     function getSubmitted(){
         $data=ListSppd::where('submitted_by', Employe::employeId())->get()->latest();
-        return new PostResource(true, 'data sppd', $data);
+        return new PostResource(true, Employe::employeId(), $data);
     }
 
     function getRomawi($bln)
