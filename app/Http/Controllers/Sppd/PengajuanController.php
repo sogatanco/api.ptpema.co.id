@@ -68,7 +68,7 @@ class PengajuanController extends Controller
     }
 
     function getSubmitted(){
-        $data=ListSppd::where('submitted_by', Employe::employeId())->get()->latest();
+        $data=ListSppd::where('submitted_by', Employe::employeId())->get();
         return new PostResource(true, Employe::employeId(), $data);
     }
 
