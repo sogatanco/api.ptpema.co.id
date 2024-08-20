@@ -79,6 +79,17 @@ class PengajuanController extends Controller
         return new PostResource(true, 'success', $data);
     }
 
+    function updatePengajuan(Request $request, $id){
+        $sppd=Sppd::find($id);
+
+        $sppd->nama=$request->name;
+        $sppd->jabatan = $request->jabatann;
+        $sppd->golongan_rate = $request->rate;
+        if($sppd->touch()){
+            return new PostResource(true, 'success', $sppd);
+        }
+    }
+
     function getRomawi($bln)
     {
         switch ($bln) {
