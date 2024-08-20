@@ -75,10 +75,7 @@ class PengajuanController extends Controller
 
     function getDetail($id){
         $data=ListSppd::find($id);
-        $data['tujuan_sppd']=TujuanSppd::where('id_sppd', $id)->get();
-        // foreach($data as $d){
-        //     $d['tujuan_sppddddd']=HitunganBiaya::where('id_sppd', $id)->get();
-        // }
+        $data['tujuan_sppd']=HitunganBiaya::where('id_sppd', $id)->get();
         return new PostResource(true, 'success', $data);
     }
 
