@@ -85,8 +85,41 @@ class PengajuanController extends Controller
         $sppd->nama=$request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
+        $tujuans = $request->tujuan_sppd;
         if($sppd->touch()){
-            return new PostResource(true, 'success', $sppd);
+            if(TujuanSppd::wehre('id_sppd', $id)->delete()){
+                for ($i = 0; $i < count($tujuans); $i++) {
+                    if ($tujuans[$i]['file_undangan'] !== '-') {
+                        $file = base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
+                        $fileName = 'undangan/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $sppd->id . '/undangan-' . ($i + 1) . '.pdf';
+                        if (Storage::disk('public_sppd')->put($fileName, $file)) {
+                            $file_undangan = $fileName;
+                        }
+                    } else {
+                        $file_undangan = '-';
+                    }
+                    TujuanSppd::insert([
+                        'id_sppd' => $sppd->id,
+                        'jenis_sppd' => $tujuans[$i]['jenis_sppd'],
+                        'dasar' => $tujuans[$i]['dasar_sppd'],
+                        'file_undangan' => $file_undangan,
+                        'klasifikasi' => $tujuans[$i]['klasifikasi'],
+                        'sumber' => $tujuans[$i]['sumber_biaya'],
+                        'rkap' => $tujuans[$i]['renbis'],
+                        'p_tiket' => $tujuans[$i]['p_tiket'],
+                        'p_um' => $tujuans[$i]['p_um'],
+                        'p_tl' => $tujuans[$i]['p_tl'],
+                        'p_us' => $tujuans[$i]['p_us'],
+                        'p_hotel' => $tujuans[$i]['p_hotel'],
+                        'kategori' => $tujuans[$i]['kategori_sppd'],
+                        'detail_tujuan' => $tujuans[$i]['detail_tujuan'],
+                        'tugas' => $tujuans[$i]['tugas_sppd'],
+                        'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_berangkat'])),
+                        'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali']))
+                    ]);
+                }
+                return new PostResource(true, 'success', []);
+            }
         }
     }
 
