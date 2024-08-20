@@ -115,4 +115,5 @@ Route::controller(StaticDataController::class)->group(function(){
 Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan', 'store')->middleware("role:Employee");
      Route::get('sppd/pengajuan', 'getSubmitted')->middleware("role:Employee");
+     Route::get('sppd/pengajuan/{id}', 'getDetail')->middleware("role:Employee");
 });

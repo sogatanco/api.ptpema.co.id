@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
+use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
 use Illuminate\Support\Facades\Storage;
@@ -70,6 +71,14 @@ class PengajuanController extends Controller
     function getSubmitted(){
         $data=ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         return new PostResource(true, Employe::employeId(), $data);
+    }
+
+    function getDetail($id){
+        $data=ListSppd::find($id);
+        foreach($data as $d){
+            $d->tujuan_sppd=HitunganBiaya::where('id_sppd', $d->id)->get();
+        }
+        return new PostResource(true, 'success', $data);
     }
 
     function getRomawi($bln)
