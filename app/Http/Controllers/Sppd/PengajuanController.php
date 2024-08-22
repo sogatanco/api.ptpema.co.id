@@ -11,6 +11,7 @@ use App\Models\Employe;
 use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
+use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppd;
 
@@ -85,8 +86,12 @@ class PengajuanController extends Controller
             
         }
         $data['tujuan_sppd']=$tujuans;
+        $data['approval']=ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
         return new PostResource(true, 'success', $data);
     }
+
+
+
 
     function updatePengajuan(Request $request, $id){
         $sppd=Sppd::find($id);
@@ -113,7 +118,7 @@ class PengajuanController extends Controller
                         'dasar' => $tujuans[$i]['dasar_sppd'],
                         'file_undangan' => $file_undangan,
                         'klasifikasi' => $tujuans[$i]['klasifikasi'],
-                        'sumber' => $tujuans[$i]['sumber_biaya'],
+                        'sumber' => $tujuans[$i]['sumber_biaya']||null,
                         'rkap' => $tujuans[$i]['renbis'],
                         'p_tiket' => $tujuans[$i]['p_tiket'],
                         'p_um' => $tujuans[$i]['p_um'],
