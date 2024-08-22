@@ -14,6 +14,7 @@ use App\Models\Sppd\KetetapanSppd;
 use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppd;
+use App\Models\Sppd\LogPengajuan;
 
 
 class PengajuanController extends Controller
@@ -87,6 +88,7 @@ class PengajuanController extends Controller
         }
         $data['tujuan_sppd']=$tujuans;
         $data['approval']=ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
+        $data['log_pengajuan']=LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
         return new PostResource(true, 'success', $data);
     }
 
