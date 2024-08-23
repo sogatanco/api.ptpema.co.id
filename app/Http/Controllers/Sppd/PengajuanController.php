@@ -70,9 +70,9 @@ class PengajuanController extends Controller
         }
     }
 
-    function getSubmitted(){
+    function getSubmitted(Request $request){
         $data=ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
-        return new PostResource(true, Employe::employeId(), $data);
+        return new PostResource(true, $request->ref, $data);
     }
 
     function getDetail($id){
