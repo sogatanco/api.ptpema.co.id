@@ -71,7 +71,12 @@ class PengajuanController extends Controller
     }
 
     function getSubmitted(Request $request){
-        $data=ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
+        if($request->ref=='mine'){
+            $data=ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
+        }else{
+            $data=ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
+        }
+       
         return new PostResource(true, $request->ref, $data);
     }
 
