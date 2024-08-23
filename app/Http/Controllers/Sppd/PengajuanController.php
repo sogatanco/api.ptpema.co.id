@@ -73,7 +73,10 @@ class PengajuanController extends Controller
     function getSubmitted(Request $request){
         if($request->ref=='mine'){
             $data=ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
-        }else{
+        }else if($request->ref=='review'){
+            $data=ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();          
+        }
+        else{
             $data=ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
        
