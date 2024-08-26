@@ -16,7 +16,7 @@ use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppd;
 use App\Models\Sppd\LogPengajuan;
-
+use Illuminate\Cache\RateLimiting\Limit;
 
 class PengajuanController extends Controller
 {
@@ -147,7 +147,7 @@ class PengajuanController extends Controller
     }
 
     function persetujuan(Request $request, $id_doc){
-        $verif=VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->skip(0)->take(1)->get();
+        $verif=VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->limit(1)->get();
         $verif->status=$request->status;
         $verif->ket=$request->catatan_persetujuan;
         if($verif->save()){
