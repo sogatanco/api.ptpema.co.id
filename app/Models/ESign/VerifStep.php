@@ -7,5 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class VerifStep extends Model
 {
-    use HasFactory;
+    protected $connection = 'esign';
 }

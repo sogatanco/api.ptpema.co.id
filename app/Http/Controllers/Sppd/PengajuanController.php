@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
+use App\Models\ESign\VerifStep;
 use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
@@ -73,7 +74,7 @@ class PengajuanController extends Controller
     function getSubmitted(Request $request){
         if($request->ref=='mine'){
             $data=ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
-        }else if($request->ref=='review'){
+        }elseif($request->ref=='review'){
             $data=ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();          
         }
         else{
@@ -99,8 +100,6 @@ class PengajuanController extends Controller
         $data['log_pengajuan']=LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
         return new PostResource(true, 'success', $data);
     }
-
-
 
 
     function updatePengajuan(Request $request, $id){
@@ -144,6 +143,15 @@ class PengajuanController extends Controller
                 }
                 return new PostResource(true, 'success', []);
             }
+        }
+    }
+
+    function persetujuan(Request $request, $id_doc){
+        $verif=VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->first();
+        $verif->status=$request->status;
+        $verif->ket=$request->catatan;
+        if($verif->save()){
+            return new PostResource(true, 'success', []);   
         }
     }
 
