@@ -149,7 +149,7 @@ class PengajuanController extends Controller
     function persetujuan(Request $request, $id_doc){
         $verif=VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->first();
         $verif->status=$request->status;
-        $verif->ket=$request->catatan;
+        $verif->ket=$request->catatan_persetujuan;
         if($verif->save()){
             return new PostResource(true, 'success', []);   
         }
