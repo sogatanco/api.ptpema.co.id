@@ -19,10 +19,12 @@ class ProjectReportController extends Controller
         // ], 200);
 
         // fase projek
+        $query = 22;
         $projectId = 127;
 
+        // fase projek
         if($query){
-            $wherePhase = ['project_stages.project_id' => $projectId, 'project_stages.division' => 22];
+            $wherePhase = ['project_stages.project_id' => $projectId, 'project_stages.division' => +$query];
         }else{
             $wherePhase = ['project_stages.project_id' => $projectId, 'project_stages.status' => 1];
         }
@@ -123,6 +125,22 @@ class ProjectReportController extends Controller
                                     ->where('task_id', $all[$at]->task_id)
                                     ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                     ->get();
+    
+                $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
+                
+                $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
+                                            ->where('task_id', $all[$at]->task_id)
+                                            ->get(); 
+                                    
+                if(in_array("Director", $userRequest->roles)){
+
+                    // jika ada di list favorite untuk direksi
+                    $isFavorite[$p] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $all[$at]->task_id])
+                                    ->first();
+
+                    $all[$at]['isFavorite'] = $isFavorite[$p] ? true : false;
+                    
+                }
                 
             }
         }
