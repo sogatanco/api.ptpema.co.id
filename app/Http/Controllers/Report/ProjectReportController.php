@@ -36,7 +36,9 @@ class ProjectReportController extends Controller
                     ->get();
 
         for ($p=0; $p < count($projects); $p++) { 
-            $projects[$p]['task'] = Task::where('project_id', $projects[$p]->project_id)->get();
+            $projects[$p]['task'] = Task::where('project_id', $projects[$p]->project_id)
+                                ->where('task_parent', NULL)
+                                ->get();
         };
 
         return response()->json([
