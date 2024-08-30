@@ -146,23 +146,6 @@ class ProjectReportController extends Controller
                                     ->where('task_id', $all[$at]->task_id)
                                     ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                     ->get();
-    
-                $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
-                
-                $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
-                                            ->where('task_id', $all[$at]->task_id)
-                                            ->get(); 
-                                    
-                if(in_array("Director", $userRequest->roles)){
-
-                    // jika ada di list favorite untuk direksi
-                    $isFavorite[$p] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $all[$at]->task_id])
-                                    ->first();
-
-                    $all[$at]['isFavorite'] = $isFavorite[$p] ? true : false;
-                    
-                }
-                
             }
         }
     
