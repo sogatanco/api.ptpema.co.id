@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Http\Models\Projects\ProjectHistory;
-use App\Http\Models\Projects\ProjectTask;
+use App\Http\Models\Tasks\Task;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
@@ -53,6 +53,6 @@ class Project extends Model
     protected $with = ['project_task'];
     public function project_task(): HasMany
     {
-        return $this->hasMany(ProjectTask::class, 'project_id', 'project_id');
+        return $this->hasMany(Task::class, 'project_id', 'project_id');
     }
 }
