@@ -10,15 +10,7 @@ class ProjectReportController extends Controller
 {
     public function allProjectToExcel()
     {
-        $projects = Project::select(
-                    'project_number', 
-                    'project_name', 
-                    'goals',
-                    'project_stages.desc',
-                    'project_stages.start_date',
-                    'project_stages.end_date',
-                    )
-                    ->leftJoin('project_stages', 'project_stages.project_id', '=', 'projects.project_id')
+        $projects = Project::leftJoin('project_stages', 'project_stages.project_id', '=', 'projects.project_id')
                     ->where('projects.division', 22)
                     ->get();
 
