@@ -13,6 +13,7 @@ use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Notification\TestingController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
+use App\Http\Controllers\Report\ProjectReportController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -41,7 +42,7 @@ Route::controller(Auth2Controller::class)->group(function(){
 
 // Employee Routes
 Route::controller(EmployeController::class)->group(function(){
-    Route::get("/employe", 'index')->middleware("role:Employee");
+    Route::get("/employe", 'index')->middleware("role:Admin");
     Route::get("/employe/assignment-list", 'assignmentList')->middleware("role:Employee");
     Route::post('/employe', 'store');
     Route::patch('/employe/{employe_id}', 'update');
@@ -156,3 +157,7 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get('/project/structure/check/exist/is-true', "checkStructure");
 });
 
+// report routes
+Route::controller(ProjectReportController::class)->group(function(){
+    Route::get('/report/all-project', "allProjectToExcel")->middleware("role:Employee");
+});
