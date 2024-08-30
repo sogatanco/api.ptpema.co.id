@@ -32,10 +32,12 @@ class ProjectReportController extends Controller
     public function allProjectToExcel()
     {
         $projects = Project::leftJoin('project_stages', 'project_stages.project_id', '=', 'projects.project_id')
-                    ->join('project_tasks', 'project_tasks.project_id', '=', 'projects.project_id')
                     ->where('projects.division', 22)
-                    ->andWhere('project_tasks.task_parent', null)
                     ->get();
+
+        for ($p=0; $p < count($projects); $p++) { 
+            $projects[$p]['task'] = Task::where('project_id', $projects[$p]->project_id)->get();
+        };
 
         return response()->json([
             'data' => $projects
