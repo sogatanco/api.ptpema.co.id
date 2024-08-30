@@ -19,7 +19,7 @@ class ProjectReportController extends Controller
                     'project_stages.end_date',
                     )
                     ->leftJoin('project_stages', 'project_stages.project_id', '=', 'projects.project_id')
-                    ->where('division', 22)
+                    ->where('projects.division', 22)
                     ->get();
 
         return response()->json([
