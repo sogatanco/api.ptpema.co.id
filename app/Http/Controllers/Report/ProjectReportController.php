@@ -33,6 +33,7 @@ class ProjectReportController extends Controller
     {
         $projects = Project::leftJoin('project_stages', 'project_stages.project_id', '=', 'projects.project_id')
                     ->where('projects.division', 22)
+                    ->where('project_tasks.parent', null)
                     ->get();
 
         return response()->json([
