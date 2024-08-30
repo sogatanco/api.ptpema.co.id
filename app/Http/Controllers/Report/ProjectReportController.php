@@ -5,6 +5,24 @@ namespace App\Http\Controllers\Report;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Projects\Project;
+use App\Models\Tasks\TaskFile;
+use App\Models\Tasks\TaskStatus;
+use App\Models\Tasks\TaskFavorite;
+use App\Models\Comment\Comment;
+use App\Models\Employe;
+use App\Models\Organization;
+use App\Models\Structure;
+use App\Models\Projects\ProjectStage;
+use App\Models\Projects\ProjectHistory;
+use App\Models\Projects\TaskProgress;
+use App\Models\Notification;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\TaskResource;
+use App\Http\Requests\TaskRequest;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectReportController extends Controller
 {
