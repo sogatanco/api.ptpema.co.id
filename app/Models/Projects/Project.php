@@ -5,9 +5,9 @@ namespace App\Models\Projects;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Http\Models\Projects\ProjectHistory;
-use App\Http\Models\Tasks\Task;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Projects\ProjectHistory;
+use App\Models\Tasks\Task;
 
 
 class Project extends Model
