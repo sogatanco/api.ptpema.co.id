@@ -46,4 +46,10 @@ class Project extends Model
     {
         return $this->hasMany(ProjectHistory::class, 'project_id', 'project_id');
     }    
+
+    protected $with = ['project_task'];
+    public function project_task(): HasMany
+    {
+        return $this->hasMany(ProjectTask::class, 'project_id', 'project_id');
+    }
 }
