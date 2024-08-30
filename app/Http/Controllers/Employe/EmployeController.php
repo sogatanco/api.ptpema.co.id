@@ -11,6 +11,25 @@ use App\Models\Structure;
 use App\Models\Position;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Tasks\TaskApproval;
+use App\Models\Tasks\TaskPic;
+use App\Models\Tasks\TaskFile;
+use App\Models\Tasks\TaskStatus;
+use App\Models\Tasks\TaskFavorite;
+use App\Models\Comment\Comment;
+use App\Models\Employe;
+use App\Models\Organization;
+use App\Models\Structure;
+use App\Models\Projects\Project;
+use App\Models\Projects\ProjectStage;
+use App\Models\Projects\ProjectHistory;
+use App\Models\Projects\TaskProgress;
+use App\Models\Notification;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\TaskResource;
+use App\Http\Requests\TaskRequest;
 
 class EmployeController extends Controller
 {
