@@ -110,6 +110,12 @@ Route::controller(StaticDataController::class)->group(function(){
      Route::get('sppd/static/renbis', 'getRenbis')->middleware("role:Employee");
 });
 
+
+
 Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan', 'store')->middleware("role:Employee");
+     Route::get('sppd/pengajuan', 'getSubmitted')->middleware("role:Employee");
+     Route::get('sppd/pengajuan/{id}', 'getDetail')->middleware("role:Employee");
+     Route::post('sppd/pengajuan/update/{id}', 'updatePengajuan')->middleware("role:Employee");  
+     Route::post('sppd/pengajuan/review/{id_doc}', 'persetujuan')->middleware("role:Employee");
 });

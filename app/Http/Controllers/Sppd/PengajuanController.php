@@ -8,10 +8,15 @@ use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
+use App\Models\ESign\VerifStep;
+use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
+use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
-
+use App\Models\Sppd\ListSppd;
+use App\Models\Sppd\LogPengajuan;
+use Illuminate\Cache\RateLimiting\Limit;
 
 class PengajuanController extends Controller
 {
@@ -63,6 +68,90 @@ class PengajuanController extends Controller
                 ]);
             }
             return new PostResource(true, 'success', []);
+        }
+    }
+
+    function getSubmitted(Request $request){
+        if($request->ref=='mine'){
+            $data=ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
+        }elseif($request->ref=='review'){
+            $data=ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();          
+        }
+        else{
+            $data=ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
+        }
+       
+        return new PostResource(true, $request->ref, $data);
+    }
+
+    function getDetail($id){
+        $data=ListSppd::find($id);
+        $tujuans=HitunganBiaya::where('id_sppd', $id)->get();
+        foreach ($tujuans as $t){
+            if($t->file_undangan !== '-'){
+                $t->base64_undangan=base64_encode(Storage::disk('public_sppd')->get($t->file_undangan));
+            }else{
+                $t->base64_undangan='-';
+            }
+            
+        }
+        $data['tujuan_sppd']=$tujuans;
+        $data['approval']=ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
+        $data['log_pengajuan']=LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
+        return new PostResource(true, 'success', $data);
+    }
+
+
+    function updatePengajuan(Request $request, $id){
+        $sppd=Sppd::find($id);
+
+        $sppd->nama=$request->name;
+        $sppd->jabatan = $request->jabatann;
+        $sppd->golongan_rate = $request->rate;
+        $tujuans = $request->tujuan_sppd;
+        if($sppd->touch()){
+            if(TujuanSppd::where('id_sppd', $id)->delete()){
+                for ($i = 0; $i < count($tujuans); $i++) {
+                    if ($tujuans[$i]['file_undangan'] !== '-') {
+                        $file = base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
+                        $fileName = 'undangan/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $sppd->id . '/undangan-' . ($i + 1) . '.pdf';
+                        if (Storage::disk('public_sppd')->put($fileName, $file)) {
+                            $file_undangan = $fileName;
+                        }
+                    } else {
+                        $file_undangan = '-';
+                    }
+                    TujuanSppd::insert([
+                        'id_sppd' => $sppd->id,
+                        'jenis_sppd' => $tujuans[$i]['jenis_sppd'],
+                        'dasar' => $tujuans[$i]['dasar_sppd'],
+                        'file_undangan' => $file_undangan,
+                        'klasifikasi' => $tujuans[$i]['klasifikasi'],
+                        'sumber' => $tujuans[$i]['sumber_biaya']||null,
+                        'rkap' => $tujuans[$i]['renbis'],
+                        'p_tiket' => $tujuans[$i]['p_tiket'],
+                        'p_um' => $tujuans[$i]['p_um'],
+                        'p_tl' => $tujuans[$i]['p_tl'],
+                        'p_us' => $tujuans[$i]['p_us'],
+                        'p_hotel' => $tujuans[$i]['p_hotel'],
+                        'kategori' => $tujuans[$i]['kategori_sppd'],
+                        'detail_tujuan' => $tujuans[$i]['detail_tujuan'],
+                        'tugas' => $tujuans[$i]['tugas_sppd'],
+                        'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_berangkat'])),
+                        'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali']))
+                    ]);
+                }
+                return new PostResource(true, 'success', []);
+            }
+        }
+    }
+
+    function persetujuan(Request $request, $id_doc){
+        $verif=VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->limit(1)->first();
+        $verif->status=$request->status;
+        $verif->ket=$request->catatan_persetujuan;
+        if($verif->save()){
+            return new PostResource(true, 'success', []);   
         }
     }
 
