@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Project;
+use App\Models\Projects\Project;
 
 class ProjectReportController extends Controller
 {
