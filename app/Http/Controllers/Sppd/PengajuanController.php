@@ -16,6 +16,8 @@ use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppd;
 use App\Models\Sppd\LogPengajuan;
+use App\Models\Sppd\Realisasi;
+use App\Models\Sppd\RealisasiTujuan;
 use Illuminate\Cache\RateLimiting\Limit;
 
 class PengajuanController extends Controller
@@ -196,4 +198,34 @@ class PengajuanController extends Controller
                 break;
         }
     }
+
+
+// realisasi
+    function submitRealisasi(Request $request){
+        $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->doc_file), true);
+        $fileName = 'realisasi/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $request->id_sppd . '.pdf';
+        if (Storage::disk('public_sppd')->put($fileName, $file)) {
+            $realisasi=new Realisasi();
+            $realisasi->id_sppd=$request->id_sppd;
+            $realisasi->submitted_by=Employe::employeId();
+            $realisasi->doc_file=$fileName;
+            if($realisasi->save()){
+                $tujuan_realisasi=$request->tujuan_realisasi;
+                for ($i = 0; $i < count($tujuan_realisasi); $i++) {
+                    RealisasiTujuan::insert([
+                        'id_tujuan' => $tujuan_realisasi[$i]['id'],
+                        'rill_tiket'  => $tujuan_realisasi[$i]['rill_tiket'],
+                        'rill_hotel'=> $tujuan_realisasi[$i]['rill_hotel'],
+                        'rill_wb'=> $tujuan_realisasi[$i]['rill_wb'],
+                        'rill_wt'=> $tujuan_realisasi[$i]['rill_wt'],
+                    ]);
+                }
+                return new PostResource(true, 'success', []);
+            }
+        }else{
+            return new PostResource(false, 'error', []);
+        }
+    }
 }
+
+
