@@ -100,3 +100,5 @@ Route::controller(PublicData::class)->group(function(){
 Route::controller(PublicUserController::class)->group(function(){
     Route::post('public/send-message', 'sendMessage');
 });
+
+Route::get('phpinfo', fn () => phpinfo());
