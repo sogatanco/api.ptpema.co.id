@@ -190,7 +190,7 @@ class FileController extends Controller
         }
 
         else if($request->whatfile=='spt'){
-            $fileReq = base64_encode(file_get_contents($request->file('file')->pat‌​h()));
+            $fileReq = base64_encode(file_get_contents($request->file('file')->path()));
             $file = base64_decode($fileReq, true);
             $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/spt.pdf';
             if(Storage::disk('public_vendor')->put($filename, $file)){
