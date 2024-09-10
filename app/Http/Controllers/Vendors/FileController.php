@@ -20,6 +20,11 @@ class FileController extends Controller
     }
 
     function viewFile(){
+
+        return response()->json([
+            "data" => 'success'
+        ], 200);
+
         $p=Perusahaan::where('user_id', Auth::user()->id)->get()->first();
         $doc[0]['id']='profil';
         $doc[0]['file_name']=null;
