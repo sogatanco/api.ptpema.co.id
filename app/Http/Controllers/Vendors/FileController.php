@@ -34,11 +34,12 @@ class FileController extends Controller
         $doc[1]['id']='ktp';
         $doc[1]['file_name']=null;
         $doc[1]['base64']=null;
-        // if (file_exists(public_path('vendor_file/' . $p->ktp_pengurus))){
-        //     $doc[1]['id']='ktp';
-        //     $doc[1]['file_name']='ktp_pengurus.pdf';
-        //     $doc[1]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->ktp_pengurus)));
-        // }
+        if (file_exists(public_path('vendor_file/' . $p->ktp_pengurus))){
+            $doc[1]['id']='ktp';
+            $doc[1]['file_name']='ktp_pengurus.pdf';
+            // $doc[1]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->ktp_pengurus)));
+            $doc[1]['base64']="horeoeoeje";
+        }
 
         return new PostResource(true,'Doc Company', $doc);
 
