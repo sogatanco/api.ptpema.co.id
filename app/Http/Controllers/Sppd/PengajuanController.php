@@ -202,6 +202,11 @@ class PengajuanController extends Controller
 
 // realisasi
     function submitRealisasi(Request $request){
+
+        if(Realisasi::where('id_sppd', $request->id_sppd)->exists()){
+            Realisasi::where('id_sppd', $request->id_sppd)->delete();
+            RealisasiTujuan::where('id_sppd', $request->id_sppd)->delete();
+        }
         $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->doc_file), true);
         $fileName = 'realisasi/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $request->id_sppd . '.pdf';
         if (Storage::disk('public_sppd')->put($fileName, $file)) {
