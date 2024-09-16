@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppd;
 use App\Models\Sppd\LogPengajuan;
 use App\Models\Sppd\Realisasi;
+use App\Models\Sppd\RealisasiBiaya;
 use App\Models\Sppd\RealisasiTujuan;
 use Illuminate\Cache\RateLimiting\Limit;
 
@@ -98,6 +99,7 @@ class PengajuanController extends Controller
             
         }
         $data['tujuan_sppd']=$tujuans;
+        $data['realisasi_biaya']=RealisasiBiaya::where('id_sppd', $id)->get();
         $data['approval']=ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
         $data['log_pengajuan']=LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
         return new PostResource(true, 'success', $data);
