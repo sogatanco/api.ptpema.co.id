@@ -10,6 +10,7 @@ use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
 use App\Models\ESign\VerifStep;
 use App\Models\Sppd\CheklistDoc;
+use App\Models\Sppd\CheklistDokRealisasi;
 use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
@@ -75,53 +76,54 @@ class PengajuanController extends Controller
         }
     }
 
-    function getSubmitted(Request $request){
-        if($request->ref=='mine'){
-            $data=ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
-        }elseif($request->ref=='review'){
-            $data=ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();          
+    function getSubmitted(Request $request)
+    {
+        if ($request->ref == 'mine') {
+            $data = ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
+        } elseif ($request->ref == 'review') {
+            $data = ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();
+        } else {
+            $data = ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
-        else{
-            $data=ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
-        }
-       
+
         return new PostResource(true, $request->ref, $data);
     }
 
-    function getDetail($id){
-        $data=ListSppd::find($id);
-        $tujuans=HitunganBiaya::where('id_sppd', $id)->get();
-        foreach ($tujuans as $t){
-            if($t->file_undangan !== '-'){
-                $t->base64_undangan=base64_encode(Storage::disk('public_sppd')->get($t->file_undangan));
-            }else{
-                $t->base64_undangan='-';
+    function getDetail($id)
+    {
+        $data = ListSppd::find($id);
+        $tujuans = HitunganBiaya::where('id_sppd', $id)->get();
+        foreach ($tujuans as $t) {
+            if ($t->file_undangan !== '-') {
+                $t->base64_undangan = base64_encode(Storage::disk('public_sppd')->get($t->file_undangan));
+            } else {
+                $t->base64_undangan = '-';
             }
-            
         }
-        $rill=Realisasi::where('id_sppd', $id)->first();
-        $rill->submitter_name=Employe::where('employe_id', $rill->submitted_by)->first()->first_name;
-        $data['realisasi']=$rill;
-        
-        $data['tujuan_sppd']=$tujuans;
-        $data['check_doc']=CheklistDoc::where('id_sppd', $id)->get();
-        
-        $data['realisasi_biaya']=RealisasiBiaya::where('id_sppd', $id)->get();
-        $data['approval']=ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
-        $data['log_pengajuan']=LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
+        $rill = Realisasi::where('id_sppd', $id)->first();
+        $rill->submitter_name = Employe::where('employe_id', $rill->submitted_by)->first()->first_name;
+        $data['realisasi'] = $rill;
+
+        $data['tujuan_sppd'] = $tujuans;
+        $data['check_doc'] = CheklistDoc::where('id_sppd', $id)->get();
+
+        $data['realisasi_biaya'] = RealisasiBiaya::where('id_sppd', $id)->get();
+        $data['approval'] = ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
+        $data['log_pengajuan'] = LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
         return new PostResource(true, 'success', $data);
     }
 
 
-    function updatePengajuan(Request $request, $id){
-        $sppd=Sppd::find($id);
+    function updatePengajuan(Request $request, $id)
+    {
+        $sppd = Sppd::find($id);
 
-        $sppd->nama=$request->name;
+        $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
         $tujuans = $request->tujuan_sppd;
-        if($sppd->touch()){
-            if(TujuanSppd::where('id_sppd', $id)->delete()){
+        if ($sppd->touch()) {
+            if (TujuanSppd::where('id_sppd', $id)->delete()) {
                 for ($i = 0; $i < count($tujuans); $i++) {
                     if ($tujuans[$i]['file_undangan'] !== '-') {
                         $file = base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
@@ -138,7 +140,7 @@ class PengajuanController extends Controller
                         'dasar' => $tujuans[$i]['dasar_sppd'],
                         'file_undangan' => $file_undangan,
                         'klasifikasi' => $tujuans[$i]['klasifikasi'],
-                        'sumber' => $tujuans[$i]['sumber_biaya']||null,
+                        'sumber' => $tujuans[$i]['sumber_biaya'] || null,
                         'rkap' => $tujuans[$i]['renbis'],
                         'p_tiket' => $tujuans[$i]['p_tiket'],
                         'p_um' => $tujuans[$i]['p_um'],
@@ -157,12 +159,26 @@ class PengajuanController extends Controller
         }
     }
 
-    function persetujuan(Request $request, $id_doc){
-        $verif=VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->limit(1)->first();
-        $verif->status=$request->status;
-        $verif->ket=$request->catatan_persetujuan;
-        if($verif->save()){
-            return new PostResource(true, 'success', []);   
+    function persetujuan(Request $request, $id_doc)
+    {
+        if ($request->type == 'check_document') {
+
+            if (CheklistDokRealisasi::where('id_sppd', Sppd::where('nomor_dokumen', $id_doc)->first()->id)->delete()) {
+                $c = $request->check_doc;
+                for ($i = 0; $i < count($c); $i++) {
+                    CheklistDokRealisasi::insert([
+                        'id_sppd' => Sppd::where('nomor_dokumen', $id_doc)->first()->id,
+                        'id_doc' => $c[$i]['id_doc'],
+                        'status' => $c[$i]['status'],
+                    ]);
+                }
+            }
+        }
+        $verif = VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->limit(1)->first();
+        $verif->status = $request->status;
+        $verif->ket = $request->catatan_persetujuan;
+        if ($verif->save()) {
+            return new PostResource(true, 'success', []);
         }
     }
 
@@ -209,39 +225,38 @@ class PengajuanController extends Controller
     }
 
 
-// realisasi
-    function submitRealisasi(Request $request){
+    // realisasi
+    function submitRealisasi(Request $request)
+    {
 
-        if(Realisasi::where('id_sppd', $request->id_sppd)->exists()){
+        if (Realisasi::where('id_sppd', $request->id_sppd)->exists()) {
             Realisasi::where('id_sppd', $request->id_sppd)->delete();
         }
         $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->doc_file), true);
         $fileName = 'realisasi/' . $request->id_sppd . '.pdf';
         if (Storage::disk('public_sppd')->put($fileName, $file)) {
-            $realisasi=new Realisasi();
-            $realisasi->id_sppd=$request->id_sppd;
-            $realisasi->submitted_by=Employe::employeId();
-            $realisasi->doc_file=$fileName;
-            if($realisasi->save()){
-                $tujuan_realisasi=$request->tujuan_realisasi;
+            $realisasi = new Realisasi();
+            $realisasi->id_sppd = $request->id_sppd;
+            $realisasi->submitted_by = Employe::employeId();
+            $realisasi->doc_file = $fileName;
+            if ($realisasi->save()) {
+                $tujuan_realisasi = $request->tujuan_realisasi;
                 for ($i = 0; $i < count($tujuan_realisasi); $i++) {
-                    if(RealisasiTujuan::where('id_tujuan', $tujuan_realisasi[$i]['id'])->exists()){
+                    if (RealisasiTujuan::where('id_tujuan', $tujuan_realisasi[$i]['id'])->exists()) {
                         RealisasiTujuan::where('id_tujuan', $tujuan_realisasi[$i]['id'])->delete();
                     }
                     RealisasiTujuan::insert([
                         'id_tujuan' => $tujuan_realisasi[$i]['id'],
                         'rill_tiket'  => $tujuan_realisasi[$i]['rill_tiket'],
-                        'rill_hotel'=> $tujuan_realisasi[$i]['rill_hotel'],
-                        'rill_wb'=>  date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wb'])),
-                        'rill_wt'=> date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wt'])),
+                        'rill_hotel' => $tujuan_realisasi[$i]['rill_hotel'],
+                        'rill_wb' =>  date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wb'])),
+                        'rill_wt' => date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wt'])),
                     ]);
                 }
                 return new PostResource(true, 'success', []);
             }
-        }else{
+        } else {
             return new PostResource(false, 'error', []);
         }
     }
 }
-
-
