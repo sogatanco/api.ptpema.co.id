@@ -217,7 +217,7 @@ class PengajuanController extends Controller
                 $tujuan_realisasi=$request->tujuan_realisasi;
                 for ($i = 0; $i < count($tujuan_realisasi); $i++) {
                     if(RealisasiTujuan::where('id_tujuan', $tujuan_realisasi[$i]['id'])->exists()){
-                        Realisasi::where('id_tujuan', $tujuan_realisasi[$i]['id'])->delete();
+                        RealisasiTujuan::where('id_tujuan', $tujuan_realisasi[$i]['id'])->delete();
                     }
                     RealisasiTujuan::insert([
                         'id_tujuan' => $tujuan_realisasi[$i]['id'],
