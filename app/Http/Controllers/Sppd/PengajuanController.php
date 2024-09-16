@@ -9,6 +9,7 @@ use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
 use App\Models\ESign\VerifStep;
+use App\Models\Sppd\CheklistDoc;
 use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
@@ -99,6 +100,7 @@ class PengajuanController extends Controller
             
         }
         $data['tujuan_sppd']=$tujuans;
+        $data['check_doc']=CheklistDoc::where('id_sppd', $id)->get();
         $data['realisasi_biaya']=RealisasiBiaya::where('id_sppd', $id)->get();
         $data['approval']=ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
         $data['log_pengajuan']=LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
