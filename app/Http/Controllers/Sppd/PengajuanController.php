@@ -205,7 +205,6 @@ class PengajuanController extends Controller
 
         if(Realisasi::where('id_sppd', $request->id_sppd)->exists()){
             Realisasi::where('id_sppd', $request->id_sppd)->delete();
-            RealisasiTujuan::where('id_sppd', $request->id_sppd)->delete();
         }
         $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->doc_file), true);
         $fileName = 'realisasi/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $request->id_sppd . '.pdf';
@@ -217,6 +216,9 @@ class PengajuanController extends Controller
             if($realisasi->save()){
                 $tujuan_realisasi=$request->tujuan_realisasi;
                 for ($i = 0; $i < count($tujuan_realisasi); $i++) {
+                    if(RealisasiTujuan::where('id_tujuan', $tujuan_realisasi[$i]['id'])->exists()){
+                        Realisasi::where('id_tujuan', $tujuan_realisasi[$i]['id'])->delete();
+                    }
                     RealisasiTujuan::insert([
                         'id_tujuan' => $tujuan_realisasi[$i]['id'],
                         'rill_tiket'  => $tujuan_realisasi[$i]['rill_tiket'],
