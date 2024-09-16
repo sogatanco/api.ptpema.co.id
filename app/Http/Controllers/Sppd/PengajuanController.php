@@ -99,8 +99,13 @@ class PengajuanController extends Controller
             }
             
         }
+        $rill=Realisasi::where('id_sppd', $id)->first();
+        $rill->submitter_name=Employe::where('employe_id', $rill->submitted_by)->first()->first_name;
+        $data['realisasi']=$rill;
+        
         $data['tujuan_sppd']=$tujuans;
         $data['check_doc']=CheklistDoc::where('id_sppd', $id)->get();
+        
         $data['realisasi_biaya']=RealisasiBiaya::where('id_sppd', $id)->get();
         $data['approval']=ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
         $data['log_pengajuan']=LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
