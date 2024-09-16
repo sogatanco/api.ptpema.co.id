@@ -101,7 +101,10 @@ class PengajuanController extends Controller
             }
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
-        $rill->submitter_name = Employe::where('employe_id', $rill->submitted_by)->first()->first_name;
+        if (!is_null($rill)) {
+            $rill->submitter_name = Employe::where('employe_id', $rill->submitted_by)->first()->first_name;
+        }
+
         $data['realisasi'] = $rill;
 
         $data['tujuan_sppd'] = $tujuans;
