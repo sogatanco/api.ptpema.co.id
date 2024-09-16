@@ -44,7 +44,7 @@ class PengajuanController extends Controller
             for ($i = 0; $i < count($tujuans); $i++) {
                 if ($tujuans[$i]['file_undangan'] !== '-') {
                     $file = base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
-                    $fileName = 'undangan/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $sppd->id . '/undangan-' . ($i + 1) . '.pdf';
+                    $fileName = 'undangan/' . date('Y') . '/' . $sppd->id . '/undangan-' . ($i + 1) . '.pdf';
                     if (Storage::disk('public_sppd')->put($fileName, $file)) {
                         $file_undangan = $fileName;
                     }
@@ -216,7 +216,7 @@ class PengajuanController extends Controller
             Realisasi::where('id_sppd', $request->id_sppd)->delete();
         }
         $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->doc_file), true);
-        $fileName = 'realisasi/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $request->id_sppd . '.pdf';
+        $fileName = 'realisasi/' . $request->id_sppd . '.pdf';
         if (Storage::disk('public_sppd')->put($fileName, $file)) {
             $realisasi=new Realisasi();
             $realisasi->id_sppd=$request->id_sppd;
