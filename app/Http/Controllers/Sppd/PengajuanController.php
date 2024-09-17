@@ -9,6 +9,7 @@ use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
 use App\Models\ESign\VerifStep;
+use App\Models\Sppd\ApprovedSppd;
 use App\Models\Sppd\CheklistDoc;
 use App\Models\Sppd\CheklistDokRealisasi;
 use App\Models\Sppd\HitunganBiaya;
@@ -82,12 +83,15 @@ class PengajuanController extends Controller
             $data = ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'review') {
             $data = ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();
+        } elseif ($request->ref == 'approved_by') {
+            $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
         } else {
             $data = ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
 
         return new PostResource(true, $request->ref, $data);
     }
+
 
     function getDetail($id)
     {
