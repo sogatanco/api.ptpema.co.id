@@ -291,6 +291,7 @@ class PengajuanController extends Controller
         }else{
             $proses->keuangan=Employe::employeId();
         }
+        $proses->last_proses_by=Employe::employeId();
         if($proses->save()){
             return new PostResource(true, 'success', []);
         }
