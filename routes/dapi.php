@@ -13,6 +13,7 @@ use App\Http\Controllers\Vendors\Admin\ATenderController;
 
 use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Sppd\PengajuanController;
+use App\Http\Middleware\Role;
 
 Route::controller(DaCatController::class)->group(function () {
      Route::get('/categories', 'index')->middleware("role:Employee");
@@ -119,4 +120,5 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan/update/{id}', 'updatePengajuan')->middleware("role:Employee");  
      Route::post('sppd/pengajuan/review/{id_doc}', 'persetujuan')->middleware("role:Employee");
      Route::post('sppd/pengajuan/realisasi', 'submitRealisasi')->middleware("role:Employee");
+     Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
 });

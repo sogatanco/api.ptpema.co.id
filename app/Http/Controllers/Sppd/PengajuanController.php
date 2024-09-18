@@ -19,6 +19,7 @@ use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppd;
 use App\Models\Sppd\LogPengajuan;
+use App\Models\Sppd\Proses;
 use App\Models\Sppd\Realisasi;
 use App\Models\Sppd\RealisasiBiaya;
 use App\Models\Sppd\RealisasiTujuan;
@@ -96,6 +97,8 @@ class PengajuanController extends Controller
 
         return new PostResource(true, $request->ref, $data);
     }
+
+
 
 
     function getDetail($id)
@@ -269,6 +272,27 @@ class PengajuanController extends Controller
             }
         } else {
             return new PostResource(false, 'error', []);
+        }
+    }
+
+
+    function done(Request $request){
+        if(!Proses::where('id_sppd', $request->id_sppd)->exists()){
+            Proses::insert([
+                'id_sppd' => $request->id_sppd,
+            ]);
+        }
+
+       
+        
+        $proses = Proses::where('id_sppd', $request->id_sppd)->first();
+        if($request->who=='umum'){
+            $proses->umum=Employe::employeId();
+        }else{
+            $proses->keuangan=Employe::employeId();
+        }
+        if($proses->save()){
+            return new PostResource(true, 'success', []);
         }
     }
 }
