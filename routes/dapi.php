@@ -122,3 +122,9 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan/realisasi', 'submitRealisasi')->middleware("role:Employee");
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
 });
+
+// Verification Document
+
+Route::controller(PengajuanController::class)->group(function(){
+     Route::post('verif/{id_doc}', 'getDetail');
+});
