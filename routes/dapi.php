@@ -13,6 +13,7 @@ use App\Http\Controllers\Vendors\Admin\ATenderController;
 
 use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Sppd\PengajuanController;
+use App\Http\Controllers\Verify\ScanVerif;
 use App\Http\Middleware\Role;
 
 Route::controller(DaCatController::class)->group(function () {
@@ -125,6 +126,6 @@ Route::controller(PengajuanController::class)->group(function(){
 
 // Verification Document
 
-Route::controller(PengajuanController::class)->group(function(){
+Route::controller(ScanVerif::class)->group(function(){
      Route::post('verif/{id_doc}', 'getDetail');
 });
