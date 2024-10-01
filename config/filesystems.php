@@ -78,10 +78,30 @@ return [
         'public_inven' => [
             'driver' => 'local',
             'root' => public_path(). '/inven',
+            'permissions' => [
+                'file' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+                'dir' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+            ]
         ],
         'public_sppd' => [
             'driver' => 'local',
             'root' => public_path(). '/sppd',
+            'permissions' => [
+                'file' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+                'dir' => [
+                    'public' => 0755,
+                    'private' => 0755,
+                ],
+            ]
         ],
         'public_vendor' => [
             'driver' => 'local',
