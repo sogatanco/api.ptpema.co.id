@@ -31,8 +31,7 @@ class FileController extends Controller
             $doc[0]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->company_profile)));
         }
         
-        return new PostResource(true,'Doc Company', $doc);
-
+        
         $doc[1]['id']='ktp';
         $doc[1]['file_name']=null;
         $doc[1]['base64']=null;
@@ -41,8 +40,7 @@ class FileController extends Controller
             $doc[1]['file_name']='ktp_pengurus.pdf';
             $doc[1]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->ktp_pengurus)));
         }
-
-
+        
         $doc[2]['id']='sk_kemenkumham';
         $doc[2]['file_name']=null;
         $doc[2]['base64']=null;
@@ -60,7 +58,7 @@ class FileController extends Controller
             $doc[3]['file_name']='fakta_integritas.pdf';
             $doc[3]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->fakta_integritas)));
         }
-
+        
         $doc[4]['id']='spt';
         $doc[4]['file_name']=null;
         $doc[4]['base64']=null;
@@ -69,7 +67,7 @@ class FileController extends Controller
             $doc[4]['file_name']='spt.pdf';
             $doc[4]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->spt)));
         }
-
+        
         $doc[5]['id']='pph';
         $doc[5]['file_name']=null;
         $doc[5]['base64']=null;
@@ -78,7 +76,7 @@ class FileController extends Controller
             $doc[5]['file_name']='pph.pdf';
             $doc[5]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->pph)));
         }
-
+        
         $doc[6]['id']='lap_keuangan';
         $doc[6]['file_name']=null;
         $doc[6]['base64']=null;
@@ -87,7 +85,7 @@ class FileController extends Controller
             $doc[6]['file_name']='lap_keuangan.pdf';
             $doc[6]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->lap_keuangan)));
         }
-
+        
         $doc[7]['id']='rek_koran';
         $doc[7]['file_name']=null;
         $doc[7]['base64']=null;
