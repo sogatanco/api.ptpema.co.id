@@ -289,7 +289,7 @@ class APerusahaanController extends Controller
 
         array_push($list, [
             'value' => 'all_kbli',
-            'label' => 'Semua KBLI'
+            'label' => 'SEMUA KBLI'
         ]);
 
         return new PostResource(true, 'List Kbli', $list);
