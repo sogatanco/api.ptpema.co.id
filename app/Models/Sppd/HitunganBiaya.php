@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class HitunganBiaya extends Model
 {
     protected $connection='mysql4';
-    protected $table='hitungan_biayaV';
+    protected $table='hitungan_biaya';
 }
