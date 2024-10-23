@@ -288,6 +288,7 @@ class PengajuanController extends Controller
         if (Storage::disk('public_sppd')->put($fileName, $file)) {
             $file = $fileName;
         }
+        $proses->id_sppd=$request->id_sppd;
         $proses->process_by=Employe::employeId();
         $proses->as=$request->who;
         $proses->file=$file;
