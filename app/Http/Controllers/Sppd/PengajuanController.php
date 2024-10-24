@@ -125,6 +125,7 @@ class PengajuanController extends Controller
         $data['realisasi_biaya'] = RealisasiBiaya::where('id_sppd', $id)->get();
         $data['approval'] = ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
         $data['log_pengajuan'] = LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
+        $data['proses'] = Proses::where('id_sppd', $id)->get();
         return new PostResource(true, 'success', $data);
     }
 
@@ -277,21 +278,20 @@ class PengajuanController extends Controller
 
 
     function done(Request $request){
-        if(!Proses::where('id_sppd', $request->id_sppd)->exists()){
-            Proses::insert([
-                'id_sppd' => $request->id_sppd,
-            ]);
-        }
-
        
-        
-        $proses = Proses::where('id_sppd', $request->id_sppd)->first();
-        if($request->who=='umum'){
-            $proses->umum=Employe::employeId();
-        }else{
-            $proses->keuangan=Employe::employeId();
+
+        $proses = new Proses();
+
+
+        $file = base64_decode(str_replace('data:application/pdf;base64,', '',$request->file));
+        $fileName = 'proses/' .  $request->id_sppd . '/proses-' .$request->who . '.pdf';
+        if (Storage::disk('public_sppd')->put($fileName, $file)) {
+            $file = $fileName;
         }
-        $proses->last_proses_by=Employe::employeId();
+        $proses->id_sppd=$request->id_sppd;
+        $proses->process_by=Employe::employeId();
+        $proses->as=$request->who;
+        $proses->file=$file;
         if($proses->save()){
             return new PostResource(true, 'success', []);
         }
