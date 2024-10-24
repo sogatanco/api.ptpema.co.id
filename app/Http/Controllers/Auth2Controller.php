@@ -214,11 +214,11 @@ class Auth2Controller extends Controller
         ]);
 
         $emailIsExist = User::where('email', $request->email)->count();
-        
+
         if ($emailIsExist == 0) {
             throw new HttpResponseException(response([
                 "status" => false,
-                "message" => "Email not found"
+                "message" => "Email tidak terdaftar"
             ], 404));
         }
 
@@ -235,7 +235,7 @@ class Auth2Controller extends Controller
         if (!$emailSent) {
             throw new HttpResponseException(response([
                 "status" => false,
-                "message" => "Email failed to send"
+                "message" => "Gagal mengirim email"
             ], 500));
         }
         
