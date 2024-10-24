@@ -216,7 +216,7 @@ class Auth2Controller extends Controller
             'link' => Config::get('app.url') . '?action=fp&key=123456789=username',
         ];
 
-        $emailSent = Mail::to($per['email'])->send(new VendorMail($mailData));
+        $emailSent = Mail::to($request->email)->send(new VendorMail($mailData));
 
         if (!$emailSent) {
             throw new HttpResponseException(response([
