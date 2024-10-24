@@ -14,9 +14,10 @@ use App\Models\UserVendor;
 use App\Models\User;
 use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\Perusahaan;
+use App\Models\Vendor\ForgotPassword;
 use Mail;
 use App\Mail\VendorMail;
-use App\Mail\ForgotPassword;
+use App\Mail\ForgotPasswordMail;
 use App\Http\Resources\PostResource;
 use Config;
 use App\Http\Controllers\Notification\NotificationController;
@@ -221,8 +222,19 @@ class Auth2Controller extends Controller
                 "message" => "Email tidak terdaftar"
             ], 404));
         }
+        
+        $requestIsExist = ForgotPassword::where('email', $request->email)->count();
+        
+        if ($requestIsExist > 0) {
+            ForgotPassword::where('email', $request->email)->delete();
+        }
 
         $uniq = base64_encode((rand(pow(10, 5 - 1), pow(10, 5) - 1)) . '-' . strtotime(now()));
+
+        $newForgotPassword = new ForgotPassword();
+        $newForgotPassword->email = $request->email;
+        $newForgotPassword->key = $uniq;
+        $newForgotPassword->save();
 
         $mailData = [
             'site_name' => 'Integrated Vendor Database System (IVDS)',
@@ -230,7 +242,7 @@ class Auth2Controller extends Controller
             'email' => $request->email
         ];
 
-        $emailSent = Mail::to($request->email)->send(new ForgotPassword($mailData));
+        $emailSent = Mail::to($request->email)->send(new ForgotPasswordMail($mailData));
 
         if (!$emailSent) {
             throw new HttpResponseException(response([
