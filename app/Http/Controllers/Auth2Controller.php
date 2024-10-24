@@ -213,6 +213,15 @@ class Auth2Controller extends Controller
             'email' => 'required|email',
         ]);
 
+        $emailIsExist = User::where('email', $request->email)->count();
+        
+        if ($emailIsExist == 0) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Email not found"
+            ], 404));
+        }
+
         $uniq = base64_encode((rand(pow(20, 20 - 1), pow(20, 20) - 1)) . '-' . strtotime(now()));
 
         $mailData = [
