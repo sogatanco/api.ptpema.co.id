@@ -16,6 +16,7 @@ use App\Models\Vendor\ViewPerusahaan;
 use App\Models\Vendor\Perusahaan;
 use Mail;
 use App\Mail\VendorMail;
+use App\Mail\ForgotPassword;
 use App\Http\Resources\PostResource;
 use Config;
 use App\Http\Controllers\Notification\NotificationController;
@@ -214,10 +215,10 @@ class Auth2Controller extends Controller
 
         $mailData = [
             'link' => Config::get('app.url') . '?action=fp&key=123456789=username',
-            'company_name' => "PT Test AJA"
+            'email' => $request->email
         ];
 
-        $emailSent = Mail::to($request->email)->send(new VendorMail($mailData));
+        $emailSent = Mail::to($request->email)->send(new ForgotPassword($mailData));
 
         if (!$emailSent) {
             throw new HttpResponseException(response([
@@ -227,8 +228,7 @@ class Auth2Controller extends Controller
         }
         
         return response()->json([
-            "messsage" => "forgot password!",
-            "email" => $request->email
+            "messsage" => "Email sent succesfully",
         ], 200);
 
 
