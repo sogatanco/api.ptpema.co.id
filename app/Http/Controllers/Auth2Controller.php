@@ -183,6 +183,13 @@ class Auth2Controller extends Controller
         }
     }
 
+    /**
+     * Handle verification email
+     * 
+     * @param string $id_token token sent via email
+     * 
+     * @return \Illuminate\Http\Response
+     */
     function verifEmail($id_token)
     {
         $token_explode = explode("-", base64_decode($id_token));
@@ -205,9 +212,24 @@ class Auth2Controller extends Controller
             'email' => 'required|email',
         ]);
 
+        $mailData = [
+            'link' => Config::get('app.url') . '?action=fp&key=123456789=username' . $uniq,
+        ];
+
+        $emailSent = Mail::to($per['email'])->send(new VendorMail($mailData));
+
+        if (!$emailSent) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Email failed to send"
+            ], 500));
+        }
+        
         return response()->json([
             "messsage" => "forgot password!",
             "email" => $request->email
         ], 200);
+
+
     }
 }
