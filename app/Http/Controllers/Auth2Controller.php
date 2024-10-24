@@ -213,11 +213,11 @@ class Auth2Controller extends Controller
             'email' => 'required|email',
         ]);
 
-        $uniq = base64_encode((rand(pow(10, 10 - 1), pow(10, 10) - 1)) . '-' . strtotime(now()));
+        $uniq = base64_encode((rand(pow(20, 20 - 1), pow(20, 20) - 1)) . '-' . strtotime(now()));
 
         $mailData = [
             'site_name' => 'Integrated Vendor Database System (IVDS)',
-            'link' => 'https://ivds.ptpema.co.id/auth?action=fp&key='.$uniq,
+            'link' => 'https://ivds.ptpema.co.id/auth?action=forgotpassword&key='.$uniq,
             'email' => $request->email
         ];
 
