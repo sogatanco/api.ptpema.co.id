@@ -222,7 +222,7 @@ class Auth2Controller extends Controller
             ], 404));
         }
 
-        $uniq = base64_encode((rand(pow(20, 20 - 1), pow(20, 20) - 1)) . '-' . strtotime(now()));
+        $uniq = base64_encode((rand(pow(10, 5 - 1), pow(10, 5) - 1)) . '-' . strtotime(now()));
 
         $mailData = [
             'site_name' => 'Integrated Vendor Database System (IVDS)',
