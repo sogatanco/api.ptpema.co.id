@@ -203,6 +203,6 @@ class Auth2Controller extends Controller
     {
         return response()->json([
             "messsage" => "forgot password!"
-        ], 2000);
+        ], 200);
     }
 }
