@@ -214,6 +214,7 @@ class Auth2Controller extends Controller
 
         $mailData = [
             'link' => Config::get('app.url') . '?action=fp&key=123456789=username',
+            'company_name' => "PT Test AJA"
         ];
 
         $emailSent = Mail::to($request->email)->send(new VendorMail($mailData));
