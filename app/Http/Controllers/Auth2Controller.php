@@ -27,7 +27,7 @@ class Auth2Controller extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api_vendor', ['except' => ['login', 'register', 'welcome', 'kirimEmail', 'verifEmail', 'forgotPassword']]);
+        $this->middleware('auth:api_vendor', ['except' => ['login', 'register', 'welcome', 'kirimEmail', 'verifEmail', 'forgotPassword', 'checkToken']]);
     }
 
     public function register(userRegisterRequest $request): userResource
