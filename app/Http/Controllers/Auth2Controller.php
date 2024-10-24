@@ -213,7 +213,7 @@ class Auth2Controller extends Controller
         ]);
 
         $mailData = [
-            'link' => Config::get('app.url') . '?action=fp&key=123456789=username' . $uniq,
+            'link' => Config::get('app.url') . '?action=fp&key=123456789=username',
         ];
 
         $emailSent = Mail::to($per['email'])->send(new VendorMail($mailData));
