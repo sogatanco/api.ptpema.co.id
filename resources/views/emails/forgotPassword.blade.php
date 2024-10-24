@@ -92,7 +92,7 @@
   </style>
 
 </head>
-<body style="background-color: #e9ecef;">
+<body style="background-color: #FFFFFF;">
 
   <!-- start preheader -->
   <!-- <div class="preheader" style="display: none; max-width: 0; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
@@ -106,7 +106,7 @@
 
     <!-- start copy block -->
     <tr>
-      <td align="center" bgcolor="#e9ecef">
+      <td align="center" bgcolor="#FFFFFF">
         <!--[if (gte mso 9)|(IE)]>
         <table align="center" border="0" cellpadding="0" cellspacing="0" width="600">
         <tr>
@@ -114,10 +114,17 @@
         <![endif]-->
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
 
+          <tr>
+            <td align="center" bgcolor="#FFFFFF" style="padding: 12px 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px; color: #666;">
+              <p style="margin: 0;">PT Pembangunan Aceh (PEMA). Kuta Alam. Banda Aceh, Aceh 23121</p>
+            </td>
+          </tr>
+
           <!-- start copy -->
           <tr>
             <td align="left" bgcolor="#ffffff" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
               <p style="margin: 0;">Seseorang telah meminta pengaturan ulang kata sandi untuk akun berikut:</p>
+              <p style="margin: 0;">Nama Situs: <?php echo $mailData['site_name']?></p>
               <p style="margin: 0;">Email: <?php echo $mailData['email']?></p>
               <p style="margin: 0;">Jika ini adalah kesalahan, abaikan email ini.</p>
               <p style="margin: 0;">Untuk mengatur ulang kata sandi Anda, kunjungi alamat berikut:</p>
@@ -138,7 +145,7 @@
 
     <!-- start footer -->
     <tr>
-      <td align="center" bgcolor="#e9ecef" style="padding: 24px;">
+      <td align="center" bgcolor="#FFFFFF" style="padding: 24px;">
         <!--[if (gte mso 9)|(IE)]>
         <table align="center" border="0" cellpadding="0" cellspacing="0" width="600">
         <tr>
@@ -147,7 +154,7 @@
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
           <!-- start unsubscribe -->
           <tr>
-            <td align="center" bgcolor="#e9ecef" style="padding: 12px 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px; color: #666;">
+            <td align="center" bgcolor="#FFFFFF" style="padding: 12px 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px; color: #666;">
               <p style="margin: 0;">PT Pembangunan Aceh (PEMA). Kuta Alam. Banda Aceh, Aceh 23121</p>
             </td>
           </tr>

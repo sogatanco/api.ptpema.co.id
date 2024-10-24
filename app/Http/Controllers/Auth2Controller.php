@@ -214,6 +214,7 @@ class Auth2Controller extends Controller
         ]);
 
         $mailData = [
+            'site_name' => 'Integrated Vendor Database System (IVDS)',
             'link' => Config::get('app.url') . '?action=fp&key=123456789=username',
             'email' => $request->email
         ];
