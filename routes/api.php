@@ -38,7 +38,7 @@ Route::controller(Auth2Controller::class)->group(function(){
     Route::get('/auth2/refresh', 'refresh');
     Route::get('/auth2/resend/{id}', 'kirimEmail');
     Route::get('/auth2/verif/{id}', 'verifEmail');
-    Route::post('auth2/forgot-password', 'forgotPassword');
+    Route::post('/auth2/forgot-password', 'forgotPassword');
 });
 
 // Employee Routes
