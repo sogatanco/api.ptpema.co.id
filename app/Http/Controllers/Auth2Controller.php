@@ -213,7 +213,7 @@ class Auth2Controller extends Controller
             'email' => 'required|email',
         ]);
 
-        $emailIsExist = User::where('email', $request->email)->count();
+        $emailIsExist = UserVendor::where('email', $request->email)->count();
 
         if ($emailIsExist == 0) {
             throw new HttpResponseException(response([
