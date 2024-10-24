@@ -201,8 +201,8 @@ class Auth2Controller extends Controller
 
     public function forgotPassword(Request $request)
     {
-        validate($request, [
-            'email' => ['required', 'email']
+        $request->validate([
+            'email' => 'required|email',
         ]);
 
         return response()->json([
