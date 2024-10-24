@@ -254,7 +254,21 @@ class Auth2Controller extends Controller
         return response()->json([
             "messsage" => "Email sent succesfully",
         ], 200);
+    }
 
+    public function checkToken($token)
+    {
+        $tokenIsExist = ForgotPassword::where('token', $token)->count();
 
+        if ($tokenIsExist == 0) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Invalid token"
+            ], 404));
+        }
+
+        return response()->json([
+            "status" => true,
+        ], 200);
     }
 }

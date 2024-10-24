@@ -121,7 +121,7 @@
               <p style="margin: 0;">Nama Situs: <?php echo $mailData['site_name']?></p>
               <p style="margin: 0;">Email: <?php echo $mailData['email']?></p>
               <p style="margin: 0;">&nbsp;</p>
-              <p style="margin: 0;">Jika ini adalah kesalahan, abaikan email ini.</p>
+              <p style="margin: 0;">Abaikan email ini apabila permintaan bukan dari Anda.</p>
               <p style="margin: 0;">&nbsp;</p>
               <p style="margin: 0;">Untuk mengatur ulang kata sandi Anda, kunjungi alamat berikut:</p>
               <p style="margin: 0;"><a href="<?php echo $mailData['link']?>" target="_blank"><?php echo $mailData['link']?></a></p>
