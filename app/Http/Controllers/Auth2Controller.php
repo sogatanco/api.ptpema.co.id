@@ -198,4 +198,11 @@ class Auth2Controller extends Controller
             }
         }
     }
+
+    public function forgotPassword()
+    {
+        return response()->json([
+            "messsage" => "forgot password!"
+        ], 2000);
+    }
 }
