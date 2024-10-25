@@ -40,6 +40,7 @@ Route::controller(Auth2Controller::class)->group(function(){
     Route::get('/auth2/verif/{id}', 'verifEmail');
     Route::post('/auth2/forgot-password', 'forgotPassword');
     Route::GET('/auth2/forgot-password/{token}', 'checkToken');
+    Route::post('/auth2/new-password', 'newPassword');
 });
 
 // Employee Routes
