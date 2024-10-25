@@ -276,7 +276,7 @@ class Auth2Controller extends Controller
     {
         $request->validate([
             'password' => 'required|min:8',
-            'confirm_password' => 'required',
+            'confirmPassword' => 'required',
             'token' => 'required'
         ]);
 
