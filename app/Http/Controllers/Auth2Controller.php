@@ -238,7 +238,7 @@ class Auth2Controller extends Controller
 
         $mailData = [
             'site_name' => 'Integrated Vendor Database System (IVDS)',
-            'link' => 'https://ivds.ptpema.co.id/auth?action=forgotpassword&key='.$uniq,
+            'link' => Config::get('app.url') . '/auth/forgot-password?action=fp&key=' . $uniq,
             'email' => $request->email
         ];
 
