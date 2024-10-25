@@ -233,7 +233,7 @@ class Auth2Controller extends Controller
 
         $newForgotPassword = new ForgotPassword();
         $newForgotPassword->email = $request->email;
-        $newForgotPassword->token = $uniq;
+        $newForgotPassword->token = $key;
         $newForgotPassword->save();
 
         $mailData = [
