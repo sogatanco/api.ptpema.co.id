@@ -271,4 +271,32 @@ class Auth2Controller extends Controller
             "status" => true,
         ], 200);
     }
+
+    public function newPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|min:8',
+            'confirm_password' => 'required',
+            'token' => 'required'
+        ]);
+
+        $email = ForgotPassword::where('token', $request->token)->first()->email;
+
+        $user = UserVendor::where('email', $email)->first();
+        $user->password = Hash::make($request->password);
+        $isSaved = $user->save();
+
+        if (!$isSaved) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Gagal merubah password"
+            ], 500));
+        }
+
+        ForgotPassword::where('token', $request->token)->delete();
+
+        return response()->json([
+            "message" => "Password changed successfully"
+        ], 200);
+    }
 }
