@@ -229,7 +229,7 @@ class Auth2Controller extends Controller
             ForgotPassword::where('email', $request->email)->delete();
         }
 
-        $uniq = base64_encode((rand(pow(10, 5 - 1), pow(10, 5) - 1)) . '-' . strtotime(now()));
+        $key = base64_encode($request->email . '-' . strtotime(now()));
 
         $newForgotPassword = new ForgotPassword();
         $newForgotPassword->email = $request->email;
@@ -238,7 +238,7 @@ class Auth2Controller extends Controller
 
         $mailData = [
             'site_name' => 'Integrated Vendor Database System (IVDS)',
-            'link' => 'https://ivds.ptpema.co.id/auth/forgot-password?action=fp&key=' . $uniq,
+            'link' => 'https://ivds.ptpema.co.id/auth/forgot-password?action=fp&key=' . $key,
             'email' => $request->email
         ];
 
