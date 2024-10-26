@@ -229,7 +229,7 @@ class Auth2Controller extends Controller
             ForgotPassword::where('email', $request->email)->delete();
         }
 
-        $key = base64_encode($request->email . '-' . strtotime(now()));
+        $key = Hash::make($request->email);
 
         $newForgotPassword = new ForgotPassword();
         $newForgotPassword->email = $request->email;
