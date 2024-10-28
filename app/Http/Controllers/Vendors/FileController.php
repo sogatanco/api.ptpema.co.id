@@ -28,7 +28,8 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->company_profile))){
             $doc[0]['id']='company_profile';
             $doc[0]['file_name']='company_profile.pdf';
-            $doc[0]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->company_profile)));
+            // $doc[0]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->company_profile)));
+            $doc[0]['base64']="bakbudik";
         }
         
         $doc[1]['id']='ktp_pengurus';
@@ -37,7 +38,8 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->ktp_pengurus))){
             $doc[1]['id']='ktp_pengurus';
             $doc[1]['file_name']='ktp_pengurus.pdf';
-            $doc[1]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->ktp_pengurus)));
+            // $doc[1]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->ktp_pengurus)));
+            $doc[1]['base64']="bakbudik";
         }
         
         $doc[2]['id']='sk_kemenkumham';
@@ -46,16 +48,18 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->sk_kemenkumham))){
             $doc[2]['id']='sk_kemenkumham';
             $doc[2]['file_name']='sk_kemenkumham.pdf';
-            $doc[2]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->sk_kemenkumham)));
+            // $doc[2]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->sk_kemenkumham)));
+            $doc[2]['base64']="bakbudik";
         }
-
+        
         $doc[3]['id']='fakta_integritas';
         $doc[3]['file_name']=null;
         $doc[3]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->fakta_integritas))){
             $doc[3]['id']='fakta_integritas';
             $doc[3]['file_name']='fakta_integritas.pdf';
-            $doc[3]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->fakta_integritas)));
+            // $doc[3]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->fakta_integritas)));
+            $doc[3]['base64']="bakbudik";
         }
         
         $doc[4]['id']='spt';
