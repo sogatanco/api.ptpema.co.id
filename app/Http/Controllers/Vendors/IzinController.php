@@ -47,7 +47,7 @@ class IzinController extends Controller
         
         $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
 
-        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . time() . '.pdf';
+        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . $file->hashName();
 
         $file = $request->file('file'); 
 
