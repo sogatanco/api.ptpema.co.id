@@ -110,7 +110,7 @@ class FileController extends Controller
 
             $perusahaan->$fileTitle = $filePath;
 
-            if($p->save()){
+            if($perusahaan->save()){
                 return new PostResource(true, "Upload ".$fileTitle." Berhasil", []);
             }else{
                 return new PostResource(false, "Upload ".$fileTitle." Gagal", []);
