@@ -48,7 +48,7 @@ class IzinController extends Controller
         $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
 
         $file = $request->file('file'); 
-        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . $file->hashName();
+        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . time() . '.pdf';
 
         if(Storage::disk('public_vendor')->put($filePath, file_get_contents($file))) {
             $akt = new Izin();
@@ -57,7 +57,7 @@ class IzinController extends Controller
             $akt->nama_izin = $request->nama_izin;
             $akt->tgl_terbit = $request->tgl_terbit;
             $akt->tgl_berakhir = $request->tgl_berakhir;
-            $akt->file_izin = $file->hashName();
+            $akt->file_izin = $filePath;
             $akt->keterangan = $request->keterangan;
             if ($akt->save()) {
                 return new PostResource(true, 'New Izin Inserted', []);
