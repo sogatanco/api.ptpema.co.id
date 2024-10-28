@@ -51,7 +51,7 @@ class IzinController extends Controller
 
         $file = $request->file('file'); 
 
-        if(Storage::disk('public_vendor')->put($filePath, $file)){ 
+        if(Storage::disk('public_vendor')->put($filePath, file_get_contents($file))) {
             $akt = new Izin();
             $akt->perusahaan_id = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
             $akt->nomor = $request->nomor;
