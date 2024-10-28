@@ -50,9 +50,9 @@ class AktaController extends Controller
 
         $filename = Akta::where('id_perusahaan', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get();
 
-        foreach ($filename as $f) {
-            $f->file_base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $f->file_akta)));
-        }
+        // foreach ($filename as $f) {
+        //     $f->file_base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $f->file_akta)));
+        // }
         return new PostResource(true, 'Detail Akta ' , $filename);
     }
 
