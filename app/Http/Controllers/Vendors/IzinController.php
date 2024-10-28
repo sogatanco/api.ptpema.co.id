@@ -40,11 +40,11 @@ class IzinController extends Controller
         //     return new PostResource(false, 'Failed to upload akta', []);
         // }
 
-        $request->validate([
-            'nomor' => 'required',
-            'tgl_terbit' => 'required',
-            'file' => 'required',
-        ]);
+        // $request->validate([
+        //     'nomor' => 'required',
+        //     'tgl_terbit' => 'required',
+        //     'file' => 'required',
+        // ]);
         
         $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
 
