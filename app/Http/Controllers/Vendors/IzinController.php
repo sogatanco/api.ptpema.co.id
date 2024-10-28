@@ -77,8 +77,9 @@ class IzinController extends Controller
         $filename = Izin::where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get();
 
         foreach ($filename as $f) {
-            $f->file_base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $f->file_izin)));
+            $f->file_base64 = file_get_contents(public_path('vendor_file/' . $f->file_izin));
         }
+        
         return new PostResource(true, 'Detail Akta ', $filename);
     }
 
