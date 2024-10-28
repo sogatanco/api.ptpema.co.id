@@ -20,9 +20,37 @@ class IzinController extends Controller
 
     public function store(Request $request)
     {
-        $file = base64_decode($request->file, true);
-        $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . time() . '.pdf';
-        if (Storage::disk('public_vendor')->put($filename, $file)) {
+        // $file = base64_decode($request->file, true);
+        // $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . time() . '.pdf';
+        // if (Storage::disk('public_vendor')->put($filename, $file)) {
+        //     $akt = new Izin();
+        //     $akt->perusahaan_id = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+        //     $akt->nomor = $request->nomor;
+        //     $akt->nama_izin = $request->nama_izin;
+        //     $akt->tgl_terbit = $request->tgl_terbit;
+        //     $akt->tgl_berakhir = $request->tgl_berakhir;
+        //     $akt->file_izin = $filename;
+        //     $akt->keterangan = $request->keterangan;
+        //     if ($akt->save()) {
+        //         return new PostResource(true, 'New Izin Inserted', []);
+        //     } else { 
+        //         return new PostResource(false, 'Failed to add akta', []);
+        //     }
+        // } else {
+        //     return new PostResource(false, 'Failed to upload akta', []);
+        // }
+
+        $request->validate([
+            'nomor' => 'required',
+            'tgl_terbit' => 'required',
+            'file' => 'required',
+        ]);
+        
+        $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+
+        $filePath = $perusahaanId . '/' . 'izin/' . time() . '.pdf';
+
+        if(Storage::disk('public_vendor')->put($filePath, $request->file('file'))){ 
             $akt = new Izin();
             $akt->perusahaan_id = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
             $akt->nomor = $request->nomor;
@@ -33,11 +61,14 @@ class IzinController extends Controller
             $akt->keterangan = $request->keterangan;
             if ($akt->save()) {
                 return new PostResource(true, 'New Izin Inserted', []);
-            } else {
+            } else { 
                 return new PostResource(false, 'Failed to add akta', []);
-            }
-        } else {
-            return new PostResource(false, 'Failed to upload akta', []);
+            };
+        }else{
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Failed to upload akta',
+            ]));
         }
     }
 

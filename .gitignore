@@ -6,7 +6,7 @@
 /public/project
 /public/taskfiles
 /public/vendor
-/public/vendor_files
+/public/vendor_file
 /storage/*.key
 /vendor
 .env
