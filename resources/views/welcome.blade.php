@@ -6,6 +6,6 @@
         <title>Laravel</title>        
     </head>
     <body class="antialiased">
-        <h1 class="fw-bold text-white">Welcomess dev safrian 1dsfsdg1</h1>
+        <h1 class="fw-bold text-white">Welcomess</h1>
     </body>
 </html>
