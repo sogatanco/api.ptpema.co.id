@@ -136,21 +136,7 @@ class FileController extends Controller
         //     }
         // }
         
-        // else if($request->whatfile=='profil'){
-        //     $file = base64_decode($request->file, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/company_profile.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->company_profile=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }
+       
         // else if($request->whatfile=='logo'){
         //     $dataImage = explode(',', $request->file);
         //     $file=base64_decode($dataImage[1], true);
@@ -189,112 +175,6 @@ class FileController extends Controller
         //     if(Storage::disk('public_vendor')->put($filename, $file)){
         //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
         //         $p->file_pvd=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }
-
-        // else if($request->whatfile=='ktp'){
-        //     $file = base64_decode($request->file, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/ktp_pengurus.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->ktp_pengurus=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }
-
-        // else if($request->whatfile=='spt'){
-        //     $fileReq = base64_encode(file_get_contents($request->file('file')->path()));
-        //     $file = base64_decode($fileReq, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/spt.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->spt=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }
-        // else if($request->whatfile=='pph'){
-        //     $file = base64_decode($request->file, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/pph.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->pph=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }
-        // else if($request->whatfile=='lap_keuangan'){
-        //     $file = base64_decode($request->file, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/lap_keuangan.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->lap_keuangan=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }
-        // else if($request->whatfile=='rek_koran'){
-        //     $file = base64_decode($request->file, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/rek_koran.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->rek_koran=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }else if($request->whatfile=='fakta_integritas'){
-        //     $file = base64_decode($request->file, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/fakta_integritas.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->fakta_integritas=$filename;
-        //         if($p->save()){
-        //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
-        //         }else{
-        //             return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //         }
-        //     }else{
-        //         return new PostResource(false, "Upload ".$request->whatfile." Gagal", []);
-        //     }
-        // }else if($request->whatfile=='sk_kemenkumham'){
-        //     $file = base64_decode($request->file, true);
-        //     $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id .'/sk_kemenkumham.pdf';
-        //     if(Storage::disk('public_vendor')->put($filename, $file)){
-        //         $p=Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
-        //         $p->sk_kemenkumham=$filename;
         //         if($p->save()){
         //             return new PostResource(true, "Upload ".$request->whatfile." Berhasil", []);
         //         }else{
