@@ -47,9 +47,8 @@ class IzinController extends Controller
         
         $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
 
-        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . $file->hashName();
-
         $file = $request->file('file'); 
+        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . $file->hashName();
 
         if(Storage::disk('public_vendor')->put($filePath, file_get_contents($file))) {
             $akt = new Izin();
