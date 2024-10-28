@@ -40,19 +40,18 @@ class IzinController extends Controller
         //     return new PostResource(false, 'Failed to upload akta', []);
         // }
 
-        // $request->validate([
-        //     'nomor' => 'required',
-        //     'tgl_terbit' => 'required',
-        //     'file' => 'required',
-        // ]);
+        $request->validate([
+            'nomor' => 'required',
+            'tgl_terbit' => 'required',
+        ]);
         
         $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
 
-        $filePath = 'public_vendor' . '/ ' . $perusahaanId . '/' . 'izin/' . time() . '.pdf';
+        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . time() . '.pdf';
 
         $file = $request->file('file'); 
 
-        if($file->storeAs($filePath, $file->hashName())){ 
+        if(Storage::disk('public_vendor')->put($filePath, $file)){ 
             $akt = new Izin();
             $akt->perusahaan_id = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
             $akt->nomor = $request->nomor;
