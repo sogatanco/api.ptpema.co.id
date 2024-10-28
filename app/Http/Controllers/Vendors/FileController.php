@@ -68,7 +68,8 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->spt))){
             $doc[4]['id']='spt';
             $doc[4]['file_name']='spt.pdf';
-            $doc[4]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->spt)));
+            // $doc[4]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->spt)));
+            $doc[4]['base64']="bakbudik";
         }
         
         $doc[5]['id']='pph';
@@ -77,7 +78,8 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->pph))){
             $doc[5]['id']='pph';
             $doc[5]['file_name']='pph.pdf';
-            $doc[5]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->pph)));
+            // $doc[5]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->pph)));
+            $doc[5]['base64']="bakbudik";
         }
         
         $doc[6]['id']='lap_keuangan';
@@ -86,7 +88,8 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->lap_keuangan))){
             $doc[6]['id']='lap_keuangan';
             $doc[6]['file_name']='lap_keuangan.pdf';
-            $doc[6]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->lap_keuangan)));
+            // $doc[6]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->lap_keuangan)));
+            $doc[6]['base64']="bakbudik";
         }
         
         $doc[7]['id']='rek_koran';
@@ -95,7 +98,8 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->rek_koran))){
             $doc[7]['id']='rek_koran';
             $doc[7]['file_name']='rek_koran.pdf';
-            $doc[7]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->rek_koran)));
+            // $doc[7]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->rek_koran)));
+            $doc[7]['base64']="bakbudik";
         }
         return new PostResource(true,'Doc Company', $doc);
     }
