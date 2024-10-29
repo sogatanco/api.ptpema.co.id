@@ -231,7 +231,7 @@ class Auth2Controller extends Controller
 
         $hashedKey = Hash::make($request->email);
 
-        $key = stripslashes($hashedKey);
+        $key = str_replace('/', '', $hashedKey);;
 
         $newForgotPassword = new ForgotPassword();
         $newForgotPassword->email = $request->email;
