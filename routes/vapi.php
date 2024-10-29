@@ -14,8 +14,7 @@ use App\Http\Controllers\Vendors\KlbiController;
 use App\Http\Controllers\Vendors\ProvinceController;
 use App\Http\Controllers\Vendors\PublicData;
 use App\Http\Controllers\Vendors\PublicUserController;
-
-
+use App\Http\Controllers\File\FileController as FileController2;
 
 Route::middleware('auth:api_vendor')->get('/uservendor', function (Request $request) {
     return $request->user();
@@ -103,6 +102,11 @@ Route::controller(PublicUserController::class)->group(function(){
 
 Route::controller(PublicData::class)->group(function(){
     Route::get('public/tender/detail/{id}', 'detailTender');
+});
+
+// file routes
+Route::controller(FileController2::class)->group(function(){
+    Route::get('file/download', 'download');
 });
 
 Route::get('phpinfo', fn () => phpinfo());
