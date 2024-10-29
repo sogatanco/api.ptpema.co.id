@@ -23,6 +23,7 @@ use App\Models\Sppd\Proses;
 use App\Models\Sppd\Realisasi;
 use App\Models\Sppd\RealisasiBiaya;
 use App\Models\Sppd\RealisasiTujuan;
+use DateTime;
 use Illuminate\Cache\RateLimiting\Limit;
 
 class PengajuanController extends Controller
@@ -300,7 +301,8 @@ class PengajuanController extends Controller
     function getNomorSppd(Request $request){
         $data=HitunganBiaya::get();
         foreach($data as $d){
-            $d->berangkat=$d->waktu_berangkat->format('Y-m-d');
+            $date=new DateTime($d->waktu_berangkat);
+            $d->berangkat=$date->format('Y-m-d');
         }
         return new PostResource(true, 'list data sppd', $data);
     }
