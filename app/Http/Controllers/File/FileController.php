@@ -28,7 +28,7 @@ class FileController extends Controller
         // file path
         $file = public_path('vendor_file/87/company_profile.pdf');
         
-        if(fileType != null){
+        if($fileType != null){
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileType . '/' . $fileName);
         }else{
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileName);
