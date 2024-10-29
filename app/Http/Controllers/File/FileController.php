@@ -11,6 +11,12 @@ use App\Models\Vendor\Perusahaan;
 
 class FileController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth:api_vendor');
+    }
+    
     public function download(Request $request)
     {
         $fileType = $request->query('type');
