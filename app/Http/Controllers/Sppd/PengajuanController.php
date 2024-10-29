@@ -73,7 +73,11 @@ class PengajuanController extends Controller
                     'detail_tujuan' => $tujuans[$i]['detail_tujuan'],
                     'tugas' => $tujuans[$i]['tugas_sppd'],
                     'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_berangkat'])),
-                    'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali']))
+                    'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali'])),
+                    'moda'=> $tujuans[$i]['moda'],
+                    'bbm'=> $tujuans[$i]['ubbm'],
+                    'share_with'=> $tujuans[$i]['shareWith'],
+
                 ]);
             }
             return new PostResource(true, 'success', []);
@@ -169,7 +173,10 @@ class PengajuanController extends Controller
                         'detail_tujuan' => $tujuans[$i]['detail_tujuan'],
                         'tugas' => $tujuans[$i]['tugas_sppd'],
                         'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_berangkat'])),
-                        'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali']))
+                        'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali'])),
+                        'moda'=> $tujuans[$i]['moda'],
+                        'bbm'=> $tujuans[$i]['ubbm'],
+                        'share_with'=> $tujuans[$i]['shareWith'],
                     ]);
                 }
                 return new PostResource(true, 'success', []);
@@ -305,7 +312,7 @@ class PengajuanController extends Controller
         foreach($data as $d){
             $date=new DateTime($d->waktu_berangkat);
             $d->berangkat=$date->format('Y-m-d');
-            $d->value=$d->id_sppd;
+            $d->value=$d->id;
             $d->label=ListSppd::where('id', $d->id_sppd)->first()->nomor_sppd.' a/n '.ListSppd::where('id', $d->id_sppd)->first()->nama;
         }
         return new PostResource(true, 'list data sppd', $data);
