@@ -16,7 +16,7 @@ class FileController extends Controller
     {
         $this->middleware('auth:api_vendor');
     }
-    
+
     public function download(Request $request)
     {
         $fileType = $request->query('type');
@@ -28,7 +28,7 @@ class FileController extends Controller
         // file path
         $file = public_path('vendor_file/87/company_profile.pdf');
         
-        if(fileType != ''){
+        if(fileType != null){
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileType . '/' . $fileName);
         }else{
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileName);
