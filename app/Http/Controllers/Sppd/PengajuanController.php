@@ -296,4 +296,9 @@ class PengajuanController extends Controller
             return new PostResource(true, 'success', []);
         }
     }
+
+    function getNomorSppd(Request $request){
+        $data=HitunganBiaya::get();
+        return new PostResource(true, 'list data sppd', $data);
+    }
 }
