@@ -122,6 +122,7 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan/review/{id_doc}', 'persetujuan')->middleware("role:Employee");
      Route::post('sppd/pengajuan/realisasi', 'submitRealisasi')->middleware("role:Employee");
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
+     Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
 });
 
 // Verification Document
