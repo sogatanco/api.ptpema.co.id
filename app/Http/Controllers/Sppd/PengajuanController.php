@@ -299,7 +299,8 @@ class PengajuanController extends Controller
     }
 
     function getNomorSppd(Request $request){
-        $data=HitunganBiaya::get();
+        $wb=new DateTime($request->wb);
+        $data=HitunganBiaya::whereDate('waktu_berangkat', '>=', $wb)->get();
         foreach($data as $d){
             $date=new DateTime($d->waktu_berangkat);
             $d->berangkat=$date->format('Y-m-d');
