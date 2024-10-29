@@ -25,6 +25,7 @@ use App\Models\Sppd\RealisasiBiaya;
 use App\Models\Sppd\RealisasiTujuan;
 use DateTime;
 use Illuminate\Cache\RateLimiting\Limit;
+use PhpParser\Node\Expr\Cast\Object_;
 
 class PengajuanController extends Controller
 {
@@ -304,6 +305,8 @@ class PengajuanController extends Controller
         foreach($data as $d){
             $date=new DateTime($d->waktu_berangkat);
             $d->berangkat=$date->format('Y-m-d');
+            $d->value=$d->id_sppd;
+            $d->label=ListSppd::where('id', $d->id_sppd)->first()->nomor_sppd.' a/n '.ListSppd::where('id', $d->id_sppd)->first()->nama;
         }
         return new PostResource(true, 'list data sppd', $data);
     }
