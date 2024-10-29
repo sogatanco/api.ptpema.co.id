@@ -95,11 +95,11 @@ class PerusahaanController extends Controller
         $dataUmum->pvd_base64 = null;
         if (file_exists(public_path('vendor_file/' . $dataUmum->file_npwp))) {
             // $dataUmum->npwp_base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $dataUmum->file_npwp)));
-            $dataUmum->npwp_base64 = 'bakbudik';
+            $dataUmum->npwp_base64 = '';
         }
         if (file_exists(public_path('vendor_file/' . $dataUmum->file_pvd))) {
             // $dataUmum->pvd_base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $dataUmum->file_pvd)));
-            $dataUmum->pvd_base64 = 'bakbudik';
+            $dataUmum->pvd_base64 = '';
         }
 
         return response()->json([

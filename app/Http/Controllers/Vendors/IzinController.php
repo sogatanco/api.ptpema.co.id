@@ -74,8 +74,7 @@ class IzinController extends Controller
 
     public function view()
     {
-        $filename = Izin::where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get();
-         
+        $filename = Izin::where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get(); 
         return new PostResource(true, 'Detail Akta ', $filename);
     }
 
