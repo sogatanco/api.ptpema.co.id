@@ -42,7 +42,7 @@ class FileController extends Controller
         if (file_exists(public_path('vendor_file/' . $p->ktp_pengurus))){
             $doc[1]['id']='ktp_pengurus';
             $doc[1]['file_name']='ktp_pengurus.pdf';
-            $doc[1]['file_path']=$p->ktp_penguru;
+            $doc[1]['file_path']=$p->ktp_pengurus;
             // $doc[1]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->ktp_pengurus)));
             $doc[1]['base64']="bakbudik";
         }
