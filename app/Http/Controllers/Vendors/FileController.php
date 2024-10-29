@@ -107,14 +107,14 @@ class FileController extends Controller
     function uplaodFile(Request $request)
     {   
         $fileTitle = $request->whatfile;
-        $file = base64_decode($request->file, true);
+        $file = $request->file('file');
 
         $userId = Auth::user()->id;
         $perusahaan = Perusahaan::where('user_id', $userId)->first();
 
         $filePath = $perusahaan->id .'/'.$fileTitle.'.pdf';
 
-        if(Storage::disk('public_vendor')->put($filePath, $file)){
+        if(Storage::disk('public_vendor')->put($filePath, file_get_contents($file))){
 
             $perusahaan->$fileTitle = $filePath;
 
