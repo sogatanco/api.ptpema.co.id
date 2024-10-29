@@ -22,22 +22,27 @@ class FileController extends Controller
     function viewFile(){
 
         $p=Perusahaan::where('user_id', Auth::user()->id)->get()->first();
+
         $doc[0]['id']='company_profile';
         $doc[0]['file_name']=null;
+        $doc[0]['file_path']=null;
         $doc[0]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->company_profile))){
             $doc[0]['id']='company_profile';
             $doc[0]['file_name']='company_profile.pdf';
             // $doc[0]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->company_profile)));
+            $doc[0]['file_path']= $p->company_profile;
             $doc[0]['base64']="bakbudik";
         }
         
         $doc[1]['id']='ktp_pengurus';
         $doc[1]['file_name']=null;
+        $doc[1]['file_path']=null;
         $doc[1]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->ktp_pengurus))){
             $doc[1]['id']='ktp_pengurus';
             $doc[1]['file_name']='ktp_pengurus.pdf';
+            $doc[1]['file_path']=$p->ktp_penguru;
             // $doc[1]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->ktp_pengurus)));
             $doc[1]['base64']="bakbudik";
         }
@@ -45,59 +50,71 @@ class FileController extends Controller
         $doc[2]['id']='sk_kemenkumham';
         $doc[2]['file_name']=null;
         $doc[2]['base64']=null;
+        $doc[2]['file_path']=null;
         if (file_exists(public_path('vendor_file/' . $p->sk_kemenkumham))){
             $doc[2]['id']='sk_kemenkumham';
             $doc[2]['file_name']='sk_kemenkumham.pdf';
+            $doc[2]['file_path']=$p->sk_kemenkumham;
             // $doc[2]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->sk_kemenkumham)));
             $doc[2]['base64']="bakbudik";
         }
         
         $doc[3]['id']='fakta_integritas';
         $doc[3]['file_name']=null;
+        $doc[3]['file_path']=null;
         $doc[3]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->fakta_integritas))){
             $doc[3]['id']='fakta_integritas';
             $doc[3]['file_name']='fakta_integritas.pdf';
+            $doc[3]['file_path']=$p->fakta_integritas;
             // $doc[3]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->fakta_integritas)));
             $doc[3]['base64']="bakbudik";
         }
         
         $doc[4]['id']='spt';
         $doc[4]['file_name']=null;
+        $doc[4]['file_path']=null;
         $doc[4]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->spt))){
             $doc[4]['id']='spt';
             $doc[4]['file_name']='spt.pdf';
+            $doc[4]['file_path']=$p->spt;
             // $doc[4]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->spt)));
             $doc[4]['base64']="bakbudik";
         }
         
         $doc[5]['id']='pph';
         $doc[5]['file_name']=null;
+        $doc[5]['file_path']=null;
         $doc[5]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->pph))){
             $doc[5]['id']='pph';
             $doc[5]['file_name']='pph.pdf';
+            $doc[5]['file_path']=$p->pph;
             // $doc[5]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->pph)));
             $doc[5]['base64']="bakbudik";
         }
         
         $doc[6]['id']='lap_keuangan';
         $doc[6]['file_name']=null;
+        $doc[6]['file_path']=null;
         $doc[6]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->lap_keuangan))){
             $doc[6]['id']='lap_keuangan';
             $doc[6]['file_name']='lap_keuangan.pdf';
+            $doc[6]['file_path']=$p->lap_keuangan;
             // $doc[6]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->lap_keuangan)));
             $doc[6]['base64']="bakbudik";
         }
         
         $doc[7]['id']='rek_koran';
         $doc[7]['file_name']=null;
+        $doc[7]['file_path']=null;
         $doc[7]['base64']=null;
         if (file_exists(public_path('vendor_file/' . $p->rek_koran))){
             $doc[7]['id']='rek_koran';
             $doc[7]['file_name']='rek_koran.pdf';
+            $doc[7]['file_path']=$p->rek_koran;
             // $doc[7]['base64']=base64_encode(file_get_contents(public_path('vendor_file/' . $p->rek_koran)));
             $doc[7]['base64']="bakbudik";
         }
