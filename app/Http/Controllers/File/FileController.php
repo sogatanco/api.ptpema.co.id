@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Response;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Vendor\Perusahaan;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class FileController extends Controller
 {
