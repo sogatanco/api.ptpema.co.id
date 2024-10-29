@@ -31,6 +31,13 @@ class FileController extends Controller
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileName);
         }
 
+        if (!file_exists($filePath)) {
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => "File Tidak Ditemukan",
+            ], 404));
+        }
+
         $headers = array(
             'Content-Type: application/pdf',
         );
