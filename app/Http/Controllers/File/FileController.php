@@ -35,6 +35,6 @@ class FileController extends Controller
             'Content-Type: application/pdf',
         );
 
-        return Response::download($file, $fileName, $headers);
+        return Response::download($filePath, $fileName, $headers);
     }
 }
