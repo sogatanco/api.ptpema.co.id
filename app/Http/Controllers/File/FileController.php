@@ -25,7 +25,7 @@ class FileController extends Controller
         $userId = Auth::user()->id;
         $perusahaan = Perusahaan::where('user_id', $userId)->first();
 
-        if($fileType != null){
+        if($fileType != 'null'){
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileType . '/' . $fileName);
         }else{
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileName);
