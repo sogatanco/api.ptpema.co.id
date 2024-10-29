@@ -125,7 +125,10 @@ class FileController extends Controller
             }
 
         }else{
-            return new PostResource(false, "Upload ".$fileTitle." Gagal", []);
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => "Upload ".$fileTitle." Gagal",
+            ], 500));
         }
 
         // if($request->whatfile=='struktur'){
