@@ -145,7 +145,7 @@ class PengajuanController extends Controller
         $sppd->golongan_rate = $request->rate;
         $tujuans = $request->tujuan_sppd;
         if ($sppd->touch()) {
-            if (TujuanSppd::where('id_sppd', $id)->delete()) {
+            TujuanSppd::where('id_sppd', $id)->delete();
                 for ($i = 0; $i < count($tujuans); $i++) {
                     if ($tujuans[$i]['file_undangan'] !== '-') {
                         $file = base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
@@ -180,7 +180,7 @@ class PengajuanController extends Controller
                     ]);
                 }
                 return new PostResource(true, 'success', []);
-            }
+            
         }
     }
 
