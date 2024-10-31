@@ -312,7 +312,7 @@ class PengajuanController extends Controller
         foreach($data as $d){
             $date=new DateTime($d->waktu_berangkat);
             $d->berangkat=$date->format('Y-m-d');
-            $d->value=$d->id;
+            $d->value=$d->id_sppd;
             $d->label=ListSppd::where('id', $d->id_sppd)->first()->nomor_sppd.' a/n '.ListSppd::where('id', $d->id_sppd)->first()->nama;
         }
         return new PostResource(true, 'list data sppd', $data);
