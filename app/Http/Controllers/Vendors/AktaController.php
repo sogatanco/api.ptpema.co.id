@@ -43,8 +43,6 @@ class AktaController extends Controller
         }
     }
 
-
-
     public function viewFile()
     {
 

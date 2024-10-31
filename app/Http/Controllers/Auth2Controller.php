@@ -208,6 +208,24 @@ class Auth2Controller extends Controller
         }
     }
 
+    public function changePas(Request $request){
+
+        $request->validate([
+            'password' => 'required|min:8',
+            'confirmPassword' => 'required'
+        ]);
+
+        $user = User::find(Auth::user()->id);
+
+        $user->password = Hash::make($request->password);
+
+        if($user->save()){
+            return response()->json([
+                "messsage" => "Password updated succesfully"
+            ], 200);
+        }
+    }
+
     public function forgotPassword(Request $request)
     {
         $request->validate([
