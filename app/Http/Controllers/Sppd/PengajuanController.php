@@ -146,14 +146,20 @@ class PengajuanController extends Controller
                 //     $t->termin[$jt+1]['tgl'] = $t->waktu_berangkat;
                 //     $t->termin[$jt+1]['jumlah'] = ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (($j_k-1) * $t->rate_um) + (($j_k-1) * $t->rate_tr) + (($j_k-1) * $t->rate_tiket) + (($j_k-1) * $t->rate_hotel);
                 // }
-                $t->termin[0]['id'] = 1;
-                $t->termin[0]['tgl'] = $t->waktu_berangkat;
-                $t->termin[0]['jumlah'] = 'sdg';
+                $obj=(object)[
+                    'id'=>1,
+                    'tgl'=>$t->waktu_berangkat,
+                    'jumlah'=>'sdgsdg'
+                ];
+                $t->termin=array($obj);
             
             } else {
-                $t->termin[0]['id'] = 1;
-                $t->termin[0]['tgl'] = $t->waktu_berangkat;
-                $t->termin[0]['jumlah'] = $t->uang_muka;
+                $obj=(object)[
+                    'id'=>1,
+                    'tgl'=>$t->waktu_berangkat,
+                    'jumlah'=>$t->uang_muka
+                ];
+                $t->termin=array($obj);
             }
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
