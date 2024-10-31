@@ -120,31 +120,32 @@ class PengajuanController extends Controller
                 $j_k = ($t->jumlah_hari) % 3;
                 $jt = ($t->jumlah_hari - $j_k) / 3;
                 for ($i = 0; $i < $jt; $i++) {
-                    if ($i = 0) {
-                        $t->termin[$i]['id'] = $i;
-                        $t->termin[$i]['tgl'] = $t->waktu_berangkat;
-                        $t->termin[$i]['jumlah'] = ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel);
-                    } elseif ($i = ($jt-1)) {
-                        if ($j_k > 0) {
-                            $t->termin[$i]['id'] = $i;
-                            $t->termin[$i]['tgl']= $t->waktu_berangkat;
-                            $t->termin[$i]['jumlah'] = (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm;
-                        } else {
+                    // if ($i = 0) {
+                    //     $t->termin[$i]['id'] = $i;
+                    //     $t->termin[$i]['tgl'] = $t->waktu_berangkat;
+                    //     $t->termin[$i]['jumlah'] = ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel);
+                    // } 
+                    // elseif ($i = ($jt-1)) {
+                    //     if ($j_k > 0) {
+                    //         $t->termin[$i]['id'] = $i;
+                    //         $t->termin[$i]['tgl']= $t->waktu_berangkat;
+                    //         $t->termin[$i]['jumlah'] = (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm;
+                    //     } else {
                             $t->termin[$i]['id']  = $i;
                             $t->termin[$i]['tgl'] = $t->waktu_berangkat;
                             $t->termin[$i]['jumlah'] = ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel);
-                        }
-                    } else {
-                        $t->termin[$i]['id']  = $i;
-                        $t->termin[$i]['tgl'] = $t->waktu_berangkat;
-                        $t->termin[$i]['jumlah'] = (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm;
-                    }
+                    //     }
+                    // } else {
+                    //     $t->termin[$i]['id']  = $i;
+                    //     $t->termin[$i]['tgl'] = $t->waktu_berangkat;
+                    //     $t->termin[$i]['jumlah'] = (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm;
+                    // }
                 }
-                if($j_k>0){
-                    $t->termin[$jt+1]['id']  = $jt+1;
-                    $t->termin[$jt+1]['tgl'] = $t->waktu_berangkat;
-                    $t->termin[$jt+1]['jumlah'] = ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (($j_k-1) * $t->rate_um) + (($j_k-1) * $t->rate_tr) + (($j_k-1) * $t->rate_tiket) + (($j_k-1) * $t->rate_hotel);
-                }
+                // if($j_k>0){
+                //     $t->termin[$jt+1]['id']  = $jt+1;
+                //     $t->termin[$jt+1]['tgl'] = $t->waktu_berangkat;
+                //     $t->termin[$jt+1]['jumlah'] = ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (($j_k-1) * $t->rate_um) + (($j_k-1) * $t->rate_tr) + (($j_k-1) * $t->rate_tiket) + (($j_k-1) * $t->rate_hotel);
+                // }
             } else {
                 $t->termin[0]['id'] = 1;
                 $t->termin[0]['tgl'] = $t->waktu_berangkat;
