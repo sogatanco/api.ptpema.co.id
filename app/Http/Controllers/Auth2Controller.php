@@ -211,12 +211,20 @@ class Auth2Controller extends Controller
     public function changePas(Request $request){
 
         $request->validate([
+            'oldPassword' => 'required',
             'password' => 'required|min:8',
             'confirmPassword' => 'required'
         ]);
 
         $userId = Auth::guard('api_vendor')->user()->id;
         $user = UserVendor::find($userId);
+
+        if(!Hash::check($request->oldPassword, $user->password)){
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Password lama tidak sesuai"
+            ], 400));
+        }
 
         $user->password = Hash::make($request->password);
 
