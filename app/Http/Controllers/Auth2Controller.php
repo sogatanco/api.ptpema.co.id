@@ -215,7 +215,8 @@ class Auth2Controller extends Controller
             'confirmPassword' => 'required'
         ]);
 
-        $user = User::find(Auth::user()->id);
+        $userId = Auth::guard('api_vendor')->user()->id;
+        $user = UserVendor::find($userId);
 
         $user->password = Hash::make($request->password);
 
