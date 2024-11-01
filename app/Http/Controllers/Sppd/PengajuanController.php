@@ -116,83 +116,55 @@ class PengajuanController extends Controller
             } else {
                 $t->base64_undangan = '-';
             }
+            
+
             if ($t->jumlah_hari > 3) {
+                
                 $j_k = ($t->jumlah_hari) % 3;
                 $jt = ($t->jumlah_hari - $j_k) / 3;
-                // for ($i = 0; $i < $jt; $i++) {
-                //     if ($i = 0) {
-                //         $t->termin[$i] = (object)[
-                //             'id' => $i,
-                //             'tgl' => $t->waktu_berangkat,
-                //             'jumlah' => ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
-                //         ];
-                //     } elseif ($i = ($jt - 1)) {
-                //         if ($j_k > 0) {
-                //             $t->termin[$i] = (object)[
-                //                 'id' => $i,
+                // $terminArray = [];    
+                //     for($tr = 0; $tr < $jt; $tr++) {
+                //         if($tr = 0) {
+                //             array_push($terminArray, (object)[
+                //                 'id' => $tr + 1,
                 //                 'tgl' => $t->waktu_berangkat,
-                //                 'jumlah' => (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
-                //             ];
-                //         } else {
-                //             $t->termin[$i] = (object)[
-                //                 'id' => $i,
-                //                 'tgl' => $t->waktu_berangkat,
-                //                 'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
-                //             ];
+                //                 'jumlah' => ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
+                //             ]);
                 //         }
-                //     } else {
-                //         $t->termin[$i] = (object)[
-                //             'id' => $i,
-                //             'tgl' => $t->waktu_berangkat,
-                //             'jumlah' => (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
-                //         ];
-                //     }
-                // }
-             
-
-
-                $terminArray = [];
-
-                    for($tr = 0; $tr < $jt; $tr++) {
-                        if($tr = 0) {
-                            array_push($terminArray, (object)[
-                                'id' => $tr + 1,
-                                'tgl' => $t->waktu_berangkat,
-                                'jumlah' => ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
-                            ]);
-                        }elseif($tr = ($jt - 1)){
-                            if ($j_k > 0){
-                                array_push($terminArray, (object)[
-                                    'id' => $tr + 1,
-                                    'tgl' => $t->waktu_berangkat,
-                                    'jumlah' =>(3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
-                                ]);
-                            }else{
-                                array_push($terminArray, (object)[
-                                    'id' => $tr + 1,
-                                    'tgl' => $t->waktu_berangkat,
-                                    'jumlah' =>($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
-                                ]);
-                            }
-                            
-                        }else{
-                            array_push($terminArray, (object)[
-                                'id' => $tr + 1,
-                                'tgl' => $t->waktu_berangkat,
-                                'jumlah' =>(3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
-                            ]);
-                        }
+                //         else{
+                //             array_push($terminArray, (object)[
+                //                 'id' => $tr + 1,
+                //                 'tgl' => $t->waktu_berangkat,
+                //                 'jumlah' =>(3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
+                //             ]);
+                //         }
                         
-                    }
-                if ($j_k > 0) {
-                    array_push($terminArray, (object)[
-                        'id' => $jt + 1,
-                        'tgl' => $t->waktu_berangkat,
-                        'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (($j_k - 1) * $t->rate_um) + (($j_k - 1) * $t->rate_tr) + (($j_k - 1) * $t->rate_tiket) + (($j_k - 1) * $t->rate_hotel)
-                    ]);
-                }
+                //     }
+                // if ($j_k > 0) {
+                //     array_push($terminArray, (object)[
+                //         'id' => $jt + 1,
+                //         'tgl' => $t->waktu_berangkat,
+                //         'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (($j_k - 1) * $t->rate_um) + (($j_k - 1) * $t->rate_tr) + (($j_k - 1) * $t->rate_tiket) + (($j_k - 1) * $t->rate_hotel)
+                //     ]);
+                // }
 
-                $t->termin = $terminArray;
+                // $t->termin = $terminArray;
+
+                $obj = (object)[
+                    'id' => 1,
+                    'tgl' => $j_k,
+                    'jumlah' => $jt
+                ];
+                $t->termin= array($obj);
+
+                $terminArray = []; 
+                for($tr = 0; $tr < $jt; $tr++) {
+                    if($tr==0){
+                        $terminArray[$tr]='ini '.$tr; 
+                    }
+                    $terminArray[$tr]=$tr;
+                }
+                $t->tetet=$terminArray;
 
 
             } else {
@@ -201,7 +173,7 @@ class PengajuanController extends Controller
                     'tgl' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
-                $t->termin = array($obj);
+                $t->termin= array($obj);
             }
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
