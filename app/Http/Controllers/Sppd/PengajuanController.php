@@ -116,6 +116,8 @@ class PengajuanController extends Controller
             } else {
                 $t->base64_undangan = '-';
             }
+            $terminArray = [];
+
             if ($t->jumlah_hari > 3) {
                 $j_k = ($t->jumlah_hari) % 3;
                 $jt = ($t->jumlah_hari - $j_k) / 3;
@@ -151,8 +153,7 @@ class PengajuanController extends Controller
              
 
 
-                $terminArray = [];
-
+               
                     for($tr = 0; $tr < $jt; $tr++) {
                         if($tr = 0) {
                             array_push($terminArray, (object)[
