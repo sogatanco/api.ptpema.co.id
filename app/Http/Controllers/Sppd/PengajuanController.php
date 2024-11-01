@@ -162,7 +162,7 @@ class PengajuanController extends Controller
                     if($tr==0){
                         $terminArray[$tr]=(object)[
                             'id' => $tr,
-                            'tgl_bayar' => $t->waktu_berangkat,
+                            'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat)),
                             'jumlah' =>  ($t->rate_wb*$t->rate_um)+ ($t->rate_wb*$t->rate_tr)  + $t->bbm + (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
                         ]; 
                     }elseif($tr==($jt-1)){
