@@ -237,14 +237,13 @@ class AuthController extends Controller
         if ($currentTimestamp->greaterThan($expirationTime)) {
             throw new HttpResponseException(response([
                 "status" => false,
-                "message" => "Invalid token"
+                "message" => "Invalid token",
+                "isExpired" => true,
             ], 404));
-            $isExpired = true;  
         } 
 
         return response()->json([
             "status" => true,
-            "isExpired" => $isExpired
         ], 200);
     }
 
