@@ -231,12 +231,20 @@ class AuthController extends Controller
         }
 
         $createdAt = $reqData->created_at;
+        $expirationTime = $createdAt->copy()->addHour();
         $currentTimestamp = Carbon::now();
-        $hoursElapsed = $createdAt->diffInHours($currentTimestamp);
+
+        if ($currentTimestamp->greaterThan($expirationTime)) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Invalid token"
+            ], 404));
+            $isExpired = true;  
+        } 
 
         return response()->json([
             "status" => true,
-            "hoursElapsed" => $hoursElapsed
+            "isExpired" => $isExpired
         ], 200);
     }
 
