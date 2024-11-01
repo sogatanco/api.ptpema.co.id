@@ -157,6 +157,12 @@ class PengajuanController extends Controller
                 ];
                 $t->termin= array($obj);
 
+                $terminArray = []; 
+                for($tr = 0; $tr < $jt; $tr++) {
+                    $terminArray[$tr]=$tr;
+                }
+                $t->tetet=$terminArray;
+
 
             } else {
                 $obj = (object)[
