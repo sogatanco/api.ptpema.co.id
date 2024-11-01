@@ -159,6 +159,9 @@ class PengajuanController extends Controller
 
                 $terminArray = []; 
                 for($tr = 0; $tr < $jt; $tr++) {
+                    if($tr==0){
+                        $terminArray[$tr]='ini '.$tr; 
+                    }
                     $terminArray[$tr]=$tr;
                 }
                 $t->tetet=$terminArray;
