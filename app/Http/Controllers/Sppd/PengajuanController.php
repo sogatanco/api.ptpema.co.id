@@ -156,7 +156,7 @@ class PengajuanController extends Controller
                     'jumlah' => $jt
                 ];
                 $t->termin= array($obj);
-
+                
                 $terminArray = []; 
                 for($tr = 0; $tr < $jt; $tr++) {
                     if($tr==0){
@@ -169,7 +169,7 @@ class PengajuanController extends Controller
                         if($j_k<=0){
                             $terminArray[$tr]=(object)[
                                 'id' => $tr,
-                                'tgl_bayar' => $t->waktu_berangkat,
+                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ 1 days')),
                                 'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (2* ($t->rate_um + $t->rate_tr) + (3*$t->rate_hotel))
                             ]; 
                         }else{
