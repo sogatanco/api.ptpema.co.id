@@ -15,6 +15,7 @@ use App\Models\ForgotPassword;
 use App\Models\Employe;
 use App\Mail\ForgotPasswordMail;
 use Carbon\Carbon;
+use Mail;
 
 class AuthController extends Controller
 {
