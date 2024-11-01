@@ -12,6 +12,7 @@ use App\Http\Resources\UserResource;
 use App\Http\Requests\UserRegisterRequest;
 use App\Models\User;
 use App\Models\Employe;
+use App\Mail\ForgotPasswordMail;
 
 class AuthController extends Controller
 {
@@ -165,8 +166,97 @@ class AuthController extends Controller
         }
     }
 
-    public function forgotPassword()
+    public function forgotPassword(Request $request)
     {
-        // send email
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $emailIsExist = User::where('email', $request->email)->count();
+
+        if ($emailIsExist == 0) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Email tidak terdaftar"
+            ], 404));
+        }
+        
+        $requestIsExist = ForgotPassword::where('email', $request->email)->count();
+        
+        if ($requestIsExist > 0) {
+            ForgotPassword::where('email', $request->email)->delete();
+        }
+
+        $hashedKey = Hash::make($request->email);
+
+        $key = str_replace('/', '', $hashedKey);;
+
+        $newForgotPassword = new ForgotPassword();
+        $newForgotPassword->email = $request->email;
+        $newForgotPassword->token = $key;
+        $newForgotPassword->save();
+
+        $mailData = [
+            'site_name' => 'Pema Information System',
+            'link' => 'https://sys.ptpema.co.id/auth/new-password?&key=' . $key,
+            'email' => $request->email
+        ];
+
+        $emailSent = Mail::to($request->email)->send(new ForgotPasswordMail($mailData));
+
+        if (!$emailSent) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Gagal mengirim email"
+            ], 500));
+        }
+        
+        return response()->json([
+            "messsage" => "Email sent succesfully",
+        ], 200);
+    }
+
+    public function checkToken($token)
+    {
+        $tokenIsExist = ForgotPassword::where('token', $token)->count();
+
+        if ($tokenIsExist == 0) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Invalid token"
+            ], 404));
+        }
+
+        return response()->json([
+            "status" => true,
+        ], 200);
+    }
+
+    public function newPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|min:8',
+            'confirmPassword' => 'required',
+            'token' => 'required'
+        ]);
+
+        $email = ForgotPassword::where('token', $request->token)->first()->email;
+
+        $user = User::where('email', $email)->first();
+        $user->password = Hash::make($request->password);
+        $isSaved = $user->save();
+
+        if (!$isSaved) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Gagal merubah password"
+            ], 500));
+        }
+
+        ForgotPassword::where('token', $request->token)->delete();
+
+        return response()->json([
+            "message" => "Password changed successfully"
+        ], 200);
     }
 }

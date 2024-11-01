@@ -24,8 +24,6 @@ Route::controller(DaActController::class)->group(function () {
      Route::get('/activities', 'index')->middleware("role:Employee");
 });
 
-
-
 Route::controller(DaActivitController::class)->group(function () {
      Route::post('/activit', 'store')->middleware("role:Employee");
      Route::get('/myactivity/{filter}', 'index')->middleware("role:Employee");
@@ -60,10 +58,9 @@ Route::controller(InvController::class)->group(function () {
      Route::post('inven/service/done', 'doneService')->middleware("role:PicAsset");
 });
 
-// vendor admin
-
+// vendor admin & viewer
 Route::controller(APerusahaanController::class)->group(function(){
-     Route::get('vendor/company', 'index')->middleware("role:AdminVendorUmum,AdminVendorScm");
+     Route::get('vendor/company', 'index')->middleware("role:AdminVendorUmum,AdminVendorScm,VendorViewer");
      Route::get('vendor/company/{id}', 'show')->middleware("role:AdminVendorUmum,AdminVendorScm");
      Route::get('vendor/request-list', 'requestList')->middleware("role:AdminVendorUmum,AdminVendorScm");
      Route::get('vendor/{id}/list-data-umum', 'listDataUmum')->middleware("role:AdminVendorUmum,AdminVendorScm");
