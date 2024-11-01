@@ -157,8 +157,8 @@ class PengajuanController extends Controller
                     'tgl' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
-                $t->termin['jumlah_termin']=1;
-                $t->termin = array($obj);
+                $t->termin->jumlah_termin=1;
+                $t->termin->t = array($obj);
             }
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
