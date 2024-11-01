@@ -157,6 +157,7 @@ class PengajuanController extends Controller
                     'tgl' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
+                $t->termin['jumlah_termin']=1;
                 $t->termin = array($obj);
             }
         }
