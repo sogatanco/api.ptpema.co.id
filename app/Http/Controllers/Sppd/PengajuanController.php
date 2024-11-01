@@ -183,7 +183,7 @@ class PengajuanController extends Controller
                     }else{
                         $terminArray[$tr]=(object)[
                             'id' => $tr,
-                            'tgl_bayar' => $t->waktu_berangkat,
+                            'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*3).' days')),
                             'jumlah' =>  (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
                         ]; 
                     }
@@ -193,7 +193,7 @@ class PengajuanController extends Controller
                 if($j_k>0){
                     $terminArray[$tr]=(object)[
                         'id' => $tr,
-                        'tgl_bayar' => $t->waktu_berangkat,
+                        'tgl_bayar' =>date('Y-m-d', strtotime($t->waktu_berangkat. '- '.$j_k.' days')),
                         'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($j_k-1)* ($t->rate_um + $t->rate_tr )+ ($j_k*$t->rate_hotel))
                     ];
                 }
