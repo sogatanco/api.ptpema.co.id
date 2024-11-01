@@ -161,20 +161,41 @@ class PengajuanController extends Controller
                 for($tr = 0; $tr < $jt; $tr++) {
                     if($tr==0){
                         $terminArray[$tr]=(object)[
-                            'id' => 1,
-                            'tgl_bayar' => $t->waktu_berangkat,
+                            'id' => $tr,
+                            'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat)),
                             'jumlah' =>  ($t->rate_wb*$t->rate_um)+ ($t->rate_wb*$t->rate_tr)  + $t->bbm + (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
                         ]; 
                     }elseif($tr==($jt-1)){
-                        $terminArray[$tr]='itu '.$tr; 
+                        if($j_k<=0){
+                            $terminArray[$tr]=(object)[
+                                'id' => $tr,
+                                'tgl_bayar' => $t->waktu_berangkat,
+                                'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (2* ($t->rate_um + $t->rate_tr) + (3*$t->rate_hotel))
+                            ]; 
+                        }else{
+                            $terminArray[$tr]=(object)[
+                                'id' => $tr,
+                                'tgl_bayar' => $t->waktu_berangkat,
+                                'jumlah' =>  (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                            ]; 
+                        }
+                       
                     }else{
                         $terminArray[$tr]=(object)[
-                            'id' => 1,
+                            'id' => $tr,
                             'tgl_bayar' => $t->waktu_berangkat,
                             'jumlah' =>  (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
                         ]; 
                     }
                     // $terminArray[$tr]=$tr;
+                }
+
+                if($j_k>0){
+                    $terminArray[$tr]=(object)[
+                        'id' => $tr,
+                        'tgl_bayar' => $t->waktu_berangkat,
+                        'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($j_k-1)* ($t->rate_um + $t->rate_tr )+ ($j_k*$t->rate_hotel))
+                    ];
                 }
                 $t->tetet=$terminArray;
 
