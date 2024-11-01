@@ -13,12 +13,13 @@ use App\Http\Requests\UserRegisterRequest;
 use App\Models\User;
 use App\Models\Employe;
 use App\Mail\ForgotPasswordMail;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'welcome', 'refresh']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'welcome', 'refresh', 'forgotPassword', 'checkToken', 'newPassword']]);
     }
 
     public function register(userRegisterRequest $request): userResource
@@ -218,17 +219,22 @@ class AuthController extends Controller
 
     public function checkToken($token)
     {
-        $tokenIsExist = ForgotPassword::where('token', $token)->count();
+        $reqData = ForgotPassword::where('token', $token)->first();
 
-        if ($tokenIsExist == 0) {
+        if ($reqData == null) {
             throw new HttpResponseException(response([
                 "status" => false,
                 "message" => "Invalid token"
             ], 404));
         }
 
+        $createdAt = $reqData->created_at;
+        $currentTimestamp = Carbon::now();
+        $hoursElapsed = $createdAt->diffInHours($currentTimestamp);
+
         return response()->json([
             "status" => true,
+            "hoursElapsed" => $hoursElapsed
         ], 200);
     }
 
