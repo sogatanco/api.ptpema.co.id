@@ -62,37 +62,12 @@ class APerusahaanController extends Controller
     public function listDataUmum($companyId)
     {
         $data = ViewPerusahaan::where('id', $companyId)->first();
-        $base64Npwp = null;
-        $base64Pvd = null;
-        
-        if (file_exists(public_path('vendor_file/' . $data->file_pvd))) {
-            $base64Pvd = base64_encode(file_get_contents(public_path('vendor_file/' . $data->file_pvd)));
-        }
-        
-        if (file_exists(public_path('vendor_file/' . $data->file_npwp))) {
-            $base64Npwp = base64_encode(file_get_contents(public_path('vendor_file/' . $data->file_npwp)));
-        }
-
-        $data['base64_npwp'] = $base64Npwp; 
-        $data['base64_pvd'] = $base64Pvd; 
         return new PostResource(true, 'List data umum', $data);
     }
 
     public function listJajaran($companyId)
     {
         $data['jajaran'] = Jajaran::where('perusahaan_id', $companyId)->get();
-
-        $struktur = ViewPerusahaan::where('id', $companyId)->get()->first()->struktur_organisasi;
-
-        $base64 = null;
-        $filename = null;
-        if (file_exists(public_path('vendor_file/' . $struktur))) {
-            $base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $struktur)));
-            $filename = 'struktur.pdf';
-        }
-
-        $data['struktur_filename'] = $filename;
-        $data['struktur_base64'] = $base64;
 
         return new PostResource(true, 'List jajaran', $data);
     }
