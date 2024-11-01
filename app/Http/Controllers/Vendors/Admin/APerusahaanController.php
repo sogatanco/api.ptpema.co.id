@@ -69,7 +69,7 @@ class APerusahaanController extends Controller
     {
         $data['jajaran'] = Jajaran::where('perusahaan_id', $companyId)->get();
 
-        $dta['file_struktur'] = ViewPerusahaan::where('id', $companyId)->get()->first()->struktur_organisasi;
+        $data['file_struktur'] = ViewPerusahaan::where('id', $companyId)->get()->first()->struktur_organisasi;
 
         return new PostResource(true, 'List jajaran', $data);
     }
