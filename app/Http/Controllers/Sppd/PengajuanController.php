@@ -194,7 +194,7 @@ class PengajuanController extends Controller
                     $terminArray[$tr]=(object)[
                         'id' => $tr,
                         'tgl_bayar' => $t->waktu_berangkat,
-                        'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($j_k-1)* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                        'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($j_k-1)* ($t->rate_um + $t->rate_tr )+ ($j_k*$t->rate_hotel))
                     ];
                 }
                 $t->tetet=$terminArray;
