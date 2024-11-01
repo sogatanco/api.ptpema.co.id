@@ -161,6 +161,8 @@ class PengajuanController extends Controller
                 for($tr = 0; $tr < $jt; $tr++) {
                     if($tr==0){
                         $terminArray[$tr]='ini '.$tr; 
+                    }else{
+                        $terminArray[$tr]='itu '.$tr; 
                     }
                     // $terminArray[$tr]=$tr;
                 }
