@@ -120,8 +120,8 @@ class PengajuanController extends Controller
 
             if ($t->jumlah_hari > 3) {
                 
-                // $j_k = ($t->jumlah_hari) % 3;
-                // $jt = ($t->jumlah_hari - $j_k) / 3;
+                $j_k = ($t->jumlah_hari) % 3;
+                $jt = ($t->jumlah_hari - $j_k) / 3;
                 // $terminArray = [];    
                 //     for($tr = 0; $tr < $jt; $tr++) {
                 //         if($tr = 0) {
@@ -150,6 +150,13 @@ class PengajuanController extends Controller
 
                 // $t->termin = $terminArray;
 
+                $obj = (object)[
+                    'id' => 1,
+                    'tgl' => $j_k,
+                    'jumlah' => $jt
+                ];
+                $t->termin= array($obj);
+
 
             } else {
                 $obj = (object)[
@@ -157,8 +164,7 @@ class PengajuanController extends Controller
                     'tgl' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
-                $t->termin->jumlah_termin=1;
-                $t->termin->t = array($obj);
+                $t->termin= array($obj);
             }
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
