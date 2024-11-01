@@ -74,9 +74,9 @@ class PengajuanController extends Controller
                     'tugas' => $tujuans[$i]['tugas_sppd'],
                     'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_berangkat'])),
                     'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali'])),
-                    'moda'=> $tujuans[$i]['moda'],
-                    'bbm'=> $tujuans[$i]['ubbm'],
-                    'share_with'=> $tujuans[$i]['shareWith'],
+                    'moda' => $tujuans[$i]['moda'],
+                    'bbm' => $tujuans[$i]['ubbm'],
+                    'share_with' => $tujuans[$i]['shareWith'],
 
                 ]);
             }
@@ -92,12 +92,11 @@ class PengajuanController extends Controller
             $data = ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'approved_by') {
             $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
-        } elseif($request->ref == 'by_umum'){
+        } elseif ($request->ref == 'by_umum') {
             $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
-        } elseif($request->ref == 'by_keuangan'){
+        } elseif ($request->ref == 'by_keuangan') {
             $data = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
-        }
-        else {
+        } else {
             $data = ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
 
@@ -117,6 +116,93 @@ class PengajuanController extends Controller
             } else {
                 $t->base64_undangan = '-';
             }
+            if ($t->jumlah_hari > 3) {
+                $j_k = ($t->jumlah_hari) % 3;
+                $jt = ($t->jumlah_hari - $j_k) / 3;
+                // for ($i = 0; $i < $jt; $i++) {
+                //     if ($i = 0) {
+                //         $t->termin[$i] = (object)[
+                //             'id' => $i,
+                //             'tgl' => $t->waktu_berangkat,
+                //             'jumlah' => ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
+                //         ];
+                //     } elseif ($i = ($jt - 1)) {
+                //         if ($j_k > 0) {
+                //             $t->termin[$i] = (object)[
+                //                 'id' => $i,
+                //                 'tgl' => $t->waktu_berangkat,
+                //                 'jumlah' => (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
+                //             ];
+                //         } else {
+                //             $t->termin[$i] = (object)[
+                //                 'id' => $i,
+                //                 'tgl' => $t->waktu_berangkat,
+                //                 'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
+                //             ];
+                //         }
+                //     } else {
+                //         $t->termin[$i] = (object)[
+                //             'id' => $i,
+                //             'tgl' => $t->waktu_berangkat,
+                //             'jumlah' => (3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
+                //         ];
+                //     }
+                // }
+             
+
+
+                $terminArray = [];
+
+                    for($tr = 0; $tr < $jt; $tr++) {
+                        if($tr = 0) {
+                            array_push($terminArray, (object)[
+                                'id' => $tr + 1,
+                                'tgl' => $t->waktu_berangkat,
+                                'jumlah' => ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
+                            ]);
+                        }elseif($tr = ($jt - 1)){
+                            if ($j_k > 0){
+                                array_push($terminArray, (object)[
+                                    'id' => $tr + 1,
+                                    'tgl' => $t->waktu_berangkat,
+                                    'jumlah' =>(3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
+                                ]);
+                            }else{
+                                array_push($terminArray, (object)[
+                                    'id' => $tr + 1,
+                                    'tgl' => $t->waktu_berangkat,
+                                    'jumlah' =>($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
+                                ]);
+                            }
+                            
+                        }else{
+                            array_push($terminArray, (object)[
+                                'id' => $tr + 1,
+                                'tgl' => $t->waktu_berangkat,
+                                'jumlah' =>(3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
+                            ]);
+                        }
+                        
+                    }
+                if ($j_k > 0) {
+                    array_push($terminArray, (object)[
+                        'id' => $jt + 1,
+                        'tgl' => $t->waktu_berangkat,
+                        'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (($j_k - 1) * $t->rate_um) + (($j_k - 1) * $t->rate_tr) + (($j_k - 1) * $t->rate_tiket) + (($j_k - 1) * $t->rate_hotel)
+                    ]);
+                }
+
+                $t->termin = $terminArray;
+
+
+            } else {
+                $obj = (object)[
+                    'id' => 1,
+                    'tgl' => $t->waktu_berangkat,
+                    'jumlah' => $t->uang_muka
+                ];
+                $t->termin = array($obj);
+            }
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
         if (!is_null($rill)) {
@@ -126,6 +212,8 @@ class PengajuanController extends Controller
         $data['realisasi'] = $rill;
 
         $data['tujuan_sppd'] = $tujuans;
+
+
         $data['check_doc'] = CheklistDoc::where('id_sppd', $id)->get();
 
         $data['realisasi_biaya'] = RealisasiBiaya::where('id_sppd', $id)->get();
@@ -146,41 +234,40 @@ class PengajuanController extends Controller
         $tujuans = $request->tujuan_sppd;
         if ($sppd->touch()) {
             TujuanSppd::where('id_sppd', $id)->delete();
-                for ($i = 0; $i < count($tujuans); $i++) {
-                    if ($tujuans[$i]['file_undangan'] !== '-') {
-                        $file = base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
-                        $fileName = 'undangan/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $sppd->id . '/undangan-' . ($i + 1) . '.pdf';
-                        if (Storage::disk('public_sppd')->put($fileName, $file)) {
-                            $file_undangan = $fileName;
-                        }
-                    } else {
-                        $file_undangan = '-';
+            for ($i = 0; $i < count($tujuans); $i++) {
+                if ($tujuans[$i]['file_undangan'] !== '-') {
+                    $file = base64_decode(str_replace('data:application/pdf;base64,', '', $tujuans[$i]['file_undangan']), true);
+                    $fileName = 'undangan/' . date('Y') . '/' . date('m') . '/' . date('d') . '/' . $sppd->id . '/undangan-' . ($i + 1) . '.pdf';
+                    if (Storage::disk('public_sppd')->put($fileName, $file)) {
+                        $file_undangan = $fileName;
                     }
-                    TujuanSppd::insert([
-                        'id_sppd' => $sppd->id,
-                        'jenis_sppd' => $tujuans[$i]['jenis_sppd'],
-                        'dasar' => $tujuans[$i]['dasar_sppd'],
-                        'file_undangan' => $file_undangan,
-                        'klasifikasi' => $tujuans[$i]['klasifikasi'],
-                        'sumber' => $tujuans[$i]['sumber_biaya'] || null,
-                        'rkap' => $tujuans[$i]['renbis'],
-                        'p_tiket' => $tujuans[$i]['p_tiket'],
-                        'p_um' => $tujuans[$i]['p_um'],
-                        'p_tl' => $tujuans[$i]['p_tl'],
-                        'p_us' => $tujuans[$i]['p_us'],
-                        'p_hotel' => $tujuans[$i]['p_hotel'],
-                        'kategori' => $tujuans[$i]['kategori_sppd'],
-                        'detail_tujuan' => $tujuans[$i]['detail_tujuan'],
-                        'tugas' => $tujuans[$i]['tugas_sppd'],
-                        'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_berangkat'])),
-                        'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali'])),
-                        'moda'=> $tujuans[$i]['moda'],
-                        'bbm'=> $tujuans[$i]['ubbm'],
-                        'share_with'=> $tujuans[$i]['shareWith'],
-                    ]);
+                } else {
+                    $file_undangan = '-';
                 }
-                return new PostResource(true, 'success', []);
-            
+                TujuanSppd::insert([
+                    'id_sppd' => $sppd->id,
+                    'jenis_sppd' => $tujuans[$i]['jenis_sppd'],
+                    'dasar' => $tujuans[$i]['dasar_sppd'],
+                    'file_undangan' => $file_undangan,
+                    'klasifikasi' => $tujuans[$i]['klasifikasi'],
+                    'sumber' => $tujuans[$i]['sumber_biaya'] || null,
+                    'rkap' => $tujuans[$i]['renbis'],
+                    'p_tiket' => $tujuans[$i]['p_tiket'],
+                    'p_um' => $tujuans[$i]['p_um'],
+                    'p_tl' => $tujuans[$i]['p_tl'],
+                    'p_us' => $tujuans[$i]['p_us'],
+                    'p_hotel' => $tujuans[$i]['p_hotel'],
+                    'kategori' => $tujuans[$i]['kategori_sppd'],
+                    'detail_tujuan' => $tujuans[$i]['detail_tujuan'],
+                    'tugas' => $tujuans[$i]['tugas_sppd'],
+                    'waktu_berangkat' => date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_berangkat'])),
+                    'waktu_kembali' =>  date('Y-m-d H:i:s', strtotime($tujuans[$i]['waktu_kembali'])),
+                    'moda' => $tujuans[$i]['moda'],
+                    'bbm' => $tujuans[$i]['ubbm'],
+                    'share_with' => $tujuans[$i]['shareWith'],
+                ]);
+            }
+            return new PostResource(true, 'success', []);
         }
     }
 
@@ -286,34 +373,36 @@ class PengajuanController extends Controller
     }
 
 
-    function done(Request $request){
-       
+    function done(Request $request)
+    {
+
 
         $proses = new Proses();
 
 
-        $file = base64_decode(str_replace('data:application/pdf;base64,', '',$request->file));
-        $fileName = 'proses/' .  $request->id_sppd . '/proses-' .$request->who . '.pdf';
+        $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->file));
+        $fileName = 'proses/' .  $request->id_sppd . '/proses-' . $request->who . '.pdf';
         if (Storage::disk('public_sppd')->put($fileName, $file)) {
             $file = $fileName;
         }
-        $proses->id_sppd=$request->id_sppd;
-        $proses->process_by=Employe::employeId();
-        $proses->as=$request->who;
-        $proses->file=$file;
-        if($proses->save()){
+        $proses->id_sppd = $request->id_sppd;
+        $proses->process_by = Employe::employeId();
+        $proses->as = $request->who;
+        $proses->file = $file;
+        if ($proses->save()) {
             return new PostResource(true, 'success', []);
         }
     }
 
-    function getNomorSppd(Request $request){
-        $wb=new DateTime($request->wb);
-        $data=HitunganBiaya::whereDate('waktu_berangkat', '>=', $wb)->get();
-        foreach($data as $d){
-            $date=new DateTime($d->waktu_berangkat);
-            $d->berangkat=$date->format('Y-m-d');
-            $d->value=$d->id;
-            $d->label=ListSppd::where('id', $d->id_sppd)->first()->nomor_sppd.' a/n '.ListSppd::where('id', $d->id_sppd)->first()->nama;
+    function getNomorSppd(Request $request)
+    {
+        $wb = new DateTime($request->wb);
+        $data = HitunganBiaya::whereDate('waktu_berangkat', '>=', $wb)->groupBy('id_sppd')->get();
+        foreach ($data as $d) {
+            $date = new DateTime($d->waktu_berangkat);
+            $d->berangkat = $date->format('Y-m-d');
+            $d->value = $d->id_sppd;
+            $d->label = ListSppd::where('id', $d->id_sppd)->first()->nomor_sppd . ' a/n ' . ListSppd::where('id', $d->id_sppd)->first()->nama;
         }
         return new PostResource(true, 'list data sppd', $data);
     }
