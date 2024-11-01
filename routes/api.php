@@ -28,6 +28,7 @@ Route::controller(AuthController::class)->group(function(){
     Route::get('auth/welcome/test', 'welcome');
     Route::post('auth/change-pas', 'changePas');
     Route::post('auth/forgot-password', 'forgotPassword');
+    Route::GET('/auth/forgot-password/{token}', 'checkToken');
     Route::post('auth/new-password', 'newPassword');
 });
 
