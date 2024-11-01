@@ -160,9 +160,19 @@ class PengajuanController extends Controller
                 $terminArray = []; 
                 for($tr = 0; $tr < $jt; $tr++) {
                     if($tr==0){
-                        $terminArray[$tr]='ini '.$tr; 
-                    }else{
+                        $terminArray[$tr]=(object)[
+                            'id' => 1,
+                            'tgl_bayar' => $t->waktu_berangkat,
+                            'jumlah' =>  ($t->rate_wb*$t->rate_um)+ ($t->rate_wb*$t->rate_tr)  + $t->bbm + (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                        ]; 
+                    }elseif($tr==($jt-1)){
                         $terminArray[$tr]='itu '.$tr; 
+                    }else{
+                        $terminArray[$tr]=(object)[
+                            'id' => 1,
+                            'tgl_bayar' => $t->waktu_berangkat,
+                            'jumlah' =>  (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                        ]; 
                     }
                     // $terminArray[$tr]=$tr;
                 }
