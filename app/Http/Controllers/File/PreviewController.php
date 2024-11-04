@@ -4,32 +4,23 @@ namespace App\Http\Controllers\File;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Vendor\Perusahaan;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
-class FileController extends Controller
+class PreviewController extends Controller
 {
-
     public function __construct()
     {
-        $this->middleware('auth:api_vendor');
+        $this->middleware('auth:api');
     }
 
-    public function download(Request $request)
-    {
+    public function getFile(Request $request, $companyId){
         $fileType = $request->query('type');
         $fileName = $request->query('file');
 
-        $userId = Auth::user()->id;
-        $perusahaan = Perusahaan::where('user_id', $userId)->first();
 
         if($fileType != 'null'){
-            $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileType . '/' . $fileName);
+            $filePath = public_path('vendor_file/' . $companyId . '/' . $fileType . '/' . $fileName);
         }else{
-            $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileName);
+            $filePath = public_path('vendor_file/' . $companyId . '/' . $fileName);
         }
 
         if (!file_exists($filePath)) {

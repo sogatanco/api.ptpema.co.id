@@ -169,5 +169,5 @@ Route::controller(ProjectReportController::class)->group(function(){
 });
 
 Route::controller(FileController::class)->group(function(){
-    Route::get('file/preview/{companyId}', 'filePreview');
+    Route::get('file/preview/{companyId}', 'filePreview')->middleware("role:AdminVendorScm,AdminVendorUmum,VendorViewer");
 });
