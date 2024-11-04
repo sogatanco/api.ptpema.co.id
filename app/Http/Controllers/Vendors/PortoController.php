@@ -20,11 +20,15 @@ class PortoController extends Controller
 
     public function store(Request $request)
     {
-        $file = base64_decode($request->file, true);
-        $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'spk_porto/' . time() . '.pdf';
-        if (Storage::disk('public_vendor')->put($filename, $file)) {
+        $file = $request->file('file'); 
+        
+        $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+
+        $filename = $perusahaanId . '/' . 'spk_porto/' . time() . '.pdf';
+
+        if (Storage::disk('public_vendor')->put($filename, file_get_contents($file))) {
             $akt = new Porto();
-            $akt->perusahaan_id  = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+            $akt->perusahaan_id  = $perusahaanId;
             $akt->nama_project = $request->nama_project;
             $akt->tahun_mulai = $request->tahun_mulai;
             $akt->tahun_selesai = $request->tahun_selesai;
@@ -35,10 +39,10 @@ class PortoController extends Controller
             if ($akt->save()) {
                 return new PostResource(true, 'New Porto Inserted', []);
             } else {
-                return new PostResource(false, 'Failed to add akta', []);
+                return new PostResource(false, 'Failed to add Porto', []);
             }
         } else {
-            return new PostResource(false, 'Failed to upload akta', []);
+            return new PostResource(false, 'Failed to upload porto', []);
         }
     }
 
@@ -46,10 +50,7 @@ class PortoController extends Controller
     {
         $filename = Porto::where('perusahaan_id', ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get();
 
-        foreach ($filename as $f) {
-            $f->file_base64 = base64_encode(file_get_contents(public_path('vendor_file/' . $f->spk)));
-        }
-        return new PostResource(true, 'Detail Akta ', $filename);
+        return new PostResource(true, 'Detail Portofolio ', $filename);
     }
 
     public function delete($id)

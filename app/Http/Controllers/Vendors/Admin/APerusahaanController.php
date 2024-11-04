@@ -69,7 +69,7 @@ class APerusahaanController extends Controller
     {
         $data['jajaran'] = Jajaran::where('perusahaan_id', $companyId)->get();
 
-        $dta['file_struktur'] = ViewPerusahaan::where('id', $companyId)->get()->first()->struktur_organisasi;
+        $data['file_struktur'] = ViewPerusahaan::where('id', $companyId)->get()->first()->struktur_organisasi;
 
         return new PostResource(true, 'List jajaran', $data);
     }
@@ -78,10 +78,6 @@ class APerusahaanController extends Controller
     {
         $listAkta = Akta::where('id_perusahaan', $companyId)->get();
 
-        for ($a = 0; $a < count($listAkta); $a++) {
-            $listAkta[$a]['file_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $listAkta[$a]->file_akta)));
-        }
-
         return new PostResource(true, 'List akta', $listAkta);
     }
 
@@ -89,18 +85,11 @@ class APerusahaanController extends Controller
     {
         $listIzin = Izin::where('perusahaan_id', $companyId)->get();
 
-        for ($i = 0; $i < count($listIzin); $i++) {
-            $listIzin[$i]['file_base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $listIzin[$i]->file_izin)));
-        }
-
         return new PostResource(true, 'List izin', $listIzin);
     }
 
     public function listDokumen($companyId)
     {
-        $data = Perusahaan::where('id', $companyId)->first();
-
-        $docs = [];
         $list = [
             'company_profile',
             'ktp_pengurus',
@@ -112,26 +101,14 @@ class APerusahaanController extends Controller
             'rek_koran',
         ];
 
-        for ($l = 0; $l < count($list); $l++) {
-            if (file_exists(public_path('vendor_file/' . $data[$list[$l]]))) {
-                $item[$l] = [
-                    "name" => $list[$l],
-                    "base_64" => base64_encode(file_get_contents(public_path('vendor_file/' . $data[$list[$l]])))
-                ];
-                array_push($docs, $item[$l]);
-            }
-        }
+        $data = Perusahaan::select($list)->where('id', $companyId)->first();
 
-        return new PostResource(true, 'List dokumen', $docs);
+        return new PostResource(true, 'List dokumen', $data);
     }
 
     public function listPortofolio($companyId)
     {
         $data = Porto::where('perusahaan_id', $companyId)->get();
-
-        for ($p = 0; $p < count($data); $p++) {
-            $data[$p]['base64'] = base64_encode(file_get_contents(public_path('vendor_file/' . $data[$p]->spk)));
-        }
 
         return new PostResource(true, 'List portofolio', $data);
     }

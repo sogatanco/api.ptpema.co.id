@@ -14,6 +14,7 @@ use App\Http\Controllers\Notification\TestingController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Report\ProjectReportController;
+use App\Http\Controllers\File\PreviewController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -165,4 +166,8 @@ Route::controller(ProjectController::class)->group(function(){
 // report routes
 Route::controller(ProjectReportController::class)->group(function(){
     Route::get('/report/all-project', "allProjectToExcel")->middleware("role:Employee");
+});
+
+Route::controller(PreviewController::class)->group(function(){
+    Route::get('file/preview/{companyId}', 'getFile')->middleware("role:AdminVendorScm,AdminVendorUmum,VendorViewer");
 });

@@ -48,11 +48,11 @@ class IzinController extends Controller
         $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
 
         $file = $request->file('file'); 
-        $filePath = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'izin/' . time() . '.pdf';
+        $filePath = $perusahaanId . '/' . 'izin/' . time() . '.pdf';
 
         if(Storage::disk('public_vendor')->put($filePath, file_get_contents($file))) {
             $akt = new Izin();
-            $akt->perusahaan_id = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+            $akt->perusahaan_id = $perusahaanId;
             $akt->nomor = $request->nomor;
             $akt->nama_izin = $request->nama_izin;
             $akt->tgl_terbit = $request->tgl_terbit;
