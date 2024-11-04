@@ -90,9 +90,6 @@ class APerusahaanController extends Controller
 
     public function listDokumen($companyId)
     {
-        $data = Perusahaan::where('id', $companyId)->first();
-
-        $docs = [];
         $list = [
             'company_profile',
             'ktp_pengurus',
@@ -104,17 +101,9 @@ class APerusahaanController extends Controller
             'rek_koran',
         ];
 
-        for ($l = 0; $l < count($list); $l++) {
-            if (file_exists(public_path('vendor_file/' . $data[$list[$l]]))) {
-                $item[$l] = [
-                    "name" => $list[$l],
-                    "base_64" => base64_encode(file_get_contents(public_path('vendor_file/' . $data[$list[$l]])))
-                ];
-                array_push($docs, $item[$l]);
-            }
-        }
+        $data = Perusahaan::select($list)->where('id', $companyId)->first();
 
-        return new PostResource(true, 'List dokumen', $docs);
+        return new PostResource(true, 'List dokumen', $data);
     }
 
     public function listPortofolio($companyId)
