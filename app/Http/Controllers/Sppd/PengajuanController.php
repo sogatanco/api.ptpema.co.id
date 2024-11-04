@@ -169,7 +169,7 @@ class PengajuanController extends Controller
             } else {
                 $obj = (object)[
                     'id' => 1,
-                    'tgl' => $t->waktu_berangkat,
+                    'tgl_bayar' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
                 $t->termin= array($obj);
