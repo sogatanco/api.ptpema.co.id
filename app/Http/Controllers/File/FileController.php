@@ -15,7 +15,7 @@ class FileController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:api_vendor');
+        $this->middleware('auth:api_vendor') || $this->middleware('auth:api');
     }
 
     public function download(Request $request)
