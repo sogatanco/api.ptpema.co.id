@@ -22,10 +22,13 @@ class PortoController extends Controller
     {
         $file = $request->file('file'); 
         
-        $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'spk_porto/' . time() . '.pdf';
+        $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+
+        $filename = $perusahaanId . '/' . 'spk_porto/' . time() . '.pdf';
+
         if (Storage::disk('public_vendor')->put($filename, file_get_contents($file))) {
             $akt = new Porto();
-            $akt->perusahaan_id  = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+            $akt->perusahaan_id  = $perusahaanId;
             $akt->nama_project = $request->nama_project;
             $akt->tahun_mulai = $request->tahun_mulai;
             $akt->tahun_selesai = $request->tahun_selesai;
