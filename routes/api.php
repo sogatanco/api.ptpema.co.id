@@ -14,7 +14,7 @@ use App\Http\Controllers\Notification\TestingController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Report\ProjectReportController;
-use App\Http\File\FileController;
+use App\Http\Controllers\File\FileController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
