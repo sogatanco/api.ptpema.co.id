@@ -4,6 +4,9 @@ namespace App\Http\Controllers\File;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
+use App\Models\Vendor\Perusahaan;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class PreviewController extends Controller
 {
