@@ -20,25 +20,27 @@ class PortoController extends Controller
 
     public function store(Request $request)
     {
-        $file = base64_decode($request->file, true);
-        $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/' . 'spk_porto/' . time() . '.pdf';
-        if (Storage::disk('public_vendor')->put($filename, $file)) {
+        $perusahaanId = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+        $file = $request->file('file'); 
+        $filePath = $perusahaanId . '/' . 'spk_porto/' . time() . '.pdf';
+
+        if (Storage::disk('public_vendor')->put($filePath, file_get_contents($file))) {
             $akt = new Porto();
-            $akt->perusahaan_id  = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
+            $akt->perusahaan_id  = $perusahaanId;
             $akt->nama_project = $request->nama_project;
             $akt->tahun_mulai = $request->tahun_mulai;
             $akt->tahun_selesai = $request->tahun_selesai;
             $akt->durasi = $request->durasi;
             $akt->nilai_po = $request->nilai_po;
             $akt->owner = $request->owner;
-            $akt->spk = $filename;
+            $akt->spk = $filePath;
             if ($akt->save()) {
                 return new PostResource(true, 'New Porto Inserted', []);
             } else {
-                return new PostResource(false, 'Failed to add akta', []);
+                return new PostResource(false, 'Failed to add Porto', []);
             }
         } else {
-            return new PostResource(false, 'Failed to upload akta', []);
+            return new PostResource(false, 'Failed to upload porto', []);
         }
     }
 
