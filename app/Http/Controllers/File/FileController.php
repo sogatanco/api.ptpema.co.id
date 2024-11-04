@@ -13,11 +13,6 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class FileController extends Controller
 {
 
-    public function __construct()
-    {
-        $this->middleware('auth:api_vendor') || $this->middleware('auth:api');
-    }
-
     public function download(Request $request)
     {
         $fileType = $request->query('type');
@@ -30,6 +25,32 @@ class FileController extends Controller
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileType . '/' . $fileName);
         }else{
             $filePath = public_path('vendor_file/' . $perusahaan->id . '/' . $fileName);
+        }
+
+        if (!file_exists($filePath)) {
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => "File Tidak Ditemukan",
+            ], 404));
+        }
+
+        $headers = array(
+            'Content-Type: application/pdf',
+        );
+
+        return Response::download($filePath, $fileName, $headers);
+    }
+
+    public function filePreview(Request $request, $companyId)
+    {
+        $fileType = $request->query('type');
+        $fileName = $request->query('file');
+
+
+        if($fileType != 'null'){
+            $filePath = public_path('vendor_file/' . $companyId . '/' . $fileType . '/' . $fileName);
+        }else{
+            $filePath = public_path('vendor_file/' . $companyId . '/' . $fileName);
         }
 
         if (!file_exists($filePath)) {

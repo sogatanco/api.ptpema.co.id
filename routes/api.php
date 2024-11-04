@@ -169,5 +169,5 @@ Route::controller(ProjectReportController::class)->group(function(){
 });
 
 Route::controller(FileController::class)->group(function(){
-    Route::get('file/download', 'download');
+    Route::get('file/preview', 'filePreview');
 });
