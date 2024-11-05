@@ -332,6 +332,7 @@ class PengajuanController extends Controller
                         'id_tujuan' => $tujuan_realisasi[$i]['id'],
                         'rill_tiket'  => $tujuan_realisasi[$i]['rill_tiket'],
                         'rill_hotel' => $tujuan_realisasi[$i]['rill_hotel'],
+                        'rill_bbm' => $tujuan_realisasi[$i]['rill_bbm'],
                         'rill_wb' =>  date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wb'])),
                         'rill_wt' => date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wt'])),
                     ]);
