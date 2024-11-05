@@ -29,7 +29,7 @@ class APerusahaanController extends Controller
 {
     function index()
     {
-        $data = ViewPerusahaan::get();
+        $data = ViewPerusahaan::orderBy('id', 'desc')->get();
         return new PostResource(true, 'list data Perusahaan', $data);
     }
 
