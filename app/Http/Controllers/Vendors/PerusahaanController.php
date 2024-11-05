@@ -155,6 +155,9 @@ class PerusahaanController extends Controller
         }
 
         $newData = [
+            'nama_perusahaan' => $request->nama_perusahaan,
+            'tipe' => $request->tipe,
+            'bentuk_usaha' => $request->bentuk_usaha,
             'email_alternatif' => $request->email_alternatif,
             'no_npwp' => $request->no_npwp,
             'hp' => $request->hp,
