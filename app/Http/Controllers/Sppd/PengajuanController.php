@@ -122,41 +122,7 @@ class PengajuanController extends Controller
                 
                 $j_k = ($t->jumlah_hari) % 3;
                 $jt = ($t->jumlah_hari - $j_k) / 3;
-                // $terminArray = [];    
-                //     for($tr = 0; $tr < $jt; $tr++) {
-                //         if($tr = 0) {
-                //             array_push($terminArray, (object)[
-                //                 'id' => $tr + 1,
-                //                 'tgl' => $t->waktu_berangkat,
-                //                 'jumlah' => ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr) + ($t->rate_wb * $t->rate_tiket) + ($t->rate_wb * $t->rate_hotel) + $t->bbm + (2 * $t->rate_um) + (2 * $t->rate_tr) + (2 * $t->rate_tiket) + (2 * $t->rate_hotel)
-                //             ]);
-                //         }
-                //         else{
-                //             array_push($terminArray, (object)[
-                //                 'id' => $tr + 1,
-                //                 'tgl' => $t->waktu_berangkat,
-                //                 'jumlah' =>(3 * $t->rate_um) + (3 * $t->rate_tr) + (3 * $t->rate_tiket) + (3 * $t->rate_hotel) + $t->bbm
-                //             ]);
-                //         }
-                        
-                //     }
-                // if ($j_k > 0) {
-                //     array_push($terminArray, (object)[
-                //         'id' => $jt + 1,
-                //         'tgl' => $t->waktu_berangkat,
-                //         'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr) + ($t->rate_wt * $t->rate_tiket) + ($t->rate_wt * $t->rate_hotel) + $t->bbm + (($j_k - 1) * $t->rate_um) + (($j_k - 1) * $t->rate_tr) + (($j_k - 1) * $t->rate_tiket) + (($j_k - 1) * $t->rate_hotel)
-                //     ]);
-                // }
-
-                // $t->termin = $terminArray;
-
-                $obj = (object)[
-                    'id' => 1,
-                    'tgl' => $j_k,
-                    'jumlah' => $jt
-                ];
-                $t->termin= array($obj);
-                
+             
                 $terminArray = []; 
                 for($tr = 0; $tr < $jt; $tr++) {
                     if($tr==0){
@@ -197,13 +163,13 @@ class PengajuanController extends Controller
                         'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($j_k-1)* ($t->rate_um + $t->rate_tr )+ ($j_k*$t->rate_hotel))
                     ];
                 }
-                $t->tetet=$terminArray;
+                $t->termin=$terminArray;
 
 
             } else {
                 $obj = (object)[
                     'id' => 1,
-                    'tgl' => $t->waktu_berangkat,
+                    'tgl_bayar' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
                 $t->termin= array($obj);
