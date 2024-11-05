@@ -62,6 +62,13 @@ class APerusahaanController extends Controller
     public function listDataUmum($companyId)
     {
         $data = ViewPerusahaan::where('id', $companyId)->first();
+
+        if($data == null){
+            throw new HttpResponseException(response([
+                "message" => "data not found"
+            ], 404));
+        }
+
         return new PostResource(true, 'List data umum', $data);
     }
 
