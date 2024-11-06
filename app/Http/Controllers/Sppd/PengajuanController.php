@@ -96,7 +96,10 @@ class PengajuanController extends Controller
             $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
         } elseif ($request->ref == 'by_keuangan') {
             $data = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
-        } else {
+        } elseif($request->ref == 'uangmuka'){
+            $data = ListSppd::where('current_status', 'signed')->where('uangmuka', 0)->get();
+        }      
+        else {
             $data = ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
 
