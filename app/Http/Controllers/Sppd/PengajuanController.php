@@ -96,7 +96,13 @@ class PengajuanController extends Controller
             $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
         } elseif ($request->ref == 'by_keuangan') {
             $data = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
-        } else {
+        } elseif($request->ref == 'uangmuka'){
+            $data1 = ListSppd::where('current_status', 'signed')->where('uangmuka', 0)->get();
+            $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
+            $tempCollection = collect([$data1, $data2]);
+            $data=$tempCollection->flatten(1);
+        }      
+        else {
             $data = ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
 
@@ -168,7 +174,7 @@ class PengajuanController extends Controller
 
             } else {
                 $obj = (object)[
-                    'id' => 1,
+                    'id' => 0,
                     'tgl_bayar' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
@@ -332,6 +338,7 @@ class PengajuanController extends Controller
                         'id_tujuan' => $tujuan_realisasi[$i]['id'],
                         'rill_tiket'  => $tujuan_realisasi[$i]['rill_tiket'],
                         'rill_hotel' => $tujuan_realisasi[$i]['rill_hotel'],
+                        'rill_bbm' => $tujuan_realisasi[$i]['rill_bbm'],
                         'rill_wb' =>  date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wb'])),
                         'rill_wt' => date('Y-m-d H:i:s', strtotime($tujuan_realisasi[$i]['rill_wt'])),
                     ]);
