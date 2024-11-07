@@ -22,9 +22,9 @@ class AktaController extends Controller
 
     public function store(Request $request)
     {
-        $file = base64_decode($request->file, true);
+        $file = $request->file('file');
         $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id.'/'.'akta/' . time() . '.pdf';
-        if (Storage::disk('public_vendor')->put($filename, $file)) {
+        if (Storage::disk('public_vendor')->put($filename, file_get_contents($file))) {
             $akt = new Akta();
             $akt->id_perusahaan = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id;
             $akt->no_akta = $request->no_akta;

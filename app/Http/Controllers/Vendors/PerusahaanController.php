@@ -130,9 +130,9 @@ class PerusahaanController extends Controller
 
         // upload file pvd
         if ($request->filePvd) {
-            $file = base64_decode($request->filePvd, true);
+            $file = $request->file('filePvd');
             $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/pvd.pdf';
-            if (Storage::disk('public_vendor')->put($filename, $file)) {
+            if (Storage::disk('public_vendor')->put($filename, file_get_contents($file))) {
                 $p = Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
                 $p->file_pvd = $filename;
                 $p->save();
@@ -143,9 +143,9 @@ class PerusahaanController extends Controller
 
         // upload file npwp
         if ($request->fileNpwp) {
-            $file = base64_decode($request->fileNpwp, true);
+            $file = $request->file('fileNpwp');
             $filename = ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id . '/npwp.pdf';
-            if (Storage::disk('public_vendor')->put($filename, $file)) {
+            if (Storage::disk('public_vendor')->put($filename, file_get_contents($file))) {
                 $p = Perusahaan::find(ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id);
                 $p->file_npwp = $filename;
                 $p->save();
