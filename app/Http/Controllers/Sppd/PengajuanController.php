@@ -94,11 +94,18 @@ class PengajuanController extends Controller
             $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
         } elseif ($request->ref == 'by_umum') {
             $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
+            foreach($data as $d){
+                $d->type_proses='pemesanan_tiket';
+            }
         } elseif ($request->ref == 'by_keuangan') {
-            $data = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
-        } elseif($request->ref == 'uangmuka'){
             $data1 = ListSppd::where('current_status', 'signed')->where('uangmuka', 0)->get();
+            foreach($data1 as $d1){
+                $d1->type_proses='uang_muka';
+            }
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
+            foreach($data2 as $d2){
+                $d2->type_proses='realisasi';
+            }
             $tempCollection = collect([$data1, $data2]);
             $data=$tempCollection->flatten(1);
         }      
