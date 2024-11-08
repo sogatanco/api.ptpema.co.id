@@ -106,12 +106,13 @@ class PengajuanController extends Controller
             // }
             $data1=$data1->map(function($d1){
                 $d1->id_unique=(rand(1,100)*$d1->id);
+                $d1->type_proses='uangmuka';
                 $d1array=$d1->toArray();
                 $d1array=['id_unique'=>(rand(1,100)*$d1->id)]+$d1array;
                 return $d1array;
             });
 
-            
+
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
             foreach($data2 as $d2){
                 $d2->id_unique=(rand(1,100)*$d2->id);
