@@ -96,6 +96,7 @@ class PengajuanController extends Controller
             $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
             foreach($data as $d){
                 $d->type_proses='pemesanan_tiket';
+                $d->id_unique=rand(1,100)*$d->id;
             }
         } elseif ($request->ref == 'by_keuangan') {
             $data1 = ListSppd::where('uangmuka', 0)->where('current_status', 'signed')->get();
