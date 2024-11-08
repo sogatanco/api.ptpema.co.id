@@ -98,7 +98,7 @@ class PengajuanController extends Controller
                 $d->type_proses='pemesanan_tiket';
             }
         } elseif ($request->ref == 'by_keuangan') {
-            $data1 = ListSppd::where('current_status', 'signed')->where('uangmuka', 0)->get();
+            $data1 = ListSppd::where('uangmuka', 0)->where('current_status', 'signed')->get();
             foreach($data1 as $d1){
                 $d1->type_proses='uang_muka';
             }
