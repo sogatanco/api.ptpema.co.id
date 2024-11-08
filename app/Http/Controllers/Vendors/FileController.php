@@ -133,8 +133,16 @@ class FileController extends Controller
 
         if(Storage::disk('public_vendor')->put($filePath, file_get_contents($file))){
 
-            $perusahaan->$fileTitle = $filePath;
-
+            if($fileTitle=='npwp'){
+                $perusahaan->file_npwp = $filePath;
+            }elseif($fileTitle=='pvd'){
+                $perusahaan->file_pvd = $filePath;
+            }elseif($fileTitle=='struktur'){
+                $perusahaan->struktur_organisasi = $filePath;
+            }else{
+                $perusahaan->$fileTitle = $filePath;
+            }
+            
             if($perusahaan->save()){
                 return new PostResource(true, "Upload ".$fileTitle." Berhasil", []);
             }else{
