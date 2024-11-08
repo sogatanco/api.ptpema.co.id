@@ -99,13 +99,8 @@ class PengajuanController extends Controller
             }
         } elseif ($request->ref == 'by_keuangan') {
             $data1 = ListSppd::where('uangmuka', 0)->where('current_status', 'signed')->get();
-            // foreach($data1 as $d1){
-            //     $d1->id_unique=(rand(1,100)*$d1->id);
-            //     $d1->type_proses='uangmuka';
-            //     $d1=['id_unique'=>'dsgsdg']+$d1->toArray();
-            // }
+           
             $data1=$data1->map(function($d1){
-                $d1->id_unique=(rand(1,100)*$d1->id);
                 $d1->type_proses='uangmuka';
                 $d1array=$d1->toArray();
                 $d1array=['id_unique'=>(rand(1,100)*$d1->id)]+$d1array;
@@ -114,11 +109,12 @@ class PengajuanController extends Controller
 
 
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
-            foreach($data2 as $d2){
-                $d2->id_unique=(rand(1,100)*$d2->id);
+            $data2=$data2->map(function($d2){
                 $d2->type_proses='realisasi';
-                // sort((array)$d2);
-            }
+                $d2array=$d2->toArray();
+                $d2array=['id_unique'=>(rand(1,100)*$d2->id)]+$d2array;
+                return $d2array;
+            });
             $tempCollection = collect([$data1, $data2]);
             $data=$tempCollection->flatten(1);
         }      
