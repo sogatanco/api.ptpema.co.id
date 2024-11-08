@@ -102,10 +102,9 @@ class PengajuanController extends Controller
             foreach($data1 as $d1){
                 $d1->id_unique=(rand(1,100)*$d1->id);
                 $d1->type_proses='uang_muka';
-                // $d1->ddd=gettype($d1);
-                $d='gdgdg';
-                $d22=(array)$d1;
-                array_unshift($d22, $d);
+                // $d1->ddd=gettype($d1);d
+                $d11=$d1->toArray();
+                $d1=['ssss'=>'dsgsdg']+$d1;
             }
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
             foreach($data2 as $d2){
