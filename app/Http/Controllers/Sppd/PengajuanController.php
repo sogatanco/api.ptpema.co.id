@@ -100,10 +100,12 @@ class PengajuanController extends Controller
         } elseif ($request->ref == 'by_keuangan') {
             $data1 = ListSppd::where('uangmuka', 0)->where('current_status', 'signed')->get();
             foreach($data1 as $d1){
+                $d1->id_unique=(rand(1,100)*$d1->id);
                 $d1->type_proses='uang_muka';
             }
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
             foreach($data2 as $d2){
+                $d2->id_unique=(rand(1,100)*$d2->id);
                 $d2->type_proses='realisasi';
             }
             $tempCollection = collect([$data1, $data2]);
