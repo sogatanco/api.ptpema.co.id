@@ -104,13 +104,13 @@ class PengajuanController extends Controller
                 $d1->type_proses='uang_muka';
                 // $d1->ddd=gettype($d1);d
                 $d11=$d1->toArray();
-                $d1=['ssss'=>'dsgsdg']+$d1;
+                $d1=['ssss'=>'dsgsdg']+$d11;
             }
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
             foreach($data2 as $d2){
                 $d2->id_unique=(rand(1,100)*$d2->id);
                 $d2->type_proses='realisasi';
-                sort((array)$d2);
+                // sort((array)$d2);
             }
             $tempCollection = collect([$data1, $data2]);
             $data=$tempCollection->flatten(1);
