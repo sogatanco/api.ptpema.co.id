@@ -393,12 +393,12 @@ class PengajuanController extends Controller
     function getNomorSppd(Request $request)
     {
         $wb = new DateTime($request->wb);
-        $data = HitunganBiaya::whereDate('waktu_berangkat', '>=', $wb)->groupBy('id_sppd')->get();
+        $data = ListSppd::whereDate('mulai_tugas', '>=', $wb)->get();
         foreach ($data as $d) {
-            $date = new DateTime($d->waktu_berangkat);
+            $date = new DateTime($d->mulai_tugas);
             $d->berangkat = $date->format('Y-m-d');
-            $d->value = $d->id_sppd;
-            $d->label = ListSppd::where('id', $d->id_sppd)->first()->nomor_sppd . ' a/n ' . ListSppd::where('id', $d->id_sppd)->first()->nama;
+            $d->value = $d->id;
+            $d->label = $d->nomor_sppd . ' a/n ' . $d->nama;
         }
         return new PostResource(true, 'list data sppd', $data);
     }
