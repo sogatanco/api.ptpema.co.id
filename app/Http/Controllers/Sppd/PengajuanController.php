@@ -39,8 +39,8 @@ class PengajuanController extends Controller
         $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
-        $sppd->ketetapan =
-            $sppd->submitted_by = Employe::employeId();
+        $sppd->narasi_st=$request->narasi;
+        $sppd->submitted_by = Employe::employeId();
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
         $tujuans = $request->tujuan_sppd;
 
@@ -225,6 +225,7 @@ class PengajuanController extends Controller
         $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
+        $sppd->narasi_st=$request->narasi;
         $tujuans = $request->tujuan_sppd;
         if ($sppd->touch()) {
             TujuanSppd::where('id_sppd', $id)->delete();
