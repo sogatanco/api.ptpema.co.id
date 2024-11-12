@@ -12,6 +12,7 @@ use App\Models\ESign\VerifStep;
 use App\Models\Sppd\ApprovedSppd;
 use App\Models\Sppd\CheklistDoc;
 use App\Models\Sppd\CheklistDokRealisasi;
+use App\Models\Sppd\Dashboard;
 use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
@@ -401,5 +402,12 @@ class PengajuanController extends Controller
             $d->label = $d->nomor_sppd . ' a/n ' . $d->nama;
         }
         return new PostResource(true, 'list data sppd', $data);
+    }
+
+    function dataDashboard(){
+        $data=[];
+        $dashboard=Dashboard::first();
+        $data['dashboard']=$dashboard;
+        return new PostResource(true, 'dashboard', $data);
     }
 }
