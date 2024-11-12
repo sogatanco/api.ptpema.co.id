@@ -23,6 +23,7 @@ use App\Models\Sppd\LogPengajuan;
 use App\Models\Sppd\Proses;
 use App\Models\Sppd\Realisasi;
 use App\Models\Sppd\RealisasiBiaya;
+use App\Models\Sppd\RealisasiRkap;
 use App\Models\Sppd\RealisasiTujuan;
 use DateTime;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -408,6 +409,17 @@ class PengajuanController extends Controller
         $data=[];
         $dashboard=Dashboard::first();
         $data['dashboard']=$dashboard;
+
+        $label=[];
+        $value=[];
+        $rkap=RealisasiRkap::whereYear('tahun', date("Y"))->get();
+        foreach($rkap as $r){
+            array_push($label, $r->renbis);
+            array_push($value, $r->persen);
+        }
+
+        $data['label']=$label;
+        $data['value']=$value;
         return new PostResource(true, 'dashboard', $data);
     }
 }
