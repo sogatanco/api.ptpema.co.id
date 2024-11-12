@@ -13,6 +13,7 @@ use App\Models\Sppd\ApprovedSppd;
 use App\Models\Sppd\CheklistDoc;
 use App\Models\Sppd\CheklistDokRealisasi;
 use App\Models\Sppd\Dashboard;
+use App\Models\Sppd\GroupByKar;
 use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
@@ -420,6 +421,9 @@ class PengajuanController extends Controller
 
         $data['label']=$label;
         $data['value']=$value;
+
+        $gKar=GroupByKar::orderBy('budget', 'DESC')->get();
+        $data['groupKar']=$gKar;
         return new PostResource(true, 'dashboard', $data);
     }
 }
