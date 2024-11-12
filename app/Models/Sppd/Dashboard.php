@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Dashboard extends Model
 {
     protected $connection='mysql4';
-    protected $table='dashboard';
+    protected $table='dasboard';
 }
