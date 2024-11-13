@@ -27,4 +27,13 @@ class PositionController extends Controller
             'data' => $data
         ], 200);
     }
+
+    public function allPosition()
+    {
+        $data = Position::all();
+
+        return response()->json([
+            'data' => $data
+        ], 200);
+    }
 }
