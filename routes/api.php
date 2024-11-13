@@ -186,5 +186,5 @@ Route::controller(OrganizationController::class)->group(function(){
 
 Route::controller(PositionController::class)->group(function(){
     Route::get('/master/pos/insert-code', "insertCode")->middleware("role:Employee");
-    Route::get('/master/pos/list', "allPosition")->middleware("role:Employee");
+    Route::get('/master/pos/list', "allPosition")->middleware("client");
 });
