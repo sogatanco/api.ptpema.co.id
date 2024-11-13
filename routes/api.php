@@ -175,5 +175,5 @@ Route::controller(PreviewController::class)->group(function(){
 
 // Master Structure router
 Route::controller(BoardOrganizationController::class)->group(function(){
-    Route::get('/master/insert-code', "insertCode")->middleware("role:Admin");
+    Route::get('/master/insert-code', "insertCode")->middleware("role:Employee");
 });
