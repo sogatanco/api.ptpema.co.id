@@ -27,4 +27,13 @@ class OrganizationController extends Controller
             'data' => $data
         ], 200);
     }
+
+    public function allOrganization()
+    {
+        $data = Organization::all();
+
+        return response()->json([
+            'data' => $data
+        ], 200);
+    }
 }

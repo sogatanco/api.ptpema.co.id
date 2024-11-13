@@ -183,7 +183,7 @@ Route::controller(BoardOrganizationController::class)->group(function(){
 
 Route::controller(OrganizationController::class)->group(function(){
     Route::get('/master/org/insert-code', "insertCode")->middleware("role:Employee");
-    Route::get('/master/org/list', "allPosition")->middleware("client");
+    Route::get('/master/org/list', "allOrganization")->middleware("client");
 });
 
 Route::controller(PositionController::class)->group(function(){
