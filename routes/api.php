@@ -15,6 +15,7 @@ use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Report\ProjectReportController;
 use App\Http\Controllers\File\PreviewController;
+use App\Http\Controllers\Master\BoardOrganizationController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -170,4 +171,9 @@ Route::controller(ProjectReportController::class)->group(function(){
 
 Route::controller(PreviewController::class)->group(function(){
     Route::get('file/preview/{companyId}', 'getFile')->middleware("role:AdminVendorScm,AdminVendorUmum,VendorViewer");
+});
+
+// Master Structure router
+Route::controller(BoardOrganizationController::class)->group(function(){
+    Route::get('/master/insert-code', "insertCode")->middleware("role:Admin");
 });
