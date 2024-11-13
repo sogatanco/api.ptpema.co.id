@@ -13,9 +13,9 @@ class BoardOrganizationController extends Controller
         $data = BoardOrganization::all();
 
         // generate 4 digit random number
-        $code = mt_rand(1000, 9999);
-
+        
         for ($i=0; $i < count($data); $i++) { 
+            $code = mt_rand(1000, 9999);
             $data[$i]['board_code'] = 'BOA'.$code;
         }
 
