@@ -13,25 +13,14 @@ class OrganizationController extends Controller
         $data = Organization::all();
 
         // generate 4 digit random number
-        $savedCode = [];
-
+        
         for ($i=0; $i < count($data); $i++) { 
             $code = mt_rand(1000, 9999);
 
-            if(!in_array($code, $savedCode)){
-                
-                $theCode = 'ORG'.$code;
-            }else{
-                $otherCode = mt_rand(1000, 9999);
-                $theCode = 'ORG'.$otherCode;
-            }
-
-            Organization::where('board_id', $data[$i]['board_id'])
+            Organization::where('organization_id', $data[$i]['organization_id'])
                                 ->update([
-                                    'organization_code' => $theCode
+                                    'organization_code' => 'ORG'.$code
                                 ]);
-
-            array_push($savedCode, $theCode);
         }
 
         return response()->json([
