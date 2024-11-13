@@ -12,6 +12,8 @@ use App\Models\ESign\VerifStep;
 use App\Models\Sppd\ApprovedSppd;
 use App\Models\Sppd\CheklistDoc;
 use App\Models\Sppd\CheklistDokRealisasi;
+use App\Models\Sppd\Dashboard;
+use App\Models\Sppd\GroupByKar;
 use App\Models\Sppd\HitunganBiaya;
 use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
@@ -22,6 +24,7 @@ use App\Models\Sppd\LogPengajuan;
 use App\Models\Sppd\Proses;
 use App\Models\Sppd\Realisasi;
 use App\Models\Sppd\RealisasiBiaya;
+use App\Models\Sppd\RealisasiRkap;
 use App\Models\Sppd\RealisasiTujuan;
 use DateTime;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -39,8 +42,8 @@ class PengajuanController extends Controller
         $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
-        $sppd->ketetapan =
-            $sppd->submitted_by = Employe::employeId();
+        $sppd->narasi_st=$request->narasi;
+        $sppd->submitted_by = Employe::employeId();
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
         $tujuans = $request->tujuan_sppd;
 
@@ -94,11 +97,28 @@ class PengajuanController extends Controller
             $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
         } elseif ($request->ref == 'by_umum') {
             $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
+            foreach($data as $d){
+                $d->type_proses='pemesanan_tiket';
+                $d->id_unique=rand(1,100)*$d->id;
+            }
         } elseif ($request->ref == 'by_keuangan') {
-            $data = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
-        } elseif($request->ref == 'uangmuka'){
-            $data1 = ListSppd::where('current_status', 'signed')->where('uangmuka', 0)->get();
+            $data1 = ListSppd::where('uangmuka', 0)->where('current_status', 'signed')->get();
+           
+            $data1=$data1->map(function($d1){
+                $d1->type_proses='uangmuka';
+                $d1array=$d1->toArray();
+                $d1array=['id_unique'=>(rand(1,100)*$d1->id)]+$d1array;
+                return $d1array;
+            });
+
+
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
+            $data2=$data2->map(function($d2){
+                $d2->type_proses='realisasi';
+                $d2array=$d2->toArray();
+                $d2array=['id_unique'=>(rand(1,100)*$d2->id)]+$d2array;
+                return $d2array;
+            });
             $tempCollection = collect([$data1, $data2]);
             $data=$tempCollection->flatten(1);
         }      
@@ -208,6 +228,7 @@ class PengajuanController extends Controller
         $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
+        $sppd->narasi_st=$request->narasi;
         $tujuans = $request->tujuan_sppd;
         if ($sppd->touch()) {
             TujuanSppd::where('id_sppd', $id)->delete();
@@ -375,13 +396,34 @@ class PengajuanController extends Controller
     function getNomorSppd(Request $request)
     {
         $wb = new DateTime($request->wb);
-        $data = HitunganBiaya::whereDate('waktu_berangkat', '>=', $wb)->groupBy('id_sppd')->get();
+        $data = ListSppd::whereDate('mulai_tugas', '>=', $wb)->get();
         foreach ($data as $d) {
-            $date = new DateTime($d->waktu_berangkat);
+            $date = new DateTime($d->mulai_tugas);
             $d->berangkat = $date->format('Y-m-d');
-            $d->value = $d->id_sppd;
-            $d->label = ListSppd::where('id', $d->id_sppd)->first()->nomor_sppd . ' a/n ' . ListSppd::where('id', $d->id_sppd)->first()->nama;
+            $d->value = $d->id;
+            $d->label = $d->nomor_sppd . ' a/n ' . $d->nama;
         }
         return new PostResource(true, 'list data sppd', $data);
+    }
+
+    function dataDashboard(){
+        $data=[];
+        $dashboard=Dashboard::first();
+        $data['dashboard']=$dashboard;
+
+        $label=[];
+        $value=[];
+        $rkap=RealisasiRkap::whereYear('tahun', date("Y"))->get();
+        foreach($rkap as $r){
+            array_push($label, $r->renbis);
+            array_push($value, $r->persen);
+        }
+
+        $data['label']=$label;
+        $data['value']=$value;
+
+        $gKar=GroupByKar::orderBy('budget', 'DESC')->get();
+        $data['groupKar']=$gKar;
+        return new PostResource(true, 'dashboard', $data);
     }
 }
