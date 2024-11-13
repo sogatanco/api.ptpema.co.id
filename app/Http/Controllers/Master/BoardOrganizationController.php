@@ -17,9 +17,10 @@ class BoardOrganizationController extends Controller
             $code = mt_rand(1000, 9999);
             $data[$i]['board_code'] = 'BOA'.$code;
 
-            $new = BoardOrganization::where('board_id', $data[$i]['board_id'])->first();
-            $new->board_code = 'BOA'.$code;
-            $new->save();
+            BoardOrganization::where('board_id', $data[$i]['board_id'])
+                                ->update([
+                                    'board_code' => 'BOA'.$code
+                                ]);
         }
 
         return response()->json([
