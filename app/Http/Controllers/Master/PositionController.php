@@ -19,7 +19,7 @@ class PositionController extends Controller
 
             Position::where('position_id', $data[$i]['position_id'])
                                 ->update([
-                                    'position_code' => 'POS'.$code
+                                    'position_code' => 'PO'.$code.'S'
                                 ]);
         }
 
