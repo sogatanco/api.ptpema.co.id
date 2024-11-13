@@ -422,7 +422,7 @@ class PengajuanController extends Controller
         $data['label']=$label;
         $data['value']=$value;
 
-        $gKar=GroupByKar::get();
+        $gKar=GroupByKar::orderBy('budget', 'DESC')->get();
         $data['groupKar']=$gKar;
         return new PostResource(true, 'dashboard', $data);
     }
