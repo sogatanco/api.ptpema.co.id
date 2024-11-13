@@ -27,4 +27,13 @@ class BoardOrganizationController extends Controller
             'data' => $data
         ], 200);
     }
+
+    public function allBoard()
+    {
+        $data = BoardOrganization::all();
+
+        return response()->json([
+            'data' => $data
+        ], 200);
+    }
 }

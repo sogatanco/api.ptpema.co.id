@@ -178,10 +178,12 @@ Route::controller(PreviewController::class)->group(function(){
 // Master Structure router
 Route::controller(BoardOrganizationController::class)->group(function(){
     Route::get('/master/insert-code', "insertCode")->middleware("role:Employee");
+    Route::get('/master/board/list', "allBoard")->middleware("client");
 });
 
 Route::controller(OrganizationController::class)->group(function(){
     Route::get('/master/org/insert-code', "insertCode")->middleware("role:Employee");
+    Route::get('/master/org/list', "allPosition")->middleware("client");
 });
 
 Route::controller(PositionController::class)->group(function(){
