@@ -17,7 +17,7 @@ class BoardOrganizationController extends Controller
             $code = mt_rand(1000, 9999);
             $data[$i]['board_code'] = 'BOA'.$code;
 
-            $new = BoardOrganization::find($data[$i]['id']);
+            $new = BoardOrganization::find($data[$i]['board_id']);
             $new->board_code = 'BOA'.$code;
             $new->save();
         }
