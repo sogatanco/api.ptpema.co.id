@@ -17,6 +17,7 @@ use App\Http\Controllers\Report\ProjectReportController;
 use App\Http\Controllers\File\PreviewController;
 use App\Http\Controllers\Master\BoardOrganizationController;
 use App\Http\Controllers\Master\OrganizationController;
+use App\Http\Controllers\Master\PositionController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -181,4 +182,8 @@ Route::controller(BoardOrganizationController::class)->group(function(){
 
 Route::controller(OrganizationController::class)->group(function(){
     Route::get('/master/org/insert-code', "insertCode")->middleware("role:Employee");
+});
+
+Route::controller(PositionController::class)->group(function(){
+    Route::get('/master/pos/insert-code', "insertCode")->middleware("role:Employee");
 });
