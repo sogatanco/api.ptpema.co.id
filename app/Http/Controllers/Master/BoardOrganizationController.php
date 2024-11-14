@@ -11,18 +11,29 @@ class BoardOrganizationController extends Controller
 {
     public function update(Request $request)
     {
-    
         $data = BoardOrganization::where('board_code', $request->board_code)->first();
 
-        // if(!$isUpdated){
-        //    throw new HttpResponseException(response([
-        //        'message' => 'Failed to update board'
-        //    ], 500));
-        // }          
+        if(!$data){
+           throw new HttpResponseException(response([
+               'status' => false,
+               'message' => 'Board not exist in sys'
+           ], 500));
+        }
+
+        $isSaved = BoardOrganization::where('board_code', $request->board_code)
+                            ->update([
+                                'board_name' => $request->board_name,
+                            ]);
+
+        if(!$isSaved){
+           throw new HttpResponseException(response([
+               'status' => false,
+               'message' => 'Failed to update board'
+           ], 500));
+        }
         
         return response()->json([
             'message' => 'Successfully updated board',
-            'data' => $data
         ], 200);
     }
 
