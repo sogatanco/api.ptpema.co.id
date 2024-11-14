@@ -12,5 +12,5 @@ class BoardOrganization extends Model
     protected $fillable = [
         'board_code',
         'board_name',
-    ]
+    ];
 }
