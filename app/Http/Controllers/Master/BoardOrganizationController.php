@@ -12,7 +12,7 @@ class BoardOrganizationController extends Controller
     public function update(Request $request)
     {
     
-        BoardOrganization::where('board_code', $request->board_code)->first();
+        $data = BoardOrganization::where('board_code', $request->board_code)->first();
 
         // if(!$isUpdated){
         //    throw new HttpResponseException(response([
@@ -21,7 +21,8 @@ class BoardOrganizationController extends Controller
         // }          
         
         return response()->json([
-            'message' => 'Successfully updated board'
+            'message' => 'Successfully updated board',
+            'data' => $data
         ], 200);
     }
 
