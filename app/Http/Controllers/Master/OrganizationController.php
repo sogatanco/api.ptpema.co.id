@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Organization;
-use App\Models\Structure\BoardOrganization;
+use App\Models\BoardOrganization;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class OrganizationController extends Controller
