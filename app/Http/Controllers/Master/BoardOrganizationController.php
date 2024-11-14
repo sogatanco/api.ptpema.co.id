@@ -12,16 +12,16 @@ class BoardOrganizationController extends Controller
     public function update(Request $request)
     {
     
-        $isUpdated = BoardOrganization::where('board_code', $request->board_code)
+        BoardOrganization::where('board_code', $request->board_code)
                             ->update([
                                 'board_name' => $request->board_name
                             ]);
 
-        if(!$isUpdated){
-           throw new HttpResponseException(response([
-               'message' => 'Failed to update board'
-           ], 500));
-        }          
+        // if(!$isUpdated){
+        //    throw new HttpResponseException(response([
+        //        'message' => 'Failed to update board'
+        //    ], 500));
+        // }          
         
         return response()->json([
             'message' => 'Successfully updated board'
