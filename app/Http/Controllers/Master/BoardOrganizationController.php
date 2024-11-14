@@ -8,6 +8,23 @@ use App\Models\BoardOrganization;
 
 class BoardOrganizationController extends Controller
 {
+    public function update(Request $request, $code)
+    {
+        $isUpdated = BoardOrganization::where('board_code', $code)
+                            ->update([
+                                'board_name' => $request->board_name
+                            ]);
+        if(!$isUpdated){
+           throw new HttpResponseException(response([
+               'message' => 'Failed to update board'
+           ], 500));
+        }          
+        
+        return response()->json([
+            'message' => 'Successfully updated board'
+        ], 200);
+    }
+
     public function insertCode()
     {
         $data = BoardOrganization::all();
