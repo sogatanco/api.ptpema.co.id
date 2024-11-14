@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Organization;
 use App\Models\Structure\BoardOrganization;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class OrganizationController extends Controller
 {
@@ -13,7 +14,7 @@ class OrganizationController extends Controller
     {
         $board = BoardOrganization::where('board_code', $request->board_code)->first();
 
-        $data = BoardOrganization::create([
+        $data = Organization::create([
             'board_id' => $board->board_id,
             'organization_code' => $request->organization_code,
             'organization_name' => $request->organization_name,
