@@ -16,6 +16,7 @@ class BoardOrganizationController extends Controller
         if(!$data){
 
            BoardOrganization::create([
+                'company_id' => 1,
                'board_code' => $request->board_code,
                'board_name' => $request->board_name,
            ]);
