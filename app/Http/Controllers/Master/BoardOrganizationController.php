@@ -33,6 +33,7 @@ class BoardOrganizationController extends Controller
         }
         
         return response()->json([
+            'status' => true,
             'message' => 'Successfully updated board',
         ], 200);
     }
