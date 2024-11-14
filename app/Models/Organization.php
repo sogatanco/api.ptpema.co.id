@@ -9,4 +9,9 @@ class Organization extends Model
 {
     use HasFactory;
     protected $table = 'organizations';
+    protected $fillable = [
+        'board_id',
+        'organization_code',
+        'organization_name',
+    ];
 }
