@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Adm\StaticAdmController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -127,4 +128,10 @@ Route::controller(PengajuanController::class)->group(function(){
 
 Route::controller(ScanVerif::class)->group(function(){
      Route::post('verif/{id_doc}', 'getDetail');
+});
+
+// ADM
+Route::controller(StaticAdmController::class)->group(function(){
+     Route::get('adm/divisi', 'getDivisi')->middleware("role:Employee");
+     Route::get('adm/signers/{id}', 'getSigner')->middleware("role:Employee");
 });
