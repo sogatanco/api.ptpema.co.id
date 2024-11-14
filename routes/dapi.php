@@ -133,4 +133,5 @@ Route::controller(ScanVerif::class)->group(function(){
 // ADM
 Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/divisi', 'getDivisi')->middleware("role:Employee");
+     Route::get('adm/signers/{id}', 'getSigner')->middleware("role:Employee");
 });
