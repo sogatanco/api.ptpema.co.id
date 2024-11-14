@@ -19,7 +19,7 @@ class BoardOrganizationController extends Controller
                'board_code' => $request->board_code,
                'board_name' => $request->board_name,
            ]);
-           
+
         } else {
 
             $isSaved = BoardOrganization::where('board_code', $request->board_code)
