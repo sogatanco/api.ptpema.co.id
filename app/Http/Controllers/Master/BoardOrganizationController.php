@@ -11,11 +11,15 @@ class BoardOrganizationController extends Controller
 {
     public function update(Request $request)
     {
+        return response()->json([
+            'message' => 'testing update'
+        ], 200);
+
         $isUpdated = BoardOrganization::where('board_code', $request->board_code)
                             ->update([
                                 'board_name' => $request->board_name
                             ]);
-                            
+
         if(!$isUpdated){
            throw new HttpResponseException(response([
                'message' => 'Failed to update board'
