@@ -9,6 +9,27 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BoardOrganizationController extends Controller
 {
+    public function store(Request $request)
+    {
+        $data = BoardOrganization::create([
+            'company_id' => 1,
+            'board_code' => $request->board_code,
+            'board_name' => $request->board_name,
+        ]);
+
+        if(!$data){
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Failed to create board'
+            ], 500));
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully created board',
+        ], 200);
+    }
+
     public function update(Request $request)
     {
         $data = BoardOrganization::where('board_code', $request->board_code)->first();

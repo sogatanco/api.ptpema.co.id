@@ -178,6 +178,7 @@ Route::controller(PreviewController::class)->group(function(){
 // Master Structure router
 Route::controller(BoardOrganizationController::class)->group(function(){
     Route::get('/master/insert-code', "insertCode")->middleware("role:Employee");
+    Route::post('/master/board/store', "store")->middleware("client");
     Route::get('/master/board/list', "allBoard")->middleware("client");
     Route::put('/master/board/update', "update")->middleware("client");
 });
