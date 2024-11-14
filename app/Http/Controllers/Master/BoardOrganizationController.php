@@ -12,10 +12,7 @@ class BoardOrganizationController extends Controller
     public function update(Request $request)
     {
     
-        BoardOrganization::where('board_code', $request->board_code)
-                            ->update([
-                                'board_name' => $request->board_name
-                            ]);
+        BoardOrganization::where('board_code', $request->board_code)->first();
 
         // if(!$isUpdated){
         //    throw new HttpResponseException(response([
