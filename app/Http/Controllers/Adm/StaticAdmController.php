@@ -13,7 +13,7 @@ class StaticAdmController extends Controller
 {
     public function getDivisi()
     {
-        $data = Organization::where('board_id', Structure::where('employe_id', Employe::employeId())->first()->board_id)->get();
+        $data = Organization::where('is_division', 1)->where('board_id', Structure::where('employe_id', Employe::employeId())->first()->board_id)->get();
 
         return new PostResource(true, "Data Divisi", $data);
     }
