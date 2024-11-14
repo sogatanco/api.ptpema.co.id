@@ -178,8 +178,8 @@ Route::controller(PreviewController::class)->group(function(){
 // Master Structure router
 Route::controller(BoardOrganizationController::class)->group(function(){
     Route::get('/master/insert-code', "insertCode")->middleware("role:Employee");
-    Route::post('/master/board/store', "store")->middleware("client");
     Route::get('/master/board/list', "allBoard")->middleware("client");
+    Route::post('/master/board/store', "store")->middleware("client");
     Route::put('/master/board/update', "update")->middleware("client");
     Route::delete('/master/board/delete', "delete")->middleware("client");
 });
@@ -187,6 +187,9 @@ Route::controller(BoardOrganizationController::class)->group(function(){
 Route::controller(OrganizationController::class)->group(function(){
     Route::get('/master/org/insert-code', "insertCode")->middleware("role:Employee");
     Route::get('/master/org/list', "allOrganization")->middleware("client");
+    Route::post('/master/org/store', "store")->middleware("client");
+    Route::put('/master/org/update', "update")->middleware("client");
+    Route::delete('/master/org/delete', "delete")->middleware("client");
 });
 
 Route::controller(PositionController::class)->group(function(){
