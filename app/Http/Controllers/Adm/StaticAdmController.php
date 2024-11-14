@@ -27,7 +27,7 @@ class StaticAdmController extends Controller
             ->orWhere('id_base', 4);
         })->get();
 
-        $data->merge(Structure::where('employe_active',1)->where('id_base', 7)->where('organization_id', $id)->get());
+        $data->push(Structure::where('employe_active',1)->where('id_base', 7)->where('organization_id', $id)->first());
 
         return new PostResource(true, 'Pilihan signers', $data);
     }
