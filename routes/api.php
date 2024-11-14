@@ -15,6 +15,9 @@ use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Report\ProjectReportController;
 use App\Http\Controllers\File\PreviewController;
+use App\Http\Controllers\Master\BoardOrganizationController;
+use App\Http\Controllers\Master\OrganizationController;
+use App\Http\Controllers\Master\PositionController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -170,4 +173,23 @@ Route::controller(ProjectReportController::class)->group(function(){
 
 Route::controller(PreviewController::class)->group(function(){
     Route::get('file/preview/{companyId}', 'getFile')->middleware("role:AdminVendorScm,AdminVendorUmum,VendorViewer");
+});
+
+// Master Structure router
+Route::controller(BoardOrganizationController::class)->group(function(){
+    Route::get('/master/insert-code', "insertCode")->middleware("role:Employee");
+    Route::post('/master/board/store', "store")->middleware("client");
+    Route::get('/master/board/list', "allBoard")->middleware("client");
+    Route::put('/master/board/update', "update")->middleware("client");
+    Route::delete('/master/board/delete', "delete")->middleware("client");
+});
+
+Route::controller(OrganizationController::class)->group(function(){
+    Route::get('/master/org/insert-code', "insertCode")->middleware("role:Employee");
+    Route::get('/master/org/list', "allOrganization")->middleware("client");
+});
+
+Route::controller(PositionController::class)->group(function(){
+    Route::get('/master/pos/insert-code', "insertCode")->middleware("role:Employee");
+    Route::get('/master/pos/list', "allPosition")->middleware("client");
 });
