@@ -9,12 +9,13 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BoardOrganizationController extends Controller
 {
-    public function update(Request $request, $code)
+    public function update(Request $request)
     {
-        $isUpdated = BoardOrganization::where('board_code', $code)
+        $isUpdated = BoardOrganization::where('board_code', $request->board_code)
                             ->update([
                                 'board_name' => $request->board_name
                             ]);
+                            
         if(!$isUpdated){
            throw new HttpResponseException(response([
                'message' => 'Failed to update board'
