@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BoardOrganization;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BoardOrganizationController extends Controller
 {

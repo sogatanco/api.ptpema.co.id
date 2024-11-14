@@ -179,7 +179,7 @@ Route::controller(PreviewController::class)->group(function(){
 Route::controller(BoardOrganizationController::class)->group(function(){
     Route::get('/master/insert-code', "insertCode")->middleware("role:Employee");
     Route::get('/master/board/list', "allBoard")->middleware("client");
-    Route::put('/master/board/update}', "update")->middleware("client");
+    Route::put('/master/board/update', "update")->middleware("client");
 });
 
 Route::controller(OrganizationController::class)->group(function(){
