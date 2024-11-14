@@ -181,6 +181,7 @@ Route::controller(BoardOrganizationController::class)->group(function(){
     Route::post('/master/board/store', "store")->middleware("client");
     Route::get('/master/board/list', "allBoard")->middleware("client");
     Route::put('/master/board/update', "update")->middleware("client");
+    Route::delete('/master/board/delete', "delete")->middleware("client");
 });
 
 Route::controller(OrganizationController::class)->group(function(){

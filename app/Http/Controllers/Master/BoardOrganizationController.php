@@ -9,6 +9,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BoardOrganizationController extends Controller
 {
+    
     public function store(Request $request)
     {
         $data = BoardOrganization::create([
@@ -58,10 +59,19 @@ class BoardOrganizationController extends Controller
 
         }
 
-        
         return response()->json([
             'status' => true,
             'message' => 'Successfully updated board',
+        ], 200);
+    }
+
+    public function delete(Request $request)
+    {
+        BoardOrganization::where('board_code', $request->board_code)->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully deleted board',
         ], 200);
     }
 
