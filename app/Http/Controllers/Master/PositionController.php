@@ -5,9 +5,39 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Position;
+use App\Models\Organization;
+use Illuminate\Http\Exceptions\HttpResponseException;
+
 
 class PositionController extends Controller
 {
+    public function store(Request $request)
+    {
+        $organization = Organization::where('organization_code', $request->organization_code)->first();
+
+        $parent = Position::where('position_code', $request->parent_code)->first();
+
+        $data = Position::create([
+            'organization_id' => $organization->organization_id,
+            'parent_id' => $parent->position_id,
+            'position_code' => $request->position_code,
+            'position_name' => $request->position_name,
+            'id_base' => 9
+        ]);
+
+        if(!$data){
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Failed to create position'
+            ], 500));
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully created position',
+        ], 200);
+    }
+
     public function insertCode()
     {
         $data = Position::all();
