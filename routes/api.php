@@ -196,6 +196,5 @@ Route::controller(PositionController::class)->group(function(){
     Route::get('/master/pos/insert-code', "insertCode")->middleware("role:Employee");
     Route::get('/master/pos/list', "allPosition")->middleware("client");
     Route::post('/master/pos/store', "store")->middleware("client");
-    Route::put('/master/pos/update', "update")->middleware("client");
     Route::delete('/master/pos/delete', "delete")->middleware("client");
 });

@@ -23,7 +23,7 @@ class PositionController extends Controller
             'position_name' => $request->position_name,
             'id_base' => 9
         ]);
-        
+
         if(!$positionSaved){
             throw new HttpResponseException(response([
                 'status' => false,
@@ -51,6 +51,16 @@ class PositionController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Successfully created position',
+        ], 200);
+    }
+
+    public function delete(Request $request)
+    {
+        Position::where('position_code', $request->position_code)->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully deleted position',
         ], 200);
     }
 
