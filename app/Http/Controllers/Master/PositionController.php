@@ -24,6 +24,11 @@ class PositionController extends Controller
             'id_base' => 9
         ]);
 
+        return response()->json([
+            'status' => true,
+            $positionSaved
+        ], 200);
+
         if(!$positionSaved){
             throw new HttpResponseException(response([
                 'status' => false,
