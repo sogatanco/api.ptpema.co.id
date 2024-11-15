@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\AtasanTerkait;
 use App\Models\Employe;
 use App\Models\Organization;
 use App\Models\Structure;
@@ -26,6 +27,12 @@ class StaticAdmController extends Controller
             $query->where('id_base', 3)
             ->orWhere('id_base', 4);
         })->get();
+
+        $mEks=AtasanTerkait::where('employe_id', Structure::where('employe_active', 1)->where('organization_id', $id)->first()->employe_id)->first()->manager_eksekutif;
+        if($mEks){
+            $data->push(Structure::where('employe_active',1 )->where('employe_id', $mEks)->first());
+        }
+        // 
 
         $manager=Structure::where('employe_active',1)->where('id_base', 7)->where('organization_id', $id)->first();
         $supervisor=Structure::where('employe_active',1)->where('id_base', 8)->where('organization_id', $id)->get();
