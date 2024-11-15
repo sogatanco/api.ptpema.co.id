@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Position;
 use App\Models\Organization;
 use Illuminate\Http\Exceptions\HttpResponseException;
-
+use App\Models\StructureMaster;
 
 class PositionController extends Controller
 {
@@ -17,18 +17,34 @@ class PositionController extends Controller
 
         $parent = Position::where('position_code', $request->parent_code)->first();
 
-        $data = Position::create([
+        $positionSaved = Position::create([
             'organization_id' => $organization->organization_id,
-            'parent_id' => $parent->position_id,
             'position_code' => $request->position_code,
             'position_name' => $request->position_name,
             'id_base' => 9
         ]);
 
-        if(!$data){
+        if(!$positionSaved){
             throw new HttpResponseException(response([
                 'status' => false,
                 'message' => 'Failed to create position'
+            ], 500));
+        }
+
+        // save to structure master
+        $masterSaved = StructureMaster::create([
+                        'position_id' => $positionSaved->position_id,
+                        'direct_supervisor' => $parent->position_id
+                    ]);
+
+        if(!$masterSaved){
+
+            // delete new position saved
+            Position::where('position_id', $positionSaved->position_id)->delete();
+
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Failed to create structure master'
             ], 500));
         }
 
