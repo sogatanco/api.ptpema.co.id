@@ -23,12 +23,7 @@ class PositionController extends Controller
             'position_name' => $request->position_name,
             'id_base' => 9
         ]);
-
-        return response()->json([
-            'status' => true,
-            $positionSaved
-        ], 200);
-
+        
         if(!$positionSaved){
             throw new HttpResponseException(response([
                 'status' => false,
@@ -38,7 +33,7 @@ class PositionController extends Controller
 
         // save to structure master
         $masterSaved = StructureMaster::create([
-                        'position_id' => $positionSaved->position_id,
+                        'position_id' => $positionSaved->id,
                         'direct_supervisor' => $parent->position_id
                     ]);
 
