@@ -97,8 +97,6 @@ class EmployeController extends Controller
             $position = Position::where('position_code', $positionCode)->first();
             
             $data = [
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
                 'position_id' => $position->position_id
             ];
 
