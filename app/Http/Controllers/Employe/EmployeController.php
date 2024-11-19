@@ -91,9 +91,9 @@ class EmployeController extends Controller
     public function update(Request $request, $employe_id)
     {
 
-        $positionCode = $request->position_code;
+        $positionCode = $request->position_code ?? null;
 
-        if($positionCode){
+        if($positionCode != null){
             $position = Position::where('position_code', $positionCode)->first();
             $request->position_id = $position->position_id;
         }
