@@ -92,14 +92,16 @@ class EmployeController extends Controller
     {
 
         $positionCode = $request->position_code ?? null;
+        $isPic = $request->is_pic ?? null;
+        $employeActive = $request->employe_active ?? null;
 
-        if($positionCode != null){
+        if($positionCode != null || $isPic != null || $employeActive != null){
             $position = Position::where('position_code', $positionCode)->first();
             
             $data = [
-                'position_id' => $position->position_id,
-                'as_pic' => $request->as_pic,
-                'employe_active' => $request->employe_active
+                $positionCode != null && 'position_id' => $position->position_id,
+                $isPic != null && 'is_pic' => $isPic,
+                $employeActive != null && 'employe_active' => $employeActive
             ];
 
         }else{
