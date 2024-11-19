@@ -53,7 +53,7 @@ Route::controller(Auth2Controller::class)->group(function(){
 Route::controller(EmployeController::class)->group(function(){
     Route::get("/employe", 'index')->middleware("role:Admin");
     Route::get("/employe/assignment-list", 'assignmentList')->middleware("role:Employee");
-    Route::post('/employe', 'store');
+    Route::post('/employe', 'store')->middlewate("client");
     Route::patch('/employe/{employe_id}', 'update');
     Route::get('/employe/{employe_id}', 'show');
     Route::delete("/employe/{employe_id}", 'destroy');
@@ -161,7 +161,7 @@ Route::controller(ClientController::class)->group(function(){
     Route::get('/client/structure', "stucture")->middleware("client");
 });
 
-// check struckture
+// check structure
 Route::controller(ProjectController::class)->group(function(){
     Route::get('/project/structure/check/exist/is-true', "checkStructure");
 });

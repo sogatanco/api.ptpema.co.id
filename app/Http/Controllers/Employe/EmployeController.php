@@ -11,6 +11,7 @@ use App\Models\Structure;
 use App\Models\Position;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class EmployeController extends Controller
 {
@@ -37,15 +38,10 @@ class EmployeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'employe_id' => ['required', 'unique:employees'],
-            'user_id' => ['required', 'unique:employees'],
+            'email' => ['required'],
             'first_name' => ['required', 'max:20'],
             'last_name' => ['required', 'max:20'],
-            'gender' => ['required'],
-            'religion' => ['required'],
-            'birthday' => ['required'],
-            'birthday_place' => ['required', "max:100"],
-            'marital_status' => ['required'],
-            'img' => ['required'],
+            'position_code' => ['required'],
         ]);
 
         if($validator->fails()){
@@ -55,13 +51,40 @@ class EmployeController extends Controller
             ]);
         }
 
-        $employe = Employe::create($request->all());
+        $newUser = new User();
+        $newUser->email = $request->email;
+        $newUser->password = Hash::make('asdasdasd');
+        $newUser->roles = ["Employee"];
+        
+
+        if(!$newUser->save()){
+            return response()->json([
+                "status" => false,
+                "message" => "Failed to create user."
+            ], 500);
+        }
+
+        $position = Position::where('position_code', $request->position_code)->first();
+
+        if(!$position){
+            return response()->json([
+                "status" => false,
+                "message" => "Position not found."
+            ], 404);
+        }
+        
+        $newEmploye = new Employe();
+        $newEmploye->user_id = $newUser->id;
+        $newEmploye->employe_id = $request->employe_id;
+        $newEmploye->first_name = $request->first_name;
+        $newEmploye->last_name = $request->last_name;
+        $newEmploye->position_id = $position->position_id;
+        $newEmploye->save();
 
         return response()->json([
             "status" => true,
             'message' => "Employe data has been created.",
-            "data" => $employe
-        ], 201);
+        ], 200);
     }
 
     public function update(Request $request, $employe_id)
