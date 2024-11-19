@@ -90,40 +90,27 @@ class EmployeController extends Controller
 
     public function update(Request $request, $employe_id)
     {
-        // validating
-        $validator = Validator::make($request->all(), [
-            "first_name" => ["required", "max:20"],
-            "last_name" => ["required", "max:20"],
-            "gender" => ["required"],
-            "religion" => ["required"],
-            "birthday" => ["required"],
-            "birthday_place" => ["required"],
-            "marital_status" => ["required"],
-            "img" => ["required"]
-        ]);
 
-        if($validator->fails()){
-            return response()->json([
-                "status" => false,
-                "errors" => $validator->errors()
-            ]);
+        $positionCode = $request->position_code;
+
+        if($positionCode){
+            $position = Position::where('position_code', $positionCode)->first();
+            $request->position_id = $position->position_id;
         }
 
         $savedUpdate = Employe::where('employe_id', $employe_id)->update($request->all());
 
-        if($savedUpdate){
-            $newData = Employe::where('employe_id', $employe_id)->first();
-            return response()->json([
-               "status" => true,
-               "message" => "Employe has been updated.",
-               "data" => $newData
-            ], 200);
-        } else {
-            return response()->json([
-               "status" => false,
-               "message" => "Data update failed."
-            ], 500);
+        if(!$savedUpdate){
+            throw new HttpResponseException(response()->json([
+                "status" => false,
+                "message" => "Data update failed."
+            ], 500));
         }
+
+        return response()->json([
+            "status" => true,
+            "message" => "Employe has been updated.",
+         ], 200);
     }
 
     public function show($employe_id)
