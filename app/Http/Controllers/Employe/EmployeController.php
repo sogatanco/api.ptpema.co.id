@@ -100,7 +100,7 @@ class EmployeController extends Controller
             
             $data = [
                 $positionCode != null && 'position_id' => $position->position_id,
-                $isPic != null && 'is_pic' => $isPic,
+                $isPic != null && 'as_pic' => $isPic,
                 $employeActive != null && 'employe_active' => $employeActive
             ];
 
