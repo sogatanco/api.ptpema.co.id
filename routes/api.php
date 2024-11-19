@@ -53,7 +53,7 @@ Route::controller(Auth2Controller::class)->group(function(){
 Route::controller(EmployeController::class)->group(function(){
     Route::get("/employe", 'index')->middleware("role:Admin");
     Route::get("/employe/assignment-list", 'assignmentList')->middleware("role:Employee");
-    Route::post('/employe', 'store')->middlewate("client");
+    Route::post('/employe', 'store')->middleware("client");
     Route::patch('/employe/{employe_id}', 'update');
     Route::get('/employe/{employe_id}', 'show');
     Route::delete("/employe/{employe_id}", 'destroy');
