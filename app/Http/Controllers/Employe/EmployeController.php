@@ -12,6 +12,7 @@ use App\Models\Position;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeController extends Controller
 {
