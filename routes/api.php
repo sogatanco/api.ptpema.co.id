@@ -54,7 +54,7 @@ Route::controller(EmployeController::class)->group(function(){
     Route::get("/employe", 'index')->middleware("role:Admin");
     Route::get("/employe/assignment-list", 'assignmentList')->middleware("role:Employee");
     Route::post('/employe/store', 'store')->middleware("client");
-    Route::patch('/employe/update/{employe_id}', 'update')->middleware("client");
+    Route::put('/employe/update/{employe_id}', 'update')->middleware("client");
     Route::get('/employe/{employe_id}', 'show');
     Route::delete("/employe/{employe_id}", 'destroy');
     Route::get("/employe/division/{employe_id}", 'getEmployeDivision');
