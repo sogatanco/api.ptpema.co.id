@@ -95,10 +95,23 @@ class EmployeController extends Controller
 
         if($positionCode != null){
             $position = Position::where('position_code', $positionCode)->first();
-            $request->position_id = $position->position_id;
+            
+            $data = [
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'position_id' => $position->position_id
+            ];
+
+        }else{
+
+            $data = [
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+            ];
+
         }
 
-        $savedUpdate = Employe::where('employe_id', $employe_id)->update($request->all());
+        $savedUpdate = Employe::where('employe_id', $employe_id)->update($data);
 
         if(!$savedUpdate){
             throw new HttpResponseException(response()->json([
