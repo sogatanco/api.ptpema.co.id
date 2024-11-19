@@ -97,7 +97,9 @@ class EmployeController extends Controller
             $position = Position::where('position_code', $positionCode)->first();
             
             $data = [
-                'position_id' => $position->position_id
+                'position_id' => $position->position_id,
+                'as_pic' => $request->as_pic,
+                'employe_active' => $request->employe_active
             ];
 
         }else{
