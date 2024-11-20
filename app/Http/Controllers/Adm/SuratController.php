@@ -32,7 +32,7 @@ class SuratController extends Controller
         $surat->j_lampiran=$request->lampiran;
         $surat->jenis_lampiran=$request->jenislampiran;    
         $surat->isi_surat=$request->isiSurat;
-        $surat->tembusans=$request->tembusans;
+        $surat->tembusans=implode(",",$request->tembusans);
         $surat->id_divisi=$request->divisi;
         $surat->submitted_by=Employe::employeId();
         $surat->sign_by=$request->ttdBy;
