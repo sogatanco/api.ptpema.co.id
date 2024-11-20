@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Adm\StaticAdmController;
+use App\Http\Controllers\Adm\SuratController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -134,4 +135,8 @@ Route::controller(ScanVerif::class)->group(function(){
 Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/divisi', 'getDivisi')->middleware("role:Employee");
      Route::get('adm/signers/{id}', 'getSigner')->middleware("role:Employee");
+});
+
+Route::controller(SuratController::class)->group(function(){
+     Route::post('adm/insert', 'insert')->middleware("role:Employee");
 });
