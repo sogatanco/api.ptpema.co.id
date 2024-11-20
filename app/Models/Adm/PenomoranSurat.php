@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class PenomoranSurat extends Model
 {
-    protected $conncection='adm';
+    protected $connection='adm';
     protected $table='penomoran_surat';
 }
