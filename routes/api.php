@@ -53,8 +53,8 @@ Route::controller(Auth2Controller::class)->group(function(){
 Route::controller(EmployeController::class)->group(function(){
     Route::get("/employe", 'index')->middleware("role:Admin");
     Route::get("/employe/assignment-list", 'assignmentList')->middleware("role:Employee");
-    Route::post('/employe', 'store');
-    Route::patch('/employe/{employe_id}', 'update');
+    Route::post('/employe/store', 'store')->middleware("client");
+    Route::put('/employe/update/{employe_id}/personal', 'update')->middleware("client");
     Route::get('/employe/{employe_id}', 'show');
     Route::delete("/employe/{employe_id}", 'destroy');
     Route::get("/employe/division/{employe_id}", 'getEmployeDivision');
@@ -161,7 +161,7 @@ Route::controller(ClientController::class)->group(function(){
     Route::get('/client/structure', "stucture")->middleware("client");
 });
 
-// check struckture
+// check structure
 Route::controller(ProjectController::class)->group(function(){
     Route::get('/project/structure/check/exist/is-true', "checkStructure");
 });
@@ -195,4 +195,6 @@ Route::controller(OrganizationController::class)->group(function(){
 Route::controller(PositionController::class)->group(function(){
     Route::get('/master/pos/insert-code', "insertCode")->middleware("role:Employee");
     Route::get('/master/pos/list', "allPosition")->middleware("client");
+    Route::post('/master/pos/store', "store")->middleware("client");
+    Route::delete('/master/pos/delete', "delete")->middleware("client");
 });

@@ -70,6 +70,16 @@ class OrganizationController extends Controller
         ], 200);
     }
 
+    public function delete(Request $request)
+    {
+        Organization::where('organization_code', $request->organization_code)->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully deleted organization',
+        ], 200);
+    }
+
     public function insertCode()
     {
         $data = Organization::all();

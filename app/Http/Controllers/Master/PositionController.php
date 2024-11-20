@@ -5,9 +5,65 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Position;
+use App\Models\Organization;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Models\StructureMaster;
 
 class PositionController extends Controller
 {
+    public function store(Request $request)
+    {
+        $organization = Organization::where('organization_code', $request->organization_code)->first();
+
+        $parent = Position::where('position_code', $request->parent_code)->first();
+
+        $positionSaved = Position::create([
+            'organization_id' => $organization->organization_id,
+            'position_code' => $request->position_code,
+            'position_name' => $request->position_name,
+            'id_base' => 9
+        ]);
+
+        if(!$positionSaved){
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Failed to create position'
+            ], 500));
+        }
+
+        // save to structure master
+        $masterSaved = StructureMaster::create([
+                        'position_id' => $positionSaved->id,
+                        'direct_supervisor' => $parent->position_id
+                    ]);
+
+        if(!$masterSaved){
+
+            // delete new position saved
+            Position::where('position_id', $positionSaved->position_id)->delete();
+
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Failed to create structure master'
+            ], 500));
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully created position',
+        ], 200);
+    }
+
+    public function delete(Request $request)
+    {
+        Position::where('position_code', $request->position_code)->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully deleted position',
+        ], 200);
+    }
+
     public function insertCode()
     {
         $data = Position::all();

@@ -5,14 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Position extends Model
+class StructureMaster extends Model
 {
     use HasFactory;
-    protected $table = "positions";
+    protected $table = 'struktur';
     protected $fillable = [
-        'organization_id',
-        'id_base',
-        "position_code",
-        "position_name"
+        'position_id',
+        'direct_supervisor',
     ];
 }
