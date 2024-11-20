@@ -8,27 +8,42 @@ use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
 use App\Models\Employe;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SuratController extends Controller
 {
     function insert(Request $request){
 
         $surat=new Surat();
+
+
+        if($request->j_lampiran+0>0){
+            $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->fileLampiran), true);
+            $fileName = 'lampiran/' . date('Y') . '/' .sprintf("%02d", ((PenomoranSurat::where('type',$request->type)->first()->last_number)+1)). '.pdf';
+            if (Storage::disk('public_sppd')->put($fileName, $file)) {
+                $surat->file_lampiran=$fileName;
+            }
+        }
+        
         $surat->nomor_surat=sprintf("%02d", ((PenomoranSurat::where('type',$request->type)->first()->last_number)+1)) .'/'.PenomoranSurat::where('type',$request->type)->first()->kode.'/'. $this->getRomawi(date('m')).'/'.date('Y');
         $surat->no_document=unique_random('documents', 'doc_id', 40);
         $surat->kepada=$request->kepada;
         $surat->perihal=$request->perihal;
         $surat->j_lampiran=$request->lampiran;
-        $surat->jenis_lampiran=$request->jenislampiran;
-        // $surat->file_lampiran='sdgsdg';
+        $surat->jenis_lampiran=$request->jenislampiran;    
         $surat->isi_surat=$request->isiSurat;
         $surat->tembusans=$request->tembusans;
         $surat->id_divisi=$request->divisi;
         $surat->submitted_by=Employe::employeId();
         $surat->sign_by=$request->ttdBy;
 
+        if($surat->save()){
+            return new PostResource(true, 'Data Inserted', []);
+        }
         
-      return new PostResource(true, 'Insert Surat', $surat);
+
+        
+     
     }
 
     function getRomawi($bln)

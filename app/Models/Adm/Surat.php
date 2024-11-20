@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Surat extends Model
 {
-    protected $conection='adm';
+    protected $connection='adm';
     protected $table='surats';
 }
