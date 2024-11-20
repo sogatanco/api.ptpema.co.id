@@ -20,7 +20,7 @@ class SuratController extends Controller
         if($request->lampiran+0>0){
             $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->fileLampiran), true);
             $fileName = 'lampiran/' . date('Y') . '/' .sprintf("%02d", ((PenomoranSurat::where('type',$request->type)->first()->last_number)+1)). '.pdf';
-            if (Storage::disk('public_sppd')->put($fileName, $file)) {
+            if (Storage::disk('public_adm')->put($fileName, $file)) {
                 $surat->file_lampiran=$fileName;
             }
         }
