@@ -39,10 +39,7 @@ class SuratController extends Controller
 
         if($surat->save()){
             return new PostResource(true, 'Data Inserted', []);
-        }
-        
-
-        
+        }   
      
     }
 
