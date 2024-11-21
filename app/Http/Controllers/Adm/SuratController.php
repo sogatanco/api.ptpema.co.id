@@ -7,6 +7,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
 use App\Models\Employe;
+use App\Models\Structure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,6 +36,7 @@ class SuratController extends Controller
         $surat->tembusans=implode(",",$request->tembusans);
         $surat->id_divisi=$request->divisi;
         $surat->submitted_by=Employe::employeId();
+        $surat->submitted_current_position=Structure::where('employe_id', Employe::employeId())->first()->position_id;
         $surat->sign_by=$request->ttdBy;
 
         if($surat->save()){
