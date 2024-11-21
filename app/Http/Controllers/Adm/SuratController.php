@@ -36,7 +36,7 @@ class SuratController extends Controller
         $surat->tembusans=implode(",",$request->tembusans);
         $surat->id_divisi=$request->divisi;
         $surat->submitted_by=Employe::employeId();
-        $surat->submitted_current_position=(Structure::where('employe_id', $surat->submitted_by)->first()->position_name);
+        $surat->submitted_current_position=(Structure::where('employe_id', $surat->submitted_by)->first('position_name')->position_name);
         $surat->sign_by=$request->ttdBy;
 
         if($surat->save()){
