@@ -15,6 +15,7 @@ class SuratController extends Controller
 {
     function insert(Request $request){
 
+
         $surat=new Surat();
 
 
