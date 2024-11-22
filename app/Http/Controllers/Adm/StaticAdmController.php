@@ -28,7 +28,7 @@ class StaticAdmController extends Controller
             ->orWhere('id_base', 4);
         })->get();
 
-        $mEks=AtasanTerkait::where('employe_id', Structure::where('employe_active', 1)->where('organization_id', $id)->first()->employe_id)->first()->manager_eksekutif;
+        $mEks=AtasanTerkait::where('employe_id', Structure::where('employe_active', 1)->where('organization_id', $id)->first('employe_id')->employe_id)->first('manager_eksekutif')->manager_eksekutif;
         if($mEks){
             $data->push(Structure::where('employe_active',1 )->where('employe_id', $mEks)->first());
         }
