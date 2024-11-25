@@ -143,11 +143,13 @@ class PengajuanController extends Controller
                 $t->base64_undangan = '-';
             }
             
+            $hr=4;
+            $hariall=$t->jumlah_hari+1;
 
-            if ($t->jumlah_hari > 3) {
+            if ($hariall > $hr) {
                 
-                $j_k = ($t->jumlah_hari) % 3;
-                $jt = ($t->jumlah_hari - $j_k) / 3;
+                $j_k = ($hariall) % $hr;
+                $jt = ($hariall - $j_k) / $hr;
              
                 $terminArray = []; 
                 for($tr = 0; $tr < $jt; $tr++) {
@@ -155,28 +157,28 @@ class PengajuanController extends Controller
                         $terminArray[$tr]=(object)[
                             'id' => $tr,
                             'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat)),
-                            'jumlah' =>  ($t->rate_wb*$t->rate_um)+ ($t->rate_wb*$t->rate_tr)  + $t->bbm + (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                            'jumlah' =>  ($t->rate_wb*$t->rate_um)+ ($t->rate_wb*$t->rate_tr)  + $t->bbm + (($hr-1)* ($t->rate_um + $t->rate_tr ))+ ($t->rate_hotel*$hr)
                         ]; 
                     }elseif($tr==($jt-1)){
                         if($j_k<=0){
                             $terminArray[$tr]=(object)[
                                 'id' => $tr,
-                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*3).' days')),
-                                'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (2* ($t->rate_um + $t->rate_tr) + (3*$t->rate_hotel))
+                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*$hr).' days')),
+                                'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($hr-1)* ($t->rate_um + $t->rate_tr) + ($hr*$t->rate_hotel))
                             ]; 
                         }else{
                             $terminArray[$tr]=(object)[
                                 'id' => $tr,
-                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*3).' days')),
-                                'jumlah' =>  (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*$hr).' days')),
+                                'jumlah' =>  ($hr* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
                             ]; 
                         }
                        
                     }else{
                         $terminArray[$tr]=(object)[
                             'id' => $tr,
-                            'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*3).' days')),
-                            'jumlah' =>  (3* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                            'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*$hr).' days')),
+                            'jumlah' =>  ($hr* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
                         ]; 
                     }
                     // $terminArray[$tr]=$tr;
@@ -185,7 +187,7 @@ class PengajuanController extends Controller
                 if($j_k>0){
                     $terminArray[$tr]=(object)[
                         'id' => $tr,
-                        'tgl_bayar' =>date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($jt*3).' days')),
+                        'tgl_bayar' =>date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($jt*$hr).' days')),
                         'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($j_k-1)* ($t->rate_um + $t->rate_tr )+ ($j_k*$t->rate_hotel))
                     ];
                 }
