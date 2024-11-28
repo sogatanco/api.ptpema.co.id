@@ -15,8 +15,8 @@ class StaticAdmController extends Controller
 {
     public function getDivisi()
     {
-        $data = Organization::where('is_division', 1)->where('board_id', Structure::where('employe_id', Employe::employeId())->first()->board_id)->get();
-        $myData=Organization::where('organization_id', Structure::where('employe_id', Employe::employeId())->first()->organization_id)->first();
+        $data = Organization::where('is_division', 1)->where('board_id', Structure::where('employe_id', Employe::employeId())->first('board_id')->board_id)->get();
+        $myData=Organization::where('organization_id', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->first();
 
         return new PostResource(true, "Data Divisi", ['other_divisis'=>$data, 'my_divisi'=>$myData]);
     }
@@ -28,7 +28,7 @@ class StaticAdmController extends Controller
             ->orWhere('id_base', 4);
         })->get();
 
-        $mEks=AtasanTerkait::where('employe_id', Structure::where('employe_active', 1)->where('organization_id', $id)->first()->employe_id)->first()->manager_eksekutif;
+        $mEks=AtasanTerkait::where('employe_id', Structure::where('employe_active', 1)->where('organization_id', $id)->first('employe_id')->employe_id)->first('manager_eksekutif')->manager_eksekutif;
         if($mEks){
             $data->push(Structure::where('employe_active',1 )->where('employe_id', $mEks)->first());
         }
