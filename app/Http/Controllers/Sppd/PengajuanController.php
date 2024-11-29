@@ -143,7 +143,7 @@ class PengajuanController extends Controller
             }
 
             $hr = 4;
-            $hariall = $t->jumlah_hari + 1;
+            $hariall = $t->jumlah_hari;
 
             if ($hariall > $hr) {
 
