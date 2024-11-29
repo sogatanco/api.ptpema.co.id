@@ -42,7 +42,7 @@ class PengajuanController extends Controller
         $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
-        $sppd->narasi_st=$request->narasi;
+        $sppd->narasi_st = $request->narasi;
         $sppd->submitted_by = Employe::employeId();
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
         $tujuans = $request->tujuan_sppd;
@@ -97,32 +97,31 @@ class PengajuanController extends Controller
             $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
         } elseif ($request->ref == 'by_umum') {
             $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
-            foreach($data as $d){
-                $d->type_proses='pemesanan_tiket';
-                $d->id_unique=rand(1,100)*$d->id;
+            foreach ($data as $d) {
+                $d->type_proses = 'pemesanan_tiket';
+                $d->id_unique = rand(1, 100) * $d->id;
             }
         } elseif ($request->ref == 'by_keuangan') {
             $data1 = ListSppd::where('uangmuka', 0)->where('current_status', 'signed')->get();
-           
-            $data1=$data1->map(function($d1){
-                $d1->type_proses='uangmuka';
-                $d1array=$d1->toArray();
-                $d1array=['id_unique'=>(rand(1,100)*$d1->id)]+$d1array;
+
+            $data1 = $data1->map(function ($d1) {
+                $d1->type_proses = 'uangmuka';
+                $d1array = $d1->toArray();
+                $d1array = ['id_unique' => (rand(1, 100) * $d1->id)] + $d1array;
                 return $d1array;
             });
 
 
             $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
-            $data2=$data2->map(function($d2){
-                $d2->type_proses='realisasi';
-                $d2array=$d2->toArray();
-                $d2array=['id_unique'=>(rand(1,100)*$d2->id)]+$d2array;
+            $data2 = $data2->map(function ($d2) {
+                $d2->type_proses = 'realisasi';
+                $d2array = $d2->toArray();
+                $d2array = ['id_unique' => (rand(1, 100) * $d2->id)] + $d2array;
                 return $d2array;
             });
             $tempCollection = collect([$data1, $data2]);
-            $data=$tempCollection->flatten(1);
-        }      
-        else {
+            $data = $tempCollection->flatten(1);
+        } else {
             $data = ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
 
@@ -142,65 +141,62 @@ class PengajuanController extends Controller
             } else {
                 $t->base64_undangan = '-';
             }
-            
-            $hr=4;
-            $hariall=$t->jumlah_hari+1;
+
+            $hr = 4;
+            $hariall = $t->jumlah_hari + 1;
 
             if ($hariall > $hr) {
-                
+
                 $j_k = ($hariall) % $hr;
                 $jt = ($hariall - $j_k) / $hr;
-             
-                $terminArray = []; 
-                for($tr = 0; $tr < $jt; $tr++) {
-                    if($tr==0){
-                        $terminArray[$tr]=(object)[
+
+                $terminArray = [];
+                for ($tr = 0; $tr < $jt; $tr++) {
+                    if ($tr == 0) {
+                        $terminArray[$tr] = (object)[
                             'id' => $tr,
                             'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat)),
-                            'jumlah' =>  ($t->rate_wb*$t->rate_um)+ ($t->rate_wb*$t->rate_tr)  + $t->bbm + (($hr-1)* ($t->rate_um + $t->rate_tr ))+ ($t->rate_hotel*$hr)
-                        ]; 
-                    }elseif($tr==($jt-1)){
-                        if($j_k<=0){
-                            $terminArray[$tr]=(object)[
+                            'jumlah' => ($t->rate_wb * $t->rate_um) + ($t->rate_wb * $t->rate_tr)  + $t->bbm + (($hr - 1) * ($t->rate_um + $t->rate_tr)) + ($t->rate_hotel * $hr)
+                        ];
+                    } elseif ($tr == ($jt - 1)) {
+                        if ($j_k <= 0) {
+                            $terminArray[$tr] = (object)[
                                 'id' => $tr,
-                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*$hr).' days')),
-                                'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($hr-1)* ($t->rate_um + $t->rate_tr) + ($hr*$t->rate_hotel))
-                            ]; 
-                        }else{
-                            $terminArray[$tr]=(object)[
+                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat . '+ ' . ($tr * $hr) . ' days')),
+                                'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr)  + (($hr - 1) * ($t->rate_um + $t->rate_tr) + ($hr * $t->rate_hotel))
+                            ];
+                        } else {
+                            $terminArray[$tr] = (object)[
                                 'id' => $tr,
-                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*$hr).' days')),
-                                'jumlah' =>  ($hr* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
-                            ]; 
+                                'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat . '+ ' . ($tr * $hr) . ' days')),
+                                'jumlah' => ($hr * ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                            ];
                         }
-                       
-                    }else{
-                        $terminArray[$tr]=(object)[
+                    } else {
+                        $terminArray[$tr] = (object)[
                             'id' => $tr,
-                            'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($tr*$hr).' days')),
-                            'jumlah' =>  ($hr* ($t->rate_um + $t->rate_tr + $t->rate_hotel))
-                        ]; 
+                            'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat . '+ ' . ($tr * $hr) . ' days')),
+                            'jumlah' => ($hr * ($t->rate_um + $t->rate_tr + $t->rate_hotel))
+                        ];
                     }
                     // $terminArray[$tr]=$tr;
                 }
 
-                if($j_k>0){
-                    $terminArray[$tr]=(object)[
+                if ($j_k > 0) {
+                    $terminArray[$tr] = (object)[
                         'id' => $tr,
-                        'tgl_bayar' =>date('Y-m-d', strtotime($t->waktu_berangkat. '+ '.($jt*$hr).' days')),
-                        'jumlah' =>  ($t->rate_wt*$t->rate_um)+ ($t->rate_wt*$t->rate_tr)  + (($j_k-1)* ($t->rate_um + $t->rate_tr +$t->rate_hotel ))
+                        'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat . '+ ' . ($jt * $hr) . ' days')),
+                        'jumlah' => ($t->rate_wt * $t->rate_um) + ($t->rate_wt * $t->rate_tr)  + (($j_k - 1) * ($t->rate_um + $t->rate_tr + $t->rate_hotel))
                     ];
                 }
-                $t->termin=$terminArray;
-
-
+                $t->termin = $terminArray;
             } else {
                 $obj = (object)[
                     'id' => 0,
                     'tgl_bayar' => $t->waktu_berangkat,
                     'jumlah' => $t->uang_muka
                 ];
-                $t->termin= array($obj);
+                $t->termin = array($obj);
             }
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
@@ -230,7 +226,7 @@ class PengajuanController extends Controller
         $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
         $sppd->golongan_rate = $request->rate;
-        $sppd->narasi_st=$request->narasi;
+        $sppd->narasi_st = $request->narasi;
         $tujuans = $request->tujuan_sppd;
         if ($sppd->touch()) {
             TujuanSppd::where('id_sppd', $id)->delete();
@@ -380,16 +376,18 @@ class PengajuanController extends Controller
 
         $proses = new Proses();
 
-
-        $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->file));
-        $fileName = 'proses/' .  $request->id_sppd . '/proses-' . $request->who . '.pdf';
-        if (Storage::disk('public_sppd')->put($fileName, $file)) {
-            $file = $fileName;
+        if ($request->file != '') {
+            $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->file));
+            $fileName = 'proses/' .  $request->id_sppd . '/proses-' . $request->who . '.pdf';
+            if (Storage::disk('public_sppd')->put($fileName, $file)) {
+                $proses->file = $fileName;
+            }
         }
+
+
         $proses->id_sppd = $request->id_sppd;
         $proses->process_by = Employe::employeId();
         $proses->as = $request->who;
-        $proses->file = $file;
         if ($proses->save()) {
             return new PostResource(true, 'success', []);
         }
@@ -408,24 +406,25 @@ class PengajuanController extends Controller
         return new PostResource(true, 'list data sppd', $data);
     }
 
-    function dataDashboard(){
-        $data=[];
-        $dashboard=Dashboard::first();
-        $data['dashboard']=$dashboard;
+    function dataDashboard()
+    {
+        $data = [];
+        $dashboard = Dashboard::first();
+        $data['dashboard'] = $dashboard;
 
-        $label=[];
-        $value=[];
-        $rkap=RealisasiRkap::whereYear('tahun', date("Y"))->get();
-        foreach($rkap as $r){
+        $label = [];
+        $value = [];
+        $rkap = RealisasiRkap::whereYear('tahun', date("Y"))->get();
+        foreach ($rkap as $r) {
             array_push($label, $r->renbis);
             array_push($value, $r->persen);
         }
 
-        $data['label']=$label;
-        $data['value']=$value;
+        $data['label'] = $label;
+        $data['value'] = $value;
 
-        $gKar=GroupByKar::orderBy('budget', 'DESC')->get();
-        $data['groupKar']=$gKar;
+        $gKar = GroupByKar::orderBy('budget', 'DESC')->get();
+        $data['groupKar'] = $gKar;
         return new PostResource(true, 'dashboard', $data);
     }
 }
