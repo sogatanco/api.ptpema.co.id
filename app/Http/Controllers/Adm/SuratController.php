@@ -55,7 +55,12 @@ class SuratController extends Controller
         }
 
         return new PostResource(true, 'data surat', $data);
-     }   
+     }  
+     
+     function detail($id){
+        $data=ListSurat::find($id);
+        return new PostResource(true, 'data surat', $data);
+     }
 
     function getRomawi($bln)
     {
