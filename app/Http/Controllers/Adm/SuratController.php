@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
 use App\Models\Employe;
@@ -45,6 +46,16 @@ class SuratController extends Controller
         }   
      
     }
+
+    public function getSurat($what){   
+        if($what== 'approved'){
+            $data=[];
+        }else{
+            $data=ListSurat::where('created_by', Employe::employeId())->latest()->get();
+        }
+
+        return new PostResource(true, 'data surat', $data);
+     }   
 
     function getRomawi($bln)
     {
