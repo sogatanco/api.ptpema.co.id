@@ -10,7 +10,7 @@ use App\Models\ESign\Log;
 class Logs extends Controller
 {
     public function getLogs($id_doc){
-        $data=Log::where('id_document', $id_doc)->latest()->get();
+        $data=Log::where('id_document', $id_doc)->get();
         foreach($data as $item){
             $item['first_name']=Structure::where('employe_id', $item->employe_id)->first('first_name')->first_name;
             $item['position_name']=Structure::where('employe_id', $item->employe_id)->first('position_name')->position_name;
