@@ -65,7 +65,7 @@ class SuratController extends Controller
         $data['lampiran']=$data->j_lampiran;
         $data['jenisLampiran']=$data->jenis_lampiran;
         $data['isiSurat']=$data->isi_surat;
-        $data['tembusans']=json_decode('['.$data->tembusans.']');
+        $data['tembusans']=explode(',',$data->tembusans);
         return new PostResource(true, 'data surat', $data);
      }
 
