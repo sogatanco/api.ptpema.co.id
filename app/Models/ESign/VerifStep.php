@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class VerifStep extends Model
 {
     protected $connection = 'esign';
-    // protected $table = 'verif_steps';
+    protected $table = 'verif_steps';
 }
