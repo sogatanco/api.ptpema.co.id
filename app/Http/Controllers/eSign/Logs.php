@@ -27,7 +27,7 @@ class Logs extends Controller
     {
         $data = VerifStep::where('id_doc', $id_doc)->get();
         foreach ($data as $item) {
-            $item['first_name'] = Employe::where('id_employe', $item->employe_id)->first('first_name')->first_name;
+            $item['first_name'] = Employe::where('employe_id', $item->id_employe)->first('first_name')->first_name;
             $item['position_name'] = $item->id_current_position;
         }
         return new PostResource(true,'data approval', $data);
