@@ -8,6 +8,7 @@ use App\Models\ESign\VerifStep;
 use App\Models\Structure;
 use App\Models\ESign\Log;
 
+
 class Logs extends Controller
 {
     public function getLogs($id_doc)
@@ -24,10 +25,10 @@ class Logs extends Controller
     public function getApproval($id_doc)
     {
         $data = VerifStep::where('id_doc', $id_doc)->get();
-        foreach ($data as $item) {
-            $item['first_name'] = Structure::where('employe_id', $item->employe_id)->first('first_name')->first_name;
-            $item['position_name'] = Structure::where('employe_id', $item->employe_id)->first('position_name')->position_name;
-        }
+        // foreach ($data as $item) {
+        //     $item['first_name'] = Structure::where('employe_id', $item->employe_id)->first('first_name')->first_name;
+        //     $item['position_name'] = Structure::where('employe_id', $item->employe_id)->first('position_name')->position_name;
+        // }
         return new PostResource(true,'data approval', $data);
     }
 }
