@@ -60,6 +60,12 @@ class SuratController extends Controller
      function detail($id){
         $data=ListSurat::find($id);
         $data['signer']=Structure::where('employe_id', $data->sign_by)->first();
+        $data['tglSurat']=$data->created_at;
+        $data['nomorSurat']=$data->nomor_surat;
+        $data['lampiran']=$data->j_lampiran;
+        $data['jenisLampiran']=$data->jenis_lampiran;
+        $data['isiSurat']=$data->isi_surat;
+        $data['tembusans']=json_decode('['.$data->tembusans.']');
         return new PostResource(true, 'data surat', $data);
      }
 
