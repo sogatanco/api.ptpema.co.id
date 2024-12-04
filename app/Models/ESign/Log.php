@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Log extends Model
 {
-    use HasFactory;
+    protected $connection = 'esign';
+    protected $table='logs';
 }

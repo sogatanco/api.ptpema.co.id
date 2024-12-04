@@ -9,7 +9,7 @@ use App\Http\Controllers\Da\DaCatController;
 use App\Http\Controllers\Da\DaActController;
 use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
-use App\Http\Controllers\Asset\InvController;
+use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 
@@ -141,4 +141,9 @@ Route::controller(SuratController::class)->group(function(){
      Route::post('adm/insert', 'insert')->middleware("role:Employee");
      Route::get('adm/surat/{what}', 'getSurat')->middleware("role:Employee");
      Route::get('adm/surat/detail/{id}', 'detail')->middleware("role:Employee");
+});
+
+
+Route::controller(Logs::class)->group(function(){
+     Route::get("eSign/logs/{id_doc}", "getLogs")->middleware(  "role:Employee");
 });
