@@ -146,4 +146,5 @@ Route::controller(SuratController::class)->group(function(){
 
 Route::controller(Logs::class)->group(function(){
      Route::get("eSign/logs/{id_doc}", "getLogs")->middleware(  "role:Employee");
+     Route::get("eSign/approval/{id_doc}", "getApproval")->middleware("");
 });
