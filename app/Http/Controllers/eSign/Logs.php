@@ -16,7 +16,7 @@ class Logs extends Controller
         $data = Log::where('id_document', $id_doc)->get();
         foreach ($data as $item) {
             $item['first_name'] = Structure::where('employe_id', $item->employe_id)->first('first_name')->first_name;
-            $item['position_name'] = $data->id_current_position;
+            $item['position_name'] = $item->id_current_position;
 
         }
         return new PostResource(true, 'data logs', $data);
@@ -27,7 +27,7 @@ class Logs extends Controller
         $data = VerifStep::where('id_doc', $id_doc)->get();
         foreach ($data as $item) {
             $item['first_name'] = Structure::where('employe_id', $item->employe_id)->first('first_name')->first_name;
-            $item['position_name'] = $data->id_current_position;
+            $item['position_name'] = $item->id_current_position;
         }
         return new PostResource(true,'data approval', $data);
     }
