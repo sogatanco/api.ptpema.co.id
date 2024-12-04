@@ -4,6 +4,7 @@ namespace App\Http\Controllers\eSign;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Employe;
 use App\Models\ESign\VerifStep;
 use App\Models\Structure;
 use App\Models\ESign\Log;
@@ -15,7 +16,7 @@ class Logs extends Controller
     {
         $data = Log::where('id_document', $id_doc)->get();
         foreach ($data as $item) {
-            $item['first_name'] = Structure::where('employe_id', $item->employe_id)->first('first_name')->first_name;
+            $item['first_name'] = Employe::where('employe_id', $item->employe_id)->first('first_name')->first_name;
             $item['position_name'] = $item->id_current_position;
 
         }
@@ -26,7 +27,7 @@ class Logs extends Controller
     {
         $data = VerifStep::where('id_doc', $id_doc)->get();
         foreach ($data as $item) {
-            $item['first_name'] = Structure::where('employe_id', $item->employe_id)->first('first_name')->first_name;
+            $item['first_name'] = Employe::where('employe_id', $item->employe_id)->first('first_name')->first_name;
             $item['position_name'] = $item->id_current_position;
         }
         return new PostResource(true,'data approval', $data);
