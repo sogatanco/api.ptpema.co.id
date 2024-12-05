@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Adm\ApprovedDocument;
 use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
@@ -50,7 +51,7 @@ class SuratController extends Controller
 
     public function getSurat($what){   
         if($what=== 'approved'){
-            $data=[];
+            $data=ApprovedDocument::where('id_employe', Employe::employeId())->latest()->get();
         }elseif($what=== 'review'){
             $data=ListSurat::where('current_reviewer', Employe::employeId())->get();
         }
