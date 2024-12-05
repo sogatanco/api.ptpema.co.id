@@ -8,6 +8,7 @@ use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
 use App\Models\Employe;
+use App\Models\ESign\VerifStep;
 use App\Models\Structure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -75,6 +76,16 @@ class SuratController extends Controller
             $data['fileLampiran']='';
         }
         return new PostResource(true, 'data surat', $data);
+     }
+
+     function reviewDokumen($id_doc, Request $request){
+        $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
+        
+        $verif->status = $request->status;
+        $verif->ket = $request->catatan_persetujuan;
+        if ($verif->save()) {
+            return new PostResource(true, 'success', []);
+        }
      }
 
     function getRomawi($bln)
