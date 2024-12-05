@@ -71,7 +71,12 @@ class SuratController extends Controller
         $data['jenisLampiran']=$data->jenis_lampiran;
         $data['isiSurat']=$data->isi_surat;
         $data['ttdBy']=$data->sign_by;
-        $data['tembusans']=explode(',',$data->tembusans);
+        if($data->tembusans!==null && $data->tembusans!=='' ){
+            $data['tembusans']=explode(',',$data->tembusans);
+        }else{
+            $data['tembusans']=[];
+        }
+        
         if($data->file_lampiran!==null && file_exists(public_path('adm/' . $data->file_lampiran))){
             $data['fileLampiran']=base64_encode(file_get_contents(public_path('adm/' . $data->file_lampiran)));   
         }else{
