@@ -51,7 +51,7 @@ class SuratController extends Controller
 
     public function getSurat($what){   
         if($what=== 'approved'){
-            $data=ApprovedDocument::where('id_employe', Employe::employeId())->latest()->get();
+            $data=ApprovedDocument::where('id_employe', Employe::employeId())->get();
         }elseif($what=== 'review'){
             $data=ListSurat::where('current_reviewer', Employe::employeId())->get();
         }
