@@ -40,13 +40,38 @@ class SuratController extends Controller
         $surat->tembusans=implode(",",$request->tembusans);
         $surat->id_divisi=$request->divisi;
         $surat->submitted_by=Employe::employeId();
-        $surat->submitted_current_position=(Structure::where('employe_id', $surat->submitted_by)->first('position_name')->position_name);
+        $surat->submitted_current_position=(Structure::where('employe_id',$surat->submitted_by)->first('position_name')->position_name);
         $surat->sign_by=$request->ttdBy;
 
         if($surat->save()){
             return new PostResource(true, 'Data Inserted', []);
         }   
      
+    }
+
+    public function update(Request $request){
+        $surat=Surat::find($request->id);
+        if($request->lampiran+0>0 && $surat->file_lampiran!==''){
+            $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->fileLampiran), true);
+            $fileName = 'lampiran/' . date('Y') . '/' .sprintf("%02d", ((PenomoranSurat::where('type',$request->type)->first()->last_number)+1)). '.pdf';
+            if (Storage::disk('public_adm')->put($fileName, $file)) {
+                $surat->file_lampiran=$fileName;
+            }
+        }
+        
+        $surat->kepada=$request->kepada;
+        $surat->perihal=$request->perihal;
+        $surat->j_lampiran=$request->lampiran;
+        $surat->jenis_lampiran=$request->jenislampiran;    
+        $surat->isi_surat=$request->isiSurat;
+        $surat->tembusans=implode(",",$request->tembusans);
+        $surat->id_divisi=$request->divisi;
+        $surat->submitted_by=Employe::employeId();
+        $surat->submitted_current_position=(Structure::where('employe_id',$surat->submitted_by)->first('position_name')->position_name);
+        $surat->sign_by=$request->ttdBy;
+        if($surat->save()){
+            return new PostResource(true, 'Data Updated', []);
+        }   
     }
 
     public function getSurat($what){   
