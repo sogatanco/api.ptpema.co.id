@@ -34,6 +34,6 @@ class SuratMasuk extends Controller
 
         }
 
-        return new PostResource(true, 'sdgsdg',$request->all());
+        // return new PostResource(true, 'sdgsdg',$request->all());
     }
 }
