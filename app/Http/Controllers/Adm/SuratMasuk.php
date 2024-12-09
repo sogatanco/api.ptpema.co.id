@@ -11,7 +11,7 @@ class SuratMasuk extends Controller
 {
     public function insert(Request $request)
     {
-        $now = new DateTime();
+        $now = new \DateTime();
         $uniqueCode = $now->format('YmdHis') . '-' . substr(microtime(), 2, 6); 
 
         $teks = str_replace(' ', '-', $request->perihal);
