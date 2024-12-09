@@ -21,7 +21,7 @@ class SuratMasuk extends Controller
 
         $suratMasuk=new SM();
         
-        if (Storage::disk('public_adm')->put($fileName, $request->file)) {
+        if (Storage::disk('public_adm')->put($fileName,      file_get_contents($request->file('file')->getRealPath()))) {
             $suratMasuk->file=$fileName;
             $suratMasuk->nomor= $request->nomorSurat;
             $suratMasuk->pengirim=$request->pengirim;
