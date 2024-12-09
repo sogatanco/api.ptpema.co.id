@@ -17,7 +17,7 @@ class SuratMasuk extends Controller
 
         $teks = str_replace(' ', '-', $request->perihal);
         $teks = preg_replace('/[^a-zA-Z-]/', '', $teks);
-        $fileName = 'surat_masuk/' . date('Y') . '/' . date('m') . '/' . $teks.$uniqueCode . '.pdf';
+        $fileName = 'surat_masuk/' . date('Y') . '/' . date('m') . '/' . $teks . '.pdf';
 
         $suratMasuk=new SM();
         
