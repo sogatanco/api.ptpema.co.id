@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Adm\StaticAdmController;
 use App\Http\Controllers\Adm\SuratController;
+use App\Http\Controllers\Adm\SuratMasuk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -150,4 +151,8 @@ Route::controller(SuratController::class)->group(function(){
 Route::controller(Logs::class)->group(function(){
      Route::get("eSign/logs/{id_doc}", "getLogs")->middleware(  "role:Employee");
      Route::get("eSign/approval/{id_doc}", "getApproval")->middleware("role:Employee");
+});
+
+Route::controller(SuratMasuk::class)->group(function(){
+     Route::post("adm/suratmasuk/", "insert")->middleware("role:Employee");
 });
