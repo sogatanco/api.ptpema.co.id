@@ -7,6 +7,7 @@ use App\Http\Resources\PostResource;
 use App\Models\AtasanTerkait;
 use App\Models\Employe;
 use App\Models\Organization;
+use App\Models\Position;
 use App\Models\Structure;
 use Illuminate\Http\Request;
 use PhpParser\Node\Expr\PostInc;
@@ -46,5 +47,10 @@ class StaticAdmController extends Controller
         
 
         return new PostResource(true, 'Pilihan signers', $data);
+    }
+
+    public function getDirektur(){
+        $data=Position::where('id_base',3)->orWhere('id_base',4)->get();
+        return new PostResource(true, 'Pilihan direktur', $data);
     }
 }
