@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Adm;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use Illuminate\Http\Request;
+use App\Models\Adm\SuratMasuk as SM;
 use Illuminate\Support\Facades\Storage;
 
 class SuratMasuk extends Controller
@@ -18,7 +19,7 @@ class SuratMasuk extends Controller
         $teks = preg_replace('/[^a-zA-Z-]/', '', $teks);
         $fileName = 'surat_masuk/' . date('Y') . '/' . date('m') . '/' . $teks.$uniqueCode . '.pdf';
 
-        $suratMasuk=new SuratMasuk();
+        $suratMasuk=new SM();
         
         if (Storage::disk('public_adm')->put($fileName, $request->file)) {
             $suratMasuk->file=$fileName;
