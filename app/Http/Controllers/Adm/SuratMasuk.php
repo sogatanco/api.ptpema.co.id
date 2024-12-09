@@ -20,18 +20,20 @@ class SuratMasuk extends Controller
 
         $suratMasuk=new SuratMasuk();
         
-        if (Storage::disk('public_adm')->put($fileName, $request->file('file'))) {
-            $suratMasuk->file=$fileName;
-            $suratMasuk->nomor= $request->nomorSurat;
-            $suratMasuk->pengirim=$request->pengirim;
-            $suratMasuk->perihal=$request->perihal;
-            $suratMasuk->id_direksi=$request->dir;
-            $suratMasuk->via= $request->via;
-            $suratMasuk->tgl_surat=date('Y-m-d', strtotime($request->tglSurat));
-            if ($suratMasuk->save()) {
-                return new PostResource(true, 'Berhasil', []);
-             }
+        // if (Storage::disk('public_adm')->put($fileName, $request->file('file'))) {
+        //     $suratMasuk->file=$fileName;
+        //     $suratMasuk->nomor= $request->nomorSurat;
+        //     $suratMasuk->pengirim=$request->pengirim;
+        //     $suratMasuk->perihal=$request->perihal;
+        //     $suratMasuk->id_direksi=$request->dir;
+        //     $suratMasuk->via= $request->via;
+        //     $suratMasuk->tgl_surat=date('Y-m-d', strtotime($request->tglSurat));
+        //     if ($suratMasuk->save()) {
+        //         return new PostResource(true, 'Berhasil', []);
+        //      }
 
-        }
+        // }
+
+        return new PostResource(true, 'sdgsdg',$request->all());
     }
 }
