@@ -43,10 +43,12 @@ class SuratMasuk extends Controller
 
     public function getSM($what){
         $data=[];
-        if ($what== '') {
-            $data=ListSuratMasuk::where('live_receiver',Employe::employeId())->latest('diterima')->get();
+        if ($what=='to_me') {
+            $data=ListSuratMasuk::where('live_receiver',Employe::employeId())->whereNull('tindak_lanjut')->latest('diterima')->get();
+        }else if ($what== 'tinjut') {
+            $data=ListSuratMasuk::where('live_receiver',Employe::employeId())->whereNotNull('tindak_lanjut')->latest('ditinjut')->get();
         }
-        return new PostResource(true,'data Surat Masuk', $data);
 
+        return new PostResource(true,'data Surat Masuk', $data);
     }
 }
