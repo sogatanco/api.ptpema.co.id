@@ -155,4 +155,5 @@ Route::controller(Logs::class)->group(function(){
 
 Route::controller(SuratMasuk::class)->group(function(){
      Route::post("adm/suratmasuk/", "insert")->middleware("role:Employee");
+     Route::get('adm/suratmasuk/{what}', 'getSM')->middleware('role:Employee');
 });

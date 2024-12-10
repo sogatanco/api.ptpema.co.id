@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Adm\ListSuratMasuk;
 use App\Models\Employe;
 use Illuminate\Http\Request;
 use App\Models\Adm\SuratMasuk as SM;
@@ -38,5 +39,14 @@ class SuratMasuk extends Controller
         }
 
         // return new PostResource(true, 'sdgsdg',$request->all());
+    }
+
+    public function getSM($what){
+        $data=[];
+        if ($what== '') {
+            $data=ListSuratMasuk::where('live_receiver',Employe::employeId())->latest('diterima')->get();
+        }
+        return new PostResource(true,'data Surat Masuk', $data);
+
     }
 }
