@@ -47,6 +47,8 @@ class SuratMasuk extends Controller
             $data=ListSuratMasuk::where('live_receiver',Employe::employeId())->whereNull('tindak_lanjut')->latest('diterima')->get();
         }else if ($what== 'tinjut') {
             $data=ListSuratMasuk::where('live_receiver',Employe::employeId())->whereNotNull('tindak_lanjut')->latest('ditinjut')->get();
+        }else if ($what== 'all') {
+            $data=SM::latest('created_at')->get();
         }
 
         return new PostResource(true,'data Surat Masuk', $data);
