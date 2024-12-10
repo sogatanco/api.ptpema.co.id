@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Employe;
 use Illuminate\Http\Request;
 use App\Models\Adm\SuratMasuk as SM;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +29,7 @@ class SuratMasuk extends Controller
             $suratMasuk->perihal=$request->perihal;
             $suratMasuk->id_direksi=$request->dir;
             $suratMasuk->via= $request->via;
+            $suratMasuk->insert_by=Employe::employeId() ;
             $suratMasuk->tgl_surat=date('Y-m-d', strtotime($request->tglSurat));
             if ($suratMasuk->save()) {
                 return new PostResource(true, 'Berhasil', []);
