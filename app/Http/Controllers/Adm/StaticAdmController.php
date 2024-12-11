@@ -61,7 +61,7 @@ class StaticAdmController extends Controller
             // $data['manager_eks']=Structure::where('id_base',6)->get();
         }
 
-        if(Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==4 ||Structure::where('',3)->where('employe_id', Employe::employeId())->first('id_base')->id_base==4 ||Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==3){  
+        if(Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==4 ||Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==4 ||Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==3){  
             $data['manager_eks']=Structure::where('id_base',6)->get();
         } 
       
