@@ -77,18 +77,27 @@ class StaticAdmController extends Controller
                 $d->type='position';
                 $d->label=$d->position_name;
             }
-        } 
-
-        if($base== 4||$base== 3 || $base== 6){
             $data['divisions']=Structure::getPukDivision();
             foreach($data['divisions'] as $d){
                 $d->value=$d->organization_id;
                 $d->type='division';
                 $d->label=$d->position_name;
             }
+        } 
+
+        if( $base== 6){
+            $data['divisions']=Structure::getPukDivisionUnderMe(Employe::employeId());
+            foreach($data['divisions'] as $d){
+                $d->value=$d->organization_id;
+                $d->type='division';
+                $d->label=$d->position_name;
+            }
         }
+
+        $all['disposisi']=$data;
+        $all['cc']=$data['direksi']+$data['manager_eks']+$data['divisions'];
       
       
-        return new PostResource(true,'Pilihan Direksi',  $data);
+        return new PostResource(true,'Pilihan Direksi',  $all);
     }
 }
