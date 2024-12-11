@@ -57,6 +57,7 @@ class StaticAdmController extends Controller
     public function getDispo(){   
        $data['direksi']=Structure::where('id_base',4)->get();
        $data['manager_eks']=Structure::where('id_base',6)->get();
+       $data['divisions']=Structure::getPukDivision();
         return new PostResource(true,'Pilihan Direksi',  $data);
     }
 }
