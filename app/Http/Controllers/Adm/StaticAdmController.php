@@ -95,7 +95,9 @@ class StaticAdmController extends Controller
         }
 
         $all['disposisi']=$data;
-        $all['cc']=array_merge($data['direksi'], $data['manager_eks'], $data['divisions']);
+        $all['cc']=collect($data['direksi'])
+        ->merge($data['manager_eks'])
+        ->merge($data['divisions']);
       
       
         return new PostResource(true,'Pilihan Direksi',  $all);
