@@ -55,17 +55,38 @@ class StaticAdmController extends Controller
         return new PostResource(true, 'Pilihan direktur', $data);
     }
 
+
     public function getDispo(){ 
-        if(Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==3){
+        $data=[];
+        $base=Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base;
+        if($base==3){
             $data['direksi']=Structure::where('id_base',4)->get(); 
-            // $data['manager_eks']=Structure::where('id_base',6)->get();
+            foreach($data['direksi'] as $d){
+                $d->value=$d->position_id;
+                $d->type='position';
+                $d->label=$d->position_name;
+            }
         }
 
-        if(Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==4 ||Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==4 ||Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==3){  
+        if($base==4 ||$base==3){  
             $data['manager_eks']=Structure::where('id_base',6)->get();
+            foreach($data['manager_eks'] as $d){
+                $d->value=$d->position_id;
+                $d->type='position';
+                $d->label=$d->position_name;
+            }
         } 
+
+        if($base== 4||$base== 3 || $base== 6){
+            $data['divisions']=Structure::getPukDivision();
+            foreach($data['divisions'] as $d){
+                $d->value=$d->organization_id;
+                $d->type='division';
+                $d->label=$d->position_name;
+            }
+        }
       
-       $data['divisions']=Structure::getPukDivision();
+      
         return new PostResource(true,'Pilihan Direksi',  $data);
     }
 }
