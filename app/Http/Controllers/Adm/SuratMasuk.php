@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Adm\Disposisi;
 use App\Models\Adm\ListSuratMasuk;
 use App\Models\Employe;
 use App\Models\Structure;
@@ -57,5 +58,13 @@ class SuratMasuk extends Controller
         }
 
         return new PostResource(true,'data Surat Masuk', $data);
+    }
+
+    public function getdetail($id){
+        $data=SM::find($id);
+        if($data->file!==null && file_exists(public_path('adm/' . $data->file))){
+            $data['file_surat']=base64_encode(file_get_contents(public_path('adm/' . $data->file)));   
+        }
+        return new PostResource(true,'data Surat Masuk', $data);        
     }
 }
