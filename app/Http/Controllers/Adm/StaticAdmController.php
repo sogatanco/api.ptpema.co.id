@@ -56,9 +56,16 @@ class StaticAdmController extends Controller
     }
 
     public function getDispo(){ 
-       $data['direksi']=Structure::where('id_base',4)->get();
-       $data['manager_eks']=Structure::where('id_base',6)->get();
+        if(Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base==3){
+            $data['direksi']=Structure::where('id_base',4)->get(); 
+            $data['manager_eks']=Structure::where('id_base',6)->get();
+        }
+
+        if(Structure::where('',3)->where('employe_id', Employe::employeId())->first('id_base')->id_base==4){  
+            $data['manager_eks']=Structure::where('id_base',6)->get();
+        } 
+      
        $data['divisions']=Structure::getPukDivision();
-        return new PostResource(true,'Pilihan Direksi',  auth()->user());
+        return new PostResource(true,'Pilihan Direksi',  $data);
     }
 }
