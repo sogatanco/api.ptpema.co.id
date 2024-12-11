@@ -53,4 +53,9 @@ class StaticAdmController extends Controller
         $data=Position::where('id_base',3)->orWhere('id_base',4)->get();
         return new PostResource(true, 'Pilihan direktur', $data);
     }
+
+    public function getDispo(){   
+       $data['direksi']=Structure::where('id_base',4)->get();
+        return new PostResource(true,'Pilihan Direksi',  $data);
+    }
 }

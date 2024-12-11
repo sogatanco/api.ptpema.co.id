@@ -136,7 +136,8 @@ Route::controller(ScanVerif::class)->group(function(){
 Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/divisi', 'getDivisi')->middleware("role:Employee");
      Route::get('adm/signers/{id}', 'getSigner')->middleware("role:Employee");
-     Route::get("adm/direkturs", "getDirektur",)->middleware(    "role:Employee");
+     Route::get("adm/direkturs", "getDirektur")->middleware(    "role:Employee");
+     Route::get('adm/dispo/to', 'getDispo')->middleware('role:Employee');
 });
 
 Route::controller(SuratController::class)->group(function(){
@@ -157,4 +158,5 @@ Route::controller(SuratMasuk::class)->group(function(){
      Route::post("adm/suratmasuk/", "insert")->middleware("role:Employee");
      Route::get('adm/suratmasuk/{what}', 'getSM')->middleware('role:Employee');
      Route::get('adm/suratmasuk/detail/{id}', 'getDetail')->middleware('role:Employee');
+     
 });
