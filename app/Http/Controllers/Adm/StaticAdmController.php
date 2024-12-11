@@ -57,7 +57,9 @@ class StaticAdmController extends Controller
 
 
     public function getDispo(){ 
-        $data=[];
+        $data['direksi']=[];
+        $data['manager_eks']=[];
+        $data['divisions']=[];
         $base=Structure::where('employe_id', Employe::employeId())->first('id_base')->id_base;
         if($base==3){
             $data['direksi']=Structure::where('id_base',4)->get(); 
