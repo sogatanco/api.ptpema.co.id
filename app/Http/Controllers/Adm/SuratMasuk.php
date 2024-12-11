@@ -60,7 +60,7 @@ class SuratMasuk extends Controller
         return new PostResource(true,'data Surat Masuk', $data);
     }
 
-    public function getdetail($id){
+    public function getDetail($id){
         $data=SM::find($id);
         if($data->file!==null && file_exists(public_path('adm/' . $data->file))){
             $data['file_surat']=base64_encode(file_get_contents(public_path('adm/' . $data->file)));   
