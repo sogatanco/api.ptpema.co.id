@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Adm\ListSuratMasuk;
 use App\Models\Employe;
+use App\Models\Structure;
 use Illuminate\Http\Request;
 use App\Models\Adm\SuratMasuk as SM;
 use Illuminate\Support\Facades\Storage;
@@ -49,6 +50,10 @@ class SuratMasuk extends Controller
             $data=ListSuratMasuk::where('live_receiver',Employe::employeId())->whereNotNull('tindak_lanjut')->latest('ditinjut')->get();
         }else if ($what== 'all') {
             $data=SM::latest('created_at')->get();
+            foreach ($data as $d) {
+                $d->nama_dir=Structure::where('position_id', $d->id_direksi)->first('first_name')->first_name;
+                $d->by_name=Structure::where('employe_id', $d->insert_by)->first('first_name')->first_name;
+            }
         }
 
         return new PostResource(true,'data Surat Masuk', $data);
