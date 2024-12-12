@@ -67,4 +67,29 @@ class SuratMasuk extends Controller
         }
         return new PostResource(true,'data Surat Masuk', $data);        
     }
+
+    public function disposisi($idSurat, Request $request){
+        $nowDispo=Disposisi::find(ListSuratMasuk::where('id_surat', $idSurat)->where('live_receiver', Employe::employeId())->first('id')->id);
+        $nowDispo->tindak_lanjut=$request->what;
+        $nowDispo->tinjut_by=Employe::employeId();
+
+        if($nowDispo->save()){
+            if($request->what==='dispo'){
+                $nextDispo=new Disposisi();
+
+                $nextDispo->id_surat=$idSurat;
+                $nextDispo->employe_id=Employe::employeId();
+                $nextDispo->position=Structure::where('employe_id', Employe::employeId())->first('position_name')->position_name;
+                $nextDispo->tickler=implode(",",$request->tickler);
+                $nextDispo->catatan=$request->catatan;
+                $nextDispo->dispo_to=$request->to['type'];
+                $nextDispo->dispo_to=$request->to['value'] ;
+                if($nextDispo->save()){
+                    return new PostResource(true,'Surat Sudah Berhasil di disposisi', []);
+                }
+            }else{
+                return new PostResource(true,'Surat Sudah Berhasil di Proses', []);
+            }
+        }
+    }
 }
