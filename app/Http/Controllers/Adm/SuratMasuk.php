@@ -83,7 +83,7 @@ class SuratMasuk extends Controller
                 $nextDispo->tickler=implode(",",$request->tickler);
                 $nextDispo->catatan=$request->catatan;
                 $nextDispo->dispo_to=$request->to['type'];
-                $nextDispo->dispo_to=$request->to['value'] ;
+                $nextDispo->id_penerima=$request->to['value'] ;
                 if($nextDispo->save()){
                     return new PostResource(true,'Surat Sudah Berhasil di disposisi', []);
                 }
