@@ -144,12 +144,15 @@ class SuratMasuk extends Controller
                 
                 'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
                 'cc'=>$cc,
+                'waktu'=>$r->created_at,
             ]);
             $collection->push([
                 'employe_id' => $r->tinjut_by,
                 'position' => $r->tinjut_by_position,
                 'nama' => Structure::where('employe_id', $r->tinjut_by)->first('first_name')->first_name,
                 'activity' => 'Surat di tindak lanjuti dan tidak didisposisi',
+                'cc'=>$cc,
+                'waktu'=>$r->updated_at,
             ]);
 
            }else{
@@ -163,6 +166,7 @@ class SuratMasuk extends Controller
                 
                 'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
                 'cc'=>$cc,
+                'waktu'=>$r->created_at,
             ]);
 
            }
