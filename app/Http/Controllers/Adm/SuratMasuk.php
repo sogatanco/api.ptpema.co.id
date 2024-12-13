@@ -7,6 +7,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Adm\Disposisi;
 use App\Models\Adm\ListSuratMasuk;
 use App\Models\Employe;
+use App\Models\Position;
 use App\Models\Structure;
 use App\Models\Adm\CC;
 use Illuminate\Http\Request;
@@ -91,7 +92,7 @@ class SuratMasuk extends Controller
                 $nextDispo->id_penerima = $request->to['value'];
                 $nextDispo->updated_at = null;
                 if ($nextDispo->save()) {
-                    if(count($request->cc) > 0) {
+                    if (count($request->cc) > 0) {
                         for ($i = 0; $i < count($request->cc); $i++) {
                             CC::create([
                                 'id_dispo' => $nextDispo->id,
@@ -115,5 +116,23 @@ class SuratMasuk extends Controller
         if ($sm->delete()) {
             return new PostResource(true, 'Surat Sudah Berhasil di Hapus', []);
         }
+    }
+
+    public function getRiwayat($id)
+    {
+        $riwayat = Disposisi::where('id_surat', $id)->get();
+        $collection = collect();
+        foreach ($riwayat as $r) {
+
+            $collection->push([
+                'employe_id' => $r->employe_id,
+                'position' => $r->position,
+                'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
+                'activity' => 'Dokumen  di disposisi kepada ' . $r->dispo_to == 'position' ? Position::where('position_id', $r->id_penerima)->first('position_name')->position_name : 'sdgsdg',
+            ]);
+        }
+
+        return new PostResource(true,'Riwayat', $collection->toArray());
+
     }
 }

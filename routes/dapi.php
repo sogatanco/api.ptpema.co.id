@@ -160,4 +160,5 @@ Route::controller(SuratMasuk::class)->group(function(){
      Route::get('adm/suratmasuk/detail/{id}', 'getDetail')->middleware('role:Employee');
      Route::post('adm/suratmasuk/diposisi/{idSurat}', 'disposisi')->middleware('role:Employee');  
      Route::post('adm/suratmasuk/delete/{id}', 'delete')->middleware('role:Employee');
+     Route::get('adm/suratmasuk/riwayat/{id}', 'getRiwayat')->middleware('role:Employee');
 });
