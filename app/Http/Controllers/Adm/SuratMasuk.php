@@ -133,11 +133,11 @@ class SuratMasuk extends Controller
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
                 'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
-                'activity' => 'Surat di tindak lanjuti dan tidak didisposisi',
+                'activity' => 'Surat di didisposisi kepada '.$r->id_penerima,
             ]);
             $collection->push([
                 'employe_id' => $r->tinjut_by,
-                'position' => $r->position,
+                'position' => $r->tinjut_by_position,
                 'nama' => Structure::where('employe_id', $r->tinjut_by)->first('first_name')->first_name,
                 'activity' => 'Surat di tindak lanjuti dan tidak didisposisi',
             ]);
