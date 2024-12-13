@@ -128,7 +128,7 @@ class SuratMasuk extends Controller
             $cc=[];
 
             $data=CC::where('id_dispo', $r->id)->get();
-            foreach ($cc as $c) {
+            foreach ($data as $c) {
                 array_push($cc, $c->cc_to);
             }
 
