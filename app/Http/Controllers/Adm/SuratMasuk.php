@@ -78,6 +78,7 @@ class SuratMasuk extends Controller
         $nowDispo = Disposisi::find(ListSuratMasuk::where('id_surat', $idSurat)->where('live_receiver', Employe::employeId())->first('id')->id);
         $nowDispo->tindak_lanjut = $request->what;
         $nowDispo->tinjut_by = Employe::employeId();
+        $nowDispo->tinjut_by_position=Structure::where('employe_id', Employe::employeId())->first('position_name')->position_name;
 
         if ($nowDispo->save()) {
             if ($request->what === 'dispo') {
@@ -129,9 +130,9 @@ class SuratMasuk extends Controller
            if($r->tindak_lanjut== 'tinjut'){
 
             $collection->push([
-                'employe_id' => $r->tinjut_by,
+                'employe_id' => $r->employe_id,
                 'position' => $r->position,
-                'nama' => Structure::where('employe_id', $r->tinjut_by)->first('first_name')->first_name,
+                'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
                 'activity' => 'Surat di tindak lanjuti dan tidak didisposisi',
             ]);
             $collection->push([
