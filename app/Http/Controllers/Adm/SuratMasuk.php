@@ -125,6 +125,9 @@ class SuratMasuk extends Controller
         $collection = collect();
         foreach ($riwayat as $r) {
 
+            // if (str_contains($r->position, 'Administrator')) {
+            //     $
+            // }
 
 
            if($r->tindak_lanjut== 'tinjut'){
@@ -133,7 +136,7 @@ class SuratMasuk extends Controller
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
                 'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
-                'activity' => 'Surat di didisposisi kepada '.$r->id_penerima,
+                'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan':'Dokumen didisposisikan',
             ]);
             $collection->push([
                 'employe_id' => $r->tinjut_by,
@@ -147,7 +150,7 @@ class SuratMasuk extends Controller
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
                 'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
-                'activity' => 'Surat di diposisi',
+                'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan':'Dokumen didisposisikan',
             ]);
 
            }
