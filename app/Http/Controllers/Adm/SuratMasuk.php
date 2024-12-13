@@ -151,7 +151,6 @@ class SuratMasuk extends Controller
                 'position' => $r->tinjut_by_position,
                 'nama' => Structure::where('employe_id', $r->tinjut_by)->first('first_name')->first_name,
                 'activity' => 'Surat ditindaklanjuti dan tidak didisposisi',
-                'cc'=>$cc,
                 'waktu'=>$r->updated_at,
             ]);
 
