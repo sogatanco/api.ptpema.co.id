@@ -125,8 +125,12 @@ class SuratMasuk extends Controller
         $riwayat = Disposisi::where('id_surat', $id)->get();
         $collection = collect();
         foreach ($riwayat as $r) {
+            $cc=[];
 
-            $cc=CC::where('id_dispo', $r->id)->get();
+            $data=CC::where('id_dispo', $r->id)->get();
+            foreach ($cc as $c) {
+                array_push($cc, $c->cc_to);
+            }
 
            if($r->tindak_lanjut== 'tinjut'){
 
