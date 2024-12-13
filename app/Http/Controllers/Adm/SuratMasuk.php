@@ -150,7 +150,9 @@ class SuratMasuk extends Controller
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
                 'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
-                'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan':'Dokumen didisposisikan',
+                'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?'posisi':'divisi')
+                
+                :'Dokumen didisposisikan',
             ]);
 
            }
