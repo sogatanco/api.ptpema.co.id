@@ -8,6 +8,7 @@ use App\Models\Adm\Disposisi;
 use App\Models\Adm\ListSuratMasuk;
 use App\Models\Employe;
 use App\Models\Structure;
+use App\Models\Adm\CC;
 use Illuminate\Http\Request;
 use App\Models\Adm\SuratMasuk as SM;
 use Illuminate\Support\Facades\Storage;
@@ -90,6 +91,16 @@ class SuratMasuk extends Controller
                 $nextDispo->id_penerima = $request->to['value'];
                 $nextDispo->updated_at = null;
                 if ($nextDispo->save()) {
+                    if(count($request->cc) > 0) {
+                        for ($i = 0; $i < count($request->cc); $i++) {
+                            CC::create([
+                                'id_dispo' => $nextDispo->id,
+                                'cc_to' => $request->cc[$i]['type'],
+                                'id_penerima' => $request->cc[$i]['value'],
+                                'created_at' => $nextDispo->created_at,
+                            ]);
+                        }
+                    }
                     return new PostResource(true, 'Surat Sudah Berhasil di disposisi', []);
                 }
             } else {

@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class CC extends Model
 {
-    use HasFactory;
+    protected $connection='adm';
+    protected $table= 'cc';
 }
