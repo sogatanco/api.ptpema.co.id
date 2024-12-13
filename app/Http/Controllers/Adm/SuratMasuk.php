@@ -129,7 +129,7 @@ class SuratMasuk extends Controller
 
             $data=CC::where('id_dispo', $r->id)->get();
             foreach ($data as $c) {
-                array_push($cc, $c->cc_to);
+                array_push($cc, ($c->cc_to=='position'?Position::where('position_id',$c->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$c->id_penerima)->first('organization_name')->organization_name));
             }
 
            if($r->tindak_lanjut== 'tinjut'){
