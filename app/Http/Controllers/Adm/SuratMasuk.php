@@ -124,12 +124,31 @@ class SuratMasuk extends Controller
         $collection = collect();
         foreach ($riwayat as $r) {
 
+
+
+           if($r->tindak_lanjut== 'tinjut'){
             $collection->push([
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
                 'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
-                'activity' => 'Dokumen  di disposisi kepada ' . $r->dispo_to == 'position' ? Position::where('position_id', $r->id_penerima)->first('position_name')->position_name : 'sdgsdg',
+                'activity' => 'Surat di diposisi',
             ]);
+            $collection->push([
+                'employe_id' => $r->tinjut_by,
+                'position' => $r->position,
+                'nama' => Structure::where('employe_id', $r->tinjut_by)->first('first_name')->first_name,
+                'activity' => 'Surat di tindak lanjuti dan tidak didisposisi',
+            ]);
+
+           }else{
+            $collection->push([
+                'employe_id' => $r->employe_id,
+                'position' => $r->position,
+                'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
+                'activity' => 'Surat di diposisi',
+            ]);
+
+           }
         }
 
         return new PostResource(true,'Riwayat', $collection->toArray());
