@@ -54,6 +54,7 @@ class SuratMasuk extends Controller
             foreach ($data as $d) {
                 $d->nama_dir=Structure::where('position_id', $d->id_direksi)->first('first_name')->first_name;
                 $d->by_name=Structure::where('employe_id', $d->insert_by)->first('first_name')->first_name;
+                $d->diproses=ListSuratMasuk::where('id_surat',$d->id_surat)->count();
             }
         }
 
