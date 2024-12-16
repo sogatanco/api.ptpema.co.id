@@ -66,7 +66,9 @@ class SuratMasuk extends Controller
                 $d->nama_dir = Structure::where('position_id', $d->id_direksi)->first('first_name')->first_name;
                 $d->by_name = Structure::where('employe_id', $d->insert_by)->first('first_name')->first_name;
                 if(count(Disposisi::where('id_surat', $d->id)->get())==1){
-                    $c=count(Disposisi::where('id_surat', $d->id)->whereNull('tindak_lanjut')->get());
+                    if(count(Disposisi::where('id_surat', $d->id)->whereNull('tindak_lanjut')->get())<1){
+                        $c=2;
+                    }
                 }else{
                     $c=count(Disposisi::where('id_surat', $d->id)->get() );
                 }
