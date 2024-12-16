@@ -68,6 +68,8 @@ class SuratMasuk extends Controller
                 if(count(Disposisi::where('id_surat', $d->id)->get())==1){
                     if(count(Disposisi::where('id_surat', $d->id)->whereNull('tindak_lanjut')->get())<1){
                         $c=2;
+                    }else{
+                        $c=1;
                     }
                 }else{
                     $c=count(Disposisi::where('id_surat', $d->id)->get() );
