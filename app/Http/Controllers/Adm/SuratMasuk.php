@@ -51,8 +51,14 @@ class SuratMasuk extends Controller
         $data = [];
         if ($what == 'to_me') {
             $data = ListSuratMasuk::where('live_receiver', Employe::employeId())->whereNull('tindak_lanjut')->latest('diterima')->get();
+            foreach ($data as $d) {
+                $d->diproses = count(Disposisi::where('id_surat', $d->id_surat)->get());
+            }
         } else if ($what == 'tinjut') {
             $data = ListSuratMasuk::where('live_receiver', Employe::employeId())->whereNotNull('tindak_lanjut')->latest('ditinjut')->get();
+            foreach ($data as $d) {
+                $d->diproses = count(Disposisi::where('id_surat', $d->id_surat)->get());
+            }
         } else if ($what == 'all') {
             $data = SM::latest('created_at')->get();
             foreach ($data as $d) {
