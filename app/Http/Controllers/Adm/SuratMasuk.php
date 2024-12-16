@@ -68,7 +68,7 @@ class SuratMasuk extends Controller
                 $d->diproses = count(Disposisi::where('id_surat', $d->id)->get());
             }
         }else if ($what == 'cc') {
-            $data=ListCC::where('live_cc', Employe::employerId())->latest('cc_at')->get();
+            $data=ListCC::where('live_cc', Employe::employeId())->latest('cc_at')->get();
         }
 
         return new PostResource(true, 'data Surat Masuk', $data);
