@@ -11,6 +11,7 @@ use App\Models\Employe;
 use App\Models\Position;
 use App\Models\Structure;
 use App\Models\Adm\CC;
+use App\Models\Adm\ListCC;
 use Illuminate\Http\Request;
 use App\Models\Adm\SuratMasuk as SM;
 use Illuminate\Support\Facades\Storage;
@@ -66,6 +67,8 @@ class SuratMasuk extends Controller
                 $d->by_name = Structure::where('employe_id', $d->insert_by)->first('first_name')->first_name;
                 $d->diproses = count(Disposisi::where('id_surat', $d->id)->get());
             }
+        }else if ($what == 'cc') {
+            $data=ListCC::where('live_cc', Employe::employerId())->latest('cc_at')->get();
         }
 
         return new PostResource(true, 'data Surat Masuk', $data);
