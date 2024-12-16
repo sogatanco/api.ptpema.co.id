@@ -65,7 +65,12 @@ class SuratMasuk extends Controller
             foreach ($data as $d) {
                 $d->nama_dir = Structure::where('position_id', $d->id_direksi)->first('first_name')->first_name;
                 $d->by_name = Structure::where('employe_id', $d->insert_by)->first('first_name')->first_name;
-                $d->diproses = count(Disposisi::where('id_surat', $d->id)->get());
+                if(count(Disposisi::where('id_surat', $d->id)->get())==1){
+                    $c=count(Disposisi::where('id_surat', $d->id)->whereNotNull('tindak_lanjut')->get());
+                }else{
+                    $c=count(Disposisi::where('id_surat', $d->id)->get() );
+                }
+                $d->diproses = $c;
             }
         }else if ($what == 'cc') {
             $data=ListCC::where('live_cc', Employe::employeId())->latest('cc_at')->get();
