@@ -183,4 +183,11 @@ class SuratMasuk extends Controller
         return new PostResource(true,'Riwayat', $collection->toArray());
 
     }
+
+    public function readCC($id){
+        $cc=CC::find($id);
+        $cc->read_by=Employe::employeId();
+        $cc->reader_position=Structure::where('employe_id',Employe::employeId())->first('position_name')->position_name;
+        $cc->save();
+    }
 }
