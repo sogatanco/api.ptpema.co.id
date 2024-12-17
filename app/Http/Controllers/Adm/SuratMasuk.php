@@ -155,7 +155,7 @@ class SuratMasuk extends Controller
 
             $collection->push([
                 'detail'=>$dt,
-                'tickler'=>$r->tickler,
+                'tickler'=>!is_null($string) && $string !== ""?explode(",", $r->tickler):[],
                 'catatan'=>$r->catatan,
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
@@ -171,7 +171,7 @@ class SuratMasuk extends Controller
                 'waktu'=>$r->created_at,
             ]);
             $collection->push([
-                'tickler'=>$r->tickler,
+                'tickler'=>[],
                 'catatan'=>$r->catatan,
                 'detail'=>$dt,
                 'employe_id' => $r->tinjut_by,
@@ -184,7 +184,7 @@ class SuratMasuk extends Controller
 
            }else{
             $collection->push([
-                'tickler'=>$r->tickler,
+                'tickler'=>!is_null($string) && $string !== ""?explode(",", $r->tickler):[],
                 'catatan'=>$r->catatan,
                 'detail'=>$dt,
                 'employe_id' => $r->employe_id,
