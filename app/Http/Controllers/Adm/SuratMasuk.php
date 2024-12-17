@@ -141,6 +141,7 @@ class SuratMasuk extends Controller
     public function getRiwayat($id)
     {
         $riwayat = Disposisi::where('id_surat', $id)->get();
+        $dt=SM::find($id);
         $collection = collect();
         foreach ($riwayat as $r) {
             $cc=[];
@@ -153,8 +154,12 @@ class SuratMasuk extends Controller
            if($r->tindak_lanjut== 'tinjut'){
 
             $collection->push([
+                'detail'=>$dt,
+                'tickler'=>$r->tickler,
+                'catatan'=>$r->catatan,
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
+                'dispo'=>true,
                 'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
                 'activity' =>  str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:'')
                 
@@ -165,7 +170,11 @@ class SuratMasuk extends Controller
                 'waktu'=>$r->created_at,
             ]);
             $collection->push([
+                'tickler'=>$r->tickler,
+                'catatan'=>$r->catatan,
+                'detail'=>$dt,
                 'employe_id' => $r->tinjut_by,
+                'dispo'=>false,
                 'position' => $r->tinjut_by_position,
                 'nama' => Structure::where('employe_id', $r->tinjut_by)->first('first_name')->first_name,
                 'activity' => 'Surat ditindaklanjuti dan tidak didisposisi',
@@ -174,7 +183,11 @@ class SuratMasuk extends Controller
 
            }else{
             $collection->push([
+                'tickler'=>$r->tickler,
+                'catatan'=>$r->catatan,
+                'detail'=>$dt,
                 'employe_id' => $r->employe_id,
+                'dispo'=>false,
                 'position' => $r->position,
                 'nama' => Structure::where('employe_id', $r->employe_id)->first('first_name')->first_name,
                 'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:'')
