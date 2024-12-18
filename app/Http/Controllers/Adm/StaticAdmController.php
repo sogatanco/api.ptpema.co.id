@@ -113,7 +113,7 @@ class StaticAdmController extends Controller
     {
         $collection = collect();
         $collection->put(
-            'dataDash' => [
+            'dataDash' , [
                 [
                     'title' => 'Surat Keluar',
                     'sub'=>'Tahun '.date("Y"),
