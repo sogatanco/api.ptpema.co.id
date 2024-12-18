@@ -145,7 +145,7 @@ class StaticAdmController extends Controller
                 ],
                 [
                     'title' => 'Document',
-                    'sub'=>'disposed to me',
+                    'sub'=>(in_array('PresidenDirector', Auth::user()->roles)?'Submitted to me':'Disposed to me'),
                     'type'=>'line',
                     'color'=>'bg-primary',
                     'value'=> count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get())
