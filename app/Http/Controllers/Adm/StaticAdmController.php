@@ -125,7 +125,7 @@ class StaticAdmController extends Controller
                     'title' => 'Surat Masuk',
                     'sub'=>'Tahun '.date("Y"),
                     'type'=>'bar',
-                    'color'=>'bg-warning',
+                    'color'=>'bg-success',
                     'value' => count(SM::get()),
                 ],
                 [
@@ -147,7 +147,7 @@ class StaticAdmController extends Controller
                     'title' => 'Document',
                     'sub'=>'disposed to me',
                     'type'=>'line',
-                    'color'=>'bg-secondary',
+                    'color'=>'bg-primary',
                     'value'=> count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get())
                 ]
 
