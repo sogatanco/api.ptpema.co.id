@@ -111,18 +111,21 @@ class StaticAdmController extends Controller
     {
         $collection = collect();
         $collection->push([
-            [
                 'dataDash' => [
-                    'label' => 'Surat Keluar',
-                    'value' => count(ListSurat::where('status', 'signed')->get())
+                    [
+                        'label' => 'Surat Keluar',
+                        'value' => count(ListSurat::where('status', 'signed')->get()),
+                    ],
+                    [
+                        'label' => 'Surat Masuk',
+                        'value' => count(SM::get()),
+                    ],
+                    [
+                        'label' => Auth::user()->roles,
+                        'value' => count(SM::get()),
+                    ],
+
                 ]
-            ],
-            [
-                'dataDash' => [
-                    'label' => 'Surat Masuk',
-                    'value' => count(SM::get())
-                ]
-            ],
 
         ]);
 
