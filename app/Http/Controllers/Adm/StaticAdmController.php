@@ -115,15 +115,24 @@ class StaticAdmController extends Controller
         $collection->push([
             'dataDash' => [
                 [
-                    'label' => 'Surat Keluar',
+                    'title' => 'Surat Keluar',
+                    'sub'=>'Tahun '.date("Y"),
+                    'type'=>'scatter',
+                    'color'=>'bg-warning',
                     'value' => count(ListSurat::where('status', 'signed')->get()),
                 ],
                 [
-                    'label' => 'Surat Masuk',
+                    'title' => 'Surat Masuk',
+                    'sub'=>'Tahun '.date("Y"),
+                    'type'=>'bar',
+                    'color'=>'bg-warning',
                     'value' => count(SM::get()),
                 ],
                 [
-                    'label' => (in_array('AdminAdm', Auth::user()->roles))
+                    'title' => 'Document',
+                    'type'=>'radar',
+                    'color'=>'bg-secondary',
+                    'sub' => (in_array('AdminAdm', Auth::user()->roles))
                         ? 'Created by me'
                         : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
                             ? 'Sign by me'
@@ -135,7 +144,10 @@ class StaticAdmController extends Controller
                         : count(ListSurat::where('status','signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get())),
                 ],
                 [
-                    'label'=>'disposed to me',
+                    'title' => 'Document',
+                    'sub'=>'disposed to me',
+                    'type'=>'line',
+                    'color'=>'bg-secondary',
                     'value'=> count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get())
                 ]
 
