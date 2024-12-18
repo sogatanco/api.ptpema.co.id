@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Adm;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Adm\ListSurat;
+use App\Models\Adm\Surat;
 use App\Models\AtasanTerkait;
 use App\Models\Employe;
 use App\Models\Organization;
@@ -126,7 +127,11 @@ class StaticAdmController extends Controller
                         : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
                             ? 'Sign by me'
                             : 'Divisi terkait'),
-                    'value' => count(SM::get()),
+                    'value' => (in_array('AdminAdm', Auth::user()->roles))
+                    ? count(Surat::where('submitted_by', Employe::employeId())->get())
+                    : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
+                        ? 'Sign by me'
+                        : 'Divisi terkait'),,
                 ],
 
             ]
