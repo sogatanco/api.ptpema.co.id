@@ -155,6 +155,6 @@ class StaticAdmController extends Controller
 
         ]);
 
-        return new PostResource(true, 'Dashboard', $collection->toArray());
+        return new PostResource(true, 'Dashboard', $collection);
     }
 }
