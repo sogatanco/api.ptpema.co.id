@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Adm\ListSurat;
 use App\Models\AtasanTerkait;
 use App\Models\Employe;
 use App\Models\Organization;
@@ -101,5 +102,19 @@ class StaticAdmController extends Controller
       
       
         return new PostResource(true,'Pilihan Direksi',  $all);
+    }
+
+    public function dashboard(){
+        $collection = collect();
+        $collection->push(
+            [
+                'dataDash'=>[
+                    'label'=>'Surat Keluar',
+                    'value'=> count(ListSurat::where('status', 'signed')->get()),
+                ]
+            ]
+                );
+       
+        return new PostResource(true, 'Dashboard', $collection->toArray());
     }
 }

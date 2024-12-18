@@ -138,6 +138,7 @@ Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/signers/{id}', 'getSigner')->middleware("role:Employee");
      Route::get("adm/direkturs", "getDirektur")->middleware(    "role:Employee");
      Route::get('adm/dispo/to', 'getDispo')->middleware('role:Employee');
+     Route::get('adm/dashboard', 'dashboard')->middleware('role:Employee');
 });
 
 Route::controller(SuratController::class)->group(function(){
