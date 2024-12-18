@@ -112,7 +112,7 @@ class StaticAdmController extends Controller
     public function dashboard()
     {
         $collection = collect();
-        $collection->push([
+        $collection->push(
             'dataDash' => [
                 [
                     'title' => 'Surat Keluar',
@@ -152,9 +152,8 @@ class StaticAdmController extends Controller
                 ]
 
             ]
+);
 
-        ]);
-
-        return new PostResource(true, 'Dashboard', $collection);
+        return new PostResource(true, 'Dashboard', $collection->toArray());
     }
 }
