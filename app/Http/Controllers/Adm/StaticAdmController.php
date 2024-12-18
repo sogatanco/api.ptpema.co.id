@@ -121,7 +121,7 @@ class StaticAdmController extends Controller
                         'value' => count(SM::get()),
                     ],
                     [
-                        'label' => Auth::user()->roles,
+                        'label' => !empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles)) ?'Sign by me' : 'Created by me',
                         'value' => count(SM::get()),
                     ],
 
