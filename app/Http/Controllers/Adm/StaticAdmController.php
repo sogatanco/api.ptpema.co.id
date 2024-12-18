@@ -130,8 +130,8 @@ class StaticAdmController extends Controller
                     'value' => (in_array('AdminAdm', Auth::user()->roles))
                     ? count(Surat::where('submitted_by', Employe::employeId())->get())
                     : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
-                        ? 'Sign by me'
-                        : 'Divisi terkait'),,
+                        ? count(ListSurat::where('status','signed')->where('sign_by', Employe::employeId())->get())
+                        : count(ListSurat::where('status','signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get())),
                 ],
 
             ]
