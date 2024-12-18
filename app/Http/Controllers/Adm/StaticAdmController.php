@@ -111,21 +111,25 @@ class StaticAdmController extends Controller
     {
         $collection = collect();
         $collection->push([
-                'dataDash' => [
-                    [
-                        'label' => 'Surat Keluar',
-                        'value' => count(ListSurat::where('status', 'signed')->get()),
-                    ],
-                    [
-                        'label' => 'Surat Masuk',
-                        'value' => count(SM::get()),
-                    ],
-                    [
-                        'label' => !empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles)) ?'Sign by me' : in_array('AdminAdm', Auth::user()->roles) ? 'Created by me' : 'Divisi terkait',
-                        'value' => count(SM::get()),
-                    ],
+            'dataDash' => [
+                [
+                    'label' => 'Surat Keluar',
+                    'value' => count(ListSurat::where('status', 'signed')->get()),
+                ],
+                [
+                    'label' => 'Surat Masuk',
+                    'value' => count(SM::get()),
+                ],
+                [
+                    'label' => (in_array('AdminAdm', Auth::user()->roles))
+                        ? 'Created by me'
+                        : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
+                            ? 'Sign by me'
+                            : 'Divisi terkait'),
+                    'value' => count(SM::get()),
+                ],
 
-                ]
+            ]
 
         ]);
 
