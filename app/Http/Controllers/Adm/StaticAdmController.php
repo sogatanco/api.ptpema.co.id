@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Adm;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Adm\ListSurat;
+use App\Models\Adm\ListSuratMasuk;
 use App\Models\Adm\Surat;
 use App\Models\AtasanTerkait;
 use App\Models\Employe;
@@ -133,6 +134,10 @@ class StaticAdmController extends Controller
                         ? count(ListSurat::where('status','signed')->where('sign_by', Employe::employeId())->get())
                         : count(ListSurat::where('status','signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get())),
                 ],
+                [
+                    'label'=>'disposed to me',
+                    'value'=> count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get())
+                ]
 
             ]
 
