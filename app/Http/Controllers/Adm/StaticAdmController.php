@@ -114,64 +114,60 @@ class StaticAdmController extends Controller
     {
         $collection = collect();
         $collection->put(
-            'dataDash' , [
+            'dataDash',
+            [
                 [
                     'title' => 'Surat Keluar',
-                    'sub'=>'Tahun '.date("Y"),
-                    'type'=>'scatter',
-                    'color'=>'bg-warning',
+                    'sub' => 'Tahun ' . date("Y"),
+                    'type' => 'scatter',
+                    'color' => 'bg-warning',
                     'value' => count(ListSurat::where('status', 'signed')->get()),
                 ],
                 [
                     'title' => 'Surat Masuk',
-                    'sub'=>'Tahun '.date("Y"),
-                    'type'=>'bar',
-                    'color'=>'bg-success',
+                    'sub' => 'Tahun ' . date("Y"),
+                    'type' => 'bar',
+                    'color' => 'bg-success',
                     'value' => count(SM::get()),
                 ],
                 [
                     'title' => 'Document',
-                    'type'=>'radar',
-                    'color'=>'bg-secondary',
+                    'type' => 'radar',
+                    'color' => 'bg-secondary',
                     'sub' => (in_array('AdminAdm', Auth::user()->roles))
                         ? 'Created by me'
                         : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
                             ? 'Sign by me'
                             : 'Divisi terkait'),
                     'value' => (in_array('AdminAdm', Auth::user()->roles))
-                    ? count(Surat::where('submitted_by', Employe::employeId())->get())
-                    : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
-                        ? count(ListSurat::where('status','signed')->where('sign_by', Employe::employeId())->get())
-                        : count(ListSurat::where('status','signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get())),
+                        ? count(Surat::where('submitted_by', Employe::employeId())->get())
+                        : (!empty(array_intersect(['Manager', 'ManagerEks', 'Director', 'Presdir'], Auth::user()->roles))
+                            ? count(ListSurat::where('status', 'signed')->where('sign_by', Employe::employeId())->get())
+                            : count(ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get())),
                 ],
                 [
                     'title' => 'Document',
-                    'sub'=>(in_array('Presdir', Auth::user()->roles)?'Submitted to me':'Disposed to me'),
-                    'type'=>'line',
-                    'color'=>'bg-primary',
-                    'value'=> count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get())
+                    'sub' => (in_array('Presdir', Auth::user()->roles) ? 'Submitted to me' : 'Disposed to me'),
+                    'type' => 'line',
+                    'color' => 'bg-primary',
+                    'value' => count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get())
                 ]
 
             ]
-);
-    $dv=DataDivisi::orderBy('divisi', 'ASC')->get();
-    foreach ($dv as $d) {
-        // $collection['chart']['divisi']
-        $update = [
-            '$push' => [
-                'data.sub.divisi' => $d->divisi,
-                'data.sub.value' => $d->jumlah_surat // Elemen yang akan ditambahkan
-            ]
-        ];
-        $collection->updateOne($update);
-    }
+        );
+        $dv = DataDivisi::orderBy('divisi', 'ASC')->get();
+        foreach ($dv as $d) {
 
-    if(!empty(array_intersect([ 'ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))){
-       $collection->put('latest_surat', ListSurat::where('status', 'signed')->get());
-    }else{
-        $collection->put('latest_surat', ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get());
-    }
-    
+            $collection['chart']['divisi'][] = $d->divisi;
+            $collection['chart']['value'][] = $d->jumlah_surat;
+        }
+
+        if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
+            $collection->put('latest_surat', ListSurat::where('status', 'signed')->get());
+        } else {
+            $collection->put('latest_surat', ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get());
+        }
+
         return new PostResource(true, 'Dashboard', $collection->toArray());
     }
 
