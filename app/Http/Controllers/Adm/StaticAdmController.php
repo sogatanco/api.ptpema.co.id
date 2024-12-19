@@ -170,9 +170,9 @@ class StaticAdmController extends Controller
         }
 
         if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
-            $collection->put('latest_surat', ListSurat::where('status', 'signed')->get());
+            $collection->put('latest_surat', ListSurat::where('status', 'signed')->latest()->take(5)->get());
         } else {
-            $collection->put('latest_surat', ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get());
+            $collection->put('latest_surat', ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->latest()->take(5)->get());
         }
 
         return new PostResource(true, 'Dashboard', $collection->toArray());
