@@ -156,15 +156,14 @@ class StaticAdmController extends Controller
             ]
         );
         $dv = DataDivisi::orderBy('divisi', 'ASC')->get();
-        if (!isset($collection["chart"])) {
-            $collection["chart"] = []; // Buat key 'sub' sebagai array kosong
-        }
-        if (!isset($collection["chart"]["divisi"])) {
-            $collection["chart"]["divisi"] = []; // Buat key 'sub'
-        }
+        $collection = collect([
+            "chart" => [
+                "divisi" => collect() // Gunakan Collection di dalam 'divisi'
+            ]
+        ]);
         foreach ($dv as $d) {
 
-            $collection['chart']['divisi'][] = $d->divisi;
+            $collection['chart']['divisi']->push($d->divisi); 
             // $collection['chart']['value'][] = $d->jumlah_surat;
         }
 
