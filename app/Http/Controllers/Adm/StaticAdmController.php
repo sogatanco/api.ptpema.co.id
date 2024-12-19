@@ -158,13 +158,15 @@ class StaticAdmController extends Controller
         $dv = DataDivisi::orderBy('divisi', 'ASC')->get();
         $collection = collect([
             "chart" => [
-                "divisi" => collect() // Gunakan Collection di dalam 'divisi'
+                "divisi" => collect(), 
+                "value" => collect() 
             ]
         ]);
         foreach ($dv as $d) {
 
             $collection['chart']['divisi']->push($d->divisi); 
-            // $collection['chart']['value'][] = $d->jumlah_surat;
+            $collection['chart']['value']->push($d->jumlah_surat); 
+            
         }
 
         if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
