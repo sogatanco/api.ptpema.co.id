@@ -154,15 +154,21 @@ class StaticAdmController extends Controller
 
             ]
 );
-    $dv=DataDivisi::get()->orderBy('divisi', 'ASC');
+    $dv=DataDivisi::orderBy('divisi', 'ASC')->get();
     foreach ($dv as $d) {
         // $collection['chart']['divisi']
         array_push($collection['chart']['divisi'], $d->divisi);
         array_push($collection['chart']['value'], $d->jumlah_surat);
     }
+
+    if(!empty(array_intersect([ 'ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))){
+       $collection->put('latest_surat', ListSurat::where('status', 'signed')->get());
+    }else{
+        $collection->put('latest_surat', ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->get());
+    }
     
-
-
         return new PostResource(true, 'Dashboard', $collection->toArray());
     }
+
+
 }
