@@ -156,10 +156,9 @@ class StaticAdmController extends Controller
 );
     $dv=DataDivisi::get()->orderBy('divisi', 'ASC');
     foreach ($dv as $d) {
-        $collection->put('chart', {
-            'divisi' => $d->divisi,
-            'value'=>$d->jumlah_surat,
-        })
+        // $collection['chart']['divisi']
+        array_push($collection['chart']['divisi'], $d->divisi);
+        array_push($collection['chart']['value'], $d->jumlah_surat);
     }
     
 
