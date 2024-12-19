@@ -157,8 +157,13 @@ class StaticAdmController extends Controller
     $dv=DataDivisi::orderBy('divisi', 'ASC')->get();
     foreach ($dv as $d) {
         // $collection['chart']['divisi']
-        array_push($collection['chart']['divisi'], $d->divisi);
-        array_push($collection['chart']['value'], $d->jumlah_surat);
+        $update = [
+            '$push' => [
+                'data.sub.divisi' => $d->divisi,
+                'data.sub.value' => $d->jumlah_surat // Elemen yang akan ditambahkan
+            ]
+        ];
+        $collection->updateOne($update);
     }
 
     if(!empty(array_intersect([ 'ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))){
