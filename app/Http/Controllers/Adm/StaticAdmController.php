@@ -159,10 +159,13 @@ class StaticAdmController extends Controller
         if (!isset($collection["chart"])) {
             $collection["chart"] = []; // Buat key 'sub' sebagai array kosong
         }
+        if (!isset($collection["chart"]["divisi"])) {
+            $collection["chart"]["divisi"] = []; // Buat key 'sub'
+        }
         foreach ($dv as $d) {
 
             $collection['chart']['divisi'][] = $d->divisi;
-            $collection['chart']['value'][] = $d->jumlah_surat;
+            // $collection['chart']['value'][] = $d->jumlah_surat;
         }
 
         if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
