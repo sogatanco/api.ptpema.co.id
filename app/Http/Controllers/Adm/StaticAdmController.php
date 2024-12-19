@@ -113,6 +113,27 @@ class StaticAdmController extends Controller
     public function dashboard()
     {
         $collection = collect();
+        $dv = DataDivisi::orderBy('divisi', 'ASC')->get();
+        $collection = collect([
+            "chart" => [
+                "divisi" => collect(), 
+                "value" => collect() 
+            ],
+            
+        ]);
+        foreach ($dv as $d) {
+
+            $collection['chart']['divisi']->push($d->divisi); 
+            $collection['chart']['value']->push($d->jumlah_surat); 
+            
+        }
+
+        if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
+            $collection->put('latest_surat', ListSurat::where('status', 'signed')->latest()->take(5)->get());
+        } else {
+            $collection->put('latest_surat', ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->latest()->take(5)->get());
+        }
+
         $collection->put(
             'dataDash',
             [
@@ -155,25 +176,6 @@ class StaticAdmController extends Controller
 
             ]
         );
-        $dv = DataDivisi::orderBy('divisi', 'ASC')->get();
-        $collection = collect([
-            "chart" => [
-                "divisi" => collect(), 
-                "value" => collect() 
-            ]
-        ]);
-        foreach ($dv as $d) {
-
-            $collection['chart']['divisi']->push($d->divisi); 
-            $collection['chart']['value']->push($d->jumlah_surat); 
-            
-        }
-
-        if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
-            $collection->put('latest_surat', ListSurat::where('status', 'signed')->latest()->take(5)->get());
-        } else {
-            $collection->put('latest_surat', ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->latest()->take(5)->get());
-        }
 
         return new PostResource(true, 'Dashboard', $collection->toArray());
     }
