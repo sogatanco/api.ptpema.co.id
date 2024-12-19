@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Adm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Adm\DataDivisi;
 use App\Models\Adm\ListSurat;
 use App\Models\Adm\ListSuratMasuk;
 use App\Models\Adm\Surat;
@@ -153,6 +154,15 @@ class StaticAdmController extends Controller
 
             ]
 );
+    $dv=DataDivisi::get()->orderBy('divisi', 'ASC');
+    foreach ($dv as $d) {
+        $collection->put('chart', {
+            'divisi' => $d->divisi,
+            'value'=>$d->jumlah_surat,
+        })
+    }
+    
+
 
         return new PostResource(true, 'Dashboard', $collection->toArray());
     }
