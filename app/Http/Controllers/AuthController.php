@@ -21,7 +21,7 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'welcome', 'refresh', 'forgotPassword', 'checkToken', 'newPassword']]);
+        $this->middleware('auth:api', ['except' => ['login', 'loginSso', 'register', 'welcome', 'refresh', 'forgotPassword', 'checkToken', 'newPassword']]);
     }
 
     public function register(userRegisterRequest $request): userResource
