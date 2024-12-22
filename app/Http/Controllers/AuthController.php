@@ -127,6 +127,54 @@ class AuthController extends Controller
         ], 200);
     }
 
+    public function loginSso(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => ['required', 'email'],
+        ]);
+
+        if($validator->fails()){
+            throw new HttpResponseException(response([
+                "message" => $validator->errors()
+            ], 400));
+        }
+
+        // checking & generate token
+        $token = Auth::attempt(['email' => $request->email]);
+
+        if(!$token){
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Email or password is invalid."
+            ], 400));
+        }
+
+        $user = Auth::user();
+        $userData = Employe::select('employe_id', 'first_name', 'employe_active')
+                    ->where("user_id", $user->id)->first();
+
+        if($userData->employe_active == 0){
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Your account has been deactivated."
+            ], 400));
+        }
+
+        $user->employe_id = $userData->employe_id;
+        $user->first_name = $userData->first_name;
+        $user->roles = $user->roles;
+        $user = $user->makeHidden(["id", "email_verified_at", "created_at", "updated_at"]);
+
+        return response()->json([
+            "status" => true,
+            "message" => "Login success.",
+            "auth" => [
+                "user" => $user,
+                "token" => $token,
+            ]
+        ], 200);
+    }
+
     public function logout()
     {
         Auth::logout();
