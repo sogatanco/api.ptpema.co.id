@@ -27,7 +27,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::controller(AuthController::class)->group(function(){
     Route::post('/auth/register', 'register');
     Route::post('/auth/login', 'login');
-    Route::post('login-sso', 'loginSso');
+    Route::post('/auth/login-sso', 'loginSso');
     Route::get('/auth/logout', 'logout');
     Route::get('/auth/refresh', 'refresh');
     Route::get('auth/welcome/test', 'welcome');
