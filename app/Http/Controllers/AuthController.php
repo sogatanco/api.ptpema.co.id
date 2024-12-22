@@ -139,8 +139,7 @@ class AuthController extends Controller
             ], 400));
         }
 
-        // checking & generate token
-        $token = Auth::attempt(['email' => $request->email]);
+        $token = Auth::login($user);
 
         if(!$token){
             throw new HttpResponseException(response([
