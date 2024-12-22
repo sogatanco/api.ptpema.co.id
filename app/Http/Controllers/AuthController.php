@@ -139,6 +139,15 @@ class AuthController extends Controller
             ], 400));
         }
 
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "User not found or inactive."
+            ], 400));
+        }
+
         $token = Auth::login($user);
 
         if(!$token){
