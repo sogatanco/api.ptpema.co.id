@@ -34,6 +34,9 @@ class ScanVerif extends Controller
             }else{
                 $data['fileLampiran']='';
             }
+            $d->detail= $data;
+        }else{
+            $d->detail= [];
         }
         return new PostResource(true, 'success', $d);
     }
