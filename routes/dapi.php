@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Adm\StaticAdmController;
 use App\Http\Controllers\Adm\SuratController;
+use App\Http\Controllers\Adm\SuratMasuk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -9,7 +10,7 @@ use App\Http\Controllers\Da\DaCatController;
 use App\Http\Controllers\Da\DaActController;
 use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
-use App\Http\Controllers\Asset\InvController;
+use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 
@@ -135,8 +136,31 @@ Route::controller(ScanVerif::class)->group(function(){
 Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/divisi', 'getDivisi')->middleware("role:Employee");
      Route::get('adm/signers/{id}', 'getSigner')->middleware("role:Employee");
+     Route::get("adm/direkturs", "getDirektur")->middleware(    "role:Employee");
+     Route::get('adm/dispo/to', 'getDispo')->middleware('role:Employee');
+     Route::get('adm/dashboard', 'dashboard')->middleware('role:Employee');
 });
 
 Route::controller(SuratController::class)->group(function(){
      Route::post('adm/insert', 'insert')->middleware("role:Employee");
+     Route::get('adm/surat/{what}', 'getSurat')->middleware("role:Employee");
+     Route::get('adm/surat/detail/{id}', 'detail')->middleware("role:Employee");
+     Route::post("adm/surat/review/{id_doc}", 'reviewDokumen')->middleware(     'role:Employee');
+     Route::post('adm/update', 'update')->middleware('role:Employee');
+});
+
+
+Route::controller(Logs::class)->group(function(){
+     Route::get("eSign/logs/{id_doc}", "getLogs")->middleware(  "role:Employee");
+     Route::get("eSign/approval/{id_doc}", "getApproval")->middleware("role:Employee");
+});
+
+Route::controller(SuratMasuk::class)->group(function(){
+     Route::post("adm/suratmasuk/", "insert")->middleware("role:Employee");
+     Route::get('adm/suratmasuk/{what}', 'getSM')->middleware('role:Employee');
+     Route::get('adm/suratmasuk/detail/{id}', 'getDetail')->middleware('role:Employee');
+     Route::post('adm/suratmasuk/diposisi/{idSurat}', 'disposisi')->middleware('role:Employee');  
+     Route::post('adm/suratmasuk/delete/{id}', 'delete')->middleware('role:Employee');
+     Route::get('adm/suratmasuk/riwayat/{id}', 'getRiwayat')->middleware('role:Employee');
+     Route::post('adm/suratmasuk/read/{id_cc}', 'readCC')->middleware('role:Employee');
 });
