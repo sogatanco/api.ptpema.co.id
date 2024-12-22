@@ -41,7 +41,6 @@ class EmployeController extends Controller
             'employe_id' => ['required', 'unique:employees'],
             'email' => ['required'],
             'first_name' => ['required', 'max:20'],
-            'last_name' => ['required', 'max:20'],
             'position_code' => ['required'],
         ]);
 
@@ -90,7 +89,6 @@ class EmployeController extends Controller
 
     public function update(Request $request, $employe_id)
     {
-
         $positionCode = $request->position_code ?? null;
 
         if($positionCode != null){
