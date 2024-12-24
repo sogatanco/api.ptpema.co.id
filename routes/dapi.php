@@ -10,6 +10,7 @@ use App\Http\Controllers\Da\DaCatController;
 use App\Http\Controllers\Da\DaActController;
 use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
+use App\Http\Controllers\Asset\InvController;
 use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
