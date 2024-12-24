@@ -29,7 +29,7 @@ class InvController extends Controller
                 $memberNew[$i] = Structure::where('employe_id', $m)->first();
             }
             $d->responsible_list = $memberNew;
-            $d->type_name = assetCat::where('code', $d->type)->first('name')->name;
+            $d->type_name = assetCat::where('code', $d->type)->first('name')->name ? assetCat::where('code', $d->type)->first('name')->name : '-';
             $child = AssetChild::where('id_parent', $d->id)->get();
             foreach ($child as $c) {
                 $newn = [];
