@@ -65,6 +65,7 @@ class InvController extends Controller
         }
         $d->responsible_list = $memberNew;
         $d->type_name = assetCat::where('code', $d->type)->first()->name;
+        $d->file_image=public_path('inven'. $d->file);
 
         $child = AssetChild::where('id_parent', $d->id)->get();
         foreach ($child as $c) {
@@ -127,7 +128,7 @@ class InvController extends Controller
 
             if ($db->save()) {
                 $numb = explode('-PEMA-', $db->asset_number);
-                for ($i = 1; $i <= (int)$request->amount; $i++) {
+                for ($i = 1; $i <= (int) $request->amount; $i++) {
                     AssetChild::create(['asset_number' => $numb[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $numb[1], 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
                 }
                 $l = new AssetLog();
@@ -174,7 +175,7 @@ class InvController extends Controller
             $l->id_employee = Employe::employeId();
             $l->activity = 'Update Responsible for asset child ' . $db->asset_number;
             if ($l->save()) {
-                return new  PostResource(true, 'Changed Succesfully !!', []);
+                return new PostResource(true, 'Changed Succesfully !!', []);
             }
         } else {
             return new PostResource(false, 'sgsdg', []);
@@ -225,14 +226,14 @@ class InvController extends Controller
         $numP = explode('-', $num[0]);
         $resp = Asset::find($request->id_parent)->responsible;
         for ($i = $numP[1] + 1; $i <= $numP[1] + $request->amount; $i++) {
-            AssetChild::create(['asset_number' => $numP[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $num[1], 'id_parent' =>  $request->id_parent, 'responsible' => $resp]);
+            AssetChild::create(['asset_number' => $numP[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $num[1], 'id_parent' => $request->id_parent, 'responsible' => $resp]);
         }
         $l = new AssetLog();
-        $l->id_asset =  $request->id_parent;
+        $l->id_asset = $request->id_parent;
         $l->id_employee = Employe::employeId();
         $l->activity = 'Add ' . $request->amount . ' childs to asset';
         if ($l->save()) {
-            return new  PostResource(true, 'sucess', []);
+            return new PostResource(true, 'sucess', []);
         }
     }
 
@@ -241,22 +242,22 @@ class InvController extends Controller
         $db = Asset::find($request->id);
         $dataImage = explode(',', $request->file);
         $image = base64_decode($dataImage[1], true);
-        if($db->file==='/placeholder_asset.jpeg'){
-            $image_name = '/'.$db->asset_number.'.png';
-        }else{
+        if ($db->file === '/placeholder_asset.jpeg') {
+            $image_name = '/' . $db->asset_number . '.png';
+        } else {
             $image_name = $db->file;
         }
-      
+
 
         if (Storage::disk('public_inven')->put($image_name, $image)) {
             $db1 = Asset::find($request->id);
-            $db1->file= $image_name ;
+            $db1->file = $image_name;
             $l = new AssetLog();
             $l->id_asset = $request->id;
             $l->id_employee = Employe::employeId();
             $l->activity = 'Update asset image';
             if ($l->save() && $db1->save()) {
-                return new  PostResource(true, 'Changed Succesfully !!', []);
+                return new PostResource(true, 'Changed Succesfully !!', []);
             }
         }
     }
@@ -266,7 +267,7 @@ class InvController extends Controller
         $data = AssetChild::where('responsible', 'like', '%//' . Employe::employeId() . '//%')->get();
         foreach ($data as $d) {
             $d->name = Asset::find($d->id_parent)->name;
-            if (count(AssetServis::where('asset_child', $d->id)->whereNotIn('status',  ['done', 'reject'])->get()) > 0) {
+            if (count(AssetServis::where('asset_child', $d->id)->whereNotIn('status', ['done', 'reject'])->get()) > 0) {
                 $d->request_service = true;
             } else {
                 $d->request_service = false;
@@ -316,13 +317,13 @@ class InvController extends Controller
             $l = new AssetLog();
             $l->id_asset = AssetChild::find($request->asset_child)->id_parent;
             $l->id_employee = Employe::employeId();
-            $l->activity = 'Request Service for '. AssetChild::find($request->asset_child)->asset_number;
+            $l->activity = 'Request Service for ' . AssetChild::find($request->asset_child)->asset_number;
             if ($l->save()) {
-               
+
                 $recipients = Structure::select('employe_id')->where('roles', 'like', '%PicAsset%')->get();
                 $entityId = '#request';
                 NotificationController::new('REQUEST_SERVICE', $recipients, $entityId);
-                return new  PostResource(true, 'success !!', []);
+                return new PostResource(true, 'success !!', []);
             }
             // return new PostResource(true, 'success', []);
         }
@@ -331,7 +332,7 @@ class InvController extends Controller
     function getRequest()
     {
         if (in_array("PicAsset", auth()->user()->roles)) {
-            $data = AssetServis::where('status','!=', 'reject')->where('status','!=', 'done')->get();
+            $data = AssetServis::where('status', '!=', 'reject')->where('status', '!=', 'done')->get();
         } else {
             $data = AssetServis::where('request_by', Employe::employeId())->latest()->get();
         }
@@ -344,56 +345,77 @@ class InvController extends Controller
         }
         return new PostResource(true, 'dsgsdg', $data);
     }
-    
-    function updateStatus(Request $request){
+
+    function updateStatus(Request $request)
+    {
         $db = AssetServis::find($request->id);
         $db->status = $request->status;
-        if($db->save()){
-             $l = new AssetLog();
+        if ($db->save()) {
+            $l = new AssetLog();
             $l->id_asset = AssetChild::find($db->asset_child)->id_parent;
             $l->id_employee = Employe::employeId();
-            $l->activity = 'Service for '. AssetChild::find($db->asset_child)->asset_number.' was '.$request->status;
+            $l->activity = 'Service for ' . AssetChild::find($db->asset_child)->asset_number . ' was ' . $request->status;
             if ($l->save()) {
-               
-                $recipients =  $db->request_by;
+
+                $recipients = $db->request_by;
                 $entityId = '#request';
-                if($request->status==='progress'){
-                     NotificationController::new('SERVICE_APPROVED', $recipients, $entityId);
-                }else{
+                if ($request->status === 'progress') {
+                    NotificationController::new('SERVICE_APPROVED', $recipients, $entityId);
+                } else {
                     NotificationController::new('SERVICE_REJECTED', $recipients, $entityId);
                 }
-               
-                return new  PostResource(true, 'success !!', []);
+
+                return new PostResource(true, 'success !!', []);
             }
         }
     }
-    
-    function uploadBukti(Request $request){
-         $name='service/'.$request->asset_number.'/'.$request->id.'.pdf';
-         $file =base64_decode($request->base64file, true);
-         if (Storage::disk('public_inven')->put($name , $file)){
-             return new PostResource(true, 'success !!',["filename"=>$name]);
-         }
+
+    function uploadBukti(Request $request)
+    {
+        $name = 'service/' . $request->asset_number . '/' . $request->id . '.pdf';
+        $file = base64_decode($request->base64file, true);
+        if (Storage::disk('public_inven')->put($name, $file)) {
+            return new PostResource(true, 'success !!', ["filename" => $name]);
+        }
     }
-    
-    function doneService(Request $request){
-         $db = AssetServis::find($request->id);
-         $db->status ='done';
-         $db->cost=$request->cost;
-         $db->proof=$request->proof;
-           if($db->save()){
-             $l = new AssetLog();
+
+    function doneService(Request $request)
+    {
+        $db = AssetServis::find($request->id);
+        $db->status = 'done';
+        $db->cost = $request->cost;
+        $db->proof = $request->proof;
+        if ($db->save()) {
+            $l = new AssetLog();
             $l->id_asset = AssetChild::find($db->asset_child)->id_parent;
             $l->id_employee = Employe::employeId();
-            $l->activity = 'Service done for '. AssetChild::find($db->asset_child)->asset_number;
+            $l->activity = 'Service done for ' . AssetChild::find($db->asset_child)->asset_number;
             if ($l->save()) {
-                $recipients =  $db->request_by;
+                $recipients = $db->request_by;
                 $entityId = '#request';
                 NotificationController::new('SERVICE_DONE', $recipients, $entityId);
-                return new  PostResource(true, 'success !!', []);
+                return new PostResource(true, 'success !!', []);
             }
         }
-         
+
+    }
+
+    public function convertImageToBase64($imagePath)
+    {
+        if (file_exists($imagePath)) {
+            
+            $fileContent = file_get_contents($imagePath);
+
+
+            $mimeType = mime_content_type($imagePath);
+
+            // Encode ke base64
+            $base64Image = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
+
+            return $base64Image;
+        }
+
+        return '';
     }
 
 }
