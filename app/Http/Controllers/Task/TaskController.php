@@ -790,7 +790,7 @@ class TaskController extends Controller
 
         $employeId = Employe::employeId();
 
-        if(in_array("Manager", $userRequest->roles) || in_array("ManagerEksekutif", $userRequest->roles)){
+        if(in_array("Manager", $userRequest->roles)){
             // jika manager
             $employeDivision = Employe::getEmployeDivision($employeId);
 
@@ -838,8 +838,6 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => $tasks,
-            "employeeDivision" => $employeDivision,
-            "manager" => $manager
          ], 200, [], JSON_NUMERIC_CHECK);
 
 
