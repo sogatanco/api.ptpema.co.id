@@ -838,6 +838,8 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "data" => $tasks,
+            "employeeDivision" => $employeDivision,
+            "manager" => $manager
          ], 200, [], JSON_NUMERIC_CHECK);
 
 
