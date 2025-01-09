@@ -49,7 +49,7 @@ class TaskController extends Controller
 
         if($request->hasFile('files')){
             $files = $request->file('files');
-        
+
             $thefile = $files[0]->getClientOriginalName();
             $savedFile  = Storage::disk("public_taskfiles")->put('', $files[0]);
         }
@@ -71,7 +71,7 @@ class TaskController extends Controller
 
         // Kode jika parent simpan progress
         // if($newTaskSaved){
-            
+
         //     $task = Task::where('task_id', $newTask->id)
         //         ->first();
 
@@ -87,7 +87,7 @@ class TaskController extends Controller
         //         $totalProgress = 0;
         //         $totalSubtask = count($subtaskSum);
 
-        //         for ($sum=0; $sum < $totalSubtask; $sum++) { 
+        //         for ($sum=0; $sum < $totalSubtask; $sum++) {
         //             $totalProgress = $subtaskSum[$sum]->task_progress + $totalProgress;
         //         }
 
@@ -102,7 +102,7 @@ class TaskController extends Controller
         //         Task::where('task_id', $parent)->update($parentData);
         //     }
         // }
-        
+
         // save filename
         if(isset($savedFile)){
             $fileData = [
@@ -115,29 +115,29 @@ class TaskController extends Controller
         }
 
         // save task approval
-        for ($i=0; $i < count($data['task_pic']); $i++) { 
+        for ($i=0; $i < count($data['task_pic']); $i++) {
 
             // simpan ke table pic
             $dataPics[$i] = [
                 'project_id' => $data['project_id'],
                 'employe_id' => $data['task_pic'][$i]['value'],
                 'task_id' => $newTask->id
-            ];  
+            ];
 
             $newTaskPic = new TaskPic($dataPics[$i]);
             $newTaskPic->save();
 
         }
-        
+
         // notif ke masing2 pic yang ditag
         $recipients = TaskPic::select('employe_id')
                     ->where('task_id', $newTask->id)->get();
-        
+
         NotificationController::new('TAG_TASK', $recipients, $request->project_id."/".$newTask->id);
 
         $dataApproval = [
             'task_id' => $newTask->id,
-            'employe_id' => $data['task_pic'][0]['value'],  
+            'employe_id' => $data['task_pic'][0]['value'],
             'status' => 0,
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date']
@@ -180,30 +180,30 @@ class TaskController extends Controller
     {
 
         $data = [
-            'task_title' => $request->task_title, 
-            'task_desc' => $request->task_desc, 
+            'task_title' => $request->task_title,
+            'task_desc' => $request->task_desc,
             'task_progress' => $request->task_progress,
         ];
 
         $isUpdated = Task::where('task_id', $taskId)
                     ->update($data);
 
-        if($isUpdated){     
+        if($isUpdated){
 
             $requestPicIds = [];
-            for ($i=0; $i < count($request->pic); $i++) { 
+            for ($i=0; $i < count($request->pic); $i++) {
                 array_push($requestPicIds, $request->pic[$i]['value']);
 
                 $where = ['employe_id' => $request->pic[$i]['value'], 'task_id' => $taskId];
                 $checkPic = TaskPic::where($where)
                             ->first();
-        
+
                 if(!$checkPic){
                     $save[$i] = [
                         'project_id' => $request->project_id,
                         'employe_id' => $request->pic[$i]['value'],
                         'task_id' => $taskId
-                    ];  
+                    ];
 
                     $newTaskPic = new TaskPic($save[$i]);
                     $newTaskPic->save();
@@ -212,13 +212,13 @@ class TaskController extends Controller
 
             $allPic = TaskPic::where('task_id', $taskId)
                     ->get();
-            
-            for ($ap=0; $ap < count($allPic); $ap++) { 
+
+            for ($ap=0; $ap < count($allPic); $ap++) {
                 if(!in_array($allPic[$ap]->employe_id, $requestPicIds)){
                  // HAPUS PIC
                  TaskPic::where(['employe_id' => $allPic[$ap]->employe_id, 'task_id' => $taskId])->delete();
                 }
-             } 
+             }
 
             TaskApproval::where('approval_id', $request->approval_id)
                         ->update(['start_date' => $request->start_date, 'end_date' => $request->end_date]);
@@ -317,7 +317,7 @@ class TaskController extends Controller
                     ->get();
 
         $taskIds = [];
-        for ($ti=0; $ti < count($taskByPic); $ti++) { 
+        for ($ti=0; $ti < count($taskByPic); $ti++) {
             $taskIds[] = $taskByPic[$ti]->task_id;
         };
 
@@ -327,7 +327,7 @@ class TaskController extends Controller
 
         $parentTasks =[];
         $parentSubtasks=[];
-        for ($p=0; $p < count($tasks); $p++) { 
+        for ($p=0; $p < count($tasks); $p++) {
             if($tasks[$p]->task_parent === null){
                 $parentTasks[] = $tasks[$p]->task_id;
             }else{
@@ -343,12 +343,12 @@ class TaskController extends Controller
             $pic_parent = TaskStatus::whereIn('task_id', $parentTasks)
                             ->get();
 
-            for ($pp=0; $pp < count($pic_parent); $pp++) { 
+            for ($pp=0; $pp < count($pic_parent); $pp++) {
                 $pic_parent[$pp]['comments'] = Comment::where('task_id', $pic_parent[$pp]->task_id)->count();
-                
+
                 $pic_parent[$pp]['files'] = TaskFile::select('file_id', 'file_name')
                                                 ->where('task_id', $pic_parent[$pp]->task_id)
-                                                ->get(); 
+                                                ->get();
 
                 $pic_parent[$pp]['subtasks'] = TaskStatus::where([
                                                     'task_parent' => $pic_parent[$pp]->task_id,
@@ -360,8 +360,8 @@ class TaskController extends Controller
                                             ->where('task_id', $pic_parent[$pp]->task_id)
                                             ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                             ->get();
-                                                
-                for ($stf1=0; $stf1 < count($pic_parent[$pp]['subtasks']); $stf1++) { 
+
+                for ($stf1=0; $stf1 < count($pic_parent[$pp]['subtasks']); $stf1++) {
                     $pic_parent[$pp]['subtasks'][$stf1]['files'] = TaskFile::select('file_id', 'file_name')
                                                                     ->where('task_id', $pic_parent[$pp]['subtasks'][$stf1]->task_id)
                                                                     ->get();
@@ -370,7 +370,7 @@ class TaskController extends Controller
                                                                     ->where('task_id', $pic_parent[$pp]['subtasks'][$stf1]->task_id)
                                                                     ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                                                     ->get();
-                }                                   
+                }
             }
         }
 
@@ -380,31 +380,31 @@ class TaskController extends Controller
         $pic_subtask= TaskStatus::whereIn('task_id', $parentSubtasks)
                     ->get();
 
-        for ($ps=0; $ps < count($pic_subtask); $ps++) { 
+        for ($ps=0; $ps < count($pic_subtask); $ps++) {
             $pic_subtask[$ps]['comments']= Comment::where('task_id', $pic_subtask[$ps]->task_id)->count();
-            
+
             $pic_subtask[$ps]['files'] = TaskFile::select('file_id', 'file_name')
                                             ->where('task_id', $pic_subtask[$ps]->task_id)
-                                            ->get(); 
-            
+                                            ->get();
+
             $pic_subtask[$ps]['subtasks'] = TaskStatus::where([
                                                 'task_parent' => $pic_subtask[$ps]->task_id,
                                                 'project_task_pics.employe_id' => $employeId
                                             ])
                                             ->select(
-                                                'task_latest_status.*', 
+                                                'task_latest_status.*',
                                                 TaskStatus::raw('(SELECT COUNT(*) FROM comments WHERE comments.task_id = task_latest_status.task_id) AS comments'),
                                                 'project_task_pics.employe_id as orangnya'
                                             )
                                             ->join('project_task_pics', 'project_task_pics.task_id', '=', 'task_latest_status.task_id')
                                             ->get() ;
-            
+
             $pic_subtask[$ps]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                                         ->where('task_id', $pic_subtask[$ps]->task_id)
                                         ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                         ->get();
-                                            
-            for ($stf=0; $stf < count($pic_subtask[$ps]['subtasks']); $stf++) { 
+
+            for ($stf=0; $stf < count($pic_subtask[$ps]['subtasks']); $stf++) {
                 $pic_subtask[$ps]['subtasks'][$stf]['files'] = TaskFile::select('file_id', 'file_name')
                                                                 ->where('task_id', $pic_subtask[$ps]['subtasks'][$stf]->task_id)
                                                                 ->get();
@@ -413,7 +413,7 @@ class TaskController extends Controller
                                                                 ->where('task_id', $pic_subtask[$ps]['subtasks'][$stf]->task_id)
                                                                 ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                                                 ->get();
-            }    
+            }
         }
         }
 
@@ -438,7 +438,7 @@ class TaskController extends Controller
         // manfaatin table view aja!
 
         $employeId = Employe::employeId();
-        
+
         $whereParent = ['project_id' => $projectId, 'task_parent' => null];
         $parent = Task::select(
                     'task_id',
@@ -454,7 +454,7 @@ class TaskController extends Controller
         $count = count($parent);
 
         // parent with status || get by employee
-        for ($p=0; $p < $count; $p++) { 
+        for ($p=0; $p < $count; $p++) {
 
             $whereHistory = ['task_id' => $parent[$p]->task_id, 'employe_id' => $employeId];
             $lastHistory[$p] = TaskApproval::select('employe_id','status', 'start_date', 'end_date')
@@ -466,19 +466,19 @@ class TaskController extends Controller
                 $parent[$p]->pic = $lastHistory[$p]->employe_id;
                 $parent[$p]->status = $lastHistory[$p]->status;
                 $parent[$p]->start_date = (!empty($lastHistory[$p]->start_date)) ? $lastHistory[$p]->start_date : null;
-                $parent[$p]->end_date =  $lastHistory[$p]->end_date;  
+                $parent[$p]->end_date =  $lastHistory[$p]->end_date;
 
                 // $parent[$p]->pics = TaskPic::select('pic_id', 'first_name', 'project_task_pics.employe_id', 'progress', 'file')
                 //                     ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
                 //                     ->where('task_id', $parent[$p]->task_id)
                 //                     ->get();
-                
+
                 // pics
                 $parent[$p]->pics = TaskApproval::select('project_task_approval.employe_id', 'first_name', 'progress', 'file')
                                 ->where('task_id', $parent[$p]->task_id)
                                 ->join('employees', 'employees.employe_id', '=', 'project_task_approval.employe_id')
                                 ->get();
-                
+
                 // comments
                 $parent[$p]->comments = Comment::where('task_id', $parent[$p]->task_id)->count();
 
@@ -492,11 +492,11 @@ class TaskController extends Controller
                             ->join('project_task_approval', 'project_task_approval.task_id', '=', 'project_tasks.task_id')
                             ->get();
 
-                            
+
                 $parent[$p]->subtasks = $subtask[$p];
 
                 // pics subtask
-                for ($sp=0; $sp < count($subtask[$p]); $sp++) { 
+                for ($sp=0; $sp < count($subtask[$p]); $sp++) {
                     $subtaskIds[] = $subtask[$p][$sp]->task_id;
 
                     $parent[$p]->subtasks[$p]->pics = TaskApproval::select('project_task_approval.employe_id', 'first_name', 'progress', 'file')
@@ -504,7 +504,7 @@ class TaskController extends Controller
                                                     ->join('employees', 'employees.employe_id', '=', 'project_task_approval.employe_id')
                                                     ->get();
                 }
-                
+
             }
         };
 
@@ -513,7 +513,7 @@ class TaskController extends Controller
 
         // $task = [];
         // $taskFiltered = [];
-        // for ($p=0; $p < $count; $p++) { 
+        // for ($p=0; $p < $count; $p++) {
         //     $where = ['task_id' => $allTaskParent[$p]->task_id, 'status' => $status];
         //     $task[$p] = TaskApproval::where($where)
         //                 ->orderBy('approval_id', 'desc')
@@ -529,7 +529,7 @@ class TaskController extends Controller
         //         ->get();
 
         // // $filteredTask = [];
-        // for ($i=0; $i < count($tasks); $i++) { 
+        // for ($i=0; $i < count($tasks); $i++) {
         //     $list[$i] = TaskApproval::where('project_task_approval.task_id', $tasks[$i]->task_id)
         //                         ->join('project_tasks', 'project_tasks.task_id', '=', 'project_task_approval.task_id')
         //                         ->orderBy('approval_id', 'desc')
@@ -558,12 +558,12 @@ class TaskController extends Controller
                     ->join('project_tasks AS C', 'C.task_id', '=', 'project_task_approval.task_id')
                     ->join('employees AS D', 'D.employe_id', '=', 'C.created_by')
                     ->select(
-                        'project_task_approval.approval_id', 
-                        'project_task_approval.status', 
-                        'project_task_approval.start_date', 
-                        'project_task_approval.end_date', 
-                        'project_task_approval.created_at', 
-                        'project_task_approval.notes', 
+                        'project_task_approval.approval_id',
+                        'project_task_approval.status',
+                        'project_task_approval.start_date',
+                        'project_task_approval.end_date',
+                        'project_task_approval.created_at',
+                        'project_task_approval.notes',
                         'A.first_name as pic_task',
                         'B.first_name as status_by',
                         'D.first_name as created_by'
@@ -585,7 +585,7 @@ class TaskController extends Controller
                 ->first();
 
         if($request->status == 1){
-            $start_date = $task->start_date; 
+            $start_date = $task->start_date;
         }elseif($request->status >= 2 ){
             $start_date = $task->start_date;
         }else{
@@ -608,7 +608,7 @@ class TaskController extends Controller
             'start_date' => $start_date,
             "end_date" => $task->end_date
         ];
-    
+
         $newStatus = new TaskApproval($data);
         $newStatus->save();
 
@@ -714,7 +714,7 @@ class TaskController extends Controller
                             ->update(['status' => 'ongoing']);
                 }
             }
-           
+
         }
 
         return response()->json([
@@ -727,7 +727,7 @@ class TaskController extends Controller
     {
         if($request->hasFile('files')){
             $files = $request->file('files');
-        
+
             $thefile = $files[0]->getClientOriginalName();
             $savedFile  = Storage::disk("public_taskfiles")->put($thefile, file_get_contents($files[0]));
 
@@ -736,7 +736,7 @@ class TaskController extends Controller
             // $savedFile = $file[0]->storeAs('task', $fileName);
             //If you want to specify the disk, you can pass that as the third parameter.
             // $file->storeAs('task', $fileName, 'task');
-            
+
         }
 
         $employeId = Employe::employeId();
@@ -790,7 +790,7 @@ class TaskController extends Controller
 
         $employeId = Employe::employeId();
 
-        if(in_array("Manager", $userRequest->roles)){
+        if(in_array("Manager", $userRequest->roles) || in_array("ManagerEksekutif", $userRequest->roles)){
             // jika manager
             $employeDivision = Employe::getEmployeDivision($employeId);
 
@@ -808,7 +808,7 @@ class TaskController extends Controller
             $tasks = TaskStatus::where($where)
                     ->where('direct_atasan', '!=', $manager->direct_atasan)
                     ->get();
-            
+
         }else{
             // jika direksi
             $where =[
@@ -819,18 +819,18 @@ class TaskController extends Controller
 
             $tasks = TaskStatus::where($where)
                     ->get();
-            
+
         }
-        
+
         $taskIds = [];
         if(count($tasks) > 0) {
-            for ($t=0; $t < count($tasks); $t++) { 
+            for ($t=0; $t < count($tasks); $t++) {
                 $taskIds[] = $tasks[$t]->task_id;
 
                 $tasks[$t]['files'] = TaskFile::select('file_name')
                                         ->where('task_id', $taskIds[$t])
                                         ->get();
-                
+
             }
         }
 
@@ -839,7 +839,7 @@ class TaskController extends Controller
             "status" => true,
             "data" => $tasks,
          ], 200, [], JSON_NUMERIC_CHECK);
-        
+
 
         // $where = ['projects.project_id' => $projectId, 'projects.division' => $organization->organization_id, 'project_task_approval.status' => 2];
         // $data = TaskApproval::select('project_task_approval.task_id')
@@ -847,12 +847,12 @@ class TaskController extends Controller
         //         ->join('project_tasks', 'project_tasks.task_id', '=', 'project_task_approval.task_id')
         //         ->join('projects', 'projects.project_id', '=', 'project_tasks.project_id')
         //         ->get();
-                
+
         // $tasks = [];
         // $taskIds = [];
-        // for ($i=0; $i < count($data); $i++) { 
+        // for ($i=0; $i < count($data); $i++) {
         //     array_push($tasks, $data[$i]->task_id);
-        // }   
+        // }
 
         // $taskIdsWithIndex = array_unique($tasks);
 
@@ -862,7 +862,7 @@ class TaskController extends Controller
         // }
 
         // $reviewTasks = [];
-        // for ($rt=0; $rt < count($taskIds); $rt++) { 
+        // for ($rt=0; $rt < count($taskIds); $rt++) {
         //     $list[$rt] = TaskApproval::select(
         //                 'approval_id',
         //                 'project_task_approval.task_id',
@@ -887,17 +887,17 @@ class TaskController extends Controller
         //     $reviewTasks[$rt]->files = TaskFile::select('file_id', 'file_name')
         //                                 ->where('task_id', $taskIds[$rt])
         //                                 ->get();
-            
+
         // }
 
-        return response()->json([
-            "total" => count($reviewTasks),
-            "data" => $reviewTasks
-        ], 200, [], JSON_NUMERIC_CHECK);
+        // return response()->json([
+        //     "total" => count($reviewTasks),
+        //     "data" => $reviewTasks
+        // ], 200, [], JSON_NUMERIC_CHECK);
     }
 
     public function taskByProject(Request $request, $projectId)
-    {  
+    {
         $userRequest = Auth::user();
         $employeId = Employe::employeId();
         $query = $request->query('div');
@@ -911,42 +911,42 @@ class TaskController extends Controller
         $fase = ProjectStage::select(
                     'projects.project_number as project_number',
                     'projects.project_name as project_name',
-                    'project_stages.schema as schema', 
+                    'project_stages.schema as schema',
                     'project_phases.title as phase',
                     'organizations.organization_name as division',
                     'project_partners.name as partner'
-                )   
+                )
                 ->where($wherePhase)
                 ->join('projects', 'projects.project_id', '=', 'project_stages.project_id')
                 ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
                 ->leftJoin('organizations', 'organizations.organization_id','=', 'project_stages.division')
                 ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                 ->first();
-        
+
         $picActive = ProjectHistory::where(['project_id' => $projectId, 'active' => 1])
                     ->first();
 
         $divisionActive = Employe::getEmployeDivision($picActive->employe_id);
         $taskByProject = TaskStatus::where(['project_id' => $projectId, 'division' => $query ? +$query : $divisionActive->organization_id])
                         ->get();
-    
+
         $taskIdsTemp = [];
 
-        for ($ti=0; $ti < count($taskByProject); $ti++) { 
+        for ($ti=0; $ti < count($taskByProject); $ti++) {
             $taskIdsTemp[] = $taskByProject[$ti]->task_id;
         };
         // CHECK EMPLOYEE SEBAGAI PIC
-        
+
         $all = [];
         if(count($taskIdsTemp) > 0){
             $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
                     ->get();
-    
+
             // CHECK LEVEL1,LEVEL2,LEVEL3
             $level1Ids = [];
             $parentIds = [];
-    
-            for ($t=0; $t < count($tasks); $t++) { 
+
+            for ($t=0; $t < count($tasks); $t++) {
                 if($tasks[$t]->task_parent === null){
                     // USER SEBAGAI PIC LEVEL 1
                     array_push($level1Ids, $tasks[$t]->task_id);
@@ -955,21 +955,21 @@ class TaskController extends Controller
                     array_push($parentIds, $tasks[$t]->task_parent);
                 }
             }
-    
+
             $level2Ids = [];
             $level3Ids = [];
-    
-            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
-            // CARI PARENT 
+
+            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT
+            // CARI PARENT
             $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
                         ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
                         ->select(
-                            'task_latest_status.task_id', 
-                            'level1.task_id as parent_id', 
+                            'task_latest_status.task_id',
+                            'level1.task_id as parent_id',
                         )
                         ->get();
-    
-            for ($p=0; $p < count($parents); $p++) { 
+
+            for ($p=0; $p < count($parents); $p++) {
                 if($parents[$p]->parent_id === null && !in_array($parents[$p]->task_id, $level1Ids)){
                     // PARENT SEBAGAI LEVEL 1
                     array_push($level1Ids, $parents[$p]->task_id);
@@ -979,39 +979,39 @@ class TaskController extends Controller
                     array_push($level1Ids, $parents[$p]->parent_id);
                 }
             }
-            
-            for ($t2=0; $t2 < count($tasks); $t2++) { 
+
+            for ($t2=0; $t2 < count($tasks); $t2++) {
                 if(in_array($tasks[$t2]->task_parent, $level1Ids)){
                     array_push($level2Ids, $tasks[$t2]->task_id);
                 }
             }
-    
-            for ($t3=0; $t3 < count($tasks); $t3++) { 
+
+            for ($t3=0; $t3 < count($tasks); $t3++) {
                 if(in_array($tasks[$t3]->task_parent, $level2Ids)){
                     array_push($level3Ids, $tasks[$t3]->task_id);
                 }
             }
             // CHECK LEVEL1,LEVEL2,LEVEL3
-    
+
             $allTask = array_merge($level1Ids, $level2Ids, $level3Ids);
-    
+
             $all = TaskStatus::whereIn('task_id', $allTask)
                     ->get();
         }
 
         if(count($all) > 0) {
-            for ($at=0; $at < count($all); $at++) { 
+            for ($at=0; $at < count($all); $at++) {
                 $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                                     ->where('task_id', $all[$at]->task_id)
                                     ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                     ->get();
-    
+
                 $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
-                
+
                 $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
                                             ->where('task_id', $all[$at]->task_id)
-                                            ->get(); 
-                                    
+                                            ->get();
+
                 if(in_array("Director", $userRequest->roles)){
 
                     // jika ada di list favorite untuk direksi
@@ -1019,17 +1019,17 @@ class TaskController extends Controller
                                     ->first();
 
                     $all[$at]['isFavorite'] = $isFavorite[$p] ? true : false;
-                    
+
                 }
-                
+
             }
         }
-    
+
         $level1 = [];
         $level2 = [];
         $level3 = [];
-    
-        for ($tk=0; $tk < count($all); $tk++) { 
+
+        for ($tk=0; $tk < count($all); $tk++) {
             if(in_array($all[$tk]->task_id, $level1Ids)){
                 array_push($level1, $all[$tk]);
             }elseif(in_array($all[$tk]->task_id, $level2Ids)){
@@ -1038,32 +1038,32 @@ class TaskController extends Controller
                 array_push($level3, $all[$tk]);
             }
         }
-    
+
         if(count($level2) > 0 ){
             // ADD LEVEL 3 TO LEVEL 2
             for ($l2=0; $l2 < count($level2); $l2++) {
                 if(count($level3) > 0){
                     $lev3 = [];
-                    for ($l3=0; $l3 < count($level3); $l3++) { 
+                    for ($l3=0; $l3 < count($level3); $l3++) {
                         if($level2[$l2]->task_id === $level3[$l3]->task_parent){
                             $lev3[] = $level3[$l3];
                         }
                      }
-        
+
                     $level2[$l2]['level_3'] = $lev3;
                 }
            }
            // ADD LEVEL 3 TO LEVEL 2
-    
+
            // ADD LEVEL 2 TO LEVEL 1
-           for ($l1=0; $l1 < count($level1); $l1++) { 
+           for ($l1=0; $l1 < count($level1); $l1++) {
                 $lev2 = [];
-                for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                for ($l2s=0; $l2s < count($level2); $l2s++) {
                         if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
                             $lev2[] = $level2[$l2s];
                         }
                 }
-    
+
                 $level1[$l1]['level_2'] = $lev2;
            }
            // ADD LEVEL 2 TO LEVEL 1
@@ -1075,7 +1075,7 @@ class TaskController extends Controller
             "data" => $level1,
         ], 200, [], JSON_NUMERIC_CHECK);
     }
-    
+
     public function recentTaskByEmploye($employeId) {
 
         // cari task inprogres / subtask
@@ -1088,11 +1088,11 @@ class TaskController extends Controller
         // $tasks = TaskApproval::where(['project_task_approval.employe_id' => $employeId, 'project_task_approval.status' => 1, 'project_tasks.task_parent' => null])
         //         ->join('project_tasks', 'project_tasks.task_id','=', 'project_task_approval.task_id')
         //         ->select(
-        //             'project_tasks.task_id', 
-        //             'project_tasks.project_id', 
-        //             'project_tasks.task_title', 
+        //             'project_tasks.task_id',
+        //             'project_tasks.project_id',
+        //             'project_tasks.task_title',
         //             'project_tasks.task_progress',
-        //             'project_task_approval.status', 
+        //             'project_task_approval.status',
         //             'project_task_approval.end_date'
         //         )
         //         ->latest('project_task_approval.updated_at')
@@ -1102,11 +1102,11 @@ class TaskController extends Controller
         $tasks = TaskStatus::where(['task_latest_status.employe_id' => $employeId, 'task_latest_status.status' => 1, 'project_tasks.task_parent' => null])
                 ->join('project_tasks', 'project_tasks.task_id','=', 'task_latest_status.task_id')
                 ->select(
-                    'project_tasks.task_id', 
-                    'project_tasks.project_id', 
-                    'project_tasks.task_title', 
+                    'project_tasks.task_id',
+                    'project_tasks.project_id',
+                    'project_tasks.task_title',
                     'project_tasks.task_progress',
-                    'task_latest_status.status', 
+                    'task_latest_status.status',
                     'task_latest_status.end_date'
                 )
                 ->limit(5)
@@ -1120,19 +1120,19 @@ class TaskController extends Controller
 
     public function addFavoriteTask($employeId, $taskId)
     {
-        
+
         $employeIdActive = Employe::employeId();
-        
+
         if($employeIdActive !== $employeId){
             throw new HttpResponseException(response([
-                "error" => "Bad request." 
+                "error" => "Bad request."
             ], 400));
         }
-        
+
         $data = ['employe_id' => $employeId, 'task_id' => $taskId];
         $favoriteIsExist = TaskFavorite::where($data)
                         ->first();
-        
+
         if($favoriteIsExist){
             $deleteFavorite = TaskFavorite::where($data)
                             ->delete();
@@ -1144,7 +1144,7 @@ class TaskController extends Controller
                 ], 200);
             }else{
                 throw new HttpResponseException(response([
-                    "error" => "Something went wrong." 
+                    "error" => "Something went wrong."
                 ], 500));
             }
         }
@@ -1159,7 +1159,7 @@ class TaskController extends Controller
             ], 200);
         }else{
             throw new HttpResponseException(response([
-                "error" => "Something went wrong." 
+                "error" => "Something went wrong."
             ], 500));
         }
     }
@@ -1174,7 +1174,7 @@ class TaskController extends Controller
 
         $divisionIds = [];
         if(count($divisions) > 0){
-            for ($d=0; $d < count($divisions); $d++) { 
+            for ($d=0; $d < count($divisions); $d++) {
                 array_push($divisionIds, $divisions[$d]->organization_id);
             }
         }
@@ -1201,7 +1201,7 @@ class TaskController extends Controller
         }
 
         if(count($listTask) > 0){
-            for ($lt=0; $lt < count($listTask); $lt++) { 
+            for ($lt=0; $lt < count($listTask); $lt++) {
                 $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                             ->where('task_id', $listTask[$lt]->task_id)
                             ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
@@ -1240,7 +1240,7 @@ class TaskController extends Controller
                     ->whereIn('task_latest_status.status', [0,1,2])
                     ->limit(10)
                     ->get();
-                    
+
 
         return response()->json([
             "status" => true,
@@ -1259,7 +1259,7 @@ class TaskController extends Controller
 
         $divisionIds = [];
         if(count($divisions) > 0){
-            for ($d=0; $d < count($divisions); $d++) { 
+            for ($d=0; $d < count($divisions); $d++) {
                 array_push($divisionIds, $divisions[$d]->organization_id);
             }
         }
@@ -1269,7 +1269,7 @@ class TaskController extends Controller
                     ->get();
 
         if(count($listTask) > 0){
-            for ($lt=0; $lt < count($listTask); $lt++) { 
+            for ($lt=0; $lt < count($listTask); $lt++) {
                 $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                             ->where('task_id', $listTask[$lt]->task_id)
                             ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
@@ -1309,7 +1309,7 @@ class TaskController extends Controller
 
             $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
         } else {
-            // jika user active adalah manager  
+            // jika user active adalah manager
             $isMemberActive = true;
         }
         // CHECK USER ADALAH DIVISI AKTIF
@@ -1319,11 +1319,11 @@ class TaskController extends Controller
         $taskByPic = TaskPic::where(['project_id' => $projectId, 'employe_id' => $employeId])
                     ->get();
 
-        for ($ti=0; $ti < count($taskByPic); $ti++) { 
+        for ($ti=0; $ti < count($taskByPic); $ti++) {
             $taskIdsTemp[] = $taskByPic[$ti]->task_id;
         };
         // CHECK EMPLOYEE SEBAGAI PIC
-        
+
         $all = [];
         if(count($taskIdsTemp) > 0){
             $tasks = TaskStatus::whereIn('task_id', $taskIdsTemp)
@@ -1333,7 +1333,7 @@ class TaskController extends Controller
             $level1Ids = [];
             $parentIds = [];
 
-            for ($t=0; $t < count($tasks); $t++) { 
+            for ($t=0; $t < count($tasks); $t++) {
                 if($tasks[$t]->task_parent === null){
                     // USER SEBAGAI PIC LEVEL 1
                     array_push($level1Ids, $tasks[$t]->task_id);
@@ -1346,17 +1346,17 @@ class TaskController extends Controller
             $level2Ids = [];
             $level3Ids = [];
 
-            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
-            // CARI PARENT 
+            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT
+            // CARI PARENT
             $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
                         ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
                         ->select(
-                            'task_latest_status.task_id', 
-                            'level1.task_id as parent_id', 
+                            'task_latest_status.task_id',
+                            'level1.task_id as parent_id',
                         )
                         ->get();
 
-            for ($p=0; $p < count($parents); $p++) { 
+            for ($p=0; $p < count($parents); $p++) {
                 if($parents[$p]->parent_id === null && !in_array($parents[$p]->task_id, $level1Ids)){
                     // PARENT SEBAGAI LEVEL 1
                     array_push($level1Ids, $parents[$p]->task_id);
@@ -1366,14 +1366,14 @@ class TaskController extends Controller
                     array_push($level1Ids, $parents[$p]->parent_id);
                 }
             }
-            
-            for ($t2=0; $t2 < count($tasks); $t2++) { 
+
+            for ($t2=0; $t2 < count($tasks); $t2++) {
                 if(in_array($tasks[$t2]->task_parent, $level1Ids)){
                     array_push($level2Ids, $tasks[$t2]->task_id);
                 }
             }
 
-            for ($t3=0; $t3 < count($tasks); $t3++) { 
+            for ($t3=0; $t3 < count($tasks); $t3++) {
                 if(in_array($tasks[$t3]->task_parent, $level2Ids)){
                     array_push($level3Ids, $tasks[$t3]->task_id);
                 }
@@ -1388,21 +1388,21 @@ class TaskController extends Controller
         }
 
         if(count($all) > 0) {
-            for ($at=0; $at < count($all); $at++) { 
+            for ($at=0; $at < count($all); $at++) {
                 $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                                     ->where('task_id', $all[$at]->task_id)
                                     ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                     ->get();
 
                 $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
-                
+
                 $all[$at]['files'] = TaskFile::select('file_id', 'file_name')
                                             ->where('task_id', $all[$at]->task_id)
-                                            ->get(); 
-                
+                                            ->get();
+
                 $taskProgress = TaskProgress::select('progress')
                                 ->where('task_id', $all[$at]->task_id)
-                                ->first(); 
+                                ->first();
 
                 $all[$at]['task_progress'] = $taskProgress->progress;
             }
@@ -1412,7 +1412,7 @@ class TaskController extends Controller
         $level2 = [];
         $level3 = [];
 
-        for ($tk=0; $tk < count($all); $tk++) { 
+        for ($tk=0; $tk < count($all); $tk++) {
             if(in_array($all[$tk]->task_id, $level1Ids)){
                 array_push($level1, $all[$tk]);
             }elseif(in_array($all[$tk]->task_id, $level2Ids)){
@@ -1427,21 +1427,21 @@ class TaskController extends Controller
             for ($l2=0; $l2 < count($level2); $l2++) {
                 if(count($level3) > 0){
                     $lev3 = [];
-                    for ($l3=0; $l3 < count($level3); $l3++) { 
+                    for ($l3=0; $l3 < count($level3); $l3++) {
                         if($level2[$l2]->task_id === $level3[$l3]->task_parent){
                             $lev3[] = $level3[$l3];
                         }
                      }
-    
+
                     $level2[$l2]['level_3'] = $lev3;
                 }
            }
            // ADD LEVEL 3 TO LEVEL 2
 
            // ADD LEVEL 2 TO LEVEL 1
-           for ($l1=0; $l1 < count($level1); $l1++) { 
+           for ($l1=0; $l1 < count($level1); $l1++) {
                 $lev2 = [];
-                for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                for ($l2s=0; $l2s < count($level2); $l2s++) {
                         if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
                             $lev2[] = $level2[$l2s];
                         }
@@ -1482,7 +1482,7 @@ class TaskController extends Controller
 
             $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
         } else {
-            // jika user active adalah manager  
+            // jika user active adalah manager
             $isMemberActive = true;
         }
         // CHECK USER ADALAH DIVISI AKTIF
@@ -1497,7 +1497,7 @@ class TaskController extends Controller
             // AMBIL SEMUA TASK BY DIVISI AKTIF KECUALI ADDITIONAL TASK MILIK DIVISI LAIN
             $listOfTask = Task::where(['project_id' => $projectId, 'division' => $employeDivision->organization_id])
                             ->get();
-            
+
         }else{
             // JIKA USER DARI DIVISI LAIN
             if(in_array('Staff', $userRoles)){
@@ -1512,7 +1512,7 @@ class TaskController extends Controller
 
                 $result2 = TaskPic::where($whereByDirectSupervisor)
                         ->get();
- 
+
                 if(count($result1) > 0 && count($result2) > 0){
                     $listOfTask = array_merge($result1->toArray(), $result2->toArray());
                 }elseif(count($result1) > 0){
@@ -1522,7 +1522,7 @@ class TaskController extends Controller
                 }else{
                     $listOfTask = [];
                 }
-                        
+
             }else{
                 // JIKA USER ADALAH SUPERVISOR/MANAGER DARI DIVISI LAIN
                 $where = ['project_id' => $projectId, 'employe_id' => $employeId];
@@ -1531,9 +1531,9 @@ class TaskController extends Controller
                             ->get();
             }
         }
-                        
+
         $taskIdsTemp = [];
-        for ($ti=0; $ti < count($listOfTask); $ti++) { 
+        for ($ti=0; $ti < count($listOfTask); $ti++) {
             if(!in_array($listOfTask[$ti]['task_id'], $taskIdsTemp)){
                 array_push($taskIdsTemp, $listOfTask[$ti]['task_id']);
             };
@@ -1548,7 +1548,7 @@ class TaskController extends Controller
             $level1Ids = [];
             $parentIds = [];
 
-            for ($t=0; $t < count($tasks); $t++) { 
+            for ($t=0; $t < count($tasks); $t++) {
                 if($tasks[$t]->task_parent === null){
                     // USER SEBAGAI PIC LEVEL 1
                     array_push($level1Ids, $tasks[$t]->task_id);
@@ -1561,17 +1561,17 @@ class TaskController extends Controller
             $level2Ids = [];
             $level3Ids = [];
 
-            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT 
-            // CARI PARENT 
+            // JIKA USER BUKAN PIC LEVEL1 CARI PARENT
+            // CARI PARENT
             $parents = TaskStatus::whereIn('task_latest_status.task_id', $parentIds)
                         ->leftJoin('task_latest_status as level1', 'task_latest_status.task_parent', '=', 'level1.task_id')
                         ->select(
-                            'task_latest_status.task_id', 
-                            'level1.task_id as parent_id', 
+                            'task_latest_status.task_id',
+                            'level1.task_id as parent_id',
                         )
                         ->get();
 
-            for ($p=0; $p < count($parents); $p++) { 
+            for ($p=0; $p < count($parents); $p++) {
                 if($parents[$p]->parent_id === null && !in_array($parents[$p]->task_id, $level1Ids)){
                     // PARENT SEBAGAI LEVEL 1
                     array_push($level1Ids, $parents[$p]->task_id);
@@ -1581,14 +1581,14 @@ class TaskController extends Controller
                     array_push($level1Ids, $parents[$p]->parent_id);
                 }
             }
-            
-            for ($t2=0; $t2 < count($tasks); $t2++) { 
+
+            for ($t2=0; $t2 < count($tasks); $t2++) {
                 if(in_array($tasks[$t2]->task_parent, $level1Ids)){
                     array_push($level2Ids, $tasks[$t2]->task_id);
                 }
             }
 
-            for ($t3=0; $t3 < count($tasks); $t3++) { 
+            for ($t3=0; $t3 < count($tasks); $t3++) {
                 if(in_array($tasks[$t3]->task_parent, $level2Ids)){
                     array_push($level3Ids, $tasks[$t3]->task_id);
                 }
@@ -1603,21 +1603,21 @@ class TaskController extends Controller
         }
 
         if(count($all) > 0) {
-            for ($at=0; $at < count($all); $at++) { 
+            for ($at=0; $at < count($all); $at++) {
                 $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
                                     ->where('task_id', $all[$at]->task_id)
                                     ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
                                     ->get();
 
                 $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
-                
+
                 $all[$at]['files'] = TaskFile::select('file_id', 'file_name', 'employe_id')
                                             ->where('task_id', $all[$at]->task_id)
-                                            ->get(); 
-                
+                                            ->get();
+
                 $taskProgress = TaskProgress::select('progress')
                                 ->where('task_id', $all[$at]->task_id)
-                                ->first(); 
+                                ->first();
 
                 $all[$at]['task_progress'] = $taskProgress->progress;
             }
@@ -1627,7 +1627,7 @@ class TaskController extends Controller
         $level2 = [];
         $level3 = [];
 
-        for ($tk=0; $tk < count($all); $tk++) { 
+        for ($tk=0; $tk < count($all); $tk++) {
             if(in_array($all[$tk]->task_id, $level1Ids)){
                 array_push($level1, $all[$tk]);
             }elseif(in_array($all[$tk]->task_id, $level2Ids)){
@@ -1642,21 +1642,21 @@ class TaskController extends Controller
             for ($l2=0; $l2 < count($level2); $l2++) {
                 if(count($level3) > 0){
                     $lev3 = [];
-                    for ($l3=0; $l3 < count($level3); $l3++) { 
+                    for ($l3=0; $l3 < count($level3); $l3++) {
                         if($level2[$l2]->task_id === $level3[$l3]->task_parent){
                             $lev3[] = $level3[$l3];
                         }
                      }
-    
+
                     $level2[$l2]['level_3'] = $lev3;
                 }
            }
            // ADD LEVEL 3 TO LEVEL 2
 
            // ADD LEVEL 2 TO LEVEL 1
-           for ($l1=0; $l1 < count($level1); $l1++) { 
+           for ($l1=0; $l1 < count($level1); $l1++) {
                 $lev2 = [];
-                for ($l2s=0; $l2s < count($level2); $l2s++) { 
+                for ($l2s=0; $l2s < count($level2); $l2s++) {
                         if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
                             $lev2[] = $level2[$l2s];
                         }
@@ -1677,7 +1677,7 @@ class TaskController extends Controller
     }
 
     // add sub activity/task level 3
-    public function addSub(Request $request, $taskId) 
+    public function addSub(Request $request, $taskId)
     {
         $current = Task::where('task_id', $taskId)->first();
 
@@ -1694,7 +1694,7 @@ class TaskController extends Controller
         }
 
         $data = json_encode($subArr);
-                
+
         $updated = Task::where('task_id', $taskId)->update(['sub' => $data]);
 
         if($updated){
@@ -1704,7 +1704,7 @@ class TaskController extends Controller
             $created = [];
             $done = [];
 
-            for ($i=0; $i < count($subArr); $i++) { 
+            for ($i=0; $i < count($subArr); $i++) {
                 if($subArr[$i]->status === 'checked'){
                     array_push($done, $subArr[$i]->id);
                 }{
@@ -1735,12 +1735,12 @@ class TaskController extends Controller
                 "error" => "Something went wrong"
             ], 500));
         }
-            
+
     }
 
-    public function updateSub(Request $request, $taskId) 
+    public function updateSub(Request $request, $taskId)
     {
-        
+
         if(count($request->sub) > 0){
             $data = json_encode($request->sub);
         }else{
@@ -1758,7 +1758,7 @@ class TaskController extends Controller
                 $created = [];
                 $done = [];
 
-                for ($i=0; $i < count($subArr); $i++) { 
+                for ($i=0; $i < count($subArr); $i++) {
                     if($subArr[$i]->status === 'checked'){
                         array_push($done, $subArr[$i]->id);
                     }{
@@ -1787,7 +1787,7 @@ class TaskController extends Controller
 
     public function duplicateTask($taskId)
     {
-        
+
 
         return response()->json([
             "message" => "From duplikat task endpoint"

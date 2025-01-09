@@ -103,7 +103,7 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("/task/{project_id}/employe/all", "taskByEmploye")->middleware("role:Employee");
     Route::delete("task/{task_id}", 'destroy')->middleware("role:Employee");
     Route::post("task/{task_id}/upload", 'upload')->middleware("role:Employee");
-    Route::get("task/{project_id}/level1/review", 'review')->middleware("role:Supervisor,Manager,Director");
+    Route::get("task/{project_id}/level1/review", 'review')->middleware("role:Supervisor,Manager,Director,ManagerEksekutifS");
     Route::get("task/{project_id}/activities/all", 'taskByProject')->middleware("role:Supervisor,Manager,Director");
     Route::get("task/{employe_id}/recent/activity", 'recentTaskByEmploye')->middleware("role:Staff,Supervisor,Manager");
     Route::post("task/{employe_id}/{task_id}/favorite", 'addFavoriteTask')->middleware("role:Director");
@@ -112,7 +112,7 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("/task/employe/additional/list", 'additionalList')->middleware("role:Staff,Supervisor,Manager");
     Route::delete("/task/file/delete/{file_id}", 'deleteFile')->middleware("role:Staff,Supervisor,Manager");
     Route::post("/task/{taskId}/duplicate", 'duplicateTask')->middleware("role:Employee");
-    
+
     // 3 LEVEL TASK
     Route::get("/task/{project_id}/employe/list", 'projectTaskByEmploye')->middleware("role:Staff,Supervisor,Manager");
     Route::patch("/task/{task_id}/activity/add-sub", 'addSub')->middleware("role:Staff,Supervisor,Manager");
