@@ -24,13 +24,13 @@ class PositionController extends Controller
             'id_base' => null
         ]);
 
-        return response()->json([
-            'status' => true,
-            'posisi_baru' => $positionSaved,
-            'id1' => $positionSaved->id,
-            'id2' => $positionSaved['id'],
-            'parent' => $parent
-        ], 200);
+        // return response()->json([
+        //     'status' => true,
+        //     'posisi_baru' => $positionSaved,
+        //     'id1' => $positionSaved->id,
+        //     'id2' => $positionSaved['id'],
+        //     'parent' => $parent
+        // ], 200);
 
         if(!$positionSaved){
             throw new HttpResponseException(response([
@@ -41,7 +41,7 @@ class PositionController extends Controller
 
         // save to structure master
         $masterSaved = StructureMaster::create([
-                        'position_id' => $positionSaved->id,
+                        'position_id' => $positionSaved->id || $positionSaved['id'],
                         'direct_supervisor' => $parent->position_id
                     ]);
 
