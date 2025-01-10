@@ -62,6 +62,51 @@ class PositionController extends Controller
         ], 200);
     }
 
+    public function update(Request $request)
+    {
+
+        $organization = Organization::where('organization_code', $request->organization_code)->first();
+
+        $position = Position::where('position_code', $request->position_code)->first();
+
+        if(!$position){
+
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Position not found'
+            ], 404));
+
+        }
+
+        $isUpdated = Position::where('position_code', $position->position_id)
+                                ->update([
+                                    'organization_id' => $organization->organization_id,
+                                    'position_name' => $request->position_name,
+                                    'id_base' => null
+                                ]);
+
+        if($isUpdated){
+            // search parent
+            $parent = Position::where('position_code', $request->parent_code)->first();
+
+            // update structure master
+            StructureMaster::where('position_id', $position->position_id)->update([
+                'direct_supervisor' => $parent->position_id,
+            ]);
+
+        } else {
+            throw new HttpResponseException(response([
+                'status' => false,
+                'message' => 'Failed to update position'
+            ], 500));
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully updated position',
+        ], 200);
+    }
+
     public function delete(Request $request)
     {
         Position::where('position_code', $request->position_code)->delete();
