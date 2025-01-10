@@ -41,7 +41,7 @@ class PositionController extends Controller
 
         // save to structure master
         $masterSaved = StructureMaster::create([
-                        'position_id' => $positionSaved->id || $positionSaved['id'],
+                        'position_id' => $positionSaved['id'],
                         'direct_supervisor' => $parent->position_id
                     ]);
 
