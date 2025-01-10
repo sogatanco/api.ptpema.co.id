@@ -33,7 +33,7 @@ class PositionController extends Controller
 
         // save to structure master
         $masterSaved = StructureMaster::create([
-                        'position_id' => $positionSaved->id,
+                        'position_id' => $positionSaved->position_id,
                         'direct_supervisor' => $parent->position_id
                     ]);
 
@@ -69,8 +69,8 @@ class PositionController extends Controller
         $data = Position::all();
 
         // generate 4 digit random number
-        
-        for ($i=0; $i < count($data); $i++) { 
+
+        for ($i=0; $i < count($data); $i++) {
             $code = mt_rand(1000, 9999);
 
             Position::where('position_id', $data[$i]['position_id'])
