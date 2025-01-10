@@ -21,8 +21,16 @@ class PositionController extends Controller
             'organization_id' => $organization->organization_id,
             'position_code' => $request->position_code,
             'position_name' => $request->position_name,
-            'id_base' => 9
+            'id_base' => null
         ]);
+
+        return response()->json([
+            'status' => true,
+            'posisi_baru' => $positionSaved,
+            'id1' => $positionSaved->id,
+            'id2' => $positionSaved['id'],
+            'parent' => $parent
+        ], 200);
 
         if(!$positionSaved){
             throw new HttpResponseException(response([
