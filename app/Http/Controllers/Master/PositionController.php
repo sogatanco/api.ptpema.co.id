@@ -74,7 +74,6 @@ class PositionController extends Controller
             throw new HttpResponseException(response([
                 'status' => false,
                 'message' => 'Position not found',
-                "request" => $request->all()
             ], 404));
 
         }
