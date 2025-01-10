@@ -78,7 +78,7 @@ class PositionController extends Controller
 
         }
 
-        $isUpdated = Position::where('position_code', $position->position_id)
+        $isUpdated = Position::where('position_id', $position->position_id)
                                 ->update([
                                     'organization_id' => $organization->organization_id,
                                     'position_name' => $request->position_name,
