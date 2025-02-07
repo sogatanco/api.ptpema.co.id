@@ -42,6 +42,7 @@ class SuratController extends Controller
         $surat->submitted_by=Employe::employeId();
         $surat->submitted_current_position=(Structure::where('employe_id',$surat->submitted_by)->first('position_name')->position_name);
         $surat->sign_by=$request->ttdBy;
+        $surat->bahasa=$request->bhs;
 
         if($surat->save()){
             return new PostResource(true, 'Data Inserted', []);
@@ -53,7 +54,7 @@ class SuratController extends Controller
         $surat=Surat::find($request->id);
         if($request->lampiran+0>0 && $surat->file_lampiran!==''){
             $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->fileLampiran), true);
-            $fileName = 'lampiran/' . date('Y') . '/' .sprintf("%02d", ((PenomoranSurat::where('type',$request->type)->first()->last_number)+1)). '.pdf';
+            $fileName = 'lampiran/' . date('Y') . '/' .strtok($surat->nomor_surat, '/'). '.pdf';
             if (Storage::disk('public_adm')->put($fileName, $file)) {
                 $surat->file_lampiran=$fileName;
             }
@@ -69,6 +70,7 @@ class SuratController extends Controller
         $surat->submitted_by=Employe::employeId();
         $surat->submitted_current_position=(Structure::where('employe_id',$surat->submitted_by)->first('position_name')->position_name);
         $surat->sign_by=$request->ttdBy;
+        $surat->bahasa=$request->bhs;
         if($surat->save()){
             return new PostResource(true, 'Data Updated', []);
         }   
@@ -98,6 +100,7 @@ class SuratController extends Controller
         $data['jenisLampiran']=$data->jenis_lampiran;
         $data['isiSurat']=$data->isi_surat;
         $data['ttdBy']=$data->sign_by;
+        $data['bhs']=$data->bahasa;
         if($data->tembusans!==null && $data->tembusans!=='' ){
             $data['tembusans']=explode(',',$data->tembusans);
         }else{
