@@ -416,7 +416,7 @@ class PengajuanController extends Controller
 
         $label = [];
         $value = [];
-        $rkap = RealisasiRkap::whereYear('tahun', date("Y"))->get();
+        $rkap = RealisasiRkap::whereYear('tahun', 2024)->get();
         foreach ($rkap as $r) {
             array_push($label, $r->renbis);
             array_push($value, $r->persen);
