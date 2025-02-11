@@ -100,7 +100,7 @@ class SuratController extends Controller
         $data['jenisLampiran']=$data->jenis_lampiran;
         $data['isiSurat']=$data->isi_surat;
         $data['ttdBy']=$data->sign_by;
-        $data['bhs']=$data->bahasa;
+        $data['bhs']=$data->bhs;
         if($data->tembusans!==null && $data->tembusans!=='' ){
             $data['tembusans']=explode(',',$data->tembusans);
         }else{
