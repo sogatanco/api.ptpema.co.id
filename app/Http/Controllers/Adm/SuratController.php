@@ -133,10 +133,10 @@ class SuratController extends Controller
         } else {
             $document['tembusans'] = [];
         }
-        if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $data->file_lampiran))) {
-            $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $data->file_lampiran)));
+        if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $doc->file_lampiran))) {
+            $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $doc->file_lampiran)));
         } else {
-            $data['lampiran'] = 'tidak ada';
+            $document['lampiran'] = '-';
         }
         
         return new PostResource(true, 'success', $document);
