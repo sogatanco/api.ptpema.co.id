@@ -23,7 +23,7 @@ class CryptoService
         $publicKey = openssl_pkey_get_details($keyPair)['key'];
 
         // Simpan Public Key di Database
-        $user = Employe::where('employe_id', $employe_id)->first();
+        $user = Employe::find($employe_id);
         $user->public_key = $publicKey;
         $user->save();
 
