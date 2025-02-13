@@ -145,7 +145,8 @@ class SuratController extends Controller
         } else {
             $document['lampiran'] = '-';
         }
-        $document['signer']=$signer;
+        $document['signer']['first_name']=$signer->employe_name;
+        $document['signer']['position_name']=$signer->id_current_position;
 
         return new PostResource(true, 'success', $document);
 
