@@ -110,13 +110,14 @@ class AuthController extends Controller
             ], 400));
         }
 
-        $pk=CryptoService::getPublicKey($userData->employe_id);
-        if(is_null($pk)){
-            $user->public_key = 'tetet';
+
+        if(is_null(CryptoService::getPublicKey($userData->employe_id))){
+            CryptoService::generateKeys($userData->employe_id);
         }
 
         $user->employe_id = $userData->employe_id;
         $user->first_name = $userData->first_name;
+        $user->public_key = CryptoService::getPublicKey($userData->employe_id);
         $user->roles = $user->roles;
         $user = $user->makeHidden(["id", "email_verified_at", "created_at", "updated_at"]);
 
