@@ -121,32 +121,31 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $doc=Surat::where('no_document', $id_doc)->first();
-        $step=ListVerif::where('id_doc', $id_doc)->get();
+        $id=Surat::where('no_document', $id_doc)->first();
+        // $step=ListVerif::where('id_doc', $id_doc)->get();
 
 
-        $document['nomor_dokument']=$doc->no_document;
-        $document['nomor_surat']=$doc->nomor_surat;
-        $document['tgl_surat']=$doc->created_at;
-        $document['perubahan_terakhir']=$doc->updated_at;
-        $document['kepada']=$doc->kepada;
-        $document['perihal']=$doc->perihal;
-        $document['isi_surat']=$doc->isi_surat;
-        $document['bhs']=$doc->bhs;
-        if ($doc->tembusans !== null && $doc->tembusans !== '') {
-            $document['tembusans'] = explode(',', $doc->tembusans);
-        } else {
-            $document['tembusans'] = [];
-        }
-        if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $doc->file_lampiran))) {
-            $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $doc->file_lampiran)));
-        } else {
-            $document['lampiran'] = '-';
-        }
-        $document['list']=$step;
+        // $document['nomor_dokument']=$doc->no_document;
+        // $document['nomor_surat']=$doc->nomor_surat;
+        // $document['tgl_surat']=$doc->created_at;
+        // $document['perubahan_terakhir']=$doc->updated_at;
+        // $document['kepada']=$doc->kepada;
+        // $document['perihal']=$doc->perihal;
+        // $document['isi_surat']=$doc->isi_surat;
+        // $document['bhs']=$doc->bhs;
+        // if ($doc->tembusans !== null && $doc->tembusans !== '') {
+        //     $document['tembusans'] = explode(',', $doc->tembusans);
+        // } else {
+        //     $document['tembusans'] = [];
+        // }
+        // if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $doc->file_lampiran))) {
+        //     $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $doc->file_lampiran)));
+        // } else {
+        //     $document['lampiran'] = '-';
+        // }
+        // $document['list']=$step;
 
-        return new PostResource(true, 'success', $document);
-
+        return new PostResource(true, 'success',[self::detail($id->id)] );
 
         // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
 
