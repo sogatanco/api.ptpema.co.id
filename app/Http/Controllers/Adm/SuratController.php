@@ -9,8 +9,8 @@ use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
 use App\Models\Employe;
-use App\Models\ESign\VerifSt
-use App\Models\Structure;ep;
+use App\Models\ESign\VerifStep;
+use App\Models\Structure;
 use App\Models\Verify\ListVerif;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
