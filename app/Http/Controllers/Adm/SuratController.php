@@ -121,7 +121,7 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $doc=Surat::where('no_document', $id_doc)->first();
+        $doc=ListSurat::where('no_document', $id_doc)->first();
         $signer=ListVerif::where('id_doc', $id_doc)->where('type','sign')->first();
 
         $document['perubahan_terakhir']=$doc->updated_at;
