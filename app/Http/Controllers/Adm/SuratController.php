@@ -124,6 +124,7 @@ class SuratController extends Controller
 
         $document={
             'nomor_surat':$doc->nomor_surat,
+            'te':'sdgsdg'
         };
         return new PostResource(true, 'success', $document);
 
