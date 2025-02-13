@@ -14,6 +14,7 @@ use App\Models\Structure;
 use App\Models\Verify\ListVerif;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Services\SignatureService;
 
 class SuratController extends Controller
 {
@@ -121,20 +122,20 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $doc=Surat::where('no_document', $id_doc)->first();
-        $signer=ListVerif::where('id_doc', $id_doc)->where('type','sign')->first();
+        $doc = Surat::where('no_document', $id_doc)->first();
+        $signer = ListVerif::where('id_doc', $id_doc)->where('type', 'sign')->first();
 
-        $document['perubahan_terakhir']=$doc->updated_at;
-        $document['nomor_dokument']=$doc->no_document;
-      
-        $document['nomorSurat']=$doc->nomor_surat;
-        $document['tglSurat']=$doc->created_at;
-        $document['lampiran']=$doc->j_lampiran; 
-        $document['jenisLampiran']=$doc->jenis_lampiran;
-        $document['kepada']=$doc->kepada;
-        $document['perihal']=$doc->perihal;
-        $document['isiSurat']=$doc->isi_surat;
-        $document['bhs']=$doc->bahasa;
+        $document['perubahan_terakhir'] = $doc->updated_at;
+        $document['nomor_dokument'] = $doc->no_document;
+
+        $document['nomorSurat'] = $doc->nomor_surat;
+        $document['tglSurat'] = $doc->created_at;
+        $document['lampiran'] = $doc->j_lampiran;
+        $document['jenisLampiran'] = $doc->jenis_lampiran;
+        $document['kepada'] = $doc->kepada;
+        $document['perihal'] = $doc->perihal;
+        $document['isiSurat'] = $doc->isi_surat;
+        $document['bhs'] = $doc->bahasa;
         if ($doc->tembusans !== null && $doc->tembusans !== '') {
             $document['tembusans'] = explode(',', $doc->tembusans);
         } else {
@@ -145,10 +146,17 @@ class SuratController extends Controller
         } else {
             $document['lampiran'] = '-';
         }
-        $document['signer']['first_name']=$signer->employe_name;
-        $document['signer']['position_name']=$signer->id_current_position;
+        $document['signer']['first_name'] = $signer->employe_name;
+        $document['signer']['position_name'] = $signer->id_current_position;
 
-        return new PostResource(true, 'success', $document);
+        $signature = SignatureService::signDocument(auth()->id(), $document);
+
+        return response()->json([
+            'document' => $document,
+            'signature' => $signature
+        ]);
+
+        // return new PostResource(true, 'success', $document);
 
 
         // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
