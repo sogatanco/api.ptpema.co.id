@@ -122,8 +122,24 @@ class SuratController extends Controller
     {
         $doc=ListSurat::where('no_document', $id_doc)->first();
 
-        $data['nomor_surat']=$doc->nomor_surat;
-        return new PostResource(true, 'success', $data);
+        $document['nomor_surat']=$doc->nomor_surat;
+        $document['tgl_surat']=$doc->created_at;
+        $document['kepada']=$doc->kepada;
+        $document['perihal']=$doc->perihal;
+        $document['isi_surat']=$doc->isi_surat;
+        $document['bhs']=>$doc->bhs;
+        if ($doc->tembusans !== null && $doc->tembusans !== '') {
+            $document['tembusans'] = explode(',', $doc->tembusans);
+        } else {
+            $document['tembusans'] = [];
+        }
+        if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $data->file_lampiran))) {
+            $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $data->file_lampiran)));
+        } else {
+            $data['lampiran'] = 'tidak ada';
+        }
+        
+        return new PostResource(true, 'success', $document);
 
 
         // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
