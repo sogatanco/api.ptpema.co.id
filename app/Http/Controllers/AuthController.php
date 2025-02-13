@@ -111,9 +111,9 @@ class AuthController extends Controller
         }
 
 
-        if(is_null(CryptoService::getPublicKey($userData->employe_id))){
-            CryptoService::generateKeys($userData->employe_id);
-        }
+        // if(is_null(CryptoService::getPublicKey($userData->employe_id))){
+        //     CryptoService::generateKeys($userData->employe_id);
+        // }
 
         $user->employe_id = $userData->employe_id;
         $user->first_name = $userData->first_name;

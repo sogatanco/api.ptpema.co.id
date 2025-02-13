@@ -15,6 +15,7 @@ use App\Models\Verify\ListVerif;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Services\SignatureService;
+use App\Services\CryptoService;
 
 class SuratController extends Controller
 {
@@ -149,23 +150,19 @@ class SuratController extends Controller
         $document['signer']['first_name'] = $signer->employe_name;
         $document['signer']['position_name'] = $signer->id_current_position;
 
+        if(is_null(CryptoService::getPublicKey(Employe::employeId()))){
+            CryptoService::generateKeys(Employe::employeId());
+        }
+
         $signature = SignatureService::signDocument(Employe::employeId(), $document);
-
-        return response()->json([
-            'document' => $document,
-            'signature' => $signature
-        ]);
-
-        // return new PostResource(true, 'success', $document);
-
-
-        // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
-
-        // $verif->status = $request->status;
-        // $verif->ket = $request->catatan_persetujuan;
-        // if ($verif->save()) {
-        //     return new PostResource(true, 'success', []);
-        // }
+        
+        $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
+        $verif->status = $request->status;
+        $verif->ket = $request->catatan_persetujuan;
+        $verif->signature=$signature;
+        if ($verif->save()) {
+            return new PostResource(true, 'success', []);
+        }
     }
 
     function getRomawi($bln)
