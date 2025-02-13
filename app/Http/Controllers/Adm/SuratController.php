@@ -9,8 +9,9 @@ use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
 use App\Models\Employe;
-use App\Models\ESign\VerifStep;
-use App\Models\Structure;
+use App\Models\ESign\VerifSt
+use App\Models\Structure;ep;
+use App\Models\Verify\ListVerif;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -121,6 +122,9 @@ class SuratController extends Controller
     function reviewDokumen($id_doc, Request $request)
     {
         $doc=Surat::where('no_document', $id_doc)->first();
+        $step=ListVerif::where('id_doc', $id_doc)->get();
+
+
         $document['nomor_dokument']=$doc->no_document;
         $document['nomor_surat']=$doc->nomor_surat;
         $document['tgl_surat']=$doc->created_at;
@@ -139,7 +143,8 @@ class SuratController extends Controller
         } else {
             $document['lampiran'] = '-';
         }
-        
+        $document['list']=$step;
+
         return new PostResource(true, 'success', $document);
 
 
