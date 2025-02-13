@@ -122,7 +122,7 @@ class SuratController extends Controller
     function reviewDokumen($id_doc, Request $request)
     {
         $doc=Surat::where('no_document', $id_doc)->first('id');
-        $step=ListVerif::where('id_doc', $id_doc)->get();
+        $signer=ListVerif::where('id_doc', $id_doc)->where('type','sign')->first();
 
         $document['perubahan_terakhir']=$doc->updated_at;
         $document['nomor_dokument']=$doc->no_document;
@@ -145,7 +145,7 @@ class SuratController extends Controller
         } else {
             $document['lampiran'] = '-';
         }
-        $document['list']=$step;
+        $document['signer']=$signer;
 
         return new PostResource(true, 'success', $document);
 
