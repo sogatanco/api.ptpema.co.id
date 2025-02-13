@@ -125,7 +125,7 @@ class SuratController extends Controller
         $verif->status = $request->status;
         $verif->ket = $request->catatan_persetujuan;
         if ($verif->save()) {
-            return new PostResource(true, 'success', []);
+            return new PostResource(true, 'success', [$this->detail($id_doc)]);
         }
     }
 
