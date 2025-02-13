@@ -13,6 +13,7 @@ class Employe extends Model
     protected $table = 'employees';
     protected $fillable = [
         'employe_id',
+        'public_key',
         'user_id', 
         'position_id',
         'first_name', 
