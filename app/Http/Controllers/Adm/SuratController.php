@@ -121,7 +121,7 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $doc=ListSurat::where('no_document', $id_doc)->first();
+        $doc=Surat::where('no_document', $id_doc)->first();
         $signer=ListVerif::where('id_doc', $id_doc)->where('type','sign')->first();
 
         $document['perubahan_terakhir']=$doc->updated_at;
@@ -134,7 +134,7 @@ class SuratController extends Controller
         $document['kepada']=$doc->kepada;
         $document['perihal']=$doc->perihal;
         $document['isiSurat']=$doc->isi_surat;
-        $document['bhs']=$doc->bhs;
+        $document['bhs']=$doc->bahasa;
         if ($doc->tembusans !== null && $doc->tembusans !== '') {
             $document['tembusans'] = explode(',', $doc->tembusans);
         } else {
