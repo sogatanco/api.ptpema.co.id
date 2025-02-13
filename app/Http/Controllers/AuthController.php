@@ -111,6 +111,7 @@ class AuthController extends Controller
 
         $user->employe_id = $userData->employe_id;
         $user->first_name = $userData->first_name;
+        $user->public_key = $userData->public_key;
         $user->roles = $user->roles;
         $user = $user->makeHidden(["id", "email_verified_at", "created_at", "updated_at"]);
 
