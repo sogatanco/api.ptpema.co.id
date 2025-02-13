@@ -120,13 +120,14 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
+        return new PostResource(true, 'success', [$this->detail($id_doc)]);
+        // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
 
-        $verif->status = $request->status;
-        $verif->ket = $request->catatan_persetujuan;
-        if ($verif->save()) {
-            return new PostResource(true, 'success', [$this->detail($id_doc)]);
-        }
+        // $verif->status = $request->status;
+        // $verif->ket = $request->catatan_persetujuan;
+        // if ($verif->save()) {
+        //     return new PostResource(true, 'success', [$this->detail($id_doc)]);
+        // }
     }
 
     function getRomawi($bln)
