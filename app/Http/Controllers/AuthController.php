@@ -15,6 +15,7 @@ use App\Models\ForgotPassword;
 use App\Models\Employe;
 use App\Mail\ForgotPasswordMail;
 use Carbon\Carbon;
+use App\Services\CryptoService;
 use Mail;
 
 class AuthController extends Controller
@@ -109,9 +110,10 @@ class AuthController extends Controller
             ], 400));
         }
 
+        $pk=CryptoService::getPublicKey($userData->employe_id);
         $user->employe_id = $userData->employe_id;
         $user->first_name = $userData->first_name;
-        $user->public_key = $userData->public_key;
+        $user->public_key = $pk;
         $user->roles = $user->roles;
         $user = $user->makeHidden(["id", "email_verified_at", "created_at", "updated_at"]);
 
