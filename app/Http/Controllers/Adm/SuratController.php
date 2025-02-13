@@ -120,7 +120,8 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        return new PostResource(true, 'success', [$this->detail($id_doc)]);
+        $doc=ListSurat::where('no_document', $id_doc)->first();
+        return new PostResource(true, 'success', $doc);
         // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
 
         // $verif->status = $request->status;
