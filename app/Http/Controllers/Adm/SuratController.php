@@ -149,7 +149,7 @@ class SuratController extends Controller
         $document['signer']['first_name'] = $signer->employe_name;
         $document['signer']['position_name'] = $signer->id_current_position;
 
-        $signature = SignatureService::signDocument(auth()->id(), $document);
+        $signature = SignatureService::signDocument(Employe::employeId(), $document);
 
         return response()->json([
             'document' => $document,
