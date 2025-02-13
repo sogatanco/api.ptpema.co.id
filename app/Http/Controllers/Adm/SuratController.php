@@ -122,11 +122,8 @@ class SuratController extends Controller
     {
         $doc=ListSurat::where('no_document', $id_doc)->first();
 
-        $document={
-            'nomor_surat':$doc->nomor_surat,
-            'te':'sdgsdg'
-        };
-        return new PostResource(true, 'success', $document);
+        $data['nomor_surat']=$doc->nomor_surat;
+        return new PostResource(true, 'success', $data);
 
 
         // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
