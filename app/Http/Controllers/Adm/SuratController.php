@@ -120,10 +120,11 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $doc=ListSurat::where('no_document', $id_doc)->first();
-
+        $doc=Surat::where('no_document', $id_doc)->first();
+        $document['nomor_dokument']=$doc->no_document;
         $document['nomor_surat']=$doc->nomor_surat;
         $document['tgl_surat']=$doc->created_at;
+        $document['perubahan_terakhir']=$doc->updated_at;
         $document['kepada']=$doc->kepada;
         $document['perihal']=$doc->perihal;
         $document['isi_surat']=$doc->isi_surat;
