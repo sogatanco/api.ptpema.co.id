@@ -127,7 +127,7 @@ class SuratController extends Controller
         $document['kepada']=$doc->kepada;
         $document['perihal']=$doc->perihal;
         $document['isi_surat']=$doc->isi_surat;
-        $document['bhs']=>$doc->bhs;
+        $document['bhs']=$doc->bhs;
         if ($doc->tembusans !== null && $doc->tembusans !== '') {
             $document['tembusans'] = explode(',', $doc->tembusans);
         } else {
