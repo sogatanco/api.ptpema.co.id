@@ -184,15 +184,17 @@ class SuratController extends Controller
             CryptoService::generateKeys(Employe::employeId());
         }
 
-        $signature = SignatureService::signDocument(Employe::employeId(), $document['data']);
+        // $signature = SignatureService::signDocument(Employe::employeId(), $document);
         
-        $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
-        $verif->status = $request->status;
-        $verif->ket = $request->catatan_persetujuan;
-        $verif->signature=$signature;
-        if ($verif->save()) {
-            return new PostResource(true, 'success', $document);
-        }
+        // $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
+        // $verif->status = $request->status;
+        // $verif->ket = $request->catatan_persetujuan;
+        // $verif->signature=$signature;
+        // if ($verif->save()) {
+        //     return new PostResource(true, 'success', $document);
+        // }
+
+        return new PostResource(true, 'success', $document->data);
     }
 
     function getRomawi($bln)
