@@ -152,7 +152,7 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $document=self::detail(Surat::where('no_document', $id_doc)->first('id')->id);
+        $document=self::detail(Surat::where('no_document', $id_doc)->first('id')->id)->data;
         // $doc = Surat::where('no_document', $id_doc)->first();
         // $signer = ListVerif::where('id_doc', $id_doc)->where('type', 'sign')->first();
 
