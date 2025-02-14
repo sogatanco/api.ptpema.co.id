@@ -194,7 +194,7 @@ class SuratController extends Controller
         //     return new PostResource(true, 'success', $document);
         // }
 
-        return new PostResource(true, 'success', $document->data);
+        return new PostResource(true, 'success',  $document->toArray(request())['data']);
     }
 
     function getRomawi($bln)
