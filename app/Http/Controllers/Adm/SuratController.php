@@ -125,6 +125,8 @@ class SuratController extends Controller
         }
         $document['signer']['first_name'] = $signer->employe_name;
         $document['signer']['position_name'] = $signer->id_current_position;
+        $document['status']=ListSurat::find($id)->status;
+      
         // $data = ListSurat::find($id);
         // $data['signer'] = Structure::where('employe_id', $data->sign_by)->first();
         // $data['tglSurat'] = $data->created_at;
