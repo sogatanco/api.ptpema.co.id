@@ -152,32 +152,33 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $doc = Surat::where('no_document', $id_doc)->first();
-        $signer = ListVerif::where('id_doc', $id_doc)->where('type', 'sign')->first();
+        $document=self::detail(Surat::where('no_document', $id_doc)->first('id')->id);
+        // $doc = Surat::where('no_document', $id_doc)->first();
+        // $signer = ListVerif::where('id_doc', $id_doc)->where('type', 'sign')->first();
 
-        $document['perubahan_terakhir'] = $doc->updated_at;
-        $document['nomor_dokument'] = $doc->no_document;
+        // $document['perubahan_terakhir'] = $doc->updated_at;
+        // $document['nomor_dokument'] = $doc->no_document;
 
-        $document['nomorSurat'] = $doc->nomor_surat;
-        $document['tglSurat'] = $doc->created_at;
-        $document['lampiran'] = $doc->j_lampiran;
-        $document['jenisLampiran'] = $doc->jenis_lampiran;
-        $document['kepada'] = $doc->kepada;
-        $document['perihal'] = $doc->perihal;
-        $document['isiSurat'] = $doc->isi_surat;
-        $document['bhs'] = $doc->bahasa;
-        if ($doc->tembusans !== null && $doc->tembusans !== '') {
-            $document['tembusans'] = explode(',', $doc->tembusans);
-        } else {
-            $document['tembusans'] = [];
-        }
-        if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $doc->file_lampiran))) {
-            $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $doc->file_lampiran)));
-        } else {
-            $document['lampiran'] = '-';
-        }
-        $document['signer']['first_name'] = $signer->employe_name;
-        $document['signer']['position_name'] = $signer->id_current_position;
+        // $document['nomorSurat'] = $doc->nomor_surat;
+        // $document['tglSurat'] = $doc->created_at;
+        // $document['lampiran'] = $doc->j_lampiran;
+        // $document['jenisLampiran'] = $doc->jenis_lampiran;
+        // $document['kepada'] = $doc->kepada;
+        // $document['perihal'] = $doc->perihal;
+        // $document['isiSurat'] = $doc->isi_surat;
+        // $document['bhs'] = $doc->bahasa;
+        // if ($doc->tembusans !== null && $doc->tembusans !== '') {
+        //     $document['tembusans'] = explode(',', $doc->tembusans);
+        // } else {
+        //     $document['tembusans'] = [];
+        // }
+        // if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $doc->file_lampiran))) {
+        //     $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $doc->file_lampiran)));
+        // } else {
+        //     $document['lampiran'] = '-';
+        // }
+        // $document['signer']['first_name'] = $signer->employe_name;
+        // $document['signer']['position_name'] = $signer->id_current_position;
 
         if(is_null(CryptoService::getPublicKey(Employe::employeId()))){
             CryptoService::generateKeys(Employe::employeId());
@@ -190,7 +191,7 @@ class SuratController extends Controller
         $verif->ket = $request->catatan_persetujuan;
         $verif->signature=$signature;
         if ($verif->save()) {
-            return new PostResource(true, 'success', []);
+            return new PostResource(true, 'success', $document);
         }
     }
 
