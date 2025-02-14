@@ -152,7 +152,7 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $document=self::detail(Surat::where('no_document', $id_doc)->first('id')->id)->data;
+        $document=self::detail(Surat::where('no_document', $id_doc)->first('id')->id);
         // $doc = Surat::where('no_document', $id_doc)->first();
         // $signer = ListVerif::where('id_doc', $id_doc)->where('type', 'sign')->first();
 
@@ -184,7 +184,7 @@ class SuratController extends Controller
             CryptoService::generateKeys(Employe::employeId());
         }
 
-        $signature = SignatureService::signDocument(Employe::employeId(), $document);
+        $signature = SignatureService::signDocument(Employe::employeId(), $document['data']);
         
         $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
         $verif->status = $request->status;
