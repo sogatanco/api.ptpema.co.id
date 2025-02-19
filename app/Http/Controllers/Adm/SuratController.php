@@ -98,6 +98,60 @@ class SuratController extends Controller
 
     function detail($id)
     {
+        // $doc = Surat::find($id);
+        // $signer = ListVerif::where('id_doc', $doc->no_document)->where('type', 'sign')->first();
+
+        // $document['perubahan_terakhir'] = $doc->updated_at;
+        // $document['nomor_dokument'] = $doc->no_document;
+
+        // $document['nomorSurat'] = $doc->nomor_surat;
+        // $document['tglSurat'] = $doc->created_at;
+        // $document['lampiran'] = $doc->j_lampiran;
+        // $document['jenisLampiran'] = $doc->jenis_lampiran;
+        // $document['kepada'] = $doc->kepada;
+        // $document['perihal'] = $doc->perihal;
+        // $document['isiSurat'] = $doc->isi_surat;
+        // $document['ttdBy'] = $doc->sign_by;
+        // $document['bhs'] = $doc->bahasa;
+        // if ($doc->tembusans !== null && $doc->tembusans !== '') {
+        //     $document['tembusans'] = explode(',', $doc->tembusans);
+        // } else {
+        //     $document['tembusans'] = [];
+        // }
+        // if ($doc->file_lampiran !== null && file_exists(public_path('adm/' . $doc->file_lampiran))) {
+        //     $document['lampiran'] = base64_encode(file_get_contents(public_path('adm/' . $doc->file_lampiran)));
+        // } else {
+        //     $document['lampiran'] = '-';
+        // }
+        // $document['signer']['first_name'] = $signer->employe_name;
+        // $document['signer']['position_name'] = $signer->id_current_position;
+        // $document['status']=ListSurat::find($id)->status;
+      
+        $data = ListSurat::find($id);
+        $data['signer'] = Structure::where('employe_id', $data->sign_by)->first();
+        $data['tglSurat'] = $data->created_at;
+        $data['nomorSurat'] = $data->nomor_surat;
+        $data['lampiran'] = $data->j_lampiran;
+        $data['jenisLampiran'] = $data->jenis_lampiran;
+        $data['isiSurat'] = $data->isi_surat;
+        $data['ttdBy'] = $data->sign_by;
+        $data['bhs'] = $data->bhs;
+        if ($data->tembusans !== null && $data->tembusans !== '') {
+            $data['tembusans'] = explode(',', $data->tembusans);
+        } else {
+            $data['tembusans'] = [];
+        }
+
+        if ($data->file_lampiran !== null && file_exists(public_path('adm/' . $data->file_lampiran))) {
+            $data['fileLampiran'] = base64_encode(file_get_contents(public_path('adm/' . $data->file_lampiran)));
+        } else {
+            $data['fileLampiran'] = '';
+        }
+        return new PostResource(true, 'data surat', $data);
+    }
+
+    function detail1($id)
+    {
         $doc = Surat::find($id);
         $signer = ListVerif::where('id_doc', $doc->no_document)->where('type', 'sign')->first();
 
@@ -126,33 +180,12 @@ class SuratController extends Controller
         $document['signer']['first_name'] = $signer->employe_name;
         $document['signer']['position_name'] = $signer->id_current_position;
         $document['status']=ListSurat::find($id)->status;
-      
-        // $data = ListSurat::find($id);
-        // $data['signer'] = Structure::where('employe_id', $data->sign_by)->first();
-        // $data['tglSurat'] = $data->created_at;
-        // $data['nomorSurat'] = $data->nomor_surat;
-        // $data['lampiran'] = $data->j_lampiran;
-        // $data['jenisLampiran'] = $data->jenis_lampiran;
-        // $data['isiSurat'] = $data->isi_surat;
-        // $data['ttdBy'] = $data->sign_by;
-        // $data['bhs'] = $data->bhs;
-        // if ($data->tembusans !== null && $data->tembusans !== '') {
-        //     $data['tembusans'] = explode(',', $data->tembusans);
-        // } else {
-        //     $data['tembusans'] = [];
-        // }
-
-        // if ($data->file_lampiran !== null && file_exists(public_path('adm/' . $data->file_lampiran))) {
-        //     $data['fileLampiran'] = base64_encode(file_get_contents(public_path('adm/' . $data->file_lampiran)));
-        // } else {
-        //     $data['fileLampiran'] = '';
-        // }
         return new PostResource(true, 'data surat', $document);
     }
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $document=self::detail(Surat::where('no_document', $id_doc)->first('id')->id);
+        $document=self::detail1(Surat::where('no_document', $id_doc)->first('id')->id);
         // $doc = Surat::where('no_document', $id_doc)->first();
         // $signer = ListVerif::where('id_doc', $id_doc)->where('type', 'sign')->first();
 
