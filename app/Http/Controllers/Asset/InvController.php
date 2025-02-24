@@ -273,8 +273,8 @@ class InvController extends Controller
                 $d->request_service = false;
             }
 
-            $d->location = Asset::find($d->id_parent)->location;
-            $d->file = Asset::find($d->id_parent)->file;
+            $d->location = Asset::find($d->id_parent)->location?? 'Parent tidak ditemukan';
+            $d->file = Asset::find($d->id_parent)->file?? 'Parent tidak ditemukan';
             $d->type_name = assetCat::where('code', Asset::find($d->id_parent)->type)->first()->name;
             $newn = [];
             $cres = explode(',', $d->responsible);
