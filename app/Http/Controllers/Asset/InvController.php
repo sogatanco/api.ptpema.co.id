@@ -266,7 +266,7 @@ class InvController extends Controller
     {
         $data = AssetChild::where('responsible', 'like', '%//' . Employe::employeId() . '//%')->get();
         foreach ($data as $d) {
-            $d->name = Asset::find($d->id_parent)->name;
+            $d->name = Asset::find($d->id_parent)->name?? 'Parent tidak ditemukan';
             if (count(AssetServis::where('asset_child', $d->id)->whereNotIn('status', ['done', 'reject'])->get()) > 0) {
                 $d->request_service = true;
             } else {
