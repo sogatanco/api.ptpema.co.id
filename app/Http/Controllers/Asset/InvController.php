@@ -275,7 +275,7 @@ class InvController extends Controller
 
             $d->location = Asset::find($d->id_parent)->location?? 'Parent tidak ditemukan';
             $d->file = Asset::find($d->id_parent)->file?? 'Parent tidak ditemukan';
-            $d->type_name = assetCat::where('code', Asset::find($d->id_parent)->type)->first()->name;
+            $d->type_name = assetCat::where('code', Asset::find($d->id_parent)->type??0)->first()->name?? 'Parent tidak ditemukan';
             $newn = [];
             $cres = explode(',', $d->responsible);
             for ($a = 0; $a < count($cres); $a++) {
