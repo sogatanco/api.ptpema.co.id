@@ -11,8 +11,13 @@ class Employe extends Model
 {
     use HasFactory;
     protected $table = 'employees';
+    protected $primaryKey = 'employe_id';
+    protected $casts = [
+    'employe_id' => 'string',
+];
     protected $fillable = [
         'employe_id',
+        'public_key',
         'user_id', 
         'position_id',
         'first_name', 
