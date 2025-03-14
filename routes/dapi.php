@@ -170,4 +170,5 @@ Route::controller(SuratMasuk::class)->group(function(){
 // HR
 Route::controller(ProfilController::class)->group(function(){
      Route::get('hr/profil/{employe_id}', 'getImage');
+     Route::post('hr/clock_in', 'clock_in')->middleware("role:Employee");
 });
