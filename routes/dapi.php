@@ -95,7 +95,7 @@ Route::controller(ATenderController::class)->group(function(){
      Route::get('vendor/tender/tahapdua/{id}', 'getTahap2')->middleware("role:AdminVendorUmum,AdminVendorScm,VendorViewer");
      Route::post('vendor/tender/ba/{id}', 'ba')->middleware("role:AdminVendorUmum,AdminVendorScm");
      Route::post('vendor/tender/status-update/{id}', 'updateTenderStatus')->middleware("role:AdminVendorUmum,AdminVendorScm");
-     Route::get('vendor/tender/approval/ba', 'approvalBa')->middleware("role:Manager,Director");
+     Route::get('vendor/tender/approval/ba', 'approvalBa')->middleware("role:Supervisor,Manager,Director");
      Route::post('vendor/tender/approval-ba/ba/{id}', 'approveBaByManager')->middleware("role:Manager");
 
 });
@@ -119,7 +119,7 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan', 'store')->middleware("role:Employee");
      Route::get('sppd/pengajuan', 'getSubmitted')->middleware("role:Employee");
      Route::get('sppd/pengajuan/{id}', 'getDetail')->middleware("role:Employee");
-     Route::post('sppd/pengajuan/update/{id}', 'updatePengajuan')->middleware("role:Employee");  
+     Route::post('sppd/pengajuan/update/{id}', 'updatePengajuan')->middleware("role:Employee");
      Route::post('sppd/pengajuan/review/{id_doc}', 'persetujuan')->middleware("role:Employee");
      Route::post('sppd/pengajuan/realisasi', 'submitRealisasi')->middleware("role:Employee");
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
@@ -160,7 +160,7 @@ Route::controller(SuratMasuk::class)->group(function(){
      Route::post("adm/suratmasuk/", "insert")->middleware("role:Employee");
      Route::get('adm/suratmasuk/{what}', 'getSM')->middleware('role:Employee');
      Route::get('adm/suratmasuk/detail/{id}', 'getDetail')->middleware('role:Employee');
-     Route::post('adm/suratmasuk/diposisi/{idSurat}', 'disposisi')->middleware('role:Employee');  
+     Route::post('adm/suratmasuk/diposisi/{idSurat}', 'disposisi')->middleware('role:Employee');
      Route::post('adm/suratmasuk/delete/{id}', 'delete')->middleware('role:Employee');
      Route::get('adm/suratmasuk/riwayat/{id}', 'getRiwayat')->middleware('role:Employee');
      Route::post('adm/suratmasuk/read/{id_cc}', 'readCC')->middleware('role:Employee');
