@@ -3,6 +3,7 @@
 use App\Http\Controllers\Adm\StaticAdmController;
 use App\Http\Controllers\Adm\SuratController;
 use App\Http\Controllers\Adm\SuratMasuk;
+use App\Http\Controllers\Hr\AbsensiController;
 use App\Http\Controllers\Hr\ProfilController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -170,5 +171,9 @@ Route::controller(SuratMasuk::class)->group(function(){
 // HR
 Route::controller(ProfilController::class)->group(function(){
      Route::get('hr/profil/{employe_id}', 'getImage');
+    
+});
+
+Route::controller(AbsensiController::class)->group(function(){
      Route::post('hr/clock_in', 'clock_in')->middleware("role:Employee");
 });
