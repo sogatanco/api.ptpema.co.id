@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Hr;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employe;
+use App\Models\Hr\Profil;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -16,7 +18,7 @@ class AbsensiController extends Controller
         $formData = [
             'api_key' => 'v9kCmXvvpcb15_QdXr5cVWnq8GWgHCsP',
             'api_secret' => '5RFVIMNXw1KwHP5dF08cM3GWErUZIckL',
-            'image_url1'=>'https://www.bankrate.com/brp/2025/02/06145605/elon-musk-2025-worlds-richest-person.jpg',
+            'image_url1'=>$this->getImage(Employe::employeId()),
             'image_url2'=>'https://www.bankrate.com/brp/2025/02/06145605/elon-musk-2025-worlds-richest-person.jpg',
             // 'image_base64_2'=>''
         ];
@@ -33,5 +35,11 @@ class AbsensiController extends Controller
                 'error' => 'Request error: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getImage($employe_id){
+        $p=Profil::where('employe_id', $employe_id)->get()->first();
+        $data = 'https://hr-api.ptpema.co.id/storage/photo/employee-photo/'.$p->photo;
+        return $data;
     }
 }
