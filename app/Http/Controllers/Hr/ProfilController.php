@@ -12,7 +12,7 @@ class ProfilController extends Controller
     public function getImage($employe_id){
         $p=Profil::where('employe_id', $employe_id)->get()->first();
         $data['employe_id'] = $employe_id;
-        $data['photo'] = $p->photo;
+        $data['photo'] = 'https://hr-api.ptpema.co.id/storage/photo/employee-photo/'.$p->photo;
         return new PostResource(true, 'data employee', $data);
     }
 }
