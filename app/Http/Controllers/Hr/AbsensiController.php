@@ -22,7 +22,7 @@ class AbsensiController extends Controller
         ];
 
         try {
-            $response = $client->request('POST', $this->baseUrl, [
+            $response = $client->request('POST', 'https://api-us.faceplusplus.com/facepp/v3/compare', [
                 'form_params' => $formData
             ]);
 
