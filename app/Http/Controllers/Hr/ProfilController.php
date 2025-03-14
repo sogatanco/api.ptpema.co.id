@@ -11,6 +11,8 @@ class ProfilController extends Controller
 {
     public function getImage($employe_id){
         $p=Profil::where('employe_id', $employe_id)->get()->first();
-        return new PostResource(true, 'data employee', $p->photo);
+        $data['employe_id'] = $employe_id;
+        $data['photo'] = $p->photo;
+        return new PostResource(true, 'data employee', $data);
     }
 }
