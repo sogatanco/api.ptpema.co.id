@@ -3,6 +3,7 @@
 use App\Http\Controllers\Adm\StaticAdmController;
 use App\Http\Controllers\Adm\SuratController;
 use App\Http\Controllers\Adm\SuratMasuk;
+use App\Http\Controllers\Hr\ProfilController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -164,4 +165,9 @@ Route::controller(SuratMasuk::class)->group(function(){
      Route::post('adm/suratmasuk/delete/{id}', 'delete')->middleware('role:Employee');
      Route::get('adm/suratmasuk/riwayat/{id}', 'getRiwayat')->middleware('role:Employee');
      Route::post('adm/suratmasuk/read/{id_cc}', 'readCC')->middleware('role:Employee');
+});
+
+// HR
+Route::controller(ProfilController::class)->group(function(){
+     Route::get('hr/profil/{employe_id}', 'getImage');
 });
