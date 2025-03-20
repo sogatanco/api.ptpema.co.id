@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Hr;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Hr\Offices;
 use App\Models\Hr\Profil;
+use App\Models\Hr\Users;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -30,7 +33,7 @@ class AbsensiController extends Controller
 
             $result = json_decode($response->getBody(), true);
 
-            
+
             // cek confidence
             if (isset($result['confidence']) && $result['confidence'] > 80) {
                 return response()->json([
@@ -56,5 +59,11 @@ class AbsensiController extends Controller
         $p = Profil::where('employe_id', $employe_id)->get()->first();
         $data = 'https://hr-api.ptpema.co.id/storage/photo/employee-photo/' . $p->photo;
         return $data;
+    }
+
+    public function getOffice(){
+        $idOffice=Users::where('employe_id', Employe::employeId())->get()->first()->office_id;
+        $office=Offices::find($idOffice);
+        return new PostResource(true, 'data office', $office);
     }
 }
