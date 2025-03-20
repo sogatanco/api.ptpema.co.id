@@ -30,14 +30,16 @@ class AbsensiController extends Controller
 
             $result = json_decode($response->getBody(), true);
 
-            // Cek nilai confidence
-            if (isset($result['confidence']) && $result['confidence'] > 85) {
+            
+            // cek confidence
+            if (isset($result['confidence']) && $result['confidence'] > 80) {
                 return response()->json([
                     'status' => 'Sesuai',
                     'confidence' => $result['confidence']
                 ], 200);
             } else {
                 return response()->json([
+                    'code' => 101,
                     'status' => 'Tidak Sesuai',
                     'confidence' => $result['confidence'] ?? null
                 ], 200);
