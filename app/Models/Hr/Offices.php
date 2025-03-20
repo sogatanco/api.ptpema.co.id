@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Offices extends Model
 {
+    protected $connection = 'hr';
     protected $table = 'offices';
 }
