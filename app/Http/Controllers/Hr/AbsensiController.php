@@ -19,8 +19,8 @@ class AbsensiController extends Controller
             'api_key' => 'v9kCmXvvpcb15_QdXr5cVWnq8GWgHCsP',
             'api_secret' => '5RFVIMNXw1KwHP5dF08cM3GWErUZIckL',
             'image_url1'=>$this->getImage(Employe::employeId()),
-            'image_url2'=>'https://hr-api.ptpema.co.id/storage/photo/employee-photo/CPhefkR6f3b2bQwLn8DCii95LQNNdn1AQq04GeG0.jpg',
-            // 'image_base64_2'=>''
+            // 'image_url2'=>'https://hr-api.ptpema.co.id/storage/photo/employee-photo/CPhefkR6f3b2bQwLn8DCii95LQNNdn1AQq04GeG0.jpg',
+            'image_base64_2'=>$request->poto,
         ];
 
         try {
