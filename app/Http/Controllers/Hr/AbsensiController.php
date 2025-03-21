@@ -82,7 +82,8 @@ class AbsensiController extends Controller
 
     public function getOffice(){
         $idOffice=Users::where('employe_id', Employe::employeId())->get()->first()->office_id;
-        $office=Offices::find($idOffice);
-        return new PostResource(true, 'data office', $office);
+        $landing['office']=Offices::find($idOffice);
+        return new PostResource(true, 'data', $landing);
     }
+
 }
