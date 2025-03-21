@@ -44,11 +44,11 @@ class AbsensiController extends Controller
                         'time_in'=>date('H:i:s'),
                         'latlong_in'=>$request->latlong
     
-                    ])
-                }else if($request->jenis == 'out'){
+                    ]);
+                }elsev if($request->jenis == 'out'){
                     Attandence::updateOrInsert([
                         'employe_id' => Employe::employeId(),
-                    ])
+                    ]);
                 }
                 
                 return new PostResource(true, 'Clock '.$request->jenis.' Berhasil !', $result['confidence']);
