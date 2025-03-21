@@ -38,9 +38,9 @@ class AbsensiController extends Controller
                 if($request->jenis == 'in'){
                     Attandence::updateOrInsert([
                         'employe_id' => Employe::employeId(),
+                        'date'=>now()->toDateString(),],[
                         'schedule_id' => Schedule::where('active', 1)->get()->first()->id,
                         'type'=>'normal',
-                        'date'=>now()->toDateString(),
                         'time_in'=>date('H:i:s'),
                         'latlong_in'=>$request->latlong
     
@@ -48,9 +48,10 @@ class AbsensiController extends Controller
                 }else if($request->jenis == 'out'){
                     Attandence::updateOrInsert([
                         'employe_id' => Employe::employeId(),
+                        'date'=>now()->toDateString()],[
+                            
                         'schedule_id' => Schedule::where('active', 1)->get()->first()->id,
                         'type'=>'normal',
-                        'date'=>now()->toDateString(),
                         'time_out'=>date('H:i:s'),
                         'latlong_out'=>$request->latlong
                     ]);
