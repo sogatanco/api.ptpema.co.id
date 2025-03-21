@@ -45,7 +45,7 @@ class AbsensiController extends Controller
                         'latlong_in'=>$request->latlong
     
                     ]);
-                }elsev if($request->jenis == 'out'){
+                }else if($request->jenis == 'out'){
                     Attandence::updateOrInsert([
                         'employe_id' => Employe::employeId(),
                     ]);
