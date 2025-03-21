@@ -41,11 +41,7 @@ class AbsensiController extends Controller
                     'confidence' => $result['confidence']
                 ], 200);
             } else {
-                return response()->json([
-                    'code' => 101,
-                    'status' => 'Tidak Sesuai',
-                    'confidence' => $result['confidence'] ?? null
-                ], 200);
+                return new PostResource(false, 'Wajah Tidak Sesuai', $result['confidence'] ?? null);
             }
         } catch (RequestException $e) {
             return response()->json([
