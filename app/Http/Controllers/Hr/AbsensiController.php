@@ -36,10 +36,7 @@ class AbsensiController extends Controller
 
             // cek confidence
             if (isset($result['confidence']) && $result['confidence'] > 80) {
-                return response()->json([
-                    'status' => 'Sesuai',
-                    'confidence' => $result['confidence']
-                ], 200);
+                return new PostResource(true, 'Wajah Sesuai', $result['confidence']);
             } else {
                 return new PostResource(false, 'Wajah Tidak Sesuai', $result['confidence'] ?? null);
             }
