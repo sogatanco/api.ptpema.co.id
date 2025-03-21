@@ -13,6 +13,7 @@ use App\Models\Hr\Users;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\DB;
 
 class AbsensiController extends Controller
 {
@@ -42,7 +43,9 @@ class AbsensiController extends Controller
                         'schedule_id' => Schedule::where('active', 1)->get()->first()->id,
                         'type'=>'normal',
                         'time_in'=>date('H:i:s'),
-                        'latlong_in'=>$request->latlong
+                        'latlong_in'=>$request->latlong,
+                        'created_at' => DB::raw('IFNULL(created_at, NOW())'), // Jika belum ada, isi dengan NOW()
+                        'updated_at' => now() // Selalu di-update
     
                     ]);
                 }else if($request->jenis == 'out'){
@@ -53,7 +56,9 @@ class AbsensiController extends Controller
                         'schedule_id' => Schedule::where('active', 1)->get()->first()->id,
                         'type'=>'normal',
                         'time_out'=>date('H:i:s'),
-                        'latlong_out'=>$request->latlong
+                        'latlong_out'=>$request->latlong,
+                        'created_at' => DB::raw('IFNULL(created_at, NOW())'), // Jika belum ada, isi dengan NOW()
+                        'updated_at' => now() // Selalu di-update
                     ]);
                 }
                 
