@@ -32,11 +32,9 @@ class AbsensiController extends Controller
             ]);
 
             $result = json_decode($response->getBody(), true);
-
-
             // cek confidence
             if (isset($result['confidence']) && $result['confidence'] > 80) {
-                return new PostResource(true, 'Wajah Sesuai', $result['confidence']);
+                return new PostResource(true, 'Clock '.$request->jenis.' Berhasil !', $result['confidence']);
             } else {
                 return new PostResource(false, 'Wajah Tidak Sesuai', $result['confidence'] ?? null);
             }
