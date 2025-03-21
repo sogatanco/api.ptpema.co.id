@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Hr;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Hr\Attandence;
 use App\Models\Hr\Offices;
 use App\Models\Hr\Profil;
+use App\Models\Hr\Schedule;
 use App\Models\Hr\Users;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
@@ -22,7 +24,6 @@ class AbsensiController extends Controller
             'api_key' => 'v9kCmXvvpcb15_QdXr5cVWnq8GWgHCsP',
             'api_secret' => '5RFVIMNXw1KwHP5dF08cM3GWErUZIckL',
             'image_url1' => $this->getImage(Employe::employeId()),
-            // 'image_url2'=>'https://hr-api.ptpema.co.id/storage/photo/employee-photo/CPhefkR6f3b2bQwLn8DCii95LQNNdn1AQq04GeG0.jpg',
             'image_base64_2' => $request->poto,
         ];
 
@@ -34,6 +35,22 @@ class AbsensiController extends Controller
             $result = json_decode($response->getBody(), true);
             // cek confidence
             if (isset($result['confidence']) && $result['confidence'] > 80) {
+                if($request->jenis == 'in'){
+                    Attandence::updateOrInsert([
+                        'employe_id' => Employe::employeId(),
+                        'schedule_id' => Schedule::where('active', 1)->get()->first()->id,
+                        'type'=>'normal',
+                        'date'=>now()->toDateString(),
+                        'time_in'=>date('H:i:s'),
+                        'latlong_in'=>$request->latlong
+    
+                    ])
+                }else if($request->jenis == 'out'){
+                    Attandence::updateOrInsert([
+                        'employe_id' => Employe::employeId(),
+                    ])
+                }
+                
                 return new PostResource(true, 'Clock '.$request->jenis.' Berhasil !', $result['confidence']);
             } else {
                 return new PostResource(false, 'Wajah Tidak Sesuai', $result['confidence'] ?? null);
