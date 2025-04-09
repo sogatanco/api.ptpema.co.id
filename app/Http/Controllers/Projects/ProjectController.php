@@ -923,10 +923,8 @@ class ProjectController extends Controller
 
         }else{
             $projectByRecentUpdate = ProjectStage::select('project_stages.*')
-                        ->where('division', $employeDivision->organization_id)
-                        ->whereYear('end_date', $year)
-                        ->where('status', 1)
-                        ->get();
+                                ->where(['division' => $employeDivision->organization_id])
+                                ->get();
         }
 
         // project id array
