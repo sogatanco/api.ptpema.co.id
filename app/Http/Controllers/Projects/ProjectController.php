@@ -46,14 +46,14 @@ class ProjectController extends Controller
         }else{
             $employeId = Employe::employeId();
             $employeDivision = Employe::getEmployeDivision($employeId);
-    
+
             $divisions = Organization::where('board_id', $employeDivision->board_id)
                         ->get();
         }
 
         $divisionIds = [];
         if(count($divisions) > 0){
-            for ($d=0; $d < count($divisions); $d++) { 
+            for ($d=0; $d < count($divisions); $d++) {
                 array_push($divisionIds, $divisions[$d]->organization_id);
             }
         }
@@ -66,7 +66,7 @@ class ProjectController extends Controller
 
         // cari progress project
         if(count($projects) > 0){
-            for ($p=0; $p < count($projects); $p++) { 
+            for ($p=0; $p < count($projects); $p++) {
 
                 // cari pic project active
                 $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
@@ -85,7 +85,7 @@ class ProjectController extends Controller
                 $totalProgress[$p] = [];
 
                 // inisiasi taskid dan progress value
-                for ($tp=0; $tp < count($allTask[$p]); $tp++) { 
+                for ($tp=0; $tp < count($allTask[$p]); $tp++) {
                     $taskIds[$p][] = $allTask[$p][$tp]->task_id;
                     $totalProgress[$p][] = $allTask[$p][$tp]->task_progress;
                 }
@@ -116,10 +116,10 @@ class ProjectController extends Controller
                                             )
                                             ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
                                             ->first();
-                }   
+                }
 
                 $projects[$p]['total_progress'] = 0;
-                
+
                 if($progress[$p] > 0 && $totalTask > 0){
                     $projects[$p]['total_progress'] = $progress[$p]/$totalTask[$p];
                 }
@@ -162,7 +162,7 @@ class ProjectController extends Controller
         }
 
         $projectNumberIsExist = Project::where("project_number", $request->project_number)->first();
-        
+
         if($projectNumberIsExist){
             throw new HttpResponseException(response([
                 "errors" => "Project number already exist.",
@@ -198,9 +198,9 @@ class ProjectController extends Controller
             'category' => $request->category,
             'created_by' => $employeId
         ];
-        
+
         $newProject = Project::create($projectData);
-        
+
         // simpan stage
         $dataStage = [
             "project_id" => $newProject['id'],
@@ -223,7 +223,7 @@ class ProjectController extends Controller
             "history_desc" => "Project created",
             "active" => 1
         ];
-        
+
         $history = new ProjectHistory($dataHistory);
 
         $history->save();
@@ -247,13 +247,13 @@ class ProjectController extends Controller
         // $isEmployeeAccessDivision = Employe::getEmployeDivision($isEmployeeAccess);
 
         $data = Project::join(
-                    'employees AS a', 
-                    'a.employe_id', '=', 'projects.created_by', 
+                    'employees AS a',
+                    'a.employe_id', '=', 'projects.created_by',
                 )
                 ->select(
-                    'projects.*', 
+                    'projects.*',
                     'activity_levels.level_desc',
-                    'activity_bases.base_description', 
+                    'activity_bases.base_description',
                     'a.first_name as created_by',
                     'bp.business_desc'
                 )
@@ -262,8 +262,8 @@ class ProjectController extends Controller
                 ->leftJoin('activity_bases', 'activity_bases.base_id', '=', 'projects.base_id')
                 ->leftJoin('business_plans as bp', 'bp.business_id', "=", 'projects.business_id')
                 ->first();
-        
-        // fase saat ini 
+
+        // fase saat ini
         if($data->category === 'business'){
             // jika category business
             $data['current_stage'] = ProjectStage::select(
@@ -289,7 +289,7 @@ class ProjectController extends Controller
                                     ->where(['project_id' => $projectId, 'status' => 1])
                                     ->first();
         }
-        
+
 
         // cari pic project active
         $data['pic_active'] = ProjectHistory::select('employees.employe_id','employees.first_name', 'positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
@@ -308,7 +308,7 @@ class ProjectController extends Controller
         $totalProgress = [];
 
         // inisiasi taskid dan progress value
-        for ($tp=0; $tp < count($allTask); $tp++) { 
+        for ($tp=0; $tp < count($allTask); $tp++) {
             $taskIds[] = $allTask[$tp]->task_id;
             $totalProgress[] = $allTask[$tp]->task_progress;
         }
@@ -322,16 +322,16 @@ class ProjectController extends Controller
         // ambil status task
         $data->task_by_active_user = [];
         $data->total_progress = 0;
-        
+
         if(count($taskList) > 0){
-            for ($tl=0; $tl < count($taskList); $tl++) { 
+            for ($tl=0; $tl < count($taskList); $tl++) {
                 $taskList[$tl] = TaskApproval::select('task_id','status')
                                 ->where('approval_id', $taskList[$tl]->approval_id)
                                 ->first();
             }
-    
+
             $data->task_by_active_user = $taskList;
-    
+
             $data->total_progress = array_sum($totalProgress)/count($allTask);
         }
 
@@ -431,13 +431,13 @@ class ProjectController extends Controller
     public function history($projectId)
     {
         $data = Project::select(
-                'projects.project_name', 
-                'project_histories.history_id', 
-                'project_histories.history_desc', 
-                'project_histories.created_at', 
-                'project_histories.updated_at', 
-                'project_histories.status', 
-                'project_histories.active', 
+                'projects.project_name',
+                'project_histories.history_id',
+                'project_histories.history_desc',
+                'project_histories.created_at',
+                'project_histories.updated_at',
+                'project_histories.status',
+                'project_histories.active',
                 'employees.first_name',
                 'employees.img',
                 'organizations.organization_id',
@@ -465,7 +465,7 @@ class ProjectController extends Controller
 
         $totalData = [];
         $membersFiltered = [];
-        for ($m=0; $m < count($members) ; $m++) { 
+        for ($m=0; $m < count($members) ; $m++) {
             $array[$m] = $members[$m]->employe_id;
 
             if(!in_array($members[$m]->employe_id, $membersFiltered)){
@@ -482,7 +482,7 @@ class ProjectController extends Controller
                 ->join('positions', "positions.position_id", "=", 'employees.position_id')
                 ->join('organizations', "organizations.organization_id", "=", 'positions.organization_id')
                 ->get();
-        
+
         return response()->json([
             "total" => count($membersFiltered),
             "data" => $mem,
@@ -498,14 +498,14 @@ class ProjectController extends Controller
 
             // inisiasi manajer
             $manajerValue = array(0 => "Manajer");
-            
+
             // replace divisi jadi manajer
             $managerDivision = implode(" ", array_replace($organizationArray, $manajerValue));
                  // cari id jabatan by manajer
             $position = Position::select('position_id')
                             ->where('position_name', $managerDivision)
                             ->first();
-            
+
             // cari si manajer
             $manager = Employe::select('employe_id', 'first_name')
                         ->where('position_id', $position->position_id)
@@ -524,7 +524,7 @@ class ProjectController extends Controller
         $userRoles = Auth::user()->roles;
 
         $filteredFiles = [];
-        for ($i=0; $i < count($tasks); $i++) { 
+        for ($i=0; $i < count($tasks); $i++) {
 
             if(in_array('Manager', $userRoles)){
                 $where = ['task_id' => $tasks[$i]->task_id];
@@ -539,7 +539,7 @@ class ProjectController extends Controller
                         ->get();
 
             if(count($files[$i]) > 0){
-                for ($f=0; $f < count($files[$i]); $f++) { 
+                for ($f=0; $f < count($files[$i]); $f++) {
                     array_push($filteredFiles, $files[$i][$f]);
                 }
             }
@@ -554,7 +554,7 @@ class ProjectController extends Controller
     public function bastReview($projectId, $directorId)
     {
         $data = ProjectHistory::select(
-                     'project_histories.*', 
+                     'project_histories.*',
                      'employees.first_name as new_pic',
                      'employees.employe_id as new_pic_id',
                      'positions.position_name as new_pic_position',
@@ -572,7 +572,7 @@ class ProjectController extends Controller
                         ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
                         ->join('positions', 'positions.position_id', '=', 'employees.position_id')
                         ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-                        ->first(); 
+                        ->first();
 
             $data->old_pic = $activeBy->first_name;
             $data->old_pic_id = $activeBy->employe_id;
@@ -592,7 +592,7 @@ class ProjectController extends Controller
 
     //     if($request->hasFile('file')){
     //         $file = $request->file('file');
-        
+
     //         $thefile = $file->getClientOriginalName();
     //         $savedFile  = Storage::disk("public_project")->put('', $file);
 
@@ -637,7 +637,7 @@ class ProjectController extends Controller
     public function bastApproval(Request $request, $historyId)
     {
         $data = [
-            'history_desc' => $request->status === 'revision' ? 'BAST review' : 'Project handover', 
+            'history_desc' => $request->status === 'revision' ? 'BAST review' : 'Project handover',
             'review_by' => $request->review_by,
             'comment' => $request->note,
             'status' => $request->status
@@ -711,7 +711,7 @@ class ProjectController extends Controller
 
             // jika fase aktif adalah planning
             if($currentStage->phase == 2) {
-                
+
                 // jika fase aktif sebelumnya belum ada data partner
                 if($currentStage->partner === null){
                     $updateStageData = [
@@ -759,9 +759,9 @@ class ProjectController extends Controller
         $employeDivision = Employe::getEmployeDivision($employeId);
         $data = ProjectHistory::where(
                     [
-                        'project_histories.project_id' => $projectId, 
-                        'project_histories.employe_id' => $employeId, 
-                        'active' => 0, 
+                        'project_histories.project_id' => $projectId,
+                        'project_histories.employe_id' => $employeId,
+                        'active' => 0,
                         'status' => 'handover'
                     ]
                 )
@@ -811,7 +811,7 @@ class ProjectController extends Controller
     }
 
     public function handoverConfirm(Request $request, $historyId)
-    {   
+    {
         //  validasi stage baru
         $validator = Validator::make($request->all(), [
             "desc_stage" => ["required"],
@@ -822,7 +822,7 @@ class ProjectController extends Controller
         if($validator->fails()){
             // throw to errors exceptions
             throw new HttpResponseException(response([
-                "message" => "column cannot be empty." 
+                "message" => "column cannot be empty."
             ], 400));
         }
 
@@ -837,7 +837,7 @@ class ProjectController extends Controller
 
             // nonaktifkan pic lama berdasarkan id project
             ProjectHistory::where(['project_id' => $projectHistory->project_id, 'active' => 1, 'status' => 'done'])
-                        ->update(['active' => 0]); 
+                        ->update(['active' => 0]);
 
             // data stage sebelumnya
             $oldStage = ProjectStage::where(['project_id' => $projectHistory->project_id, 'status' => 1])
@@ -885,10 +885,11 @@ class ProjectController extends Controller
         $user = auth()->user();
         $empId = Employe::employeId();
         $query = $request->query('for');
+        $year = $request->query('year');
 
         if($employeId !== $empId){
             throw new HttpResponseException(response([
-                "message" => 'Unauthorized.' 
+                "message" => 'Unauthorized.'
             ], 401));
         }
 
@@ -901,11 +902,25 @@ class ProjectController extends Controller
         //                     ->get();
 
         if($query === 'dashboard'){
+            // $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
+            //             ->where('division', $employeDivision->organization_id)
+            //             ->groupBy('task_latest_status.project_id')
+            //             ->orderBy('updated_at', 'DESC')
+            //             ->get();
+
             $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
                         ->where('division', $employeDivision->organization_id)
+                        ->whereExists(function ($query) use ($year) {
+                            $query->select(DB::raw(1))
+                                ->from('project_stages')
+                                ->whereColumn('project_stages.project_id', 'task_latest_status.project_id')
+                                ->whereYear('project_stages.end_date', $year) // <-- tetap pakai whereYear meskipun end_date full format
+                                ->where('project_stages.status', 1);
+                        })
                         ->groupBy('task_latest_status.project_id')
                         ->orderBy('updated_at', 'DESC')
                         ->get();
+
         }else{
             $projectByRecentUpdate = ProjectStage::select('project_stages.*')
                                 ->where(['division' => $employeDivision->organization_id])
@@ -915,7 +930,7 @@ class ProjectController extends Controller
         // project id array
         // $projectIds = [];
         $meles = [];
-        for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) { 
+        for ($pi=0; $pi < count($projectByRecentUpdate); $pi++) {
             // $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
 
             $meles[] = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
@@ -925,7 +940,7 @@ class ProjectController extends Controller
         };
 
         if(count($meles) > 0){
-            for ($m=0; $m < count($meles); $m++) { 
+            for ($m=0; $m < count($meles); $m++) {
 
                 // data dari stage yang aktif
                 if($meles[$m]->category === 'business'){
@@ -936,7 +951,7 @@ class ProjectController extends Controller
                 }else{
                     $meles[$m]['current_stage'] = ProjectStage::where(['project_id' => $meles[$m]->project_id, 'status' => 1])
                                                 ->first();
-                }   
+                }
 
                 // cari pic project active
                 $data[$m]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
@@ -955,7 +970,7 @@ class ProjectController extends Controller
                 $totalProgress[$m] = [];
 
                 // inisiasi taskid dan progress value
-                for ($tp=0; $tp < count($allTask[$m]); $tp++) { 
+                for ($tp=0; $tp < count($allTask[$m]); $tp++) {
                     $taskIds[$m][] = $allTask[$m][$tp]->task_id;
                     $totalProgress[$m][] = $allTask[$m][$tp]->task_progress;
                 }
@@ -971,7 +986,7 @@ class ProjectController extends Controller
                 $totalTask[$m] = count($allTask[$m]);
 
                 $meles[$m]['total_progress'] = 0;
-                
+
                 if($progress[$m] > 0 && $totalTask > 0){
                     $meles[$m]['total_progress'] = $progress[$m]/$totalTask[$m];
                 }
@@ -986,8 +1001,8 @@ class ProjectController extends Controller
         //             ->get();
 
         // if(count($projects) > 0){
-        //         for ($p=0; $p < count($projects); $p++) { 
-                    
+        //         for ($p=0; $p < count($projects); $p++) {
+
         //             // data dari stage yang aktif
         //             if($projects[$p]->category === 'business'){
         //                 $projects[$p]['current_stage'] = ProjectStage::select('project_stages.*', 'project_phases.title AS phase')
@@ -997,7 +1012,7 @@ class ProjectController extends Controller
         //             }else{
         //                 $projects[$p]['current_stage'] = ProjectStage::where(['project_id' => $projects[$p]->project_id, 'status' => 1])
         //                                             ->first();
-        //             }   
+        //             }
 
         //             // cari pic project active
         //             $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
@@ -1011,28 +1026,28 @@ class ProjectController extends Controller
         //             $allTask[$p] = Task::select('task_id', 'task_progress')
         //                     ->where(['project_id' =>$projects[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
         //                     ->get();
-    
+
         //             $taskIds[$p]= [];
         //             $totalProgress[$p] = [];
-    
+
         //             // inisiasi taskid dan progress value
-        //             for ($tp=0; $tp < count($allTask[$p]); $tp++) { 
+        //             for ($tp=0; $tp < count($allTask[$p]); $tp++) {
         //                 $taskIds[$p][] = $allTask[$p][$tp]->task_id;
         //                 $totalProgress[$p][] = $allTask[$p][$tp]->task_progress;
         //             }
-    
+
         //             // cari task
         //             $taskList[$p] = TaskApproval::whereIn('task_id', $taskIds[$p])
         //                         ->groupBy('task_id')
         //                         ->orderBy('approval_id', 'desc')
         //                         ->get(['task_id', TaskApproval::raw('MAX(approval_id) as approval_id')]);
-    
+
         //             // ambil status task
         //             $progress[$p] = array_sum($totalProgress[$p]);
         //             $totalTask[$p] = count($allTask[$p]);
-    
+
         //             $projects[$p]['total_progress'] = 0;
-                    
+
         //             if($progress[$p] > 0 && $totalTask > 0){
         //                 $projects[$p]['total_progress'] = $progress[$p]/$totalTask[$p];
         //             }
@@ -1095,13 +1110,13 @@ class ProjectController extends Controller
 
     public function partnerOptions()
     {
-        $data = ProjectPartner::select('id', 'name')->get(); 
-        
+        $data = ProjectPartner::select('id', 'name')->get();
+
         return response()->json([
             "status" => true,
             "data" => $data
         ], 200);
-    } 
+    }
 
     public function timelineData()
     {
@@ -1114,7 +1129,7 @@ class ProjectController extends Controller
                 ->get();
 
         $list = [];
-        for ($i=0; $i < count($projects); $i++) { 
+        for ($i=0; $i < count($projects); $i++) {
             // cari task by project dan employe
             $where = ['project_task_pics.project_id' => $projects[$i]->project_id, 'project_task_pics.employe_id' => $employeId];
             $projects[$i]['tasks'] = TaskPic::select('project_task_pics.task_id','task_parent', 'task_title', 'start_date', 'end_date', 'status')
@@ -1124,7 +1139,7 @@ class ProjectController extends Controller
 
             $tasks[$i] = [];
 
-            for ($t=0; $t < count($projects[$i]['tasks']); $t++) { 
+            for ($t=0; $t < count($projects[$i]['tasks']); $t++) {
 
                 $bgColor[$t] = '';
 
@@ -1135,7 +1150,7 @@ class ProjectController extends Controller
                 }else{
                     $bgColor[$t] = 'rgb(14,183,175)';
                 }
-                
+
 
                 $tasks[$i][$t] = [
                     "id" => $projects[$i]['tasks'][$t]->task_id,
@@ -1168,7 +1183,7 @@ class ProjectController extends Controller
     }
 
     public function createActivityBase(Request $request)
-    {   
+    {
         if($request->activity_name){
             $new = new ActivityBase(['base_description' => $request->activity_name]);
             $saved = $new->save();
@@ -1181,7 +1196,7 @@ class ProjectController extends Controller
             }
         }else{
             throw new HttpResponseException(response([
-                "error" => "Field cannot be empty" 
+                "error" => "Field cannot be empty"
             ], 400));
         }
     }
@@ -1208,7 +1223,7 @@ class ProjectController extends Controller
                     ->get();
 
             $parentIds = [];
-            for ($at=0; $at < count($allTask); $at++) { 
+            for ($at=0; $at < count($allTask); $at++) {
                 array_push($parentIds, $allTask[$at]->task_id);
             }
 
@@ -1216,9 +1231,9 @@ class ProjectController extends Controller
             $progressTask = TaskProgress::whereIn('task_id', $parentIds)
                             ->get();
 
-            for ($p=0; $p < count($projects); $p++) { 
+            for ($p=0; $p < count($projects); $p++) {
                 $proj = [];
-                for ($pt=0; $pt < count($progressTask); $pt++) { 
+                for ($pt=0; $pt < count($progressTask); $pt++) {
                     if($projects[$p]->project_id === $progressTask[$pt]->project_id){
                         $proj[] = $progressTask[$pt]->progress;
                     }
@@ -1249,8 +1264,8 @@ class ProjectController extends Controller
                     ->get();
 
         if(count($projects) > 0){
-            for ($p=0; $p < count($projects); $p++) { 
-        
+            for ($p=0; $p < count($projects); $p++) {
+
                 // cari pic project active
                 $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
                         ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
@@ -1258,31 +1273,31 @@ class ProjectController extends Controller
                         ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
                         ->where(['project_id' => $projects[$p]->project_id, 'active' => 1])
                         ->first();
-        
+
                 // cari semua task parent berdasarkan divisi yg akses
                 $allTask[$p] = Task::select('task_id', 'task_progress')
                         ->where(['project_id' =>$projects[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
                         ->get();
-        
+
                 $taskIds[$p]= [];
                 $totalProgress[$p] = [];
-        
+
                 // inisiasi taskid dan progress value
-                for ($tp=0; $tp < count($allTask[$p]); $tp++) { 
+                for ($tp=0; $tp < count($allTask[$p]); $tp++) {
                     $taskIds[$p][] = $allTask[$p][$tp]->task_id;
                     $totalProgress[$p][] = $allTask[$p][$tp]->task_progress;
                 }
-        
+
                 // cari task
                 $taskList[$p] = TaskApproval::whereIn('task_id', $taskIds[$p])
                             ->groupBy('task_id')
                             ->orderBy('approval_id', 'desc')
                             ->get(['task_id', TaskApproval::raw('MAX(approval_id) as approval_id')]);
-        
+
                 // ambil status task
                 $progress[$p] = array_sum($totalProgress[$p]);
                 $totalTask[$p] = count($allTask[$p]);
-        
+
                 // cari stage aktif
                 if($projects[$p]->category === 'business'){
                     // jika category business
@@ -1299,16 +1314,16 @@ class ProjectController extends Controller
                                             )
                                             ->where(['project_id' => $projects[$p]->project_id, 'status' => 1])
                                             ->first();
-                }   
-        
+                }
+
                 $projects[$p]['total_progress'] = 0;
-                
+
                 if($progress[$p] > 0 && $totalTask > 0){
                     $projects[$p]['total_progress'] = $progress[$p]/$totalTask[$p];
                 }
             }
         }
-            
+
 
         return response()->json([
             "status" => true,
@@ -1336,7 +1351,7 @@ class ProjectController extends Controller
 
     public function checkStructure()
     {
-        $structure = Structure::all();  
+        $structure = Structure::all();
         return response()->json([
             "status" => true,
             "total" => count($structure),
