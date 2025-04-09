@@ -923,15 +923,10 @@ class ProjectController extends Controller
 
         }else{
             $projectByRecentUpdate = ProjectStage::select('project_stages.*')
-                                ->where(['division' => $employeDivision->organization_id])
-                                ->whereExists(function ($query) use ($year) {
-                                    $query->select(DB::raw(1))
-                                        ->from('project_stages')
-                                        ->whereColumn('project_stages.project_id', 'task_latest_status.project_id')
-                                        ->whereYear('project_stages.end_date', $year)
-                                        ->where('project_stages.status', 1);
-                                })
-                                ->get();
+                        ->where('division', $employeDivision->organization_id)
+                        ->whereYear('end_date', $year)
+                        ->where('status', 1)
+                        ->get();
         }
 
         // project id array
