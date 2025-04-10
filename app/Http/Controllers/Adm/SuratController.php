@@ -131,8 +131,9 @@ class SuratController extends Controller
         $si = ListVerif::where('id_doc', $d->no_document)->where('type', 'sign')->first();
 
         // $data['signer']['first_name'] = $si->employe_name;
-        // $data['signer']['position_name'] = $si->id_current_position;
+        $data['signer']['position_name'] = $si->id_current_position;
         $data['signer']['first_name'] = $si->employe_name;
+        $data['perihal'] = $d->perihal;
         // $data['signer'] = Employe::where('employe_id', $data->sign_by)->first();
         $data['tglSurat'] = $d->created_at;
         $data['nomorSurat'] = $d->nomor_surat;
