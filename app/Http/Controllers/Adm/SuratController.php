@@ -127,33 +127,31 @@ class SuratController extends Controller
         // $document['signer']['position_name'] = $signer->id_current_position;
         // $document['status']=ListSurat::find($id)->status;
       
-        $data = ListSurat::find($id);
-        $si = ListVerif::where('id_doc', $data->no_document)->where('type', 'sign')->first();
+        $d = ListSurat::find($id);
+        $si = ListVerif::where('id_doc', $d->no_document)->where('type', 'sign')->first();
 
         // $data['signer']['first_name'] = $si->employe_name;
         // $data['signer']['position_name'] = $si->id_current_position;
-       
+        $data['signer']['first_name'] = $si->employe_name;
         // $data['signer'] = Employe::where('employe_id', $data->sign_by)->first();
-        $data['tglSurat'] = $data->created_at;
-        $data['nomorSurat'] = $data->nomor_surat;
-        $data['lampiran'] = $data->j_lampiran;
-        $data['jenisLampiran'] = $data->jenis_lampiran;
-        $data['isiSurat'] = $data->isi_surat;
-        $data['ttdBy'] = $data->sign_by;
-        $data['bhs'] = $data->bhs;
-        if ($data->tembusans !== null && $data->tembusans !== '') {
-            $data['tembusans'] = explode(',', $data->tembusans);
+        $data['tglSurat'] = $d->created_at;
+        $data['nomorSurat'] = $d->nomor_surat;
+        $data['lampiran'] = $d->j_lampiran;
+        $data['jenisLampiran'] = $d->jenis_lampiran;
+        $data['isiSurat'] = $d->isi_surat;
+        $data['ttdBy'] = $d->sign_by;
+        $data['bhs'] = $d->bhs;
+        if ($d->tembusans !== null && $d->tembusans !== '') {
+            $data['tembusans'] = explode(',', $d->tembusans);
         } else {
             $data['tembusans'] = [];
         }
 
-        if ($data->file_lampiran !== null && file_exists(public_path('adm/' . $data->file_lampiran))) {
-            $data['fileLampiran'] = base64_encode(file_get_contents(public_path('adm/' . $data->file_lampiran)));
+        if ($d->file_lampiran !== null && file_exists(public_path('adm/' . $d->file_lampiran))) {
+            $data['fileLampiran'] = base64_encode(file_get_contents(public_path('adm/' . $d->file_lampiran)));
         } else {
             $data['fileLampiran'] = '';
         }
-
-        $data['signer']['first_name'] = $si->employe_name;
         return new PostResource(true, 'data surat', $data);
     }
 
