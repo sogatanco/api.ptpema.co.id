@@ -132,7 +132,7 @@ class SuratController extends Controller
 
         // $data['signer']['first_name'] = $si->employe_name;
         // $data['signer']['position_name'] = $si->id_current_position;
-        $data['signer']['first_name'] = $si->employe_name;
+       
         // $data['signer'] = Employe::where('employe_id', $data->sign_by)->first();
         $data['tglSurat'] = $data->created_at;
         $data['nomorSurat'] = $data->nomor_surat;
@@ -152,6 +152,8 @@ class SuratController extends Controller
         } else {
             $data['fileLampiran'] = '';
         }
+
+        $data['signer']['first_name'] = $si->employe_name;
         return new PostResource(true, 'data surat', $data);
     }
 
