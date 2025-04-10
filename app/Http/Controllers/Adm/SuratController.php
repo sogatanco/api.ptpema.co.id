@@ -137,7 +137,8 @@ class SuratController extends Controller
         $data['kepada'] = $d->kepada;
         $data['divisi']=$d->divisi;
         $data['status']=$d->status;
-        
+        $data['id']=$d->id;
+
         // $data['signer'] = Employe::where('employe_id', $data->sign_by)->first();
         $data['tglSurat'] = $d->created_at;
         $data['nomorSurat'] = $d->nomor_surat;
