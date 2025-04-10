@@ -147,7 +147,7 @@ Route::controller(StaticAdmController::class)->group(function(){
 Route::controller(SuratController::class)->group(function(){
      Route::post('adm/insert', 'insert')->middleware("role:Employee");
      Route::get('adm/surat/{what}', 'getSurat')->middleware("role:Employee");
-     Route::get('adm/surat/detail/{id}', 'detail')->middleware("role:Employee");
+     Route::get('adm/surat/detail/{id}', 'detail1')->middleware("role:Employee");
      Route::post("adm/surat/review/{id_doc}", 'reviewDokumen')->middleware(     'role:Employee');
      Route::post('adm/update', 'update')->middleware('role:Employee');
 });
