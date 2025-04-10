@@ -128,7 +128,11 @@ class SuratController extends Controller
         // $document['status']=ListSurat::find($id)->status;
       
         $data = ListSurat::find($id);
-        $data['signer'] = Structure::where('employe_id', $data->sign_by)->first();
+        $si = ListVerif::where('id_doc', $doc->no_document)->where('type', 'sign')->first();
+
+        $data['signer']['first_name'] = $si->employe_name;
+        $data['signer']['position_name'] = $si->id_current_position;
+        // $data['signer'] = Employe::where('employe_id', $data->sign_by)->first();
         $data['tglSurat'] = $data->created_at;
         $data['nomorSurat'] = $data->nomor_surat;
         $data['lampiran'] = $data->j_lampiran;
