@@ -25,4 +25,27 @@ class MobilController extends Controller
         $data = Mobil::where('deleted',0)->get();
         return new PostResource(true, 'success', $data);
     }
+
+    public function delete($id) {
+        $mobil = Mobil::find($id);
+        if ($mobil) {
+            $mobil->deleted = 1;
+            $mobil->save();
+            return new PostResource(true, 'success', []);
+        } else {
+            return new PostResource(false, 'Mobil not found', []);
+        }
+    }
+
+    public function update(Request $request, $id) {
+        $mobil = Mobil::find($id);
+        if ($mobil) {
+            $mobil->status = $request->status;
+            if ($mobil->save()) {
+                return new PostResource(true, 'success', []);
+            }
+        } else {
+            return new PostResource(false, 'Mobil not found', []);
+        }
+    }
 }
