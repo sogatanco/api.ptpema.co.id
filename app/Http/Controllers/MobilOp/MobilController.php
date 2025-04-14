@@ -20,4 +20,9 @@ class MobilController extends Controller
             return new PostResource(true, 'success', []);
         }
     }
+
+    public function getMobil() {
+        $data = Mobil::where('status', '!=', 'aktif')->get();
+        return new PostResource(true, 'success', $data);
+    }
 }

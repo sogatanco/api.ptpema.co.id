@@ -182,4 +182,5 @@ Route::controller(AbsensiController::class)->group(function(){
 
 Route::controller(MobilController::class)->group(function(){
      Route::post('mobil/insert', 'insert')->middleware("role:Employee");
+     Route::get('mobil/get', 'getMobil')->middleware("role:Employee");
 });
