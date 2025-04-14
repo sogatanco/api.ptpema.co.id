@@ -5,6 +5,7 @@ use App\Http\Controllers\Adm\SuratController;
 use App\Http\Controllers\Adm\SuratMasuk;
 use App\Http\Controllers\Hr\AbsensiController;
 use App\Http\Controllers\Hr\ProfilController;
+use App\Http\Controllers\MobilOp\MobilController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -177,4 +178,8 @@ Route::controller(ProfilController::class)->group(function(){
 Route::controller(AbsensiController::class)->group(function(){
      Route::post('hr/clock_in', 'clock_in')->middleware("role:Employee");
      Route::get('hr/office', 'getOffice')->middleware("role:Employee");
+});
+
+Route::controller(MobilController::class)->group(function(){
+     Route::post('mobil/insert', 'insert')->middleware("role:Employee");
 });
