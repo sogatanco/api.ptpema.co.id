@@ -22,7 +22,7 @@ class MobilController extends Controller
     }
 
     public function getMobil() {
-        $data = Mobil::where('status', '=', 'aktif')->get();
+        $data = Mobil::all();
         return new PostResource(true, 'success', $data);
     }
 }
