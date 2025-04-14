@@ -22,7 +22,7 @@ class MobilController extends Controller
     }
 
     public function getMobil() {
-        $data = Mobil::all();
+        $data = Mobil::where('deleted',0)->get();
         return new PostResource(true, 'success', $data);
     }
 }
