@@ -63,5 +63,12 @@ class MobilController extends Controller
         }
 
     }
+
+    public function getPermintaan() {
+        $data = Permintaan::where('created_by', Employe::employeId())
+                          ->orderBy('created_at', 'desc')
+                          ->get();
+        return new PostResource(true, 'success', $data);
+    }
   
 }

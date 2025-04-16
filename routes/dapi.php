@@ -186,4 +186,5 @@ Route::controller(MobilController::class)->group(function(){
      Route::post('mobil/delete/{id}', 'delete')->middleware("role:Employee");
      Route::post('mobil/update/{id}', 'update')->middleware("role:Employee");
      Route::post('/mobil/insert-permintaan',  'insertPermintaan')->middleware("role:Employee");
+     Route::get('/mobil/get-permintaan', 'getPermintaan')->middleware("role:Employee");
 });
