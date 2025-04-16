@@ -8,6 +8,7 @@ use App\Models\Employe;
 use App\Models\Mobil\Mobil;
 use Illuminate\Http\Request;
 use App\Models\Mobil\Permintaan;
+use Carbon\Carbon;
 
 class MobilController extends Controller
 {
@@ -66,9 +67,20 @@ class MobilController extends Controller
 
     public function getPermintaan() {
         $data = Permintaan::where('created_by', Employe::employeId())
+                            ->where('deleted_at', null)
                           ->orderBy('created_at', 'desc')
                           ->get();
         return new PostResource(true, 'success', $data);
     }
   
+    public function deletePermintaan($id) {
+        $permintaan = Permintaan::find($id);
+        if ($permintaan) {
+            $permintaan->deleted_at = Carbon::now();
+            if ($permintaan->save()) {
+                return new PostResource(true, 'Permintaan deleted successfully', []);
+            }
+        }
+        return new PostResource(false, 'Permintaan not found', []);
+    }
 }
