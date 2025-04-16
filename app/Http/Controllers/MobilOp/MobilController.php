@@ -4,8 +4,10 @@ namespace App\Http\Controllers\MobilOp;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Employe;
 use App\Models\Mobil\Mobil;
 use Illuminate\Http\Request;
+use App\Models\Mobil\Permintaan;
 
 class MobilController extends Controller
 {
@@ -48,4 +50,18 @@ class MobilController extends Controller
             return new PostResource(false, 'Mobil not found', []);
         }
     }
+
+    public function insertPermintaan(Request $request) {
+        $permintaan = new Permintaan();
+        $permintaan->keperluan = $request->keperluan;
+        $permintaan->created_by=Employe::employeId();
+        $permintaan->mulai=$request->dari;
+        $permintaan->hingga=$request->sampai;
+        $permintaan->sopir=$request->perluSopir;
+        if($permintaan->save()) {
+            return new PostResource(true, 'success', []);
+        }
+
+    }
+  
 }
