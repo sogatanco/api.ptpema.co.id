@@ -70,6 +70,9 @@ class MobilController extends Controller
                             ->where('deleted_at', null)
                           ->orderBy('created_at', 'desc')
                           ->get();
+        foreach ($data as $item) {
+            $item->created_by_name = Employe::where('id', $item->created_by)->first('first_name')->first_name;
+        }
         return new PostResource(true, 'success', $data);
     }
   
