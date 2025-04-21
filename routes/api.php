@@ -200,3 +200,7 @@ Route::controller(PositionController::class)->group(function(){
     Route::put('/master/pos/update', "update")->middleware("client");
     Route::delete('/master/pos/delete', "delete")->middleware("client");
 });
+
+Route::controller(DailyController::class)->group(function(){
+    Route::post('/daily/store', "store")->middleware("role:Employee");
+});
