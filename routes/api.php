@@ -13,6 +13,7 @@ use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Notification\TestingController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
+use App\Http\Controllers\DailyController;
 use App\Http\Controllers\Report\ProjectReportController;
 use App\Http\Controllers\File\PreviewController;
 use App\Http\Controllers\Master\BoardOrganizationController;
