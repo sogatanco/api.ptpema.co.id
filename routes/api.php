@@ -204,4 +204,5 @@ Route::controller(PositionController::class)->group(function(){
 
 Route::controller(DailyController::class)->group(function(){
     Route::post('/daily/store', "store")->middleware("role:Employee");
+    Route::post('/daily/update', "update")->middleware("role:Employee");
 });
