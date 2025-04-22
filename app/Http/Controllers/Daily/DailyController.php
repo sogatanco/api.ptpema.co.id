@@ -33,6 +33,7 @@ class DailyController extends Controller
         $newDaily->task_id = $request->task_id;
         $newDaily->employe_id = $employeId;
         $newDaily->activity_name = $request->activity_name;
+        $newDaily->progress = 0;
         $newDaily->start_date = $request->start_date;
         $newDaily->end_date = $request->end_date;
 
