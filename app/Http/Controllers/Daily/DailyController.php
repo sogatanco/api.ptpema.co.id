@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Daily;
 
 use App\Http\Controllers\Controller;
 use App\Models\Daily\Daily;
+use App\Models\Employe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Auth;
 
 class DailyController extends Controller
 {
@@ -27,7 +27,7 @@ class DailyController extends Controller
             ], 500));
         }
 
-        $employeId = Auth::user()->employe_id;
+        $employeId = Employe::employeId();
 
         $newDaily = new Daily();
         $newDaily->task_id = $request->task_id;
