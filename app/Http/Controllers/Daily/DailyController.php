@@ -67,7 +67,6 @@ class DailyController extends Controller
         }
 
         $updated = Daily::where('daily_id', $request->daily_id)->update([
-            'task_id' => $request->task_id,
             'activity_name' => $request->activity_name,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
