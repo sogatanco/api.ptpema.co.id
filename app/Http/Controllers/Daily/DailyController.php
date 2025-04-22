@@ -53,7 +53,7 @@ class DailyController extends Controller
 
     public function update(Request $request){
         $validator = Validator::make($request->all(), [
-            'daily_id' => ['required'],
+            'id' => ['required'],
             'activity_name' => ['required'],
             'start_date' => ['required'],
             'end_date' => ['required'],
