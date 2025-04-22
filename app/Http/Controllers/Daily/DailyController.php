@@ -66,7 +66,7 @@ class DailyController extends Controller
             ], 500));
         }
 
-        $updated = Daily::where('daily_id', $request->daily_id)->update([
+        $updated = Daily::where('id', $request->id)->update([
             'activity_name' => $request->activity_name,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
