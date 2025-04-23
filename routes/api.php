@@ -13,6 +13,7 @@ use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Notification\TestingController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
+use App\Http\Controllers\Daily\DailyController;
 use App\Http\Controllers\Report\ProjectReportController;
 use App\Http\Controllers\File\PreviewController;
 use App\Http\Controllers\Master\BoardOrganizationController;
@@ -199,4 +200,9 @@ Route::controller(PositionController::class)->group(function(){
     Route::post('/master/pos/store', "store")->middleware("client");
     Route::put('/master/pos/update', "update")->middleware("client");
     Route::delete('/master/pos/delete', "delete")->middleware("client");
+});
+
+Route::controller(DailyController::class)->group(function(){
+    Route::post('/daily/store', "store")->middleware("role:Employee");
+    Route::put('/daily/update', "update")->middleware("role:Employee");
 });
