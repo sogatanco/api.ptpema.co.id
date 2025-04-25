@@ -3,7 +3,9 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Throwable;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class Handler extends ExceptionHandler
 {
@@ -26,5 +28,17 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    public function render($request, Throwable $exception)
+    {
+        if ($exception instanceof PostTooLargeException) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "'Ukuran file terlalu besar. Batas maksimal upload telah terlampaui.',"
+            ], 413)); // 413 = Payload Too Large
+        }
+
+        return parent::render($request, $exception);
     }
 }

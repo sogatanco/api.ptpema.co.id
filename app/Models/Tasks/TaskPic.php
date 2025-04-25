@@ -4,6 +4,7 @@ namespace App\Models\Tasks;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Employe;
 
 class TaskPic extends Model
 {
@@ -14,4 +15,9 @@ class TaskPic extends Model
         'employe_id',
         'task_id',
     ];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employe::class, 'employe_id', 'employe_id');
+    }
 }

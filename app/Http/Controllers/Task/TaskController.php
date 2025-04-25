@@ -1466,6 +1466,9 @@ class TaskController extends Controller
         $employeId = Employe::employeId();
         $employeDivision = Employe::getEmployeDivision($employeId);
 
+        // User gak jelas
+        $userGakJelas = ['202310079K'];
+
         // ROLES USER
         $userRoles = Auth::user()->roles;
 
@@ -1475,12 +1478,21 @@ class TaskController extends Controller
                         ->first();
 
         if($employeId !== $divisionActive->employe_id){
-            // Jika user bukan manager
-            $employeCompare = Structure::select('organization_id')
-                            ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
-                            ->get();
+            // Jika user gak jelas
+            if(in_array($employeId, $userGakJelas)){
 
-            $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
+                $isMemberActive = true;
+
+            }else{
+
+                // Jika user bukan manager
+                $employeCompare = Structure::select('organization_id')
+                                ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
+                                ->get();
+
+                $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
+
+            }
         } else {
             // jika user active adalah manager
             $isMemberActive = true;

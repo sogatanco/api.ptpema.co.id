@@ -2,6 +2,7 @@
 
 namespace App\Models\Daily;
 
+use App\Models\Tasks\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,4 +22,9 @@ class Daily extends Model
         'status',
         'notes',
     ];
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class, 'task_id', 'task_id');
+    }
 }
