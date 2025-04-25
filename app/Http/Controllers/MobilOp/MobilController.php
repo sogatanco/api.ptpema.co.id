@@ -8,6 +8,7 @@ use App\Models\Employe;
 use App\Models\Mobil\Mobil;
 use Illuminate\Http\Request;
 use App\Models\Mobil\Permintaan;
+use App\Models\Mobil\Pengambilan;
 use Carbon\Carbon;
 
 class MobilController extends Controller
@@ -106,5 +107,30 @@ class MobilController extends Controller
             $item->created_by_name = Employe::where('employe_id', $item->created_by)->first('first_name')->first_name;
         }
         return new PostResource(true, 'success', $data);
+    }
+
+    public function insertPengambilan(Request $request) {
+        $pengambilan = new Pengambilan();
+
+        if (!empty($request->booked)) {
+            $permintaan = Permintaan::find($request->booked);
+            if ($permintaan) {
+                $pengambilan->employe_id = $permintaan->created_by;
+                $pengambilan->keperluan = $permintaan->keperluan;
+                $pengambilan->pengembalian = $permintaan->hingga;
+            }
+        } else {
+            $pengambilan->employe_id = $request->employe_id;
+            $pengambilan->keperluan = $request->keperluan;
+            $pengambilan->pengembalian = $request->pengembalian;
+        }
+
+        $pengambilan->id_mobil = $request->id_mobil;
+        $pengambilan->booked = $request->booked;
+
+        if ($pengambilan->save()) {
+            return new PostResource(true, 'Pengambilan inserted successfully', []);
+        }
+        return new PostResource(false, 'Failed to insert Pengambilan', []);
     }
 }
