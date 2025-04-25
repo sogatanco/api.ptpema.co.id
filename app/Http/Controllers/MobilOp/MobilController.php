@@ -114,10 +114,14 @@ class MobilController extends Controller
 
         if (!empty($request->booked)) {
             $permintaan = Permintaan::find($request->booked);
+           
             if ($permintaan) {
                 $pengambilan->employe_id = $permintaan->created_by;
                 $pengambilan->keperluan = $permintaan->keperluan;
                 $pengambilan->pengembalian = $permintaan->hingga;
+
+                $permintaan->deleted_at = Carbon::now();
+                $permintaan->save();
             }
         } else {
             $pengambilan->employe_id = $request->employe_id;
