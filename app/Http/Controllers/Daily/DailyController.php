@@ -174,11 +174,22 @@ class DailyController extends Controller
         }
     }
 
-    public function listByEmployee(){
+    public function listByEmployee(Request $request){
 
+        $year = $request->query('year');
+        $search = $request->query('search');
         $employeId = Employe::employeId();
 
-        $projects = Project::whereHas('project_task.pics', function ($query) use ($employeId) {
+        $projects = Project::whereHas('activeStage', function ($query) use ($year) {
+                if ($year) {
+                    $query->whereYear('start_date', '<=', $year)
+                        ->whereYear('end_date', '>=', $year);
+                }
+            })
+            ->when($search, function ($query, $search) {
+                $query->where('project_name', 'like', '%' . $search . '%');
+            })
+            ->whereHas('project_task.pics', function ($query) use ($employeId) {
                 $query->where('employe_id', $employeId);
             })
             ->with([
@@ -214,18 +225,12 @@ class DailyController extends Controller
 
         $formatted = $projects->map(function ($project) use ($employeId) {
 
-            $totalTask = $project->project_task
-                    ->whereNotNull('task_parent')
-                    ->filter(function ($task) use ($employeId) {
-                        return $task->pics->contains('employe_id', $employeId);
-                    })->count();
-
                 return [
                     'project_name' => $project->project_name,
                     'start_date' => optional($project->activeStage)->start_date,
                     'end_date' => optional($project->activeStage)->end_date,
-                    'total_task' => $totalTask,
-                    'project_task' => $project->project_task->map(function ($task) {
+                    'total_task' => $project->project_task->count(),
+                    'project_task' => $project->project_task->map(function ($task) use ($project) {
                         return [
                             'task_id' => $task->task_id,
                             'task_title' => $task->task_title,

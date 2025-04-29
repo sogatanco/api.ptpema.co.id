@@ -66,8 +66,8 @@ class Project extends Model
         return $this->hasOne(ProjectStage::class, 'project_id', 'project_id')->where('status', 1);
     }
 
-    public function levelThreeTasks()
-    {
-        return $this->hasMany(Task::class, 'project_id', 'project_id')->whereNotNull('task_parent');
-    }
+    // public function levelThreeTasks()
+    // {
+    //     return $this->hasMany(Task::class, 'project_id', 'project_id')->whereNotNull('task_parent');
+    // }
 }

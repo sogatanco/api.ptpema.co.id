@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Daily\DailyComment;
+use App\Models\Projects\Project;
+use App\Models\Projects\ProjectHistory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
