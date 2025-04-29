@@ -147,7 +147,7 @@ class TaskController extends Controller
         $newTaskApproval = new TaskApproval($dataApproval);
         $newTaskApproval->save();
 
-        $data = Task::taskProject($newTaskApproval->id);
+        $data = Task::taskProject($newTaskApproval->approval_id);
 
         return new TaskResource($newTask);
 
