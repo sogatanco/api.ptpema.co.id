@@ -18,6 +18,11 @@ use App\Http\Controllers\File\PreviewController;
 use App\Http\Controllers\Master\BoardOrganizationController;
 use App\Http\Controllers\Master\OrganizationController;
 use App\Http\Controllers\Master\PositionController;
+use App\Http\Controllers\Pengajuan\DashboardPengajuanController;
+use App\Http\Controllers\Pengajuan\PengajuanController;
+use App\Http\Controllers\Pengajuan\ApprovalPengajuanController;
+use App\Http\Controllers\Pengajuan\PengajuanSelesaiController;
+use App\Http\Controllers\Pengajuan\PreviewFilePengajuanController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -200,3 +205,34 @@ Route::controller(PositionController::class)->group(function(){
     Route::put('/master/pos/update', "update")->middleware("client");
     Route::delete('/master/pos/delete', "delete")->middleware("client");
 });
+
+// Pengajuan Dashboard
+Route::controller(DashboardPengajuanController::class)->group(function(){
+    Route::get('/pengajuan-dashboard', 'index')->middleware("role:AdminPengajuan,ManagerUmum,DirekturUmumKeuangan,Presdir");
+});
+
+// Pengajuan
+Route::controller(PengajuanController::class)->group(function(){
+    Route::get('/pengajuan', 'index')->middleware("role:AdminPengajuan");
+    Route::get('/pengajuan/{id}/show', 'show')->middleware("role:AdminPengajuan");
+    Route::post('/pengajuan', 'store')->middleware("role:AdminPengajuan");
+    Route::post('/pengajuan/{id}/update', 'update')->middleware("role:AdminPengajuan");
+    // Route::delete('/pengajuan/{id}', 'destroy')->middleware("role:AdminPengajuan");
+});
+
+// Approval Pengajuan
+Route::controller(ApprovalPengajuanController::class)->group(function(){
+    Route::get('/pengajuan-approval', 'index')->middleware("role:ManagerUmum,DirekturUmumKeuangan,Presdir");
+    Route::post('/pengajuan-approval/approve', 'approve')->middleware("role:ManagerUmum,DirekturUmumKeuangan,Presdir");
+    Route::post('/pengajuan-approval/reject', 'reject')->middleware("role:ManagerUmum,DirekturUmumKeuangan,Presdir");
+});
+
+// Pengajuan Selesai
+Route::controller(PengajuanSelesaiController::class)->group(function(){
+    Route::get('/pengajuan-selesai', 'index')->middleware("role:AdminPengajuan,ManagerUmum,DirekturUmumKeuangan,Presdir");
+});
+
+Route::controller(PreviewFilePengajuanController::class)->group(function(){
+    Route::get('/pengajuan/{fileName}/file', 'showLampiran')->middleware("role:AdminPengajuan,ManagerUmum,DirekturUmumKeuangan,Presdir");
+});
+

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Employe extends Model
 {
     use HasFactory;
+    protected $connection = 'mysql';
     protected $table = 'employees';
     protected $primaryKey = 'employe_id';
     protected $casts = [
