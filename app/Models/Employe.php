@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Daily\DailyComment;
+use App\Models\Projects\Project;
+use App\Models\Projects\ProjectHistory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,16 +16,18 @@ class Employe extends Model
     protected $connection = 'mysql';
     protected $table = 'employees';
     protected $primaryKey = 'employe_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $casts = [
     'employe_id' => 'string',
 ];
     protected $fillable = [
         'employe_id',
         'public_key',
-        'user_id', 
+        'user_id',
         'position_id',
-        'first_name', 
-        'last_name', 
+        'first_name',
+        'last_name',
         'gender',
         'religion',
         'birthday',
@@ -61,5 +66,15 @@ class Employe extends Model
                     ->leftJoin('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
                     ->select('positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name', 'organizations.board_id')
                     ->first();
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(DailyComment::class, 'employe_id', 'employe_id');
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class, 'position_id');
     }
 }

@@ -13,6 +13,9 @@ use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Notification\TestingController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Client\ClientController;
+use App\Http\Controllers\Daily\DailyAttachmentController;
+use App\Http\Controllers\Daily\DailyCommentController;
+use App\Http\Controllers\Daily\DailyController;
 use App\Http\Controllers\Report\ProjectReportController;
 use App\Http\Controllers\File\PreviewController;
 use App\Http\Controllers\Master\BoardOrganizationController;
@@ -236,3 +239,24 @@ Route::controller(PreviewFilePengajuanController::class)->group(function(){
     Route::get('/pengajuan/{fileName}/file', 'showLampiran')->middleware("role:AdminPengajuan,ManagerUmum,DirekturUmumKeuangan,Presdir");
 });
 
+
+Route::controller(DailyController::class)->group(function(){
+    Route::post('/daily/store', "store")->middleware("role:Employee");
+    Route::put('/daily/update', "update")->middleware("role:Employee");
+    Route::put('/daily/change-progress', "changeProgress")->middleware("role:Employee");
+    Route::put('/daily/change-status', "changeStatus")->middleware("role:Employee");
+    Route::delete('/daily/delete/{id}', "delete")->middleware("role:Employee");
+    Route::get('/daily/list-by-employee', "listByEmployee")->middleware("role:Employee");
+});
+
+Route::controller(DailyAttachmentController::class)->group(function(){
+    Route::get('/daily/attachment/list', "index")->middleware("role:Employee");
+    Route::post('/daily/attachment/store', "store")->middleware("role:Employee");
+    Route::post('/daily/attachment/delete', "destroy")->middleware("role:Employee");
+});
+
+Route::controller(DailyCommentController::class)->group(function(){
+    Route::post('/daily/comment/store', "store")->middleware("role:Employee");
+    Route::delete('/daily/comment/delete/{id}', "destroy")->middleware("role:Employee");
+    Route::get('/daily/comment/list/{daily_id}', "list")->middleware("role:Employee");
+});

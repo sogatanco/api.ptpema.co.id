@@ -48,11 +48,26 @@ class Project extends Model
     public function project_history(): HasMany
     {
         return $this->hasMany(ProjectHistory::class, 'project_id', 'project_id');
-    }    
+    }
 
     protected $with = ['project_task'];
     public function project_task(): HasMany
     {
         return $this->hasMany(Task::class, 'project_id', 'project_id');
     }
+
+    public function stages()
+    {
+        return $this->hasMany(ProjectStage::class, 'project_id', 'project_id');
+    }
+
+    public function activeStage()
+    {
+        return $this->hasOne(ProjectStage::class, 'project_id', 'project_id')->where('status', 1);
+    }
+
+    // public function levelThreeTasks()
+    // {
+    //     return $this->hasMany(Task::class, 'project_id', 'project_id')->whereNotNull('task_parent');
+    // }
 }

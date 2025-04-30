@@ -67,12 +67,13 @@ class TaskController extends Controller
         $data['division'] = $divisionActive->organization_id;
         $data['created_by'] = $employeId;
         $newTask = new Task($data);
-        $newTaskSaved = $newTask->save();
+        // $newTaskSaved = $newTask->save();
+        $newTask->save();
 
         // Kode jika parent simpan progress
         // if($newTaskSaved){
 
-        //     $task = Task::where('task_id', $newTask->id)
+        //     $task = Task::where('task_id', $newTask->task_id)
         //         ->first();
 
         //     if($task->task_parent !== null){
@@ -106,7 +107,7 @@ class TaskController extends Controller
         // save filename
         if(isset($savedFile)){
             $fileData = [
-                'task_id' => $newTask->id,
+                'task_id' => $newTask->task_id,
                 'file_name' => $savedFile,
                 'employe_id' => $employeId
             ];
@@ -121,7 +122,7 @@ class TaskController extends Controller
             $dataPics[$i] = [
                 'project_id' => $data['project_id'],
                 'employe_id' => $data['task_pic'][$i]['value'],
-                'task_id' => $newTask->id
+                'task_id' => $newTask->task_id
             ];
 
             $newTaskPic = new TaskPic($dataPics[$i]);
@@ -131,12 +132,12 @@ class TaskController extends Controller
 
         // notif ke masing2 pic yang ditag
         $recipients = TaskPic::select('employe_id')
-                    ->where('task_id', $newTask->id)->get();
+                    ->where('task_id', $newTask->task_id)->get();
 
-        NotificationController::new('TAG_TASK', $recipients, $request->project_id."/".$newTask->id);
+        NotificationController::new('TAG_TASK', $recipients, $request->project_id."/".$newTask->task_id);
 
         $dataApproval = [
-            'task_id' => $newTask->id,
+            'task_id' => $newTask->task_id,
             'employe_id' => $data['task_pic'][0]['value'],
             'status' => 0,
             'start_date' => $data['start_date'],
@@ -146,9 +147,9 @@ class TaskController extends Controller
         $newTaskApproval = new TaskApproval($dataApproval);
         $newTaskApproval->save();
 
-        $data = Task::taskProject($newTaskApproval->id);
+        $data = Task::taskProject($newTaskApproval->approval_id);
 
-        return new TaskResource($data);
+        return new TaskResource($newTask);
 
     }
 
@@ -1466,6 +1467,9 @@ class TaskController extends Controller
         $employeId = Employe::employeId();
         $employeDivision = Employe::getEmployeDivision($employeId);
 
+        // User gak jelas
+        $userGakJelas = ['202310079K'];
+
         // ROLES USER
         $userRoles = Auth::user()->roles;
 
@@ -1475,12 +1479,21 @@ class TaskController extends Controller
                         ->first();
 
         if($employeId !== $divisionActive->employe_id){
-            // Jika user bukan manager
-            $employeCompare = Structure::select('organization_id')
-                            ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
-                            ->get();
+            // Jika user gak jelas
+            if(!in_array($employeId, $userGakJelas)){
 
-            $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
+                $isMemberActive = true;
+
+            }else{
+
+                // Jika user bukan manager
+                $employeCompare = Structure::select('organization_id')
+                                ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
+                                ->get();
+
+                $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
+
+            }
         } else {
             // jika user active adalah manager
             $isMemberActive = true;
