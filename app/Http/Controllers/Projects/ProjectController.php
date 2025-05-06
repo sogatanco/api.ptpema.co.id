@@ -46,7 +46,6 @@ class ProjectController extends Controller
         }else{
             $employeId = Employe::employeId();
             $employeDivision = Employe::getEmployeDivision($employeId);
-
             $divisions = Organization::where('board_id', $employeDivision->board_id)
                         ->get();
         }
@@ -79,6 +78,7 @@ class ProjectController extends Controller
                 // cari semua task parent berdasarkan divisi yg akses
                 $allTask[$p] = Task::select('task_id', 'task_progress')
                         ->where(['project_id' =>$projects[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
+                        // ->where(['project_id' =>$projects[$p]->project_id, 'task_parent' => null, 'division' => $data[$p]['pic_active']->organization_id])
                         ->get();
 
                 $taskIds[$p]= [];
