@@ -145,6 +145,8 @@ class MobilController extends Controller
             ->get();
         foreach ($data as $item) {
             $item->employe_name = Employe::where('employe_id', $item->employe_id)->first('first_name')->first_name;
+            $item->brand= Mobil::where('id', $item->id_mobil)->first('brand')->brand;
+            $item->plat= Mobil::where('id', $item->id_mobil)->first('brand')->plat;
         }
         return new PostResource(true, 'success', $data);
     }
