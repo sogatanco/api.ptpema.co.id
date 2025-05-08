@@ -128,7 +128,7 @@ class MobilController extends Controller
             $pengambilan->keperluan = $request->keperluan;
             $pengambilan->pengembalian = $request->pengembalian;
         }
-
+        
         $pengambilan->id_mobil = $request->id_mobil;
         $pengambilan->booked = $request->booked;
 
@@ -136,5 +136,16 @@ class MobilController extends Controller
             return new PostResource(true, 'Pengambilan inserted successfully', []);
         }
         return new PostResource(false, 'Failed to insert Pengambilan', []);
+    }
+
+    public function getPengambilan()
+    {
+        $data = Pengambilan::where('deleted_at', null)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        foreach ($data as $item) {
+            $item->employe_name = Employe::where('employe_id', $item->employe_id)->first('first_name')->first_name;
+        }
+        return new PostResource(true, 'success', $data);
     }
 }
