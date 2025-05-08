@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Daily\DailyComment;
+use App\Models\Projects\Project;
+use App\Models\Projects\ProjectHistory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Employe extends Model
 {
     use HasFactory;
+    protected $connection = 'mysql';
     protected $table = 'employees';
     protected $primaryKey = 'employe_id';
     public $incrementing = false;
