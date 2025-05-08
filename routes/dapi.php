@@ -191,5 +191,6 @@ Route::controller(MobilController::class)->group(function(){
      Route::get('/mobil/get-permintaan-by-status', 'getPermintaanByStatus')->middleware("role:Employee");
      Route::post('/mobil/insert-pengambilan', 'insertPengambilan')->middleware("role:Employee");
      Route::get('/mobil/get-pengambilan', 'getPengambilan')->middleware("role:Employee");
+     Route::post('/mobil/pengembalian/{id}', 'pengembalian')->middleware("role:Employee");
 });
 

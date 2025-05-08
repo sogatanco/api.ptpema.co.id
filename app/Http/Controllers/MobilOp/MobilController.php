@@ -150,4 +150,17 @@ class MobilController extends Controller
         }
         return new PostResource(true, 'success', $data);
     }
+
+    public function pengembalian($id)
+    {
+        $pengambilan = Pengambilan::find($id);
+        if ($pengambilan) {
+            $pengambilan->real_pengembalian = Carbon::now();
+            if ($pengambilan->save()) {
+                return new PostResource(true, 'Pengembalian updated successfully', []);
+            }
+            return new PostResource(false, 'Failed to update Pengembalian', []);
+        }
+        return new PostResource(false, 'Pengambilan not found', []);
+    }
 }
