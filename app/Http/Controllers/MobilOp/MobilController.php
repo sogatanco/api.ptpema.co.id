@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MobilOp;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Mobil\Bbm;
 use App\Models\Mobil\Mobil;
 use Illuminate\Http\Request;
 use App\Models\Mobil\Permintaan;
@@ -202,5 +203,20 @@ class MobilController extends Controller
             return new PostResource(false, 'Failed to reject Permintaan', []);
         }
         return new PostResource(false, 'Permintaan not found', []);
+    }
+
+    public function insertBBM(Request $request)
+    {
+        $bbm = new Bbm();
+        $bbm->id_mobil = $request->id_mobil;
+        $bbm->jenis_bbm = $request->jenis_bbm;
+        $bbm->jumlah = $request->jumlah;
+        $bbm->w_pengisian = $request->w_pengisian;
+        $bbm->oleh = $request->oleh;
+
+        if ($bbm->save()) {
+            return new PostResource(true, 'BBM data inserted successfully', []);
+        }
+        return new PostResource(false, 'Failed to insert BBM data', []);
     }
 }
