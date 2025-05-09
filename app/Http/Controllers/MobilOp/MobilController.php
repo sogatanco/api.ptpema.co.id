@@ -151,11 +151,12 @@ class MobilController extends Controller
         return new PostResource(true, 'success', $data);
     }
 
-    public function pengembalian($id)
+    public function pengembalian(Request $request, $id)
     {
         $pengambilan = Pengambilan::find($id);
         if ($pengambilan) {
             $pengambilan->real_pengembalian = Carbon::now();
+            $pengambilan->last_km = $request->last_km;
             if ($pengambilan->save()) {
                 return new PostResource(true, 'Pengembalian updated successfully', []);
             }
