@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Pengajuan\Pengajuan;
 use App\Models\Employe;
+use Illuminate\Support\Facades\DB;
 
 class DashboardPengajuanController extends Controller
 {
@@ -13,7 +14,7 @@ class DashboardPengajuanController extends Controller
     {
         // Login Role AdminPengajuan
         if(in_array('AdminPengajuan', auth()->user()->roles)) {
-            $pengajuan = Pengajuan::all();
+            $pengajuan = Pengajuan::whereYear('created_at', now())->get();
             $totalPengajuan = $pengajuan->count();
     
             $totalPengajuanSelesai = Pengajuan::withCount([
@@ -36,7 +37,7 @@ class DashboardPengajuanController extends Controller
 
         // Login Role ManagerUmum | DirekturUmumKeuangan | Presdir
         if(in_array('ManagerUmum', auth()->user()->roles) || in_array('DirekturUmumKeuangan', auth()->user()->roles) || in_array('Presdir', auth()->user()->roles)) {
-            $pengajuan = Pengajuan::all();
+            $pengajuan = Pengajuan::whereYear('created_at', now())->get();
             $totalPengajuan = $pengajuan->count();
 
             $totalPengajuanSelesai = Pengajuan::withCount([
@@ -102,9 +103,6 @@ class DashboardPengajuanController extends Controller
         }
 
 
-
-    
-
         return response()->json([
             'success' => true,
             'data' => [
@@ -114,5 +112,35 @@ class DashboardPengajuanController extends Controller
                 'total_pengajuan_ditolak' => $totalPengajuanDitolak ?? 0,
             ]
         ], 200);
+    }
+
+    public function chart()
+    {
+        $allKategori = [
+            'Permohonan Biaya',
+            'Tagihan Biaya',
+            'Aktual Biaya',
+            'Reimbursement',
+        ];
+
+        $pengajuan = Pengajuan::select('pengajuan', DB::raw('COUNT(*) as total'))
+            ->whereYear('created_at', now()->year)
+            ->groupBy('pengajuan')
+            ->pluck('total', 'pengajuan') // hasil: ['Permohonan Biaya' => 12, ...]
+            ->toArray();
+
+        // Pastikan semua kategori ada, isi 0 jika tidak ditemukan
+        $result = [];
+        foreach ($allKategori as $kategori) {
+            $result[] = [
+                'kategori' => $kategori,
+                'total' => $pengajuan[$kategori] ?? 0
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
     }
 }
