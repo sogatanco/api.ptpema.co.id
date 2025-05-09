@@ -212,6 +212,7 @@ Route::controller(PositionController::class)->group(function(){
 // Pengajuan Dashboard
 Route::controller(DashboardPengajuanController::class)->group(function(){
     Route::get('/pengajuan-dashboard', 'index')->middleware("role:AdminPengajuan,ManagerUmum,DirekturUmumKeuangan,Presdir");
+    Route::get('/pengajuan-dashboard/chart', 'chart')->middleware("role:AdminPengajuan,ManagerUmum,DirekturUmumKeuangan,Presdir");
 });
 
 // Pengajuan
