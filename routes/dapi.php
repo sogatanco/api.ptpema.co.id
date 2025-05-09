@@ -190,4 +190,11 @@ Route::controller(MobilController::class)->group(function(){
      Route::post('/mobil/delete-permintaan/{id}', 'deletePermintaan')->middleware("role:Employee");
      Route::get('/mobil/get-permintaan-by-status', 'getPermintaanByStatus')->middleware("role:Employee");
      Route::post('/mobil/insert-pengambilan', 'insertPengambilan')->middleware("role:Employee");
+     Route::get('/mobil/get-pengambilan', 'getPengambilan')->middleware("role:Employee");
+     Route::post('/mobil/pengembalian/{id}', 'pengembalian')->middleware("role:Employee");
+     Route::get('/mobil/get-permintaan-all', 'getPermintaanAll')->middleware("role:Employee");
+     Route::post('/mobil/approve-permintaan/{id}', 'approvePermintaan')->middleware("role:Employee");
+     Route::post('/mobil/reject-permintaan/{id}', 'rejectPermintaan')->middleware("role:Employee");
+     Route::post('/mobil/insert-bbm', 'insertBBM')->middleware("role:Employee");
 });
+

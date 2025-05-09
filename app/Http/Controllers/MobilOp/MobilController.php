@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MobilOp;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Mobil\Bbm;
 use App\Models\Mobil\Mobil;
 use Illuminate\Http\Request;
 use App\Models\Mobil\Permintaan;
@@ -109,6 +110,18 @@ class MobilController extends Controller
         return new PostResource(true, 'success', $data);
     }
 
+    public function getPermintaanAll()
+    {
+        $data = Permintaan::where('status', null)
+            ->where('deleted_at', null)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        foreach ($data as $item) {
+            $item->created_by_name = Employe::where('employe_id', $item->created_by)->first('first_name')->first_name;
+        }
+        return new PostResource(true, 'success', $data);
+    }
+
     public function insertPengambilan(Request $request) {
         $pengambilan = new Pengambilan();
 
@@ -128,7 +141,7 @@ class MobilController extends Controller
             $pengambilan->keperluan = $request->keperluan;
             $pengambilan->pengembalian = $request->pengembalian;
         }
-
+        
         $pengambilan->id_mobil = $request->id_mobil;
         $pengambilan->booked = $request->booked;
 
@@ -136,5 +149,74 @@ class MobilController extends Controller
             return new PostResource(true, 'Pengambilan inserted successfully', []);
         }
         return new PostResource(false, 'Failed to insert Pengambilan', []);
+    }
+
+    public function getPengambilan()
+    {
+        $data = Pengambilan::where('deleted_at', null)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        foreach ($data as $item) {
+            $item->employe_name = Employe::where('employe_id', $item->employe_id)->first('first_name')->first_name;
+            $item->brand= Mobil::where('id', $item->id_mobil)->first('brand')->brand;
+            $item->plat= Mobil::where('id', $item->id_mobil)->first('plat')->plat;
+        }
+        return new PostResource(true, 'success', $data);
+    }
+
+    public function pengembalian(Request $request, $id)
+    {
+        $pengambilan = Pengambilan::find($id);
+        if ($pengambilan) {
+            $pengambilan->real_pengembalian = Carbon::now();
+            $pengambilan->last_km = $request->last_km;
+            if ($pengambilan->save()) {
+                return new PostResource(true, 'Pengembalian updated successfully', []);
+            }
+            return new PostResource(false, 'Failed to update Pengembalian', []);
+        }
+        return new PostResource(false, 'Pengambilan not found', []);
+    }
+
+    public function approvePermintaan($id)
+    {
+        $permintaan = Permintaan::find($id);
+        if ($permintaan) {
+            $permintaan->status = 1; // Approved
+            if ($permintaan->save()) {
+                return new PostResource(true, 'Permintaan approved successfully', []);
+            }
+            return new PostResource(false, 'Failed to approve Permintaan', []);
+        }
+        return new PostResource(false, 'Permintaan not found', []);
+    }
+
+    public function rejectPermintaan(Request $request, $id)
+    {
+        $permintaan = Permintaan::find($id);
+        if ($permintaan) {
+            $permintaan->status = 0; // Rejected
+            $permintaan->ket = $request->ket; // Insert rejection reason
+            if ($permintaan->save()) {
+                return new PostResource(true, 'Permintaan rejected successfully', []);
+            }
+            return new PostResource(false, 'Failed to reject Permintaan', []);
+        }
+        return new PostResource(false, 'Permintaan not found', []);
+    }
+
+    public function insertBBM(Request $request)
+    {
+        $bbm = new Bbm();
+        $bbm->id_mobil = $request->id_mobil;
+        $bbm->jenis_bbm = $request->jenis_bbm;
+        $bbm->jumlah = $request->jumlah;
+        $bbm->w_pengisian = $request->w_pengisian;
+        $bbm->oleh = $request->oleh;
+
+        if ($bbm->save()) {
+            return new PostResource(true, 'BBM data inserted successfully', []);
+        }
+        return new PostResource(false, 'Failed to insert BBM data', []);
     }
 }
