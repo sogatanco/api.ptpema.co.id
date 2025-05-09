@@ -176,4 +176,31 @@ class MobilController extends Controller
         }
         return new PostResource(false, 'Pengambilan not found', []);
     }
+
+    public function approvePermintaan($id)
+    {
+        $permintaan = Permintaan::find($id);
+        if ($permintaan) {
+            $permintaan->status = 1; // Approved
+            if ($permintaan->save()) {
+                return new PostResource(true, 'Permintaan approved successfully', []);
+            }
+            return new PostResource(false, 'Failed to approve Permintaan', []);
+        }
+        return new PostResource(false, 'Permintaan not found', []);
+    }
+
+    public function rejectPermintaan(Request $request, $id)
+    {
+        $permintaan = Permintaan::find($id);
+        if ($permintaan) {
+            $permintaan->status = 0; // Rejected
+            $permintaan->ket = $request->ket; // Insert rejection reason
+            if ($permintaan->save()) {
+                return new PostResource(true, 'Permintaan rejected successfully', []);
+            }
+            return new PostResource(false, 'Failed to reject Permintaan', []);
+        }
+        return new PostResource(false, 'Permintaan not found', []);
+    }
 }
