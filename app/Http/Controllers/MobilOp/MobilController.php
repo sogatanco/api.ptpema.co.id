@@ -219,4 +219,19 @@ class MobilController extends Controller
         }
         return new PostResource(false, 'Failed to insert BBM data', []);
     }
+
+    public function getBBM()
+    {
+        $data = Bbm::where('deleted_at', null)
+            ->orderBy('w_pengisian', 'desc')
+            ->get();
+        foreach ($data as $item) {
+            $mobil = Mobil::find($item->id_mobil);
+            $item->name = $mobil ? $mobil->brand . ' (' . $mobil->plat . ')' : null;
+
+            $employe = Employe::where('employe_id', $item->oleh)->first();
+            $item->oleh_name = $employe ? $employe->first_name : null;
+        }
+        return new PostResource(true, 'success', $data);
+    }
 }
