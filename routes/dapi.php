@@ -195,5 +195,6 @@ Route::controller(MobilController::class)->group(function(){
      Route::get('/mobil/get-permintaan-all', 'getPermintaanAll')->middleware("role:Employee");
      Route::post('/mobil/approve-permintaan/{id}', 'approvePermintaan')->middleware("role:Employee");
      Route::post('/mobil/reject-permintaan/{id}', 'rejectPermintaan')->middleware("role:Employee");
+     Route::post('/mobil/insert-bbm', 'insertBBM')->middleware("role:Employee");
 });
 
