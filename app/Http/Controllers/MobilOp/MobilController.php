@@ -234,4 +234,22 @@ class MobilController extends Controller
         }
         return new PostResource(true, 'success', $data);
     }
+
+    /**
+     * Ambil daftar mobil yang status-nya 'aktif', tidak dihapus, dan tidak sedang dalam pemakaian.
+     */
+    public function getMobilAktifDanTidakDalamPemakaian()
+    {
+        $mobilDipakai = \App\Models\Mobil\Pengambilan::whereNull('real_pengembalian')
+            ->whereNull('deleted_at')
+            ->pluck('id_mobil')
+            ->toArray();
+
+        $data = Mobil::where('status', 'aktif')
+            ->where('deleted', 0)
+            ->whereNotIn('id', $mobilDipakai)
+            ->get();
+
+        return new PostResource(true, 'success', $data);
+    }
 }
