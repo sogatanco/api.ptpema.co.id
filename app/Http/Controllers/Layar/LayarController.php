@@ -37,12 +37,15 @@ class LayarController extends Controller
                 // Ekstrak base64 jika ada prefix data:image/xxx;base64,
                 if (preg_match('/^data:image\/(\w+);base64,/', $base64, $type)) {
                     $base64 = substr($base64, strpos($base64, ',') + 1);
-                    $ext = $type[1];
+                    $ext = strtolower($type[1]);
+                    if ($ext === 'jpeg') $ext = 'jpg';
                     $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.' . $ext;
                 } else {
                     $ext = 'png';
                     $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.png';
                 }
+                // Hilangkan whitespace pada base64
+                $base64 = preg_replace('/\s+/', '', $base64);
                 $fileContent = base64_decode($base64);
                 // Simpan file ke storage/app/public/uploads/layar
                 $saved = Storage::disk('public')->put($dir . '/' . $fileName, $fileContent);
