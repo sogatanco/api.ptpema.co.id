@@ -45,9 +45,21 @@ class LayarController extends Controller
                 }
                 $fileContent = base64_decode($base64);
                 // Simpan file ke storage/app/public/uploads/layar
-                Storage::disk('public')->put($dir . '/' . $fileName, $fileContent);
-                // Buat url publik
-                $url = url('storage/' . $dir . '/' . $fileName);
+                $saved = Storage::disk('public')->put($dir . '/' . $fileName, $fileContent);
+                if ($saved) {
+                    // Buat url publik
+                    $url = url('storage/' . $dir . '/' . $fileName);
+                } else {
+                    // Fallback: coba simpan manual ke public/uploads/layar jika Storage gagal
+                    $publicDir = public_path('uploads/layar');
+                    if (!is_dir($publicDir)) {
+                        mkdir($publicDir, 0777, true);
+                    }
+                    $filePath = $publicDir . '/' . $fileName;
+                    if (file_put_contents($filePath, $fileContent)) {
+                        $url = url('uploads/layar/' . $fileName);
+                    }
+                }
             }
 
             Layar::create([
