@@ -240,7 +240,7 @@ class MobilController extends Controller
      */
     public function getMobilAktifDanTidakDalamPemakaian()
     {
-        $mobilDipakai = \App\Models\Mobil\Pengambilan::whereNull('real_pengembalian')
+        $mobilDipakai = Pengambilan::whereNull('real_pengembalian')
             ->whereNull('deleted_at')
             ->pluck('id_mobil')
             ->toArray();
@@ -251,5 +251,48 @@ class MobilController extends Controller
             ->get();
 
         return new PostResource(true, 'success', $data);
+    }
+
+    /**
+     * Ambil data pengambilan dan konversi ke format kalender.
+     * id: id pengambilan,
+     * group: id mobil,
+     * title: first_name,
+     * start_time: taken_time,
+     * end_time: real_pengembalian,
+     * bgColor: random rgba per id_mobil.
+     */
+    public function getPengambilanCalendar()
+    {
+        $data = Pengambilan::whereNull('deleted_at')->get();
+        $result = [];
+        $colorMap = [];
+
+        foreach ($data as $item) {
+            $employe = Employe::where('employe_id', $item->employe_id)->first();
+            $firstName = $employe ? $employe->first_name : '';
+
+            // Generate consistent bgColor per id_mobil
+            if (!isset($colorMap[$item->id_mobil])) {
+                // Simple hash to color
+                $hash = crc32($item->id_mobil);
+                $r = 100 + ($hash & 0xFF) % 156;
+                $g = 100 + (($hash >> 8) & 0xFF) % 156;
+                $b = 100 + (($hash >> 16) & 0xFF) % 156;
+                $colorMap[$item->id_mobil] = "rgba($r, $g, $b, 0.6)";
+            }
+            $bgColor = $colorMap[$item->id_mobil];
+
+            $result[] = [
+                'id' => $item->id,
+                'group' => $item->id_mobil,
+                'title' => $firstName,
+                'start_time' => $item->taken_time,
+                'end_time' => $item->real_pengembalian,
+                'bgColor' => $bgColor,
+            ];
+        }
+
+        return new PostResource(true, 'success', $result);
     }
 }
