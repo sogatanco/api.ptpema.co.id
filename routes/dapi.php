@@ -17,6 +17,7 @@ use App\Http\Controllers\Asset\InvController;
 use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
+use App\Http\Controllers\Layar\LayarController;
 
 use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Sppd\PengajuanController;
@@ -200,5 +201,9 @@ Route::controller(MobilController::class)->group(function(){
      Route::get('mobil/available', 'getMobilAktifDanTidakDalamPemakaian')->middleware("role:Employee");
      Route::get('mobil/pengambilan-calendar', 'getPengambilanCalendar')->middleware("role:Employee");
      Route::get('mobil/bbm-laporan', 'getBBMLaporan')->middleware("role:Employee");
+});
+
+Route::controller(LayarController::class)->group(function(){
+    Route::post('layar/insert', 'insert')->middleware("role:Employee");
 });
 
