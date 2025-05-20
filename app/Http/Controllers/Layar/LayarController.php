@@ -79,6 +79,7 @@ class LayarController extends Controller
                 $base64 = 'data:' . $mime . ';base64,' . base64_encode($imageData);
             }
             $data[] = [
+                'url' => $item->url,
                 'image' => $base64,
                 'duration' => $item->duration,
                 'fileName' => $item->name,
