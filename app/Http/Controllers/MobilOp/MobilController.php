@@ -281,14 +281,32 @@ class MobilController extends Controller
                 $b = 100 + (($hash >> 16) & 0xFF) % 156;
                 $colorMap[$item->id_mobil] = "rgba($r, $g, $b, 0.6)";
             }
-            $bgColor = $colorMap[$item->id_mobil];
+            $defaultBgColor = $colorMap[$item->id_mobil];
+
+            // Logic untuk end_time dan bgColor
+            $now = now();
+            if ($item->real_pengembalian) {
+                $endTime = $item->real_pengembalian;
+                $bgColor = $defaultBgColor;
+            } else {
+                // Jika real_pengembalian null, gunakan pengembalian
+                $pengembalian = $item->pengembalian;
+                if ($pengembalian && Carbon::parse($pengembalian)->lt($now)) {
+                    // Sudah lewat dari waktu pengembalian, set end_time = now dan bgColor merah
+                    $endTime = $now->format('Y-m-d H:i:s');
+                    $bgColor = "rgba(255,0,0,0.6)";
+                } else {
+                    $endTime = $pengembalian;
+                    $bgColor = $defaultBgColor;
+                }
+            }
 
             $result[] = [
                 'id' => $item->id,
                 'group' => $item->id_mobil,
                 'title' => $firstName,
                 'start_time' => $item->taken_time,
-                'end_time' => $item->real_pengembalian,
+                'end_time' => $endTime,
                 'bgColor' => $bgColor,
             ];
         }
