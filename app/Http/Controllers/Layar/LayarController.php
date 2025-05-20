@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Layar\Layar;
 use App\Http\Resources\PostResource;
+use Illuminate\Support\Facades\Storage;
 
 class LayarController extends Controller
 {
@@ -21,10 +22,10 @@ class LayarController extends Controller
         // Hapus semua data lama
         Layar::truncate();
 
-        // Direktori penyimpanan file gambar
-        $dir = public_path('uploads/layar');
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+        // Pastikan direktori uploads/layar ada di storage/app/public
+        $dir = 'uploads/layar';
+        if (!Storage::disk('public')->exists($dir)) {
+            Storage::disk('public')->makeDirectory($dir);
         }
 
         foreach ($items as $item) {
@@ -42,9 +43,11 @@ class LayarController extends Controller
                     $ext = 'png';
                     $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.png';
                 }
-                $filePath = $dir . '/' . $fileName;
-                file_put_contents($filePath, base64_decode($base64));
-                $url = url('uploads/layar/' . $fileName);
+                $fileContent = base64_decode($base64);
+                // Simpan file ke storage/app/public/uploads/layar
+                Storage::disk('public')->put($dir . '/' . $fileName, $fileContent);
+                // Buat url publik
+                $url = url('storage/' . $dir . '/' . $fileName);
             }
 
             Layar::create([
