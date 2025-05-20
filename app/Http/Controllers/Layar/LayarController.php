@@ -22,11 +22,11 @@ class LayarController extends Controller
         // Hapus semua data lama
         Layar::truncate();
 
-        // Pastikan direktori uploads/layar ada di storage/app/public
-        // $dir = 'uploads/layar';
-        // if (!Storage::disk('public')->exists($dir)) {
-        //     Storage::disk('public')->makeDirectory($dir);
-        // }
+        // Kosongkan folder layar pada disk public_layar
+        $files = Storage::disk('public_layar')->files();
+        foreach ($files as $file) {
+            Storage::disk('public_layar')->delete($file);
+        }
 
         foreach ($items as $item) {
             $fileName = $item['fileName'] ?? uniqid('layar_') . '.png';
@@ -63,5 +63,32 @@ class LayarController extends Controller
         }
 
         return new PostResource(true, 'Data layar berhasil disimpan', []);
+    }
+
+    public function getLayar()
+    {
+        $data = [];
+        $items = Layar::all();
+
+        foreach ($items as $item) {
+            $filePath = Storage::disk('public_layar')->path(basename($item->url));
+            $base64 = '';
+            if (file_exists($filePath)) {
+                $mime = mime_content_type($filePath);
+                $imageData = file_get_contents($filePath);
+                $base64 = 'data:' . $mime . ';base64,' . base64_encode($imageData);
+            }
+            $data[] = [
+                'image' => $base64,
+                'duration' => $item->duration,
+                'fileName' => $item->name,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data layar berhasil diambil',
+            'data' => $data
+        ]);
     }
 }
