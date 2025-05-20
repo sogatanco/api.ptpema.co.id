@@ -61,7 +61,7 @@ class LayarController extends Controller
                 $saved = Storage::disk('public_layar')->put($fileName, $fileContent);
                 if ($saved) {
                     // Buat url publik
-                    $url = 'layar/' . $fileName;
+                    $url =  $fileName;
                 } 
             }
 
