@@ -313,4 +313,52 @@ class MobilController extends Controller
 
         return new PostResource(true, 'success', $result);
     }
+
+    /**
+     * Get laporan BBM per mobil untuk grafik.
+     * Request: startdate, enddate (GET)
+     * Response: categories (array nama & plat), data (array total jumlah per mobil)
+     */
+    public function getBBMLaporan(Request $request)
+    {
+        $startdate = $request->query('startdate');
+        $enddate = $request->query('enddate');
+
+        if (!$startdate || !$enddate) {
+            return new PostResource(false, 'startdate dan enddate wajib diisi', []);
+        }
+
+        // Ambil semua mobil yang punya transaksi BBM di rentang waktu
+        $bbmQuery = Bbm::where('deleted_at', null)
+            ->whereDate('w_pengisian', '>=', $startdate)
+            ->whereDate('w_pengisian', '<=', $enddate);
+
+        // Group by id_mobil, ambil total jumlah per mobil
+        $bbmPerMobil = $bbmQuery
+            ->selectRaw('id_mobil, SUM(jumlah) as total_jumlah')
+            ->groupBy('id_mobil')
+            ->get();
+
+        $categories = [];
+        $data = [];
+        $totalSemua = 0;
+
+        foreach ($bbmPerMobil as $row) {
+            $mobil = Mobil::find($row->id_mobil);
+            if ($mobil) {
+                $categories[] = [$mobil->brand, $mobil->plat];
+                $jumlah = (float) $row->total_jumlah;
+                $data[] = $jumlah;
+                $totalSemua += $jumlah;
+            }
+        }
+
+        $result = [
+            'categories' => $categories,
+            'data' => $data,
+            'total_semua' => $totalSemua,
+        ];
+
+        return new PostResource(true, 'success', $result);
+    }
 }

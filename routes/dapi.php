@@ -197,7 +197,8 @@ Route::controller(MobilController::class)->group(function(){
      Route::post('/mobil/reject-permintaan/{id}', 'rejectPermintaan')->middleware("role:Employee");
      Route::post('/mobil/insert-bbm', 'insertBBM')->middleware("role:Employee");
      Route::get('/mobil/get-bbm', 'getBBM')->middleware("role:Employee");
-     Route::get('/mobil/available', 'getMobilAktifDanTidakDalamPemakaian')->middleware("role:Employee");
+     Route::get('mobil/aktif-tidak-dalam-pemakaian', 'getMobilAktifDanTidakDalamPemakaian')->middleware("role:Employee");
      Route::get('mobil/pengambilan-calendar', 'getPengambilanCalendar')->middleware("role:Employee");
+     Route::get('mobil/bbm-laporan', 'getBBMLaporan')->middleware("role:Employee");
 });
 
