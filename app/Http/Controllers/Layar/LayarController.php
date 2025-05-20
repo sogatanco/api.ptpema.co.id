@@ -23,10 +23,10 @@ class LayarController extends Controller
         Layar::truncate();
 
         // Pastikan direktori uploads/layar ada di storage/app/public
-        $dir = 'uploads/layar';
-        if (!Storage::disk('public')->exists($dir)) {
-            Storage::disk('public')->makeDirectory($dir);
-        }
+        // $dir = 'uploads/layar';
+        // if (!Storage::disk('public')->exists($dir)) {
+        //     Storage::disk('public')->makeDirectory($dir);
+        // }
 
         foreach ($items as $item) {
             $fileName = $item['fileName'] ?? uniqid('layar_') . '.png';
@@ -48,21 +48,11 @@ class LayarController extends Controller
                 $base64 = preg_replace('/\s+/', '', $base64);
                 $fileContent = base64_decode($base64);
                 // Simpan file ke storage/app/public/uploads/layar
-                $saved = Storage::disk('public')->put($dir . '/' . $fileName, $fileContent);
+                $saved = Storage::disk('public_layar')->put( $fileName, $fileContent);
                 if ($saved) {
                     // Buat url publik
-                    $url = url('storage/' . $dir . '/' . $fileName);
-                } else {
-                    // Fallback: coba simpan manual ke public/uploads/layar jika Storage gagal
-                    $publicDir = public_path('uploads/layar');
-                    if (!is_dir($publicDir)) {
-                        mkdir($publicDir, 0777, true);
-                    }
-                    $filePath = $publicDir . '/' . $fileName;
-                    if (file_put_contents($filePath, $fileContent)) {
-                        $url = url('uploads/layar/' . $fileName);
-                    }
-                }
+                    $url = 'layar/' . $fileName;
+                } 
             }
 
             Layar::create([
