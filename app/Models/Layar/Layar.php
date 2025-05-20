@@ -9,4 +9,9 @@ class Layar extends Model
 {
     protected $connection = 'layar';
     protected $table = 'images';
+    protected $fillable = [
+        'url',
+        'name',
+        'duration',
+    ];
 }
