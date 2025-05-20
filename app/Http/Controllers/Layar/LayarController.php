@@ -30,6 +30,9 @@ class LayarController extends Controller
 
         foreach ($items as $item) {
             $fileName = $item['fileName'] ?? uniqid('layar_') . '.png';
+            // Normalisasi nama file: hapus karakter spesial, spasi jadi '-'
+            $fileName = preg_replace('/[^A-Za-z0-9.\s_-]/', '', $fileName); // hapus karakter spesial kecuali spasi, titik, underscore, dash
+            $fileName = preg_replace('/\s+/', '-', $fileName); // spasi jadi '-'
             $base64 = $item['image'] ?? '';
             $url = '';
 
@@ -39,16 +42,23 @@ class LayarController extends Controller
                     $base64 = substr($base64, strpos($base64, ',') + 1);
                     $ext = strtolower($type[1]);
                     if ($ext === 'jpeg') $ext = 'jpg';
-                    $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.' . $ext;
+                    $fileName = pathinfo($fileName, PATHINFO_FILENAME);
+                    // Normalisasi ulang setelah ganti ekstensi
+                    $fileName = preg_replace('/[^A-Za-z0-9.\s_-]/', '', $fileName);
+                    $fileName = preg_replace('/\s+/', '-', $fileName);
+                    $fileName = $fileName . '.' . $ext;
                 } else {
                     $ext = 'png';
-                    $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.png';
+                    $fileName = pathinfo($fileName, PATHINFO_FILENAME);
+                    $fileName = preg_replace('/[^A-Za-z0-9.\s_-]/', '', $fileName);
+                    $fileName = preg_replace('/\s+/', '-', $fileName);
+                    $fileName = $fileName . '.png';
                 }
                 // Hilangkan whitespace pada base64
                 $base64 = preg_replace('/\s+/', '', $base64);
                 $fileContent = base64_decode($base64);
                 // Simpan file ke storage/app/public/uploads/layar
-                $saved = Storage::disk('public_layar')->put( $fileName, $fileContent);
+                $saved = Storage::disk('public_layar')->put($fileName, $fileContent);
                 if ($saved) {
                     // Buat url publik
                     $url = 'layar/' . $fileName;
