@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Daily\Daily;
 use App\Models\Employe;
 use App\Models\Projects\Project;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Helpers\FormatTanggalRangeIndo;
+
 
 class DailyController extends Controller
 {
@@ -229,6 +232,7 @@ class DailyController extends Controller
                     'project_name' => $project->project_name,
                     'start_date' => optional($project->activeStage)->start_date,
                     'end_date' => optional($project->activeStage)->end_date,
+                    'date_range' => FormatTanggalRangeIndo( optional($project->activeStage)->start_date, optional($project->activeStage)->end_date),
                     'total_task' => $project->project_task->count(),
                     'project_task' => $project->project_task->map(function ($task) use ($project) {
                         return [
@@ -236,6 +240,7 @@ class DailyController extends Controller
                             'task_title' => $task->task_title,
                             'start_date' => optional($task->approval)->start_date,
                             'end_date' => optional($task->approval)->end_date,
+                            'date_range' => FormatTanggalRangeIndo( optional($task->approval)->start_date, optional($task->approval)->end_date),
                             'task_progress' => $task->task_progress,
                             'members' => $task->pics->map(function ($pic) use ($task) {
                                 $employee = $pic->employee;
@@ -250,13 +255,28 @@ class DailyController extends Controller
                                     'name' => trim($employee->first_name . ' ' . $employee->last_name),
                                     'position_name' => optional($employee->position)->position_name,
                                     'progress' => $totalProgress,
+                                    'total_daily' => $totalDaily
                                 ];
                             }),
                             'daily' => $task->daily->map(function ($d) {
+
+                                $start = $d->start_date ? Carbon::parse($d->start_date) : null;
+                                $end = $d->end_date ? Carbon::parse($d->end_date) : null;
+
                                 return [
+                                    'id' => $d->id,
                                     'activity_name' => $d->activity_name,
-                                    'start_date' => $d->start_date,
-                                    'end_date' => $d->end_date,
+                                    'category' => $d->category,
+                                    'status' => $d->status,
+                                    'start_date' => [
+                                        'date' => $start ? Carbon::parse($start)->format('d-m-Y') : null,
+                                        'time' => $start ? Carbon::parse($start)->format('H:i') : null,
+                                    ],
+                                    'end_date' => [
+                                        'date' => $end ? Carbon::parse($end)->format('d-m-Y') : null,
+                                        'time' => $end ? Carbon::parse($end)->format('H:i') : null,
+                                    ],
+                                    'date_range' => $start && $end ? FormatTanggalRangeIndo($start, $end) : null,
                                     'progress' => $d->progress,
                                 ];
                             }),

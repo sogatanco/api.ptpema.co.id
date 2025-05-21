@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('daily', function (Blueprint $table) {
-            $table->dateTime('start_date')->change();
-            $table->dateTime('end_date')->change();
+            $table->enum('category', ['rutin', 'non-rutin', 'bulanan', 'tahunan', 'tambahan'])->default('rutin')->after('activity_name');
         });
     }
 
@@ -22,9 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-       Schema::table('daily', function (Blueprint $table) {
-            $table->date('start_date')->change();
-            $table->date('end_date')->change();
+        Schema::table('daily', function (Blueprint $table) {
+            $table->dropColumn('category');
         });
     }
 };
