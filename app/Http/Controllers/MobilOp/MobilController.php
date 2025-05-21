@@ -234,4 +234,131 @@ class MobilController extends Controller
         }
         return new PostResource(true, 'success', $data);
     }
+
+    /**
+     * Ambil daftar mobil yang status-nya 'aktif', tidak dihapus, dan tidak sedang dalam pemakaian.
+     */
+    public function getMobilAktifDanTidakDalamPemakaian()
+    {
+        $mobilDipakai = Pengambilan::whereNull('real_pengembalian')
+            ->whereNull('deleted_at')
+            ->pluck('id_mobil')
+            ->toArray();
+
+        $data = Mobil::where('status', 'aktif')
+            ->where('deleted', 0)
+            ->whereNotIn('id', $mobilDipakai)
+            ->get();
+
+        return new PostResource(true, 'success', $data);
+    }
+
+    /**
+     * Ambil data pengambilan dan konversi ke format kalender.
+     * id: id pengambilan,
+     * group: id mobil,
+     * title: first_name,
+     * start_time: taken_time,
+     * end_time: real_pengembalian,
+     * bgColor: random rgba per id_mobil.
+     */
+    public function getPengambilanCalendar()
+    {
+        $data = Pengambilan::whereNull('deleted_at')->get();
+        $result = [];
+        $colorMap = [];
+
+        foreach ($data as $item) {
+            $employe = Employe::where('employe_id', $item->employe_id)->first();
+            $firstName = $employe ? $employe->first_name : '';
+
+            // Generate consistent bgColor per id_mobil
+            if (!isset($colorMap[$item->id_mobil])) {
+                // Simple hash to color
+                $hash = crc32($item->id_mobil);
+                $r = 100 + ($hash & 0xFF) % 156;
+                $g = 100 + (($hash >> 8) & 0xFF) % 156;
+                $b = 100 + (($hash >> 16) & 0xFF) % 156;
+                $colorMap[$item->id_mobil] = "rgba($r, $g, $b, 0.6)";
+            }
+            $defaultBgColor = $colorMap[$item->id_mobil];
+
+            // Logic untuk end_time dan bgColor
+            $now = now();
+            if ($item->real_pengembalian) {
+                $endTime = $item->real_pengembalian;
+                $bgColor = $defaultBgColor;
+            } else {
+                // Jika real_pengembalian null, gunakan pengembalian
+                $pengembalian = $item->pengembalian;
+                if ($pengembalian && Carbon::parse($pengembalian)->lt($now)) {
+                    // Sudah lewat dari waktu pengembalian, set end_time = now dan bgColor merah
+                    $endTime = $now->format('Y-m-d H:i:s');
+                    $bgColor = "rgba(255,0,0,0.6)";
+                } else {
+                    $endTime = $pengembalian;
+                    $bgColor = $defaultBgColor;
+                }
+            }
+
+            $result[] = [
+                'id' => $item->id,
+                'group' => $item->id_mobil,
+                'title' => $firstName,
+                'start_time' => $item->taken_time,
+                'end_time' => $endTime,
+                'bgColor' => $bgColor,
+            ];
+        }
+
+        return new PostResource(true, 'success', $result);
+    }
+
+    /**
+     * Get laporan BBM per mobil untuk grafik.
+     * Request: startdate, enddate (GET)
+     * Response: categories (array nama & plat), data (array total jumlah per mobil)
+     */
+    public function getBBMLaporan(Request $request)
+    {
+        $startdate = $request->query('startdate');
+        $enddate = $request->query('enddate');
+
+        if (!$startdate || !$enddate) {
+            return new PostResource(false, 'startdate dan enddate wajib diisi', []);
+        }
+
+        // Ambil semua mobil yang punya transaksi BBM di rentang waktu
+        $bbmQuery = Bbm::where('deleted_at', null)
+            ->whereDate('w_pengisian', '>=', $startdate)
+            ->whereDate('w_pengisian', '<=', $enddate);
+
+        // Group by id_mobil, ambil total jumlah per mobil
+        $bbmPerMobil = $bbmQuery
+            ->selectRaw('id_mobil, SUM(jumlah) as total_jumlah')
+            ->groupBy('id_mobil')
+            ->get();
+
+        $categories = [];
+        $data = [];
+        $totalSemua = 0;
+
+        foreach ($bbmPerMobil as $row) {
+            $mobil = Mobil::find($row->id_mobil);
+            if ($mobil) {
+                $categories[] = [$mobil->brand, $mobil->plat];
+                $jumlah = (float) $row->total_jumlah;
+                $data[] = $jumlah;
+                $totalSemua += $jumlah;
+            }
+        }
+
+        $result = [
+            'categories' => $categories,
+            'data' => $data,
+            'total_semua' => $totalSemua,
+        ];
+
+        return new PostResource(true, 'success', $result);
+    }
 }
