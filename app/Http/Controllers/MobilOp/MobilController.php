@@ -182,7 +182,8 @@ class MobilController extends Controller
     {
         $permintaan = Permintaan::find($id);
         if ($permintaan) {
-            $permintaan->status = 1; // Approved
+            $permintaan->status = 1; 
+            $permintaan->review_by= Employe::employeId(); // Approved
             if ($permintaan->save()) {
                 return new PostResource(true, 'Permintaan approved successfully', []);
             }
@@ -197,6 +198,7 @@ class MobilController extends Controller
         if ($permintaan) {
             $permintaan->status = 0; // Rejected
             $permintaan->ket = $request->ket; // Insert rejection reason
+            $permintaan->review_by= Employe::employeId(); 
             if ($permintaan->save()) {
                 return new PostResource(true, 'Permintaan rejected successfully', []);
             }
