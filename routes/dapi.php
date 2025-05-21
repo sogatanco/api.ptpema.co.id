@@ -204,7 +204,7 @@ Route::controller(MobilController::class)->group(function(){
 });
 
 Route::controller(LayarController::class)->group(function(){
-    Route::post('layar/insert', 'insert')->middleware("role:Employee");
-    Route::get('layar', 'getLayar');
+    Route::post('lay/insert', 'insert')->middleware("role:Employee");
+    Route::get('lay', 'getLayar');
 });
 
