@@ -122,6 +122,19 @@ class MobilController extends Controller
         return new PostResource(true, 'success', $data);
     }
 
+     public function getPermintaanAfter()
+    {
+        $data = Permintaan::whereNotNull('status')
+            ->where('deleted_at', null)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        foreach ($data as $item) {
+            $item->review_by_name = Employe::where('employe_id', $item->review_by)->first('first_name')->first_name;
+            $item->created_by_name = Employe::where('employe_id', $item->created_by)->first('first_name')->first_name;
+        }
+        return new PostResource(true, 'success', $data);
+    }
+
     public function insertPengambilan(Request $request) {
         $pengambilan = new Pengambilan();
 
