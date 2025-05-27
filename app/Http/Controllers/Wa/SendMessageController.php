@@ -26,7 +26,7 @@ class SendMessageController extends Controller
     {
         if ($resp = $this->checkBearerToken($request)) return $resp;
 
-        $data = SendWa::whereNull('s_wa')->first();
+        $data = SendWa::whereNull('s_wa')->whereNotNull('pn')->first();
         if ($data && isset($data->pn)) {
             $data->number = $data->pn;
         }
