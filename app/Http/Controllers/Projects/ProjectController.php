@@ -963,7 +963,8 @@ class ProjectController extends Controller
 
                 // cari semua task parent berdasarkan divisi yg akses
                 $allTask[$m] = Task::select('task_id', 'task_progress')
-                                ->where(['project_id' =>$meles[$m]->project_id, 'task_parent' => null, 'division' => $data[$m]['pic_active']->organization_id])
+                                // ->where(['project_id' =>$meles[$m]->project_id, 'task_parent' => null, 'division' => $data[$m]['pic_active']->organization_id])
+                                ->where(['project_id' =>$meles[$m]->project_id, 'task_parent' => null])
                                 ->get();
 
                 $taskIds[$m]= [];

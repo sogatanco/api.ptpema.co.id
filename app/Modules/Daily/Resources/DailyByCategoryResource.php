@@ -30,11 +30,11 @@ class DailyByCategoryResource extends JsonResource
                     'category' => $item['category'],
                     'progress' => $item['progress'],
                     'start_date' => [
-                        'date' => Carbon::parse($item['start_date'])->format('d-m-Y'),
+                        'date' => Carbon::parse($item['start_date'])->format('Y-m-d'),
                         'time' => Carbon::parse($item['start_date'])->format('H:i'),
                     ],
                     'end_date' => [
-                        'date' => Carbon::parse($item['end_date'])->format('d-m-Y'),
+                        'date' => Carbon::parse($item['end_date'])->format('Y-m-d'),
                         'time' => Carbon::parse($item['end_date'])->format('H:i'),
                     ],
                     'date_range' => $this->formatTimeline($item['start_date'], $item['end_date']),

@@ -16,11 +16,11 @@ class DailyResource extends JsonResource
             'category' => $this->category,
             'progress' => $this->progress,
             'start_date' => [
-                'date' => $this->start_date ? Carbon::parse($this->start_date)->format('d-m-Y') : null,
+                'date' => $this->start_date ? Carbon::parse($this->start_date)->format('Y-m-d') : null,
                 'time' => $this->start_date ? Carbon::parse($this->start_date)->format('H:i') : null,
             ],
             'end_date' => [
-                'date' => $this->end_date ? Carbon::parse($this->end_date)->format('d-m-Y') : null,
+                'date' => $this->end_date ? Carbon::parse($this->end_date)->format('Y-m-d') : null,
                 'time' => $this->end_date ? Carbon::parse($this->end_date)->format('H:i') : null,
             ],
             'status' => $this->status,
