@@ -12,7 +12,7 @@ class SendMessageController extends Controller
     private function checkBearerToken($request)
     {
         $token = $request->bearerToken();
-        $expected = env('API_BEARER_TOKEN');
+        $expected ='6e766aa21ef5173e73d602767850bbe1f2c51af2';
         if (!$token || $token !== $expected) {
             return response()->json([
                 'success' => false,
