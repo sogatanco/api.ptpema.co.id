@@ -10,9 +10,9 @@ class SendMessageController extends Controller
 {
     public function getFirst()
     {
-        $data = SendWa::first();
+        $data = SendWa::whereNull('s_wa')->first();
         if ($data && isset($data->pn)) {
-            $data->pn = (int) $data->pn;
+            $data->number =$data->pn;
         }
         return response()->json([
             'success' => true,
