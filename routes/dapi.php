@@ -18,6 +18,7 @@ use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 use App\Http\Controllers\Layar\LayarController;
+use App\Http\Controllers\Wa\SendMessageController;
 
 use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Sppd\PengajuanController;
@@ -209,4 +210,6 @@ Route::controller(LayarController::class)->group(function(){
     Route::post('lay/insert', 'insert')->middleware("role:Employee");
     Route::get('lay', 'getLayar');
 });
+
+Route::get('send-message/first', [SendMessageController::class, 'getFirst']);
 
