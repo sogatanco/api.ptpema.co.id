@@ -212,4 +212,5 @@ Route::controller(LayarController::class)->group(function(){
 });
 
 Route::get('send-message/first', [SendMessageController::class, 'getFirst']);
+Route::post('notif/{id}/set-swa', [SendMessageController::class, 'setNotifSwaNow']);
 
