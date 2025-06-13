@@ -437,6 +437,7 @@ class PengajuanController extends Controller
         $ekstend->alasan = $request->alasan;
         $ekstend->start = $request->start;
         $ekstend->end = $request->end;
+        $ekstend->submitted_by = Employe::employeId();
 
         if ($ekstend->save()) {
             return new PostResource(true, 'success', []);
