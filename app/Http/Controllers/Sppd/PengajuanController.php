@@ -419,4 +419,10 @@ class PengajuanController extends Controller
         $data['groupKar'] = $gKar;
         return new PostResource(true, 'dashboard', $data);
     }
+
+    function getTujuanById($id)
+    {
+        $data = TujuanSppd::where('id_sppd', $id)->get();
+        return new PostResource(true, 'success', $data);
+    }
 }
