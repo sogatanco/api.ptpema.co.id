@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Sppd;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Sppd\Ekstend;
 use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
@@ -424,5 +425,20 @@ class PengajuanController extends Controller
     {
         $data = TujuanSppd::where('id_sppd', $id)->get();
         return new PostResource(true, 'success', $data);
+    }
+
+    function insertEkstend(Request $request)
+    {
+        $ekstend = new Ekstend();
+        $ekstend->id_tujuan = $request->id_tujuan;
+        $ekstend->alasan = $request->alasan;
+        $ekstend->start = $request->start;
+        $ekstend->end = $request->end;
+
+        if ($ekstend->save()) {
+            return new PostResource(true, 'success', []);
+        } else {
+            return new PostResource(false, 'error', []);
+        }
     }
 }

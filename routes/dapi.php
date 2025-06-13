@@ -131,6 +131,7 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
      Route::get('sppd/dashboard', 'dataDashboard')->middleware("role:Employee");
      Route::get('sppd/tujuan/{id}', 'getTujuanById')->middleware("role:Employee");
+     Route::post('sppd/ekstend', 'insertEkstend')->middleware("role:Employee");
 });
 
 // Verification Document
