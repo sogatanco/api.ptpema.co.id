@@ -429,6 +429,9 @@ class PengajuanController extends Controller
 
     function insertEkstend(Request $request)
     {
+        // Hapus ekstend dengan id_tujuan yang sama sebelum insert
+        Ekstend::where('id_tujuan', $request->id_tujuan)->delete();
+
         $ekstend = new Ekstend();
         $ekstend->id_tujuan = $request->id_tujuan;
         $ekstend->alasan = $request->alasan;
