@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sppd;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Sppd\Ekstend;
+use App\Models\Sppd\EkstendView;
 use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
@@ -206,6 +207,7 @@ class PengajuanController extends Controller
         }
 
         $data['realisasi'] = $rill;
+        $data['ekstend']=EkstendView::where('id_sppd', $id)->get();
 
         $data['tujuan_sppd'] = $tujuans;
 
