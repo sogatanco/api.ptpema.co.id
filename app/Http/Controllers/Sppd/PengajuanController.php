@@ -211,7 +211,6 @@ class PengajuanController extends Controller
 
         $data['tujuan_sppd'] = $tujuans;
 
-
         $data['check_doc'] = CheklistDoc::where('id_sppd', $id)->get();
 
         $data['realisasi_biaya'] = RealisasiBiaya::where('id_sppd', $id)->get();
