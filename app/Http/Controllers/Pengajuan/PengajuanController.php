@@ -11,6 +11,7 @@ use App\Models\Employe;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Notification\NotificationController;
+use App\Models\Pengajuan\PengajuanTax;
 
 
 class PengajuanController extends Controller
@@ -21,7 +22,12 @@ class PengajuanController extends Controller
 
         $pengajuan = Pengajuan::latest()->whereHas('approvals', function ($query) {
             $query->where('status', '!=', 1)->orWhereNull('status');
-        })->with(['approvals', 'sub_pengajuan'])->get();
+        })
+        ->with([
+            'approvals',
+            'sub_pengajuan.taxes' // tambahkan relasi taxes di dalam sub_pengajuan
+        ])
+        ->get();
 
 
         return response()->json([
@@ -53,11 +59,22 @@ class PengajuanController extends Controller
             'jenis_permohonan' => 'required|string|max:255',
             'no_dokumen' => 'required|string|max:255',
             'lampiran' => 'required|file|mimes:pdf',
-            'items' => 'required|json',
+            'items' => 'required',
         ]);
-    
-        $items = json_decode($validated['items'], true);
-    
+
+        // Ambil dan decode items jika perlu
+        $items = $validated['items'];
+        if (is_string($items)) {
+            $items = json_decode($items, true);
+        }
+
+        // Dump semua data untuk pengecekan
+        // return response()->json([
+        //     'validated' => $validated,
+        //     'items' => $items,
+        //     'request_all' => $request->all()
+        // ], 200);
+
         // Validasi isi dari items (secara manual per item)
         foreach ($items as $index => $item) {
             if (
@@ -72,14 +89,21 @@ class PengajuanController extends Controller
                 ], 422);
             }
         }
-    
-        // Proses upload file jika ada
-        if ($request->hasFile('lampiran')) {
-        $file = $request->file('lampiran');
-        $fileName = now()->format('YmdHis') . '.' . $file->getClientOriginalExtension();
-        $file->move(public_path('pengajuan'), $fileName);
+
+        // Pastikan folder pengajuan ada
+        $pengajuanPath = public_path('pengajuan');
+        if (!file_exists($pengajuanPath)) {
+            mkdir($pengajuanPath, 0755, true);
         }
-    
+
+        // Proses upload file jika ada
+        $fileName = null;
+        if ($request->hasFile('lampiran')) {
+            $file = $request->file('lampiran');
+            $fileName = now()->format('YmdHis') . '.' . $file->getClientOriginalExtension();
+            $file->move($pengajuanPath, $fileName);
+        }
+
         // Simpan pengajuan
         $pengajuan = Pengajuan::create([
             'pengajuan' => $validated['jenis_permohonan'],
@@ -87,10 +111,10 @@ class PengajuanController extends Controller
             'lampiran' => $fileName,
             'created_by' => Employe::employeId()
         ]);
-    
+
         if ($pengajuan) {
             foreach ($items as $item) {
-                SubPengajuan::create([
+                $subPengajuan = SubPengajuan::create([
                     'pengajuan_id' => $pengajuan->id,
                     'nama_item' => $item['itemName'],
                     'jumlah' => $item['quantity'],
@@ -99,22 +123,36 @@ class PengajuanController extends Controller
                     'total_biaya' => $item['price'] * $item['quantity'],
                     'keterangan' => $item['description'] ?? null,
                 ]);
+
+                // Debug pajak yang akan disimpan
+                // \Log::info('TAXES', ['taxes' => $item['taxes'] ?? null]);
+
+                // Simpan pajak jika ada
+                if (isset($item['taxes']) && is_array($item['taxes']) && count($item['taxes']) > 0) {
+                    foreach ($item['taxes'] as $tax) {
+                        PengajuanTax::create([
+                            'sub_pengajuan_id' => $subPengajuan->id,
+                            'nama_pajak' => $tax['name'] ?? '',
+                            'persentase' => isset($tax['percentage']) ? (int)$tax['percentage'] : 0,
+                            'calculation' => (isset($tax['type']) && $tax['type'] == 'increment') ? 'increase' : 'decrease',
+                        ]);
+                    }
+                }
             }
 
-            
             $recipients = ApprovedUmumPengajuan::where('pengajuan_id', $pengajuan->id)
                             ->where('step', 1)
                             ->get(['employe_id']);
 
             // Kirim notifikasi ke user
             NotificationController::new('APPROVED_PENGAJUAN', $recipients, '');
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Data Berhasil Disimpan',
             ], 200);
         }
-    
+
         return response()->json([
             'success' => false,
             'message' => 'Data Gagal Disimpan'
@@ -138,8 +176,21 @@ class PengajuanController extends Controller
         'jenis_permohonan' => 'required|string|max:255',
         'no_dokumen' => 'required|string|max:255',
         'lampiran' => 'nullable|file|mimes:pdf',
-        'items' => 'required|json',
+        'items' => 'required',
     ]);
+
+    // Ambil dan decode items jika perlu
+    $items = $validated['items'];
+    if (is_string($items)) {
+        $items = json_decode($items, true);
+    }
+
+    // Dump data untuk pengecekan
+    // return response()->json([
+    //     'validated' => $validated,
+    //     'items' => $items,
+    //     'request_all' => $request->all()
+    // ], 200);
 
     $fileName = $pengajuan->lampiran; // default: tetap pakai file lama
 
@@ -149,12 +200,11 @@ class PengajuanController extends Controller
         if ($pengajuan->lampiran && file_exists(public_path('pengajuan/' . $pengajuan->lampiran))) {
             unlink(public_path('pengajuan/' . $pengajuan->lampiran));
         }
-        
 
-    // Simpan file baru
-    $file = $request->file('lampiran');
-    $fileName = now()->format('YmdHis') . '.' . $file->getClientOriginalExtension();
-    $file->move(public_path('pengajuan'), $fileName);
+        // Simpan file baru
+        $file = $request->file('lampiran');
+        $fileName = now()->format('YmdHis') . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('pengajuan'), $fileName);
     }
 
     // Update data utama
@@ -167,43 +217,49 @@ class PengajuanController extends Controller
     ]);
 
     if ($updated) {
+        // Hapus semua sub pengajuan dan pajaknya lama
+        $oldSubs = SubPengajuan::where('pengajuan_id', $id)->get();
+        foreach ($oldSubs as $oldSub) {
+            // Hapus pajak untuk setiap sub pengajuan lama
+            PengajuanTax::where('sub_pengajuan_id', $oldSub->id)->delete();
+        }
         // Hapus semua sub pengajuan lama
         SubPengajuan::where('pengajuan_id', $id)->delete();
 
-        $items = json_decode($validated['items'], true);
-
-        // Validasi manual isi items
-        foreach ($items as $index => $item) {
-            if (
-                empty($item['itemName']) ||
-                !isset($item['quantity']) || !is_numeric($item['quantity']) || $item['quantity'] < 1 ||
-                empty($item['unit']) ||
-                !isset($item['price']) || !is_numeric($item['price']) || $item['price'] < 0
-            ) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Validasi item ke-" . ($index + 1) . " gagal. Pastikan semua field benar."
-                ], 422);
-            }
-
-            // Simpan item baru
-            SubPengajuan::create([
+        // Simpan ulang sub pengajuan dan pajak
+        foreach ($items as $item) {
+            $subPengajuan = SubPengajuan::create([
                 'pengajuan_id' => $pengajuan->id,
                 'nama_item' => $item['itemName'],
                 'jumlah' => $item['quantity'],
                 'satuan' => $item['unit'],
                 'biaya_satuan' => $item['price'],
                 'total_biaya' => $item['price'] * $item['quantity'],
-                'keterangan' => $item['description'] ?? null
+                'keterangan' => $item['description'] ?? null,
             ]);
 
-            $recipients = ApprovedUmumPengajuan::where('pengajuan_id', $pengajuan->id)
-                            ->where('step', 1)
-                            ->get(['employe_id']);
+            // Hapus pajak sebelumnya untuk sub pengajuan baru (antisipasi jika ada duplikasi)
+            PengajuanTax::where('sub_pengajuan_id', $subPengajuan->id)->delete();
 
-            // Kirim notifikasi ke user
-            NotificationController::new('APPROVED_PENGAJUAN', $recipients, '');
+            // Simpan pajak jika ada
+            if (isset($item['taxes']) && is_array($item['taxes']) && count($item['taxes']) > 0) {
+                foreach ($item['taxes'] as $tax) {
+                    PengajuanTax::create([
+                        'sub_pengajuan_id' => $subPengajuan->id,
+                        'nama_pajak' => $tax['name'] ?? '',
+                        'persentase' => isset($tax['percentage']) ? (int)$tax['percentage'] : 0,
+                        'calculation' => (isset($tax['type']) && $tax['type'] == 'increment') ? 'increase' : 'decrease',
+                    ]);
+                }
+            }
         }
+
+        $recipients = ApprovedUmumPengajuan::where('pengajuan_id', $pengajuan->id)
+                        ->where('step', 1)
+                        ->get(['employe_id']);
+
+        // Kirim notifikasi ke user
+        NotificationController::new('APPROVED_PENGAJUAN', $recipients, '');
 
         return response()->json([
             'success' => true,
