@@ -16,6 +16,7 @@ class Daily extends Model
         'employe_id',
         'task_id',
         'activity_name',
+        'category',
         'progress',
         'start_date',
         'end_date',

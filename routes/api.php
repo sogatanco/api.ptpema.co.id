@@ -16,6 +16,7 @@ use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Daily\DailyAttachmentController;
 use App\Http\Controllers\Daily\DailyCommentController;
 use App\Http\Controllers\Daily\DailyController;
+use App\Modules\Daily\Controllers\DailyController as ModuleDailyController;
 use App\Http\Controllers\Report\ProjectReportController;
 use App\Http\Controllers\File\PreviewController;
 use App\Http\Controllers\Master\BoardOrganizationController;
@@ -26,6 +27,8 @@ use App\Http\Controllers\Pengajuan\PengajuanController;
 use App\Http\Controllers\Pengajuan\ApprovalPengajuanController;
 use App\Http\Controllers\Pengajuan\PengajuanSelesaiController;
 use App\Http\Controllers\Pengajuan\PreviewFilePengajuanController;
+use App\Modules\Daily\Controllers\ChangeProgressController;
+use App\Modules\Daily\Controllers\ChangeStatusController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -249,6 +252,21 @@ Route::controller(DailyController::class)->group(function(){
     Route::delete('/daily/delete/{id}', "delete")->middleware("role:Employee");
     Route::get('/daily/list-by-employee', "listByEmployee")->middleware("role:Employee");
 });
+
+Route::controller(ModuleDailyController::class)->group(function(){
+    Route::post('/module/daily/store', "store")->middleware("role:Employee");
+    Route::put('/module/daily/update', "update")->middleware("role:Employee");
+    Route::delete('/module/daily/delete', "destroy")->middleware("role:Employee");
+    Route::get('module/daily/by-category/{category}', 'getByCategory')->middleware("role:Employee");
+});
+
+// change progress with bulk
+Route::controller(ChangeProgressController::class)->group(function(){
+    Route::put('/module/daily/change-progress', "changeProgress")->middleware("role:Employee");
+});
+
+// change status with bulk
+Route::post('module/daily/change-status', ChangeStatusController::class)->middleware("role:Employee");
 
 Route::controller(DailyAttachmentController::class)->group(function(){
     Route::get('/daily/attachment/list', "index")->middleware("role:Employee");

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Sppd;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Models\Sppd\Ekstend;
+use App\Models\Sppd\EkstendView;
 use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
@@ -205,9 +207,9 @@ class PengajuanController extends Controller
         }
 
         $data['realisasi'] = $rill;
+        $data['ekstend']=EkstendView::where('id_sppd', $id)->get();
 
         $data['tujuan_sppd'] = $tujuans;
-
 
         $data['check_doc'] = CheklistDoc::where('id_sppd', $id)->get();
 
@@ -418,5 +420,30 @@ class PengajuanController extends Controller
         $gKar = GroupByKar::orderBy('budget', 'DESC')->get();
         $data['groupKar'] = $gKar;
         return new PostResource(true, 'dashboard', $data);
+    }
+
+    function getTujuanById($id)
+    {
+        $data = TujuanSppd::where('id_sppd', $id)->get();
+        return new PostResource(true, 'success', $data);
+    }
+
+    function insertEkstend(Request $request)
+    {
+        // Hapus ekstend dengan id_tujuan yang sama sebelum insert
+        Ekstend::where('id_tujuan', $request->id_tujuan)->delete();
+
+        $ekstend = new Ekstend();
+        $ekstend->id_tujuan = $request->id_tujuan;
+        $ekstend->alasan = $request->alasan;
+        $ekstend->start = $request->start;
+        $ekstend->end = $request->end;
+        $ekstend->submitted_by = Employe::employeId();
+
+        if ($ekstend->save()) {
+            return new PostResource(true, 'success', []);
+        } else {
+            return new PostResource(false, 'error', []);
+        }
     }
 }

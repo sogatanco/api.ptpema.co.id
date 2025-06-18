@@ -17,6 +17,8 @@ use App\Http\Controllers\Asset\InvController;
 use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
+use App\Http\Controllers\Layar\LayarController;
+use App\Http\Controllers\Wa\SendMessageController;
 
 use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Sppd\PengajuanController;
@@ -128,6 +130,8 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
      Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
      Route::get('sppd/dashboard', 'dataDashboard')->middleware("role:Employee");
+     Route::get('sppd/tujuan/{id}', 'getTujuanById')->middleware("role:Employee");
+     Route::post('sppd/ekstend', 'insertEkstend')->middleware("role:Employee");
 });
 
 // Verification Document
@@ -187,6 +191,8 @@ Route::controller(MobilController::class)->group(function(){
      Route::post('mobil/update/{id}', 'update')->middleware("role:Employee");
      Route::post('/mobil/insert-permintaan',  'insertPermintaan')->middleware("role:Employee");
      Route::get('/mobil/get-permintaan', 'getPermintaan')->middleware("role:Employee");
+     Route::get('/mobil/get-permintaan-after', 'getPermintaanAfter')->middleware("role:Employee");
+
      Route::post('/mobil/delete-permintaan/{id}', 'deletePermintaan')->middleware("role:Employee");
      Route::get('/mobil/get-permintaan-by-status', 'getPermintaanByStatus')->middleware("role:Employee");
      Route::post('/mobil/insert-pengambilan', 'insertPengambilan')->middleware("role:Employee");
@@ -196,5 +202,17 @@ Route::controller(MobilController::class)->group(function(){
      Route::post('/mobil/approve-permintaan/{id}', 'approvePermintaan')->middleware("role:Employee");
      Route::post('/mobil/reject-permintaan/{id}', 'rejectPermintaan')->middleware("role:Employee");
      Route::post('/mobil/insert-bbm', 'insertBBM')->middleware("role:Employee");
+     Route::get('/mobil/get-bbm', 'getBBM')->middleware("role:Employee");
+     Route::get('mobil/available', 'getMobilAktifDanTidakDalamPemakaian')->middleware("role:Employee");
+     Route::get('mobil/pengambilan-calendar', 'getPengambilanCalendar')->middleware("role:Employee");
+     Route::get('mobil/bbm-laporan', 'getBBMLaporan')->middleware("role:Employee");
 });
+
+Route::controller(LayarController::class)->group(function(){
+    Route::post('lay/insert', 'insert')->middleware("role:Employee");
+    Route::get('lay', 'getLayar');
+});
+
+Route::get('send-message/first', [SendMessageController::class, 'getFirst']);
+Route::post('notif/{id}/set-swa', [SendMessageController::class, 'setNotifSwaNow']);
 
