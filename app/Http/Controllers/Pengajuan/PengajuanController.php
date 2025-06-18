@@ -133,7 +133,7 @@ class PengajuanController extends Controller
                         PengajuanTax::create([
                             'sub_pengajuan_id' => $subPengajuan->id,
                             'nama_pajak' => $tax['name'] ?? '',
-                            'persentase' => isset($tax['percentage']) ? (int)$tax['percentage'] : 0,
+                            'persentase' => isset($tax['percentage']) ? (float)$tax['percentage'] : 0,
                             'calculation' => (isset($tax['type']) && $tax['type'] == 'increment') ? 'increase' : 'decrease',
                         ]);
                     }
@@ -247,7 +247,7 @@ class PengajuanController extends Controller
                     PengajuanTax::create([
                         'sub_pengajuan_id' => $subPengajuan->id,
                         'nama_pajak' => $tax['name'] ?? '',
-                        'persentase' => isset($tax['percentage']) ? (int)$tax['percentage'] : 0,
+                        'persentase' => isset($tax['percentage']) ? (float)$tax['percentage'] : 0,
                         'calculation' => (isset($tax['type']) && $tax['type'] == 'increment') ? 'increase' : 'decrease',
                     ]);
                 }
