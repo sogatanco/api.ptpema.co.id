@@ -1504,7 +1504,7 @@ class TaskController extends Controller
         $directSupervisor = Structure::select('direct_atasan')
                             ->where('employe_id', $employeId)
                             ->first();
-
+        $allResult = [];
         if($isMemberActive){
             // JIKA USER ADALAH MEMBER DIVISI
             // AMBIL SEMUA TASK BY DIVISI AKTIF KECUALI ADDITIONAL TASK MILIK DIVISI LAIN
