@@ -1478,6 +1478,11 @@ class TaskController extends Controller
                         ->where(['project_id' => $projectId, 'active' => 1])
                         ->first();
 
+        $dataUser = [
+            'employe_id' => $employeId,
+            'division_active' => $divisionActive
+        ];
+
         if($employeId !== $divisionActive->employe_id){
             // Jika user gak jelas
             if(!in_array($employeId, $userGakJelas)){
@@ -1504,7 +1509,6 @@ class TaskController extends Controller
         $directSupervisor = Structure::select('direct_atasan')
                             ->where('employe_id', $employeId)
                             ->first();
-        $allResult = [];
         if($isMemberActive){
             // JIKA USER ADALAH MEMBER DIVISI
             // AMBIL SEMUA TASK BY DIVISI AKTIF KECUALI ADDITIONAL TASK MILIK DIVISI LAIN
@@ -1525,8 +1529,6 @@ class TaskController extends Controller
 
                 $result2 = TaskPic::where($whereByDirectSupervisor)
                         ->get();
-
-                $allResult = $result1->toArray();
 
                 if(count($result1) > 0 && count($result2) > 0){
                     $listOfTask = array_merge($result1->toArray(), $result2->toArray());
@@ -1685,7 +1687,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "is_member_active" => $isMemberActive,
-            'all_rasult' => $allResult,
+            'data_user' => $dataUser,
             "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
             "data" => $level1,
