@@ -1481,24 +1481,41 @@ class TaskController extends Controller
         $dataCompare = [];
 
         if($employeId !== $divisionActive->employe_id){
+            $dataCompare = [
+                "info" => "bukan 1 divisi",
+            ];
             // Jika user gak jelas
             if(!in_array($employeId, $userGakJelas)){
+
+                $dataCompare = [
+                    "info" => "member gak jelas",
+                ];
 
                 $isMemberActive = true;
 
             }else{
+
+
 
                 // Jika user bukan manager
                 $employeCompare = Structure::select('organization_id')
                                 ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
                                 ->get();
 
-                $dataCompare = $employeCompare;
+                $dataCompare = [
+                    "info" => "seharusnya kemari",
+                    'data' => $employeCompare
+                ];
 
                 $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
 
             }
         } else {
+            $dataCompare = [
+                    "info" => "masak kemari?",
+                    'data' => ""
+                ];
+
             // jika user active adalah manager
             $isMemberActive = true;
         }
@@ -1686,7 +1703,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "is_member_active" => $isMemberActive,
-            'data_user' => $dataCompare,
+            'data_compare' => $dataCompare,
             "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
             "data" => $level1,
