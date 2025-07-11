@@ -1468,7 +1468,7 @@ class TaskController extends Controller
         $employeDivision = Employe::getEmployeDivision($employeId);
 
         // User gak jelas
-        $userGakJelas = ['202310079K'];
+        // $userGakJelas = ['202310079K'];
 
         // ROLES USER
         $userRoles = Auth::user()->roles;
@@ -1478,44 +1478,16 @@ class TaskController extends Controller
                         ->where(['project_id' => $projectId, 'active' => 1])
                         ->first();
 
-        $dataCompare = [];
-
         if($employeId !== $divisionActive->employe_id){
-            $dataCompare = [
-                "info" => "bukan 1 divisi",
-            ];
-            // Jika user gak jelas
-            if(!in_array($employeId, $userGakJelas)){
 
-                $dataCompare = [
-                    "info" => "member gak jelas",
-                ];
-
-                $isMemberActive = true;
-
-            }else{
-
-
-
-                // Jika user bukan manager
+            // Jika user bukan manager
                 $employeCompare = Structure::select('organization_id')
                                 ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
                                 ->get();
 
-                $dataCompare = [
-                    "info" => "seharusnya kemari",
-                    'data' => $employeCompare
-                ];
-
                 $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
 
-            }
         } else {
-            $dataCompare = [
-                    "info" => "masak kemari?",
-                    'data' => ""
-                ];
-
             // jika user active adalah manager
             $isMemberActive = true;
         }
@@ -1703,7 +1675,6 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "is_member_active" => $isMemberActive,
-            'data_compare' => $dataCompare,
             "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
             "data" => $level1,
