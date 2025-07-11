@@ -1526,6 +1526,8 @@ class TaskController extends Controller
                 $result2 = TaskPic::where($whereByDirectSupervisor)
                         ->get();
 
+                $allResult = array_merge($result1->toArray(), $result2->toArray());
+
                 if(count($result1) > 0 && count($result2) > 0){
                     $listOfTask = array_merge($result1->toArray(), $result2->toArray());
                 }elseif(count($result1) > 0){
@@ -1683,7 +1685,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "is_member_active" => $isMemberActive,
-            'list_task' => $listOfTask,
+            'all_rasult' => $allResult,
             "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
             "data" => $level1,
