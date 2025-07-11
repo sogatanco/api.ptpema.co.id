@@ -1526,7 +1526,7 @@ class TaskController extends Controller
                 $result2 = TaskPic::where($whereByDirectSupervisor)
                         ->get();
 
-                $allResult = array_merge($result1->toArray(), $result2->toArray());
+                $allResult = $result1->toArray();
 
                 if(count($result1) > 0 && count($result2) > 0){
                     $listOfTask = array_merge($result1->toArray(), $result2->toArray());
