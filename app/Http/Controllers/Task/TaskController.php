@@ -1478,10 +1478,7 @@ class TaskController extends Controller
                         ->where(['project_id' => $projectId, 'active' => 1])
                         ->first();
 
-        $dataUser = [
-            'employe_id' => $employeId,
-            'division_active' => $divisionActive
-        ];
+        $dataCompare = [];
 
         if($employeId !== $divisionActive->employe_id){
             // Jika user gak jelas
@@ -1495,6 +1492,8 @@ class TaskController extends Controller
                 $employeCompare = Structure::select('organization_id')
                                 ->whereIn('employe_id', [$divisionActive->employe_id, $employeId])
                                 ->get();
+
+                $dataCompare = $employeCompare;
 
                 $isMemberActive = $employeCompare[0]->organization_id === $employeCompare[1]->organization_id;
 
@@ -1687,7 +1686,7 @@ class TaskController extends Controller
         return response()->json([
             "status" => true,
             "is_member_active" => $isMemberActive,
-            'data_user' => $dataUser,
+            'data_user' => $dataCompare,
             "direct_supervisor" => $directSupervisor->direct_atasan,
             "total" => count($level1),
             "data" => $level1,
