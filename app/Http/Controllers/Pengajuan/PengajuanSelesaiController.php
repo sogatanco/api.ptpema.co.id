@@ -27,7 +27,7 @@ class PengajuanSelesaiController extends Controller
                     }
                 ]);
             },
-            'sub_pengajuan'
+            'sub_pengajuan.taxes'
         ])
         ->latest()
         ->get();

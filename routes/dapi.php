@@ -18,6 +18,7 @@ use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 use App\Http\Controllers\Layar\LayarController;
+use App\Http\Controllers\Wa\SendMessageController;
 
 use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Sppd\PengajuanController;
@@ -129,6 +130,8 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
      Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
      Route::get('sppd/dashboard', 'dataDashboard')->middleware("role:Employee");
+     Route::get('sppd/tujuan/{id}', 'getTujuanById')->middleware("role:Employee");
+     Route::post('sppd/ekstend', 'insertEkstend')->middleware("role:Employee");
 });
 
 // Verification Document
@@ -209,4 +212,7 @@ Route::controller(LayarController::class)->group(function(){
     Route::post('lay/insert', 'insert')->middleware("role:Employee");
     Route::get('lay', 'getLayar');
 });
+
+Route::get('send-message/first', [SendMessageController::class, 'getFirst']);
+Route::post('notif/{id}/set-swa', [SendMessageController::class, 'setNotifSwaNow']);
 

@@ -19,7 +19,7 @@ class ApprovalPengajuanController extends Controller
         })
         ->with(['approvals' => function ($q) {
             $q->orderBy('step'); // biar urut step
-        }, 'sub_pengajuan'])
+        }, 'sub_pengajuan.taxes'])
         ->get()
         ->filter(function ($pengajuan) {
             $currentApproval = $pengajuan->approvals->firstWhere('employe_id', Employe::employeId());
@@ -38,11 +38,14 @@ class ApprovalPengajuanController extends Controller
         
             return $previousStep && $previousStep->status == 1 && is_null($currentApproval->status);
         });
+
+        // Ubah agar array dimulai dari index 0 (default)
+        $data = array_values($pengajuan->toArray());
         
         return response()->json([
             'success' => true,
             'message' => 'From index Controller',
-            'data' => $pengajuan
+            'data' => $data
         ], 200);
     }
 
