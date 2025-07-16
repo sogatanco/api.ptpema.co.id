@@ -50,7 +50,7 @@ class Project extends Model
         return $this->hasMany(ProjectHistory::class, 'project_id', 'project_id');
     }
 
-    protected $with = ['project_task'];
+    protected $with = ['project_task', 'activeStage'];
     public function project_task(): HasMany
     {
         return $this->hasMany(Task::class, 'project_id', 'project_id');
@@ -60,6 +60,7 @@ class Project extends Model
     {
         return $this->hasMany(ProjectStage::class, 'project_id', 'project_id');
     }
+
 
     public function activeStage()
     {

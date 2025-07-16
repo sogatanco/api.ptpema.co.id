@@ -433,6 +433,7 @@ class ProjectController extends Controller
         $data = Project::select(
                 'projects.project_name',
                 'project_histories.history_id',
+                'project_histories.employe_id',
                 'project_histories.history_desc',
                 'project_histories.created_at',
                 'project_histories.updated_at',

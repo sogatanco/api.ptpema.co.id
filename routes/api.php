@@ -29,6 +29,7 @@ use App\Http\Controllers\Pengajuan\PengajuanSelesaiController;
 use App\Http\Controllers\Pengajuan\PreviewFilePengajuanController;
 use App\Modules\Daily\Controllers\ChangeProgressController;
 use App\Modules\Daily\Controllers\ChangeStatusController;
+use App\Modules\Projects\Controllers\ProjectController as ModuleProjectController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -101,6 +102,12 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get("/project/manager/assigned/list", "assignedProject")->middleware("role:Manager");
     Route::get("/project/dashboard/recent-update/list", "recentUpdate")->middleware("role:Staff,Supervisor,Manager");
 });
+
+// Project routes with SRP
+Route::controller(ModuleProjectController::class)->group(function(){
+    Route::get('/project/dashboard/list-by-division', 'listProjectByDivision')->middleware("role:Staff");
+});
+// Project routes with SRP
 
 // Task routes
 Route::controller(TaskController::class)->group(function(){
