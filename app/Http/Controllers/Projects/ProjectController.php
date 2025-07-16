@@ -955,7 +955,7 @@ class ProjectController extends Controller
                 }
 
                 // cari pic project active
-                $data[$m]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
+                $meles[$m]['pic_active'] = ProjectHistory::select('employees.employe_id', 'employees.first_name', 'positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
                                         ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
                                         ->join('positions', 'positions.position_id', '=', 'employees.position_id')
                                         ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
