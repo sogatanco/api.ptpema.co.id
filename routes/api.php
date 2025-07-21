@@ -95,7 +95,7 @@ Route::controller(ProjectController::class)->group(function(){
     Route::get("/project/{project_id}/{employe_id}/bast/review", "bastReview")->middleware("role:Director");
     Route::post("/project/{history_id}/bast/approval", "bastApproval")->middleware("role:Director");
     Route::get("/project/{employe_id}/total-data/", "totalDataByEmploye")->middleware("role:Staff,Supervisor,Manager,Director");
-    Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Supervisor,Manager,Director");
+    Route::get("/project/{employe_id}/list/", "projectByEmployeDivision")->middleware("role:Staff,Supervisor,Manager,ManagerEksekutif,Director");
     Route::get("/project/timeline/list-data", "timelineData")->middleware("role:Staff,Supervisor,Manager");
     Route::delete("/project/{project_id}", "destroy")->middleware("role:Staff,Supervisor,Manager");
     Route::post("/project/activity-base/add", "createActivityBase")->middleware("role:Staff,Supervisor,Manager");
@@ -121,7 +121,7 @@ Route::controller(TaskController::class)->group(function(){
     Route::get("/task/{project_id}/employe/all", "taskByEmploye")->middleware("role:Employee");
     Route::delete("task/{task_id}", 'destroy')->middleware("role:Employee");
     Route::post("task/{task_id}/upload", 'upload')->middleware("role:Employee");
-    Route::get("task/{project_id}/level1/review", 'review')->middleware("role:Supervisor,Manager,Director,ManagerEksekutifS");
+    Route::get("task/{project_id}/level1/review", 'review')->middleware("role:Supervisor,Manager,Director,ManagerEksekutif");
     Route::get("task/{project_id}/activities/all", 'taskByProject')->middleware("role:Supervisor,Manager,Director");
     Route::get("task/{employe_id}/recent/activity", 'recentTaskByEmploye')->middleware("role:Staff,Supervisor,Manager");
     Route::post("task/{employe_id}/{task_id}/favorite", 'addFavoriteTask')->middleware("role:Director");
