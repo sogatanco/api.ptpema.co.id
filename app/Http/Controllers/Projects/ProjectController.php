@@ -68,7 +68,7 @@ class ProjectController extends Controller
             for ($p=0; $p < count($projects); $p++) {
 
                 // cari pic project active
-                $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
+                $projects[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
                         ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
                         ->join('positions', 'positions.position_id', '=', 'employees.position_id')
                         ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
