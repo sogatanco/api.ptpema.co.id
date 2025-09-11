@@ -10,8 +10,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use App\Helpers\FormatTanggalRangeIndo;
-
 
 class DailyController extends Controller
 {
@@ -232,7 +230,7 @@ class DailyController extends Controller
                     'project_name' => $project->project_name,
                     'start_date' => optional($project->activeStage)->start_date,
                     'end_date' => optional($project->activeStage)->end_date,
-                    'date_range' => FormatTanggalRangeIndo( optional($project->activeStage)->start_date, optional($project->activeStage)->end_date),
+                    'date_range' => formatTanggalRangeIndo( optional($project->activeStage)->start_date, optional($project->activeStage)->end_date),
                     'total_task' => $project->project_task->count(),
                     'project_task' => $project->project_task->map(function ($task) use ($project) {
                         return [
