@@ -7,6 +7,7 @@ use App\Models\Daily\Daily;
 use App\Models\Employe;
 use App\Models\Projects\Project;
 use Carbon\Carbon;
+use App\Helpers\FormatTanggalRangeIndo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -230,7 +231,7 @@ class DailyController extends Controller
                     'project_name' => $project->project_name,
                     'start_date' => optional($project->activeStage)->start_date,
                     'end_date' => optional($project->activeStage)->end_date,
-                    'date_range' => formatTanggalRangeIndo( optional($project->activeStage)->start_date, optional($project->activeStage)->end_date),
+                    'date_range' => FormatTanggalRangeIndo::format( optional($project->activeStage)->start_date, optional($project->activeStage)->end_date),
                     'total_task' => $project->project_task->count(),
                     'project_task' => $project->project_task->map(function ($task) use ($project) {
                         return [
@@ -238,7 +239,7 @@ class DailyController extends Controller
                             'task_title' => $task->task_title,
                             'start_date' => optional($task->approval)->start_date,
                             'end_date' => optional($task->approval)->end_date,
-                            'date_range' => FormatTanggalRangeIndo( optional($task->approval)->start_date, optional($task->approval)->end_date),
+                            'date_range' => FormatTanggalRangeIndo::format( optional($task->approval)->start_date, optional($task->approval)->end_date),
                             'task_progress' => $task->task_progress,
                             'members' => $task->pics->map(function ($pic) use ($task) {
                                 $employee = $pic->employee;
@@ -274,7 +275,7 @@ class DailyController extends Controller
                                         'date' => $end ? Carbon::parse($end)->format('d-m-Y') : null,
                                         'time' => $end ? Carbon::parse($end)->format('H:i') : null,
                                     ],
-                                    'date_range' => $start && $end ? FormatTanggalRangeIndo($start, $end) : null,
+                                    'date_range' => $start && $end ? FormatTanggalRangeIndo::format($start, $end) : null,
                                     'progress' => $d->progress,
                                 ];
                             }),
