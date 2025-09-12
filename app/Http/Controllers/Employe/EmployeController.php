@@ -40,7 +40,7 @@ class EmployeController extends Controller
         $validator = Validator::make($request->all(), [
             'employe_id' => ['required', 'unique:employees'],
             'email' => ['required'],
-            'first_name' => ['required', 'max:20'],
+            'first_name' => ['required', 'max:100'],
             'position_code' => ['required'],
         ]);
 
@@ -55,7 +55,7 @@ class EmployeController extends Controller
         $newUser->email = $request->email;
         $newUser->password = Hash::make('asdasdasd');
         $newUser->roles = ["Employee"];
-        
+
 
         if(!$newUser->save()){
             return response()->json([
@@ -72,7 +72,7 @@ class EmployeController extends Controller
                 "message" => "Position not found."
             ], 404);
         }
-        
+
         $newEmploye = new Employe();
         $newEmploye->user_id = $newUser->id;
         $newEmploye->employe_id = $request->employe_id;
@@ -93,7 +93,7 @@ class EmployeController extends Controller
 
         if($positionCode != null){
             $position = Position::where('position_code', $positionCode)->first();
-            
+
             $data = [
                 'position_id' => $position->position_id,
                 'as_pic' => $request->as_pic,
@@ -195,7 +195,7 @@ class EmployeController extends Controller
                     ->get();
 
         }elseif($query === 'subordinate'){
-            // LIST ASSIGN UNTUK SUB AKTIFITAS 
+            // LIST ASSIGN UNTUK SUB AKTIFITAS
             // LIST BAWAHAN AJA
             $employeId = Employe::employeId();
 
@@ -215,7 +215,7 @@ class EmployeController extends Controller
                 ->orWhere('users.roles', 'like' , '%Supervisor%')
                 ->orWhere('users.roles', 'like' , '%Staff%')
                 ->get();
-                
+
             }elseif(in_array("Supervisor", $userRoles)){
                 // JIKA USER ADALAH SUPERVISOR
                 // LIST SUPERVISOR DAN STAFF
@@ -235,7 +235,7 @@ class EmployeController extends Controller
                         ->join('users', 'users.id', '=', 'employees.user_id')
                         ->where('users.roles', 'like' , '%Manager%')
                         ->get();
-    
+
             }elseif(in_array("Supervisor", $userRoles)){
                 // JIKA USER ADALAH SUPERVISOR
                 $list = Employe::select('employe_id', 'first_name', 'users.roles')
@@ -248,7 +248,7 @@ class EmployeController extends Controller
         $total = $list->count();
         $assignment = [];
 
-        for ($i=0; $i < $total; $i++) { 
+        for ($i=0; $i < $total; $i++) {
             $assignment[$i] = [
                 "value" => $list[$i]->employe_id,
                 "label" => $list[$i]->first_name,
@@ -265,17 +265,17 @@ class EmployeController extends Controller
 
     public function notification()
     {
-        
+
         $employeId = Employe::employeId();
         $nots = Notification::select(
-                    'id', 
-                    'project_notifications.from_employe', 
-                    'project_notifications.to_employe', 
-                    'project_id', 
-                    'title', 
+                    'id',
+                    'project_notifications.from_employe',
+                    'project_notifications.to_employe',
+                    'project_id',
+                    'title',
                     'desc',
-                    'category', 
-                    'employees.first_name', 
+                    'category',
+                    'employees.first_name',
                     'project_notifications.created_at'
                 )
                 ->where(['project_notifications.to_employe' => $employeId, 'read_status' => 0])
@@ -316,7 +316,7 @@ class EmployeController extends Controller
 
         return response()->json([
             "ata" => $atasan,
-            "atasan" => $atasan->level_1 === null ? 
+            "atasan" => $atasan->level_1 === null ?
                         $atasan->level_2 : $atasan->level_1
         ], 200);
     }
@@ -331,8 +331,8 @@ class EmployeController extends Controller
 
         $total = $memberOfDivision->count();
         $assignment = [];
-                    
-        for ($i=0; $i < $total; $i++) { 
+
+        for ($i=0; $i < $total; $i++) {
             $assignment[$i] = [
                 "value" => $memberOfDivision[$i]->employe_id,
                 "label" => $memberOfDivision[$i]->first_name,
