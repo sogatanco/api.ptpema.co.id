@@ -1060,7 +1060,7 @@ class TaskController extends Controller
            for ($l1=0; $l1 < count($level1); $l1++) {
                 $lev2 = [];
                 for ($l2s=0; $l2s < count($level2); $l2s++) {
-                        if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
+                        if($level1[$l1]->task_id === $level2[$l2s]['task_parent']){
                             $lev2[] = $level2[$l2s];
                         }
                 }
@@ -1443,7 +1443,7 @@ class TaskController extends Controller
            for ($l1=0; $l1 < count($level1); $l1++) {
                 $lev2 = [];
                 for ($l2s=0; $l2s < count($level2); $l2s++) {
-                        if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
+                        if($level1[$l1]->task_id === $level2[$l2s]['task_parent']){
                             $lev2[] = $level2[$l2s];
                         }
                 }
@@ -1662,7 +1662,7 @@ class TaskController extends Controller
            for ($l1=0; $l1 < count($level1); $l1++) {
                 $lev2 = [];
                 for ($l2s=0; $l2s < count($level2); $l2s++) {
-                        if($level1[$l1]->task_id === $level2[$l2s]->task_parent){
+                        if($level1[$l1]->task_id === $level2[$l2s]['task_parent']){
                             $lev2[] = $level2[$l2s];
                         }
                 }
