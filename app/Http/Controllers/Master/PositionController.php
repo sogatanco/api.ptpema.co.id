@@ -82,7 +82,6 @@ class PositionController extends Controller
                                 ->update([
                                     'organization_id' => $organization->organization_id,
                                     'position_name' => $request->position_name,
-                                    'id_base' => null
                                 ]);
 
         if($isUpdated){
