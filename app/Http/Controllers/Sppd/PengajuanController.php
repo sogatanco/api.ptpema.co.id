@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Sppd\Ekstend;
 use App\Models\Sppd\EkstendView;
+use App\Models\Sppd\TigaPuluh;
 use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
@@ -441,6 +442,31 @@ class PengajuanController extends Controller
         $ekstend->submitted_by = Employe::employeId();
 
         if ($ekstend->save()) {
+            return new PostResource(true, 'success', []);
+        } else {
+            return new PostResource(false, 'error', []);
+        }
+    }
+
+    function tgaPlhPersen(Request $request)
+    {
+        // Terima id_tujuan sebagai single value atau array
+        $ids = is_array($request->id_tujuan) ? $request->id_tujuan : [$request->id_tujuan];
+
+        // Hapus semua record TigaPuluh untuk id_tujuan yang diberikan
+        TigaPuluh::whereIn('id_tujuan', $ids)->delete();
+
+        $saved = false;
+        foreach ($ids as $id) {
+            $tp = new TigaPuluh();
+            $tp->id_tujuan = $id;
+            $tp->submitted_by = Employe::employeId();
+            if ($tp->save()) {
+                $saved = true;
+            }
+        }
+
+        if ($saved) {
             return new PostResource(true, 'success', []);
         } else {
             return new PostResource(false, 'error', []);
