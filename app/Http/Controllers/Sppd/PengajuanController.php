@@ -426,6 +426,9 @@ class PengajuanController extends Controller
     function getTujuanById($id)
     {
         $data = TujuanSppd::where('id_sppd', $id)->get();
+        foreach ($data as $t) {
+            $t->tigapuluh = TigaPuluh::where('id_tujuan', $t->id)->first();
+        }
         return new PostResource(true, 'success', $data);
     }
 
