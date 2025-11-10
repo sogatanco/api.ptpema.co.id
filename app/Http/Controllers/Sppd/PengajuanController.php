@@ -427,7 +427,7 @@ class PengajuanController extends Controller
     {
         $data = TujuanSppd::where('id_sppd', $id)->get();
         foreach ($data as $t) {
-            $t->tigapuluh = TigaPuluh::where('id_tujuan', $t->id)->first();
+            $t->tigapuluh = TigaPuluh::where('id', $t->id)->first();
         }
         return new PostResource(true, 'success', $data);
     }
