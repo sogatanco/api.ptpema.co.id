@@ -145,6 +145,11 @@ class PengajuanController extends Controller
                 $t->base64_undangan = '-';
             }
             $t->tigapuluh = TigaPuluh::where('id_tujuan', $t->id)->first();
+            if ($t->tigapuluh === null) {
+                $data['tigap']=false;
+            }else{
+                $data['tigap']=true;
+            }
             $hr = 4;
             $hariall = $t->jumlah_hari;
 
