@@ -458,23 +458,14 @@ class PengajuanController extends Controller
 
     function tgaPlhPersen(Request $request)
     {
-        // Terima id_tujuan sebagai single value atau array
-        $ids = is_array($request->id_tujuan) ? $request->id_tujuan : [$request->id_tujuan];
 
-        // Hapus semua record TigaPuluh untuk id_tujuan yang diberikan
-        TigaPuluh::whereIn('id_tujuan', $ids)->delete();
+        $tp=new TigaPuluh();
+        $tp->id_tujuan=$request->id_tujuan;
+        $tp->submitted_by=Employe::employeId();
+        $tp->mulai=$request->start_date;
+        $tp->selesai=$request->end_date;
 
-        $saved = false;
-        foreach ($ids as $id) {
-            $tp = new TigaPuluh();
-            $tp->id_tujuan = $id;
-            $tp->submitted_by = Employe::employeId();
-            if ($tp->save()) {
-                $saved = true;
-            }
-        }
-
-        if ($saved) {
+        if ($tp->save()) {
             return new PostResource(true, 'success', []);
         } else {
             return new PostResource(false, 'error', []);
