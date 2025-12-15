@@ -252,19 +252,38 @@ Route::controller(PreviewFilePengajuanController::class)->group(function(){
 
 
 Route::controller(DailyController::class)->group(function(){
+    Route::get('/daily/dashboard', "dashboard")->middleware("role:Employee");
+    Route::get('/daily/project-list', "projectList")->middleware("role:Employee");
+    Route::get('/daily/task-list', "taskList")->middleware("role:Employee");
+    Route::get('/daily/daily-list', "dailyList")->middleware("role:Employee");
+    // ---------------------------------------------------------------------------
     Route::post('/daily/store', "store")->middleware("role:Employee");
     Route::put('/daily/update', "update")->middleware("role:Employee");
     Route::put('/daily/change-progress', "changeProgress")->middleware("role:Employee");
     Route::put('/daily/change-status', "changeStatus")->middleware("role:Employee");
     Route::delete('/daily/delete/{id}', "delete")->middleware("role:Employee");
     Route::get('/daily/list-by-employee', "listByEmployee")->middleware("role:Employee");
+    Route::post('/daily/attachment/upload', "uploadAttachment")->middleware("role:Employee");
+    Route::delete('/daily/attachment/delete', "deleteAttachment")->middleware("role:Employee");
+    Route::get('daily/project/details', "projectDetails")->middleware("role:Employee");
+
+    Route::get('daily/assignment-list', "listAssignments")->middleware("role:Employee");
+
+    Route::get('module/daily/by-category/{category}', "additional")->middleware("role:Employee");
+    Route::put('/module/daily/change-type', "changeType")->middleware("role:Employee");
+
+    Route::get('daily/review-list', "reviewList")->middleware("role:Supervisor,Manager");
+    Route::get('daily/additional-review-list', "additionalReview")->middleware("role:Supervisor,Manager");
+
+    Route::get('daily/tambahan/approved-list', "approvedAdditional")->middleware("role:Supervisor,Manager");
+    Route::get('daily/list-by-employee/approved-list', "approvedListByEmployee")->middleware("role:Supervisor,Manager");
 });
 
 Route::controller(ModuleDailyController::class)->group(function(){
     Route::post('/module/daily/store', "store")->middleware("role:Employee");
     Route::put('/module/daily/update', "update")->middleware("role:Employee");
     Route::delete('/module/daily/delete', "destroy")->middleware("role:Employee");
-    Route::get('module/daily/by-category/{category}', 'getByCategory')->middleware("role:Employee");
+    // Route::get('module/daily/by-category/{category}', 'getByCategory')->middleware("role:Employee");
 });
 
 // change progress with bulk

@@ -70,6 +70,7 @@ class DailyService
         }
     }
 
+    /*
     public function getByCategory(string $category): array
     {
         try {
@@ -78,6 +79,31 @@ class DailyService
             return [
                 'category' => $category,
                 'dailies' => $dailies
+            ];
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+    */
+
+    public function getByCategory(string $category): array
+    {
+        try {
+            $dailies = $this->dailyRepo->getByCategory($category);
+            $user = auth()->user();
+            $role = $user->role->name ?? null; // pastikan kamu punya relasi role
+
+            $taskReview = $dailies->filter(function ($daily) use ($role) {
+                return ($daily->status === 'review supervisor' && $role === 'supervisor')
+                    || ($daily->status === 'review manager' && $role === 'manager');
+            })->values();
+
+            return [
+                'category' => $category,
+                'task_progress' => $dailies->avg('progress') ?? 0,
+                'date_range' => optional($dailies->first())->date_range ?? null,
+                'dailies' => $dailies,
+                'task_review' => $taskReview ?? [],
             ];
         } catch (\Exception $e) {
             throw $e;

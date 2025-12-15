@@ -13,7 +13,7 @@ use App\Models\Tasks\Task;
 class Project extends Model
 {
     protected $table = "projects";
-    protected $pimaryKey = "project_id";
+    protected $primaryKey = "project_id";
     protected $keyType = "int";
     public $timestamps = true;
     protected $guarded = [];
@@ -50,7 +50,7 @@ class Project extends Model
         return $this->hasMany(ProjectHistory::class, 'project_id', 'project_id');
     }
 
-    protected $with = ['project_task', 'activeStage'];
+    // protected $with = ['project_task', 'activeStage'];
     public function project_task(): HasMany
     {
         return $this->hasMany(Task::class, 'project_id', 'project_id');

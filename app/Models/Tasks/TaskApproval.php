@@ -9,7 +9,7 @@ class TaskApproval extends Model
 {
     use HasFactory;
     protected $table = "project_task_approval";
-    protected $pimaryKey = "approval_id";
+    protected $primaryKey = 'approval_id';
     protected $fillable = [
         'task_id',
         'employe_id',
