@@ -24,6 +24,7 @@ use App\Http\Controllers\Sppd\StaticDataController;
 use App\Http\Controllers\Sppd\PengajuanController;
 use App\Http\Controllers\Verify\ScanVerif;
 use App\Http\Middleware\Role;
+use App\Http\Controllers\Kontrak\ContractController;
 
 Route::controller(DaCatController::class)->group(function () {
      Route::get('/categories', 'index')->middleware("role:Employee");
@@ -132,6 +133,16 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::get('sppd/dashboard', 'dataDashboard')->middleware("role:Employee");
      Route::get('sppd/tujuan/{id}', 'getTujuanById')->middleware("role:Employee");
      Route::post('sppd/ekstend', 'insertEkstend')->middleware("role:Employee");
+     Route::post('sppd/tiga-puluh', 'tgaPlhPersen')->middleware("role:Employee");
+});
+
+// Tambahkan route untuk kontrak
+Route::controller(ContractController::class)->group(function(){
+     Route::get('kontrak', 'index')->middleware("role:Employee");
+     Route::get('kontrak/{id}', 'show')->middleware("role:Employee");
+     Route::post('kontrak', 'store')->middleware("role:Employee");
+     Route::post('kontrak/update/{id}', 'update')->middleware("role:Employee");
+     Route::post('kontrak/delete/{id}', 'destroy')->middleware("role:Employee");
 });
 
 // Verification Document

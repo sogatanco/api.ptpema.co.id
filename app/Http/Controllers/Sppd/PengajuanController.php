@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Sppd\Ekstend;
 use App\Models\Sppd\EkstendView;
+use App\Models\Sppd\TigaPuluh;
 use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
@@ -143,7 +144,12 @@ class PengajuanController extends Controller
             } else {
                 $t->base64_undangan = '-';
             }
-
+            $t->tigapuluh = TigaPuluh::where('id_tujuan', $t->id)->first();
+            if ($t->tigapuluh === null) {
+                $data['tigap']=false;
+            }else{
+                $data['tigap']=true;
+            }
             $hr = 4;
             $hariall = $t->jumlah_hari;
 
@@ -425,6 +431,9 @@ class PengajuanController extends Controller
     function getTujuanById($id)
     {
         $data = TujuanSppd::where('id_sppd', $id)->get();
+        foreach ($data as $t) {
+            $t->tigapuluh = TigaPuluh::where('id_tujuan', $t->id)->first();
+        }
         return new PostResource(true, 'success', $data);
     }
 
@@ -441,6 +450,22 @@ class PengajuanController extends Controller
         $ekstend->submitted_by = Employe::employeId();
 
         if ($ekstend->save()) {
+            return new PostResource(true, 'success', []);
+        } else {
+            return new PostResource(false, 'error', []);
+        }
+    }
+
+    function tgaPlhPersen(Request $request)
+    {
+
+        $tp=new TigaPuluh();
+        $tp->id_tujuan=$request->id_tujuan;
+        $tp->submitted_by=Employe::employeId();
+        $tp->mulai=$request->start_date;
+        $tp->selesai=$request->end_date;
+
+        if ($tp->save()) {
             return new PostResource(true, 'success', []);
         } else {
             return new PostResource(false, 'error', []);
