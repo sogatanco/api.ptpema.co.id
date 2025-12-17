@@ -20,7 +20,7 @@ class Project extends Model
 
     // protected $fillable = array('*');
     protected $fillable = [
-        "id",
+        "project_id",
         "project_number",
         "division",
         "project_name",
