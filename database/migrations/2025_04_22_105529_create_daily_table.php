@@ -18,10 +18,12 @@ return new class extends Migration
             $table->string('employe_id');
             $table->foreign('employe_id')->references('employe_id')->on('employees')->onDelete('cascade');
             $table->string('activity_name');
+            $table->boolean('is_priority')->default(false);
+            $table->enum('category', ['rutin','non-rutin','bulanan','tahunan','tambahan']);
             $table->date('start_date');
             $table->date('end_date');
             $table->integer('progress');
-            $table->enum('status', ['in progress', 'review', 'approved'])->default('in progress');
+            $table->enum('status', ['in progress','review supervisor','review manager','approved','revised','cancelled'])->default('in progress');
             $table->text('notes')->nullable();
             $table->timestamps();
         });
