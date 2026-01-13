@@ -203,7 +203,7 @@ class ProjectController extends Controller
 
         // simpan stage
         $dataStage = [
-            "project_id" => $newProject['id'],
+            "project_id" => $newProject['project_id'],
             "phase" => $request->category === 'business' ? 1 : null,
             'division' => $newProject['division'],
             'start_date' => $request->start_date,
@@ -218,7 +218,7 @@ class ProjectController extends Controller
 
         // simpan history
         $dataHistory = [
-            "project_id" => $newProject['id'],
+            "project_id" => $newProject['project_id'],
             "employe_id" => $pic_id,
             "history_desc" => "Project created",
             "active" => 1

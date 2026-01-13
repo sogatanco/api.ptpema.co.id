@@ -28,6 +28,7 @@ class DailyByCategoryResource extends JsonResource
                     'task_id' => $item['task_id'],
                     'activity_name' => $item['activity_name'],
                     'category' => $item['category'],
+                    'is_priority' => $item['is_priority'],
                     'progress' => $item['progress'],
                     'start_date' => [
                         'date' => Carbon::parse($item['start_date'])->format('Y-m-d'),

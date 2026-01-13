@@ -585,6 +585,12 @@ class TaskController extends Controller
                 ->orderBy('approval_id', 'desc')
                 ->first();
 
+                // return response()->json([
+                //     "status" => true,
+                //     "data" => $task,
+                //     "req" => $request->all()
+                // ], 200, [], JSON_NUMERIC_CHECK);
+
         if($request->status == 1){
             $start_date = $task->start_date;
         }elseif($request->status >= 2 ){
@@ -612,6 +618,12 @@ class TaskController extends Controller
 
         $newStatus = new TaskApproval($data);
         $newStatus->save();
+
+        // return response()->json([
+        //     "status" => true,
+        //     "message" => "Status has been updated.",
+        //     "data" => $newStatus
+        // ], 200, [], JSON_NUMERIC_CHECK);
 
         // jika status selain inprogress
         if($request->status !== 0){

@@ -4,6 +4,7 @@ namespace App\Models\Tasks;
 
 use App\Models\Daily\Daily;
 use App\Models\Projects\Project;
+use App\Models\Projects\ProjectStage;
 use App\Models\Tasks\TaskPic;
 use App\Models\Tasks\TaskApproval;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -55,11 +56,20 @@ class Task extends Model
 
     public function approval()
     {
-        return $this->hasOne(TaskApproval::class, 'task_id', 'task_id');
+        return $this->hasOne(TaskApproval::class, 'task_id', 'task_id')->latestOfMany('approval_id');
     }
 
     public function parent()
     {
         return $this->belongsTo(Task::class, 'task_parent', 'task_id');
+    }
+
+    public function scopeLevelTwo($query)
+    {
+        return $query
+            ->whereNotNull('task_parent')
+            ->whereHas('parent', function ($q) {
+                $q->whereNull('task_parent');
+            });
     }
 }
