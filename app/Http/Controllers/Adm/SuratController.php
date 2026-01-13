@@ -86,7 +86,7 @@ class SuratController extends Controller
         if ($what === 'approved') {
             $data = ApprovedDocument::where('id_employe', Employe::employeId())->get();
         } elseif ($what === 'review') {
-            $data = ListSurat::where('current_reviewer', Employe::employeId())->get();
+            $data = ListSurat::where('current_reviewer', Employe::employeId())->latest()->get();
         } elseif ($what === 'signed') {
             $data = ApprovedDocument::where('type', 'sign')->latest('created_at')->get();
         } else {
