@@ -157,7 +157,7 @@ Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/signers/{id}', 'getSigner')->middleware("role:Employee");
      Route::get("adm/direkturs", "getDirektur")->middleware(    "role:Employee");
      Route::get('adm/dispo/to', 'getDispo')->middleware('role:Employee');
-     Route::get('adm/dashboard', 'dashboard')->middleware('role:Employee');
+     Route::get('adm/dashboard/{dt}', 'dashboard')->middleware('role:Employee');
 });
 
 Route::controller(SuratController::class)->group(function(){
@@ -187,7 +187,7 @@ Route::controller(SuratMasuk::class)->group(function(){
 // HR
 Route::controller(ProfilController::class)->group(function(){
      Route::get('hr/profil/{employe_id}', 'getImage');
-    
+
 });
 
 Route::controller(AbsensiController::class)->group(function(){

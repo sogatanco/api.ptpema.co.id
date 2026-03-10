@@ -39,7 +39,7 @@ class StaticAdmController extends Controller
         if ($mEks) {
             $data->push(Structure::where('employe_active', 1)->where('employe_id', $mEks)->first());
         }
-        // 
+        //
 
         $manager = Structure::where('employe_active', 1)->where('id_base', 7)->where('organization_id', $id)->first();
         $supervisor = Structure::where('employe_active', 1)->where('id_base', 8)->where('organization_id', $id)->get();
@@ -110,22 +110,25 @@ class StaticAdmController extends Controller
         return new PostResource(true, 'Pilihan Direksi', $all);
     }
 
-    public function dashboard()
+    public function dashboard($dt)
     {
-        $collection = collect();
+       if($dt=='surat_keluar'){
+            return new PostResource(true, 'Data Surat Keluar', count(ListSurat::where('status', 'signed')->get()));
+       }else{
+         $collection = collect();
         $dv = DataDivisi::orderBy('divisi', 'ASC')->get();
         $collection = collect([
             "chart" => [
-                "divisi" => collect(), 
-                "value" => collect() 
+                "divisi" => collect(),
+                "value" => collect()
             ],
-            
+
         ]);
         foreach ($dv as $d) {
 
-            $collection['chart']['divisi']->push($d->divisi); 
-            $collection['chart']['value']->push($d->jumlah_surat); 
-            
+            $collection['chart']['divisi']->push($d->divisi);
+            $collection['chart']['value']->push($d->jumlah_surat);
+
         }
 
         if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
@@ -178,6 +181,7 @@ class StaticAdmController extends Controller
         );
 
         return new PostResource(true, 'Dashboard', $collection->toArray());
+       }
     }
 
 
