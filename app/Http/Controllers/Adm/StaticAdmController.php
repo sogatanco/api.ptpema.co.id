@@ -113,7 +113,7 @@ class StaticAdmController extends Controller
     public function dashboard($dt)
     {
        if($dt=='surat_keluar'){
-            return new PostResource(true, 'Data Surat Keluar', count(ListSurat::where('status', 'signed')->get()));
+            return new PostResource(true, 'Data Surat Keluar', count(ListSurat::where('status', 'signed')->whereYear('created_at', now()->year)->get()));
        }else{
          $collection = collect();
         $dv = DataDivisi::orderBy('divisi', 'ASC')->get();
