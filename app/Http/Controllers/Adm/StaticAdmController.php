@@ -116,6 +116,10 @@ class StaticAdmController extends Controller
             return new PostResource(true, 'Data Surat Keluar', count(ListSurat::where('status', 'signed')->whereYear('created_at', now()->year)->get()));
        }else if($dt=='surat_masuk'){
             return new PostResource(true, 'Data Surat Masuk', count(SM::whereYear('created_at', now()->year)->get()));
+       }else if($dt=='disposed'){
+            return new PostResource(true, 'Data Document', count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get()));
+       }else if($dt=='document'){
+            return new PostResource(true, 'Data Document', count(ListSurat::where('status', 'signed')->where('sign_by', Employe::employeId())->get()));
        }
 
 
