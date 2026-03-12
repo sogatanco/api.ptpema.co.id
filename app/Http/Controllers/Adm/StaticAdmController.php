@@ -120,6 +120,13 @@ class StaticAdmController extends Controller
             return new PostResource(true, 'Data Document', count(ListSuratMasuk::where('live_receiver', Employe::employeId())->get()));
        }else if($dt=='document'){
             return new PostResource(true, 'Data Document', count(ListSurat::where('status', 'signed')->where('sign_by', Employe::employeId())->get()));
+       }else if($dt=='latest'){
+            if (!empty(array_intersect(['ManagerEks', 'Director', 'Presdir', 'SuperAdminAdm'], Auth::user()->roles))) {
+                $data = ListSurat::where('status', 'signed')->latest()->take(5)->get();
+            } else {
+                $data = ListSurat::where('status', 'signed')->where('divisi', Structure::where('employe_id', Employe::employeId())->first('organization_id')->organization_id)->latest()->take(5)->get();
+            }
+            return new PostResource(true, 'Data Latest Surat Keluar', $data);
        }
 
 
