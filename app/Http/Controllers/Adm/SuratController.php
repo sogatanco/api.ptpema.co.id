@@ -126,7 +126,7 @@ class SuratController extends Controller
         // $document['signer']['first_name'] = $signer->employe_name;
         // $document['signer']['position_name'] = $signer->id_current_position;
         // $document['status']=ListSurat::find($id)->status;
-      
+
         $d = ListSurat::find($id);
         $si = ListVerif::where('id_doc', $d->no_document)->where('type', 'sign')->first();
 
@@ -229,7 +229,7 @@ class SuratController extends Controller
         }
 
         $signature = SignatureService::signDocument(Employe::employeId(), $document->toArray(request())['data']);
-        
+
         $verif = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->where('status', NULL)->first();
         $verif->status = $request->status;
         $verif->ket = $request->catatan_persetujuan;
@@ -239,6 +239,15 @@ class SuratController extends Controller
         }
 
         return new PostResource(true, 'success',  $document->toArray(request())['data']);
+    }
+
+    function readSurat($id_doc)
+    {
+        $doc = VerifStep::where('id_doc', $id_doc)->where('id_employe', Employe::employeId())->first();
+        $doc->baca = 1;
+        if ($doc->save()) {
+            return new PostResource(true, 'success', []);
+        }
     }
 
     function getRomawi($bln)
