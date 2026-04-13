@@ -58,8 +58,8 @@ class StaticDataController extends Controller
         return new PostResource(true, 'data sumber biaya', $data);
     }
 
-    public function getRenbis(){    
-        $data=Renbis::all();
+    public function getRenbis(){
+        $data=Renbis::where('tahun', date('Y'))->get();
         return new PostResource(true, 'data renbis', $data);
     }
 }
