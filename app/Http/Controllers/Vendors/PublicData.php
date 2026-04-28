@@ -12,6 +12,7 @@ class PublicData extends Controller
     public function dataTender(){
         $data = Tender::where('metode_pengadaan', 'seleksi_umum')
             ->orWhere('metode_pengadaan', 'tender_umum')
+            ->where('status_tender', '!=', 'batal')
             ->orderBy('id_tender', 'DESC')
             ->get();
 
@@ -19,5 +20,5 @@ class PublicData extends Controller
             "success" => true,
             "data" => $data
         ], 200);
-    }   
+    }
 }
