@@ -15,6 +15,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\DB;
 
+use Carbon\Carbon;
+
 class AbsensiController extends Controller
 {
     public function clock_in(Request $request)
@@ -40,20 +42,20 @@ class AbsensiController extends Controller
                     Attandence::updateOrInsert([
                         'employe_id' => Employe::employeId(),
                         'date'=>now()->toDateString(),],[
-                        'schedule_id' => Schedule::where('active', 1)->get()->first()->id,
+                        'schedule_id' => (Carbon::now()->isFriday()) ? 8 : 7,
                         'type'=>'normal',
                         'time_in'=>date('H:i:s'),
                         'latlong_in'=>$request->latlong,
                         'created_at' => DB::raw('IFNULL(created_at, NOW())'), // Jika belum ada, isi dengan NOW()
                         'updated_at' => now() // Selalu di-update
-    
+
                     ]);
                 }else if($request->jenis == 'out'){
                     Attandence::updateOrInsert([
                         'employe_id' => Employe::employeId(),
                         'date'=>now()->toDateString()],[
-                            
-                        'schedule_id' => Schedule::where('active', 1)->get()->first()->id,
+
+                        'schedule_id' => (Carbon::now()->isFriday()) ? 8 : 7,
                         'type'=>'normal',
                         'time_out'=>date('H:i:s'),
                         'latlong_out'=>$request->latlong,
@@ -61,7 +63,7 @@ class AbsensiController extends Controller
                         'updated_at' => now() // Selalu di-update
                     ]);
                 }
-                
+
                 return new PostResource(true, 'Clock '.$request->jenis.' Berhasil !', $result['confidence']);
             } else {
                 return new PostResource(false, 'Wajah Tidak Sesuai', $result['confidence'] ?? null);
