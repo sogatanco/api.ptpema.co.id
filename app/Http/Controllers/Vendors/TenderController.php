@@ -21,10 +21,16 @@ class TenderController extends Controller
 
     public function listTender()
     {
-        $tenders = Tender::orderBy('id_tender', 'DESC')->get();
+        $tenders = Tender::orderBy('id_tender', 'DESC')
+                // where range tanggal aktif
+                // ->whereDate('tgl_pendaftaran', '<=', date('Y-m-d'))
+                // ->whereDate('batas_pendaftaran', '>=', date('Y-m-d'))
+                // where status_tender != 'batal'
+                ->where('status_tender', '!=', 'batal')
+                ->get();
 
         $data = [];
-        for ($t=0; $t < count($tenders); $t++) { 
+        for ($t=0; $t < count($tenders); $t++) {
             if (count(TenderPeserta::where('tender_id', $tenders[$t]->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->get()) > 0) {
                 $tenders[$t]['register'] = true;
                 $statusPeserta = TenderPeserta::where('tender_id', $tenders[$t]->id_tender)->where('perusahaan_id',  ViewPerusahaan::where('user_id', Auth::user()->id)->get()->first()->id)->first()->status;
@@ -103,7 +109,7 @@ class TenderController extends Controller
         }else{
             $tender->status_verifikasi_admin = $company->status_verifikasi_scm;
         }
-        
+
         return response()->json([
             "success" => true,
             "data" => $tender,
