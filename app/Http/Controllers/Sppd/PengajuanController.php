@@ -217,6 +217,7 @@ class PengajuanController extends Controller
         $data['ekstend']=EkstendView::where('id_sppd', $id)->get();
 
         $data['tujuan_sppd'] = $tujuans;
+        $data['current_type']=UnderReview::where('id', $id)->first()->current_type ?? null;
 
         $data['check_doc'] = CheklistDoc::where('id_sppd', $id)->get();
 
