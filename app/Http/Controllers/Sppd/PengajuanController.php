@@ -137,7 +137,7 @@ class PengajuanController extends Controller
 
     function getDetail($id)
     {
-        $data = ListSppd::find($id);
+        $data = Sppd::find($id);
         $tujuans = HitunganBiaya::where('id_sppd', $id)->get();
         foreach ($tujuans as $t) {
             if ($t->file_undangan !== '-') {
