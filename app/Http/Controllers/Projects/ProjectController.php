@@ -909,18 +909,35 @@ class ProjectController extends Controller
             //             ->orderBy('updated_at', 'DESC')
             //             ->get();
 
-            $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
-                        ->where('division', $employeDivision->organization_id)
-                        ->whereExists(function ($query) use ($year) {
-                            $query->select(DB::raw(1))
-                                ->from('project_stages')
-                                ->whereColumn('project_stages.project_id', 'task_latest_status.project_id')
-                                ->whereYear('project_stages.end_date', $year) // <-- tetap pakai whereYear meskipun end_date full format
-                                ->where('project_stages.status', 1);
-                        })
-                        ->groupBy('task_latest_status.project_id')
-                        ->orderBy('updated_at', 'DESC')
-                        ->get();
+            // $projectByRecentUpdate = TaskStatus::select('task_latest_status.project_id', 'task_latest_status.approval_id', DB::raw("MAX(updated_at) as updated_at"))
+            //             ->where('division', $employeDivision->organization_id)
+            //             ->whereExists(function ($query) use ($year) {
+            //                 $query->select(DB::raw(1))
+            //                     ->from('project_stages')
+            //                     ->whereColumn('project_stages.project_id', 'task_latest_status.project_id')
+            //                     ->whereYear('project_stages.end_date', $year) // <-- tetap pakai whereYear meskipun end_date full format
+            //                     ->where('project_stages.status', 1);
+            //             })
+            //             ->groupBy('task_latest_status.project_id')
+            //             ->orderBy('updated_at', 'DESC')
+            //             ->get();
+
+            $projectByRecentUpdate = TaskStatus::select(
+                        'task_latest_status.project_id',
+                        DB::raw("ANY_VALUE(task_latest_status.approval_id) as approval_id"),
+                        DB::raw("MAX(updated_at) as updated_at")
+                    )
+                    ->where('division', $employeDivision->organization_id)
+                    ->whereExists(function ($query) use ($year) {
+                        $query->select(DB::raw(1))
+                            ->from('project_stages')
+                            ->whereColumn('project_stages.project_id', 'task_latest_status.project_id')
+                            ->whereYear('project_stages.end_date', $year)
+                            ->where('project_stages.status', 1);
+                    })
+                    ->groupBy('task_latest_status.project_id')
+                    ->orderBy('updated_at', 'DESC')
+                    ->get();
 
         }else{
             $projectByRecentUpdate = ProjectStage::select('project_stages.*')
