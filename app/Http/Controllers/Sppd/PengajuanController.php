@@ -23,6 +23,7 @@ use App\Models\Sppd\KetetapanSppd;
 use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppd;
+use App\Models\Sppd\UnderReview;
 use App\Models\Sppd\LogPengajuan;
 use App\Models\Sppd\Proses;
 use App\Models\Sppd\Realisasi;
@@ -95,7 +96,7 @@ class PengajuanController extends Controller
         if ($request->ref == 'mine') {
             $data = ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'review') {
-            $data = ListSppd::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();
+            $data = UnderReview::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'approved_by') {
             $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
         } elseif ($request->ref == 'by_umum') {
