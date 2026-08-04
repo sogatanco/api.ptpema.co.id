@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Zoom extends Model
 {
     use HasFactory;
+    protected $connection = 'ptpemaco_apam';
     protected $table = 'zooms';
     protected $fillable = [
         'topic',

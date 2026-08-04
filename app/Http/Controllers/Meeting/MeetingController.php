@@ -6,26 +6,113 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
 use App\Models\Meeting\Zoom;
+use Carbon\Carbon;
+use Firebase\JWT\JWT;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 
 class MeetingController extends Controller
 {
+    protected function getZoomClient(): Client
+    {
+        return new Client([
+            'base_uri' => 'https://api.zoom.us/v2/',
+            'timeout' => 20,
+        ]);
+    }
+
+    protected function getZoomToken(): string
+    {
+        $apiKey = env('ZOOM_CLIENT_ID');
+        $apiSecret = env('ZOOM_CLIENT_SECRET');
+
+        if (empty($apiKey) || empty($apiSecret)) {
+            throw new \RuntimeException('ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET must be configured.');
+        }
+
+        return JWT::encode([
+            'iss' => $apiKey,
+            'exp' => Carbon::now()->addHour()->timestamp,
+        ], $apiSecret, 'HS256');
+    }
+
+    protected function zoomRequest(string $method, string $uri, array $payload = []): array
+    {
+        $client = $this->getZoomClient();
+        $options = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->getZoomToken(),
+                'Content-Type' => 'application/json',
+            ],
+        ];
+
+        if (!empty($payload)) {
+            $options['json'] = $payload;
+        }
+
+        $response = $client->request($method, $uri, $options);
+        $body = (string) $response->getBody();
+
+        return $body !== '' ? json_decode($body, true) : [];
+    }
+
     public function bookZoom(Request $request)
     {
+        $topic = $request->input('topic');
+        $startTime = $request->input('start_time');
+        $duration = (int) $request->input('duration', 60);
+        $agenda = $request->input('agenda', $topic);
+
+        if (empty($topic) || empty($startTime)) {
+            return new PostResource(false, 'topic and start_time are required', []);
+        }
+
+        $payload = [
+            'topic' => $topic,
+            'type' => 2,
+            'start_time' => $startTime,
+            'duration' => $duration,
+            'timezone' => $request->input('timezone', 'Asia/Jakarta'),
+            'agenda' => $agenda,
+            'settings' => [
+                'host_video' => (bool) $request->input('host_video', true),
+                'participant_video' => (bool) $request->input('participant_video', true),
+                'join_before_host' => false,
+                'mute_upon_entry' => true,
+                'waiting_room' => false,
+            ],
+        ];
+
+        try {
+            $meeting = $this->zoomRequest('POST', 'users/' . env('ZOOM_ACCOUNT_ID', 'me') . '/meetings', $payload);
+        } catch (GuzzleException | \RuntimeException $e) {
+            return new PostResource(false, 'Failed to create Zoom meeting: ' . $e->getMessage(), []);
+        }
+
         $zoom = new Zoom();
-        $zoom->topic = $request->input('topic');
-        $zoom->link = $request->input('link');
-        $zoom->meeting_id = $request->input('meeting_id');
-        $zoom->password = $request->input('password');
-        $zoom->start_time = $request->input('start_time');
-        $zoom->end_time = $request->input('end_time');
+        $zoom->topic = $meeting['topic'] ?? $topic;
+        $zoom->link = $meeting['join_url'] ?? null;
+        $zoom->meeting_id = $meeting['id'] ?? null;
+        $zoom->password = $meeting['password'] ?? null;
+        $zoom->start_time = $meeting['start_time'] ?? $startTime;
+        $zoom->end_time = $this->calculateEndTime($startTime, $duration);
         $zoom->created_by = Employe::employeId();
 
         if ($zoom->save()) {
             return new PostResource(true, 'Zoom booked successfully', $zoom);
         }
 
-        return new PostResource(false, 'Failed to book zoom', []);
+        return new PostResource(false, 'Zoom meeting created on Zoom but failed to save to database', []);
+    }
+
+    protected function calculateEndTime(string $startTime, int $duration): ?string
+    {
+        try {
+            return Carbon::parse($startTime)->addMinutes($duration)->toDateTimeString();
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function listZoom()
@@ -53,11 +140,22 @@ class MeetingController extends Controller
             return new PostResource(false, 'Zoom already canceled', []);
         }
 
+        if (empty($zoom->meeting_id)) {
+            return new PostResource(false, 'Zoom meeting id is missing', []);
+        }
+
+        try {
+            $this->zoomRequest('DELETE', 'meetings/' . $zoom->meeting_id);
+        } catch (GuzzleException | \RuntimeException $e) {
+            return new PostResource(false, 'Failed to cancel Zoom meeting: ' . $e->getMessage(), []);
+        }
+
         $zoom->canceled_at = now();
+
         if ($zoom->save()) {
             return new PostResource(true, 'Zoom canceled successfully', $zoom);
         }
 
-        return new PostResource(false, 'Failed to cancel zoom', []);
+        return new PostResource(false, 'Zoom canceled in Zoom but failed to update database', []);
     }
 }
