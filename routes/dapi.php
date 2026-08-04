@@ -18,6 +18,7 @@ use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 use App\Http\Controllers\Layar\LayarController;
+use App\Http\Controllers\Meeting\MeetingController;
 use App\Http\Controllers\Wa\SendMessageController;
 
 use App\Http\Controllers\Sppd\StaticDataController;
@@ -223,6 +224,12 @@ Route::controller(MobilController::class)->group(function(){
 Route::controller(LayarController::class)->group(function(){
     Route::post('lay/insert', 'insert')->middleware("role:Employee");
     Route::get('lay', 'getLayar');
+});
+
+Route::controller(MeetingController::class)->group(function () {
+    Route::post('meeting/zoom/book', 'bookZoom')->middleware("role:Employee");
+    Route::get('meeting/zoom/list', 'listZoom')->middleware("role:Employee");
+    Route::post('meeting/zoom/cancel/{id}', 'cancelZoom')->middleware("role:Employee");
 });
 
 Route::get('send-message/first', [SendMessageController::class, 'getFirst']);
