@@ -365,7 +365,7 @@ class MeetingController extends Controller
             return new PostResource(false, 'Meeting booking already canceled', []);
         }
 
-        if ($booking->zoom_required && $booking->zoom && !empty($booking->zoom->meeting_id)) {
+        if ($booking->zoom_required && $booking->zoom && is_null($booking->zoom->canceled_at) && !empty($booking->zoom->meeting_id)) {
             try {
                 $this->zoomRequest('DELETE', 'meetings/' . $booking->zoom->meeting_id);
                 $booking->zoom->canceled_at = now();
