@@ -232,7 +232,7 @@ Route::controller(MeetingController::class)->group(function () {
     Route::post('meeting/zoom/cancel/{id}', 'cancelZoom')->middleware("role:Employee");
 
     Route::post('meeting/room/book', 'bookMeetingRoom')->middleware("role:Employee");
-    Route::get('meeting/room/list', 'listMeetingBookings')->middleware("role:Employee");
+    Route::get('meeting/room/list', 'listMeetingBookings');
     Route::post('meeting/room/cancel/{id}', 'cancelMeetingBooking')->middleware("role:Employee");
 });
 
