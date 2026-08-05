@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Meeting;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Meeting\BookingRoom;
 use App\Models\Meeting\Zoom;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -151,6 +152,131 @@ class MeetingController extends Controller
         }
 
         return new PostResource(false, 'Zoom meeting created on Zoom but failed to save to database', []);
+    }
+
+    protected function createZoomMeeting(string $topic, string $startTime, int $duration, ?string $agenda = null, ?string $timezone = null): array
+    {
+        $payload = [
+            'topic' => $topic,
+            'type' => 2,
+            'start_time' => $startTime,
+            'duration' => $duration,
+            'timezone' => $timezone ?? config('app.timezone', 'Asia/Jakarta'),
+            'agenda' => $agenda ?? $topic,
+            'settings' => [
+                'host_video' => false,
+                'participant_video' => false,
+                'join_before_host' => false,
+                'mute_upon_entry' => true,
+                'waiting_room' => false,
+            ],
+        ];
+
+        $userPath = $this->resolveZoomUserPath();
+
+        return $this->zoomRequest('POST', $userPath . '/meetings', $payload);
+    }
+
+    public function bookMeetingRoom(Request $request)
+    {
+        $topic = $request->input('topic');
+        $participants = (int) $request->input('participants', 0);
+        $startTime = $request->input('start_time');
+        $endTime = $request->input('end_time');
+        $zoomRequired = filter_var($request->input('zoom_required', false), FILTER_VALIDATE_BOOLEAN);
+        $consumptionRequired = filter_var($request->input('consumption_required', false), FILTER_VALIDATE_BOOLEAN);
+        $consumptionDetail = $request->input('consumption_detail');
+        $room = $request->input('room');
+        $agenda = $request->input('agenda', $topic);
+        $timezone = $request->input('timezone', config('app.timezone', 'Asia/Jakarta'));
+
+        if (empty($topic) || empty($startTime) || empty($endTime) || empty($room)) {
+            return new PostResource(false, 'topic, start_time, end_time and room are required', []);
+        }
+
+        $normalizedStart = $this->normalizeDateTime($startTime, $timezone);
+        $normalizedEnd = $this->normalizeDateTime($endTime, $timezone);
+
+        if (empty($normalizedStart) || empty($normalizedEnd)) {
+            return new PostResource(false, 'Invalid start_time or end_time format', []);
+        }
+
+        if (Carbon::parse($normalizedEnd)->lessThanOrEqualTo(Carbon::parse($normalizedStart))) {
+            return new PostResource(false, 'end_time must be after start_time', []);
+        }
+
+        $zoomId = null;
+        $zoomLink = null;
+        $zoomPassword = null;
+
+        if ($zoomRequired) {
+            try {
+                $duration = Carbon::parse($normalizedStart, $timezone)->diffInMinutes(Carbon::parse($normalizedEnd, $timezone));
+                $meeting = $this->createZoomMeeting($topic, $normalizedStart, $duration, $agenda, $timezone);
+
+                $zoomId = $meeting['id'] ?? null;
+                $zoomLink = $meeting['join_url'] ?? null;
+                $zoomPassword = $meeting['password'] ?? null;
+            } catch (GuzzleException | \RuntimeException $e) {
+                return new PostResource(false, 'Failed to create Zoom meeting: ' . $e->getMessage(), []);
+            }
+        }
+
+        $booking = BookingRoom::create([
+            'topic' => $topic,
+            'participants' => $participants,
+            'start_time' => $normalizedStart,
+            'end_time' => $normalizedEnd,
+            'zoom_required' => $zoomRequired,
+            'consumption_required' => $consumptionRequired,
+            'consumption_detail' => $consumptionDetail,
+            'room' => $room,
+            'zoom_id' => $zoomId,
+            'zoom_link' => $zoomLink,
+            'zoom_password' => $zoomPassword,
+            'created_by' => Employe::employeId(),
+        ]);
+
+        return new PostResource(true, 'Meeting booked successfully', $booking);
+    }
+
+    public function listMeetingBookings()
+    {
+        $bookings = BookingRoom::whereNull('canceled_at')
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        foreach ($bookings as $booking) {
+            $booking->created_by_name = Employe::where('employe_id', $booking->created_by)->value('first_name');
+        }
+
+        return new PostResource(true, 'success', $bookings);
+    }
+
+    public function cancelMeetingBooking($id)
+    {
+        $booking = BookingRoom::find($id);
+
+        if (!$booking) {
+            return new PostResource(false, 'Meeting booking not found', []);
+        }
+
+        if (!is_null($booking->canceled_at)) {
+            return new PostResource(false, 'Meeting booking already canceled', []);
+        }
+
+        if ($booking->zoom_required && !empty($booking->zoom_id)) {
+            try {
+                $this->zoomRequest('DELETE', 'meetings/' . $booking->zoom_id);
+            } catch (GuzzleException | \RuntimeException $e) {
+                return new PostResource(false, 'Failed to cancel Zoom meeting: ' . $e->getMessage(), []);
+            }
+        }
+
+        $booking->canceled_at = now();
+        $booking->save();
+
+        return new PostResource(true, 'Meeting booking canceled successfully', $booking);
     }
 
     protected function normalizeDateTime($value, ?string $timezone = null): ?string
