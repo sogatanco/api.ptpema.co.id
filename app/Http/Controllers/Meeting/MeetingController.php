@@ -134,13 +134,15 @@ class MeetingController extends Controller
             return new PostResource(false, 'Failed to create Zoom meeting: ' . $e->getMessage(), []);
         }
 
+        $normalizedStartTime = $this->normalizeDateTime($meeting['start_time'] ?? $startTime);
+
         $zoom = new Zoom();
         $zoom->topic = $meeting['topic'] ?? $topic;
         $zoom->link = $meeting['join_url'] ?? null;
         $zoom->meeting_id = $meeting['id'] ?? null;
         $zoom->password = $meeting['password'] ?? null;
-        $zoom->start_time = $meeting['start_time'] ?? $startTime;
-        $zoom->end_time = $this->calculateEndTime($startTime, $duration);
+        $zoom->start_time = $normalizedStartTime;
+        $zoom->end_time = $this->calculateEndTime($normalizedStartTime ?? $startTime, $duration);
         $zoom->created_by = Employe::employeId();
 
         if ($zoom->save()) {
@@ -150,10 +152,29 @@ class MeetingController extends Controller
         return new PostResource(false, 'Zoom meeting created on Zoom but failed to save to database', []);
     }
 
-    protected function calculateEndTime(string $startTime, int $duration): ?string
+    protected function normalizeDateTime($value): ?string
     {
+        if (empty($value)) {
+            return null;
+        }
+
         try {
-            return Carbon::parse($startTime)->addMinutes($duration)->toDateTimeString();
+            return Carbon::parse($value)->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    protected function calculateEndTime($startTime, int $duration): ?string
+    {
+        $normalizedStartTime = $this->normalizeDateTime($startTime);
+
+        if (empty($normalizedStartTime)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($normalizedStartTime)->addMinutes($duration)->format('Y-m-d H:i:s');
         } catch (\Exception $e) {
             return null;
         }
