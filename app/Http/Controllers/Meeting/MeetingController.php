@@ -70,10 +70,34 @@ class MeetingController extends Controller
             $options['json'] = $payload;
         }
 
-        $response = $client->request($method, $uri, $options);
-        $body = (string) $response->getBody();
+        try {
+            $response = $client->request($method, $uri, $options);
+            $body = (string) $response->getBody();
 
-        return $body !== '' ? json_decode($body, true) : [];
+            return $body !== '' ? json_decode($body, true) : [];
+        } catch (GuzzleException $e) {
+            $responseBody = '';
+            if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                $responseBody = (string) $e->getResponse()->getBody();
+            }
+
+            $decodedBody = $responseBody !== '' ? json_decode($responseBody, true) : [];
+            $message = $decodedBody['message'] ?? $e->getMessage();
+            $code = $decodedBody['code'] ?? null;
+
+            throw new \RuntimeException(($code ? 'Zoom error ' . $code . ': ' : '') . $message);
+        }
+    }
+
+    protected function resolveZoomUserPath(): string
+    {
+        $configuredUser = env('ZOOM_USER_ID');
+
+        if (!empty($configuredUser)) {
+            return 'users/' . $configuredUser;
+        }
+
+        return 'users/me';
     }
 
     public function bookZoom(Request $request)
@@ -104,7 +128,8 @@ class MeetingController extends Controller
         ];
 
         try {
-            $meeting = $this->zoomRequest('POST', 'users/' . env('ZOOM_ACCOUNT_ID', 'me') . '/meetings', $payload);
+            $userPath = $this->resolveZoomUserPath();
+            $meeting = $this->zoomRequest('POST', $userPath . '/meetings', $payload);
         } catch (GuzzleException | \RuntimeException $e) {
             return new PostResource(false, 'Failed to create Zoom meeting: ' . $e->getMessage(), []);
         }
