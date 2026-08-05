@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('meeting_bookings', function (Blueprint $table) {
+        Schema::create('meetings', function (Blueprint $table) {
             $table->id();
             $table->string('topic');
             $table->integer('participants')->default(0);
@@ -21,9 +21,7 @@ return new class extends Migration
             $table->boolean('consumption_required')->default(false);
             $table->text('consumption_detail')->nullable();
             $table->string('room');
-            $table->string('zoom_id')->nullable();
-            $table->string('zoom_link')->nullable();
-            $table->string('zoom_password')->nullable();
+            $table->unsignedBigInteger('zoom_id')->nullable();
             $table->string('created_by');
             $table->timestamp('canceled_at')->nullable();
             $table->timestamps();

@@ -206,17 +206,23 @@ class MeetingController extends Controller
         }
 
         $zoomId = null;
-        $zoomLink = null;
-        $zoomPassword = null;
 
         if ($zoomRequired) {
             try {
                 $duration = Carbon::parse($normalizedStart, $timezone)->diffInMinutes(Carbon::parse($normalizedEnd, $timezone));
                 $meeting = $this->createZoomMeeting($topic, $normalizedStart, $duration, $agenda, $timezone);
 
-                $zoomId = $meeting['id'] ?? null;
-                $zoomLink = $meeting['join_url'] ?? null;
-                $zoomPassword = $meeting['password'] ?? null;
+                $zoom = Zoom::create([
+                    'topic' => $meeting['topic'] ?? $topic,
+                    'link' => $meeting['join_url'] ?? null,
+                    'meeting_id' => $meeting['id'] ?? null,
+                    'password' => $meeting['password'] ?? null,
+                    'start_time' => $normalizedStart,
+                    'end_time' => $normalizedEnd,
+                    'created_by' => Employe::employeId(),
+                ]);
+
+                $zoomId = $zoom->id;
             } catch (GuzzleException | \RuntimeException $e) {
                 return new PostResource(false, 'Failed to create Zoom meeting: ' . $e->getMessage(), []);
             }
@@ -232,8 +238,6 @@ class MeetingController extends Controller
             'consumption_detail' => $consumptionDetail,
             'room' => $room,
             'zoom_id' => $zoomId,
-            'zoom_link' => $zoomLink,
-            'zoom_password' => $zoomPassword,
             'created_by' => Employe::employeId(),
         ]);
 
@@ -242,9 +246,23 @@ class MeetingController extends Controller
 
     public function listMeetingBookings()
     {
-        $bookings = BookingRoom::whereNull('canceled_at')
+        $bookings = BookingRoom::with('zoom')
+            ->whereNull('canceled_at')
             ->orderBy('start_time', 'asc')
             ->get();
+
+        foreach ($bookings as $booking) {
+            $booking->created_by_name = Employe::where('employe_id', $booking->created_by)->value('first_name');
+            $booking->zoom_details = null;
+
+            if ($booking->zoom) {
+                $booking->zoom_details = [
+                    'id' => $booking->zoom->meeting_id,
+                    'link' => $booking->zoom->link,
+                    'password' => $booking->zoom->password,
+                ];
+            }
+        }
 
         foreach ($bookings as $booking) {
             $booking->created_by_name = Employe::where('employe_id', $booking->created_by)->value('first_name');
@@ -255,7 +273,7 @@ class MeetingController extends Controller
 
     public function cancelMeetingBooking($id)
     {
-        $booking = BookingRoom::find($id);
+        $booking = BookingRoom::with('zoom')->find($id);
 
         if (!$booking) {
             return new PostResource(false, 'Meeting booking not found', []);
@@ -265,9 +283,11 @@ class MeetingController extends Controller
             return new PostResource(false, 'Meeting booking already canceled', []);
         }
 
-        if ($booking->zoom_required && !empty($booking->zoom_id)) {
+        if ($booking->zoom_required && $booking->zoom && !empty($booking->zoom->meeting_id)) {
             try {
-                $this->zoomRequest('DELETE', 'meetings/' . $booking->zoom_id);
+                $this->zoomRequest('DELETE', 'meetings/' . $booking->zoom->meeting_id);
+                $booking->zoom->canceled_at = now();
+                $booking->zoom->save();
             } catch (GuzzleException | \RuntimeException $e) {
                 return new PostResource(false, 'Failed to cancel Zoom meeting: ' . $e->getMessage(), []);
             }
