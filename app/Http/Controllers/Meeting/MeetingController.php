@@ -7,7 +7,6 @@ use App\Http\Resources\PostResource;
 use App\Models\Employe;
 use App\Models\Meeting\Zoom;
 use Carbon\Carbon;
-use Firebase\JWT\JWT;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
@@ -18,23 +17,43 @@ class MeetingController extends Controller
     {
         return new Client([
             'base_uri' => 'https://api.zoom.us/v2/',
-            'timeout' => 20,
+            'timeout' => 30,
         ]);
     }
 
-    protected function getZoomToken(): string
+    protected function getZoomAccessToken(): string
     {
-        $apiKey = env('ZOOM_CLIENT_ID');
-        $apiSecret = env('ZOOM_CLIENT_SECRET');
+        $clientId = env('ZOOM_CLIENT_ID');
+        $clientSecret = env('ZOOM_CLIENT_SECRET');
+        $accountId = env('ZOOM_ACCOUNT_ID');
 
-        if (empty($apiKey) || empty($apiSecret)) {
-            throw new \RuntimeException('ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET must be configured.');
+        if (empty($clientId) || empty($clientSecret) || empty($accountId)) {
+            throw new \RuntimeException('ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_ACCOUNT_ID must be configured.');
         }
 
-        return JWT::encode([
-            'iss' => $apiKey,
-            'exp' => Carbon::now()->addHour()->timestamp,
-        ], $apiSecret, 'HS256');
+        $client = new Client([
+            'base_uri' => 'https://zoom.us/',
+            'timeout' => 30,
+        ]);
+
+        $response = $client->request('POST', 'oauth/token', [
+            'headers' => [
+                'Authorization' => 'Basic ' . base64_encode($clientId . ':' . $clientSecret),
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ],
+            'form_params' => [
+                'grant_type' => 'account_credentials',
+                'account_id' => $accountId,
+            ],
+        ]);
+
+        $body = json_decode((string) $response->getBody(), true);
+
+        if (empty($body['access_token'])) {
+            throw new \RuntimeException('Failed to obtain Zoom access token.');
+        }
+
+        return $body['access_token'];
     }
 
     protected function zoomRequest(string $method, string $uri, array $payload = []): array
@@ -42,7 +61,7 @@ class MeetingController extends Controller
         $client = $this->getZoomClient();
         $options = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->getZoomToken(),
+                'Authorization' => 'Bearer ' . $this->getZoomAccessToken(),
                 'Content-Type' => 'application/json',
             ],
         ];
