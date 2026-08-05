@@ -116,6 +116,7 @@ class MeetingController extends Controller
         $payload = [
             'topic' => $topic,
             'type' => 2,
+            'use_pmi' => true,
             'start_time' => $startTime,
             'duration' => $duration,
             'timezone' => $timezone,
@@ -123,7 +124,7 @@ class MeetingController extends Controller
             'settings' => [
                 'host_video' => (bool) $request->input('host_video', true),
                 'participant_video' => (bool) $request->input('participant_video', true),
-                'join_before_host' => false,
+                'join_before_host' => true,
                 'mute_upon_entry' => true,
                 'waiting_room' => false,
             ],
@@ -159,6 +160,7 @@ class MeetingController extends Controller
         $payload = [
             'topic' => $topic,
             'type' => 2,
+            'use_pmi' => true,
             'start_time' => $startTime,
             'duration' => $duration,
             'timezone' => $timezone ?? config('app.timezone', 'Asia/Jakarta'),
@@ -166,7 +168,7 @@ class MeetingController extends Controller
             'settings' => [
                 'host_video' => false,
                 'participant_video' => false,
-                'join_before_host' => false,
+                'join_before_host' => true,
                 'mute_upon_entry' => true,
                 'waiting_room' => false,
             ],
@@ -175,6 +177,64 @@ class MeetingController extends Controller
         $userPath = $this->resolveZoomUserPath();
 
         return $this->zoomRequest('POST', $userPath . '/meetings', $payload);
+    }
+
+    protected function timeRangesOverlap(string $startA, string $endA, string $startB, string $endB): bool
+    {
+        $rangeAStart = Carbon::parse($startA);
+        $rangeAEnd = Carbon::parse($endA);
+        $rangeBStart = Carbon::parse($startB);
+        $rangeBEnd = Carbon::parse($endB);
+
+        return $rangeAStart->lt($rangeBEnd) && $rangeAEnd->gt($rangeBStart);
+    }
+
+    protected function getRoomConflict(string $room, string $startTime, string $endTime, ?int $ignoreId = null): ?BookingRoom
+    {
+        $query = BookingRoom::where('room', $room)
+            ->whereNull('canceled_at');
+
+        if (!is_null($ignoreId)) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        $bookings = $query->with('zoom')->get();
+
+        foreach ($bookings as $booking) {
+            if ($this->timeRangesOverlap($startTime, $endTime, (string) $booking->start_time, (string) $booking->end_time)) {
+                return $booking;
+            }
+        }
+
+        return null;
+    }
+
+    protected function getZoomConflict(string $startTime, string $endTime, ?int $ignoreBookingId = null, ?int $ignoreZoomId = null): ?BookingRoom
+    {
+        $query = BookingRoom::where('zoom_required', true)
+            ->whereNull('canceled_at')
+            ->whereNotNull('zoom_id');
+
+        if (!is_null($ignoreBookingId)) {
+            $query->where('id', '!=', $ignoreBookingId);
+        }
+
+        $bookings = $query->with('zoom')->get();
+
+        foreach ($bookings as $booking) {
+            if (!is_null($ignoreZoomId) && (int) $booking->zoom_id === (int) $ignoreZoomId) {
+                continue;
+            }
+
+            $bookingStart = $booking->zoom->start_time ?? $booking->start_time;
+            $bookingEnd = $booking->zoom->end_time ?? $booking->end_time;
+
+            if ($this->timeRangesOverlap($startTime, $endTime, (string) $bookingStart, (string) $bookingEnd)) {
+                return $booking;
+            }
+        }
+
+        return null;
     }
 
     public function bookMeetingRoom(Request $request)
@@ -205,9 +265,31 @@ class MeetingController extends Controller
             return new PostResource(false, 'end_time must be after start_time', []);
         }
 
+        $roomConflict = $this->getRoomConflict($room, $normalizedStart, $normalizedEnd);
+
+        if ($roomConflict) {
+            return new PostResource(false, 'Room is already booked in the selected time range', [
+                'conflict_booking_id' => $roomConflict->id,
+                'conflict_room' => $roomConflict->room,
+                'conflict_start_time' => $roomConflict->start_time,
+                'conflict_end_time' => $roomConflict->end_time,
+            ]);
+        }
+
         $zoomId = null;
 
         if ($zoomRequired) {
+            $zoomConflict = $this->getZoomConflict($normalizedStart, $normalizedEnd);
+
+            if ($zoomConflict) {
+                return new PostResource(false, 'Zoom meeting time conflicts with another meeting', [
+                    'conflict_booking_id' => $zoomConflict->id,
+                    'conflict_topic' => $zoomConflict->topic,
+                    'conflict_start_time' => $zoomConflict->zoom?->start_time ?? $zoomConflict->start_time,
+                    'conflict_end_time' => $zoomConflict->zoom?->end_time ?? $zoomConflict->end_time,
+                ]);
+            }
+
             try {
                 $duration = Carbon::parse($normalizedStart, $timezone)->diffInMinutes(Carbon::parse($normalizedEnd, $timezone));
                 $meeting = $this->createZoomMeeting($topic, $normalizedStart, $duration, $agenda, $timezone);
