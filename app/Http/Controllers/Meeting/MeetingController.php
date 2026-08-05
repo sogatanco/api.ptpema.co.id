@@ -106,6 +106,7 @@ class MeetingController extends Controller
         $startTime = $request->input('start_time');
         $duration = (int) $request->input('duration', 60);
         $agenda = $request->input('agenda', $topic);
+        $timezone = $request->input('timezone', config('app.timezone', 'Asia/Jakarta'));
 
         if (empty($topic) || empty($startTime)) {
             return new PostResource(false, 'topic and start_time are required', []);
@@ -116,7 +117,7 @@ class MeetingController extends Controller
             'type' => 2,
             'start_time' => $startTime,
             'duration' => $duration,
-            'timezone' => $request->input('timezone', 'Asia/Jakarta'),
+            'timezone' => $timezone,
             'agenda' => $agenda,
             'settings' => [
                 'host_video' => (bool) $request->input('host_video', true),
@@ -134,7 +135,7 @@ class MeetingController extends Controller
             return new PostResource(false, 'Failed to create Zoom meeting: ' . $e->getMessage(), []);
         }
 
-        $normalizedStartTime = $this->normalizeDateTime($meeting['start_time'] ?? $startTime);
+        $normalizedStartTime = $this->normalizeDateTime($startTime, $timezone);
 
         $zoom = new Zoom();
         $zoom->topic = $meeting['topic'] ?? $topic;
@@ -142,7 +143,7 @@ class MeetingController extends Controller
         $zoom->meeting_id = $meeting['id'] ?? null;
         $zoom->password = $meeting['password'] ?? null;
         $zoom->start_time = $normalizedStartTime;
-        $zoom->end_time = $this->calculateEndTime($normalizedStartTime ?? $startTime, $duration);
+        $zoom->end_time = $this->calculateEndTime($normalizedStartTime ?? $startTime, $duration, $timezone);
         $zoom->created_by = Employe::employeId();
 
         if ($zoom->save()) {
@@ -152,29 +153,37 @@ class MeetingController extends Controller
         return new PostResource(false, 'Zoom meeting created on Zoom but failed to save to database', []);
     }
 
-    protected function normalizeDateTime($value): ?string
+    protected function normalizeDateTime($value, ?string $timezone = null): ?string
     {
         if (empty($value)) {
             return null;
         }
 
         try {
-            return Carbon::parse($value)->format('Y-m-d H:i:s');
+            $parsed = Carbon::parse($value, $timezone ?: config('app.timezone', 'Asia/Jakarta'));
+
+            if (!empty($timezone)) {
+                $parsed = $parsed->setTimezone($timezone);
+            }
+
+            return $parsed->format('Y-m-d H:i:s');
         } catch (\Exception $e) {
             return null;
         }
     }
 
-    protected function calculateEndTime($startTime, int $duration): ?string
+    protected function calculateEndTime($startTime, int $duration, ?string $timezone = null): ?string
     {
-        $normalizedStartTime = $this->normalizeDateTime($startTime);
+        $normalizedStartTime = $this->normalizeDateTime($startTime, $timezone);
 
         if (empty($normalizedStartTime)) {
             return null;
         }
 
         try {
-            return Carbon::parse($normalizedStartTime)->addMinutes($duration)->format('Y-m-d H:i:s');
+            return Carbon::parse($normalizedStartTime, $timezone ?: config('app.timezone', 'Asia/Jakarta'))
+                ->addMinutes($duration)
+                ->format('Y-m-d H:i:s');
         } catch (\Exception $e) {
             return null;
         }
