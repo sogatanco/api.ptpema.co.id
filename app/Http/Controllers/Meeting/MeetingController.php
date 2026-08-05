@@ -183,8 +183,8 @@ class MeetingController extends Controller
         $participants = (int) $request->input('participants', 0);
         $startTime = $request->input('start_time');
         $endTime = $request->input('end_time');
-        $zoomRequired = filter_var($request->input('zoom_required', false), FILTER_VALIDATE_BOOLEAN);
-        $consumptionRequired = filter_var($request->input('consumption_required', false), FILTER_VALIDATE_BOOLEAN);
+        $zoomRequired = $request->input('zoom');
+        $consumptionRequired = $request->input('consumption');
         $consumptionDetail = $request->input('consumption_detail');
         $room = $request->input('room');
         $agenda = $request->input('agenda', $topic);

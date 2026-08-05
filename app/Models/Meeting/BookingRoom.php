@@ -26,15 +26,6 @@ class BookingRoom extends Model
         'canceled_at',
     ];
 
-    protected $casts = [
-        'participants' => 'integer',
-        'zoom_required' => 'boolean',
-        'consumption_required' => 'boolean',
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
-        'canceled_at' => 'datetime',
-    ];
-
     public function zoom()
     {
         return $this->belongsTo(Zoom::class, 'zoom_id');
