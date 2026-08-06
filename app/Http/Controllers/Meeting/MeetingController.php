@@ -5,15 +5,25 @@ namespace App\Http\Controllers\Meeting;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
+use App\Models\Structure;
 use App\Models\Meeting\BookingRoom;
 use App\Models\Meeting\Zoom;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MeetingController extends Controller
 {
+    protected WhatsAppService $whatsAppService;
+
+    public function __construct(WhatsAppService $whatsAppService)
+    {
+        $this->whatsAppService = $whatsAppService;
+    }
+
     protected function getZoomClient(): Client
     {
         return new Client([
@@ -237,6 +247,44 @@ class MeetingController extends Controller
         return null;
     }
 
+    protected function sendConsumptionNotification(BookingRoom $booking): void
+    {
+        $recipients = Structure::query()
+            ->where('roles', 'like', '%PICKonsumsi%')
+            ->whereNotNull('phone_number')
+            ->pluck('phone_number')
+            ->filter(function ($phone) {
+                return !empty($phone);
+            })
+            ->unique()
+            ->values();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        $creatorName = Employe::where('employe_id', $booking->created_by)->value('first_name') ?: '-';
+        $message = "Notifikasi Pemesanan Konsumsi Rapat\n"
+            . "Topik: {$booking->topic}\n"
+            . "Ruangan: {$booking->room}\n"
+            . "Waktu: {$booking->start_time} - {$booking->end_time}\n"
+            . "Peserta: {$booking->participants}\n"
+            . "Detail Konsumsi: " . ($booking->consumption_detail ?: '-') . "\n"
+            . "Pengaju: {$creatorName}";
+
+        foreach ($recipients as $number) {
+            try {
+                $this->whatsAppService->sendMessage((string) $number, $message);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send meeting consumption WA notification', [
+                    'booking_id' => $booking->id,
+                    'number' => $number,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
     public function bookMeetingRoom(Request $request)
     {
         $topic = $request->input('topic');
@@ -322,6 +370,10 @@ class MeetingController extends Controller
             'zoom_id' => $zoomId,
             'created_by' => Employe::employeId(),
         ]);
+
+        if ((int) $consumptionRequired === 1) {
+            $this->sendConsumptionNotification($booking);
+        }
 
         return new PostResource(true, 'Meeting booked successfully', $booking);
     }

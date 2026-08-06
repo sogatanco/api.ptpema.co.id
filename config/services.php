@@ -31,4 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'whatsapp' => [
+        'base_url' => env('WHATSAPP_BASE_URL', 'https://app.pema.co.id/api/'),
+        'api_key' => env('WHATSAPP_API_KEY', 'demi-apa-ya-kamu-kerja'),
+    ],
+
 ];
