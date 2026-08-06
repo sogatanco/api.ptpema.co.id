@@ -247,24 +247,17 @@ class MeetingController extends Controller
         return null;
     }
 
-    protected function sendConsumptionNotification(BookingRoom $booking): void
+    protected function sendConsumptionNotification(BookingRoom $booking, string $event = 'booked'): void
     {
-        $recipients = Structure::query()
-            ->where('roles', 'like', '%PICKonsumsi%')
-            ->whereNotNull('phone_number')
-            ->pluck('phone_number')
-            ->filter(function ($phone) {
-                return !empty($phone);
-            })
-            ->unique()
-            ->values();
+        $recipients = $this->getConsumptionRecipientPhones();
 
         if ($recipients->isEmpty()) {
             return;
         }
 
         $creatorName = Employe::where('employe_id', $booking->created_by)->value('first_name') ?: '-';
-        $message = "Notifikasi Pemesanan Konsumsi Rapat\n"
+        $eventLabel = $event === 'canceled' ? 'DIBATALKAN' : 'DIBUAT';
+        $message = "Notifikasi Konsumsi Rapat ({$eventLabel})\n"
             . "Topik: {$booking->topic}\n"
             . "Ruangan: {$booking->room}\n"
             . "Waktu: {$booking->start_time} - {$booking->end_time}\n"
@@ -283,6 +276,57 @@ class MeetingController extends Controller
                 ]);
             }
         }
+    }
+
+    protected function getConsumptionRecipientPhones()
+    {
+        return Structure::query()
+            ->select('roles', 'phone_number')
+            ->whereNotNull('phone_number')
+            ->get()
+            ->filter(function ($item) {
+                $roles = $this->parseRolesValue($item->roles);
+
+                return in_array('PICKonsumsi', $roles, true);
+            })
+            ->flatMap(function ($item) {
+                return $this->extractPhoneNumbers((string) $item->phone_number);
+            })
+            ->filter(function ($phone) {
+                return !empty($phone);
+            })
+            ->unique()
+            ->values();
+    }
+
+    protected function parseRolesValue($roles): array
+    {
+        if (is_array($roles)) {
+            return $roles;
+        }
+
+        if (is_string($roles) && $roles !== '') {
+            $decoded = json_decode($roles, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+
+            return array_values(array_filter(array_map('trim', explode(',', $roles))));
+        }
+
+        return [];
+    }
+
+    protected function extractPhoneNumbers(string $rawPhone): array
+    {
+        if ($rawPhone === '') {
+            return [];
+        }
+
+        $parts = preg_split('/[;,|\s]+/', $rawPhone);
+
+        return array_values(array_filter(array_map('trim', $parts)));
     }
 
     public function bookMeetingRoom(Request $request)
@@ -429,6 +473,10 @@ class MeetingController extends Controller
 
         $booking->canceled_at = now();
         $booking->save();
+
+        if ((int) $booking->consumption_required === 1) {
+            $this->sendConsumptionNotification($booking, 'canceled');
+        }
 
         return new PostResource(true, 'Meeting booking canceled successfully', $booking);
     }

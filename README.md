@@ -21,6 +21,69 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## WhatsApp Service Usage
+
+Project ini memiliki service khusus untuk kirim WhatsApp di [app/Services/WhatsAppService.php](app/Services/WhatsAppService.php).
+
+### 1. Environment
+
+Tambahkan konfigurasi berikut di file `.env`:
+
+```env
+WHATSAPP_BASE_URL=https://app.pema.co.id/api/
+WHATSAPP_API_KEY=demi-apa-ya-kamu-kerja
+```
+
+Konfigurasi ini dibaca lewat [config/services.php](config/services.php).
+
+### 2. Inject Service di Controller
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\WhatsAppService;
+
+class ExampleController extends Controller
+{
+	protected WhatsAppService $whatsAppService;
+
+	public function __construct(WhatsAppService $whatsAppService)
+	{
+		$this->whatsAppService = $whatsAppService;
+	}
+}
+```
+
+### 3. Kirim 1 Pesan WA
+
+```php
+try {
+	$this->whatsAppService->sendMessage('081234567890', 'Halo dari API');
+} catch (\Throwable $e) {
+	// handle/log error
+}
+```
+
+Service akan normalisasi nomor ke format Indonesia (`62xxxxxxxxxx`) sebelum request ke endpoint `send-message`.
+
+### 4. Kirim ke Banyak Nomor
+
+```php
+$numbers = ['081234567890', '6281299999999'];
+
+foreach ($numbers as $number) {
+	try {
+		$this->whatsAppService->sendMessage($number, 'Notifikasi rapat');
+	} catch (\Throwable $e) {
+		// handle/log error per nomor
+	}
+}
+```
+
+Contoh implementasi real di module meeting bisa dilihat di [app/Http/Controllers/Meeting/MeetingController.php](app/Http/Controllers/Meeting/MeetingController.php).
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
