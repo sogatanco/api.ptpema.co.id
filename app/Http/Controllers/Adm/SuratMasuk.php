@@ -29,6 +29,7 @@ class SuratMasuk extends Controller
 
         $suratMasuk = new SM();
 
+
         if (Storage::disk('public_adm')->put($fileName, file_get_contents($request->file('file')->getRealPath()))) {
             $suratMasuk->file = $fileName;
             $suratMasuk->nomor = $request->nomorSurat;
@@ -161,9 +162,9 @@ class SuratMasuk extends Controller
                 'to'=>$r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name,
                 'nama' => Employe::where('employe_id', $r->employe_id)->first('first_name')->first_name,
                 'activity' =>  str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:'')
-                
+
                 :
-                
+
                 'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
                 'cc'=>$cc,
                 'waktu'=>$r->created_at,
@@ -191,9 +192,9 @@ class SuratMasuk extends Controller
                 'position' => $r->position,
                 'nama' => Employe::where('employe_id', $r->employe_id)->first('first_name')->first_name,
                 'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:'')
-                
+
                 :
-                
+
                 'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
                 'cc'=>$cc,
                 'waktu'=>$r->created_at,

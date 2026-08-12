@@ -256,6 +256,9 @@ class MeetingController extends Controller
         }
 
         $creatorName = Employe::where('employe_id', $booking->created_by)->value('first_name') ?: '-';
+        $requesterPhoneRaw = (string) (Structure::where('employe_id', $booking->created_by)->value('phone_number') ?? '');
+        $requesterPhones = $this->extractPhoneNumbers($requesterPhoneRaw);
+        $requesterPhoneLabel = !empty($requesterPhones) ? implode(', ', $requesterPhones) : '-';
         $eventLabel = $event === 'canceled' ? 'DIBATALKAN' : 'DIBUAT';
         $message = "Notifikasi Konsumsi Rapat ({$eventLabel})\n"
             . "Topik: {$booking->topic}\n"
@@ -263,7 +266,8 @@ class MeetingController extends Controller
             . "Waktu: {$booking->start_time} - {$booking->end_time}\n"
             . "Peserta: {$booking->participants}\n"
             . "Detail Konsumsi: " . ($booking->consumption_detail ?: '-') . "\n"
-            . "Pengaju: {$creatorName}";
+            . "No HP PIC: {$requesterPhoneLabel}\n"
+            . "PIC: {$creatorName}";
 
         foreach ($recipients as $number) {
             try {
