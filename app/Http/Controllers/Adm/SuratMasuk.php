@@ -29,7 +29,6 @@ class SuratMasuk extends Controller
 
         $suratMasuk = new SM();
 
-
         if (Storage::disk('public_adm')->put($fileName, file_get_contents($request->file('file')->getRealPath()))) {
             $suratMasuk->file = $fileName;
             $suratMasuk->nomor = $request->nomorSurat;
@@ -62,8 +61,8 @@ class SuratMasuk extends Controller
         } else if ($what == 'all') {
             $data = SM::latest('created_at')->get();
             foreach ($data as $d) {
-                $d->nama_dir = Structure::where('position_id', $d->id_direksi)->first('first_name')->first_name;
-                $d->by_name = Structure::where('employe_id', $d->insert_by)->first('first_name')->first_name;
+                $d->nama_dir = Structure::where('position_id', $d->id_direksi)->value('first_name') ?? '-';
+                $d->by_name = Structure::where('employe_id', $d->insert_by)->value('first_name') ?? '-';
                 if(count(Disposisi::where('id_surat', $d->id)->get())==1){
                     if(count(Disposisi::where('id_surat', $d->id)->whereNull('tindak_lanjut')->get())<1){
                         $c=2;

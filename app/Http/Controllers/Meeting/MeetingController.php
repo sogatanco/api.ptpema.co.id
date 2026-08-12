@@ -258,7 +258,11 @@ class MeetingController extends Controller
         $creatorName = Employe::where('employe_id', $booking->created_by)->value('first_name') ?: '-';
         $requesterPhoneRaw = (string) (Structure::where('employe_id', $booking->created_by)->value('phone_number') ?? '');
         $requesterPhones = $this->extractPhoneNumbers($requesterPhoneRaw);
-        $requesterPhoneLabel = !empty($requesterPhones) ? implode(', ', $requesterPhones) : '-';
+        $requesterPhoneLabel = !empty($requesterPhones)
+            ? implode(', ', array_map(function ($phone) {
+                return preg_replace('/^62/', '0', (string) $phone);
+            }, $requesterPhones))
+            : '-';
         $eventLabel = $event === 'canceled' ? 'DIBATALKAN' : 'DIBUAT';
         $message = "Notifikasi Konsumsi Rapat ({$eventLabel})\n"
             . "Topik: {$booking->topic}\n"
