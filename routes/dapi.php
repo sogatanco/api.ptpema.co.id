@@ -141,6 +141,7 @@ Route::controller(PengajuanController::class)->group(function(){
 Route::controller(ContractController::class)->group(function(){
      Route::get('kontrak', 'index')->middleware("role:Employee");
      Route::get('kontrak/{id}', 'show')->middleware("role:Employee");
+     Route::get('kontrak/{id}/history', 'history')->middleware("role:Employee");
      Route::post('kontrak', 'store')->middleware("role:Employee");
      Route::post('kontrak/update/{id}', 'update')->middleware("role:Employee");
      Route::post('kontrak/delete/{id}', 'destroy')->middleware("role:Employee");

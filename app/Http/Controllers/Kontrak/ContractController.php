@@ -3,100 +3,142 @@
 namespace App\Http\Controllers\Kontrak;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kontrak\Contract;
+use App\Models\Kontrak\ContractHistory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Http\Resources\PostResource;
+use Illuminate\Support\Facades\Validator;
 
 class ContractController extends Controller
 {
-    /**
-     * List all kontrak
-     */
-    public function index(Request $request)
+    public function index()
     {
-        $data = DB::table('kontrak')->orderBy('id', 'DESC')->get();
-        return new PostResource(true, 'list kontrak', $data);
+        $contracts = Contract::withTrashed()->orderByDesc('id')->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'List kontrak berhasil dimuat',
+            'data' => $contracts,
+        ], 200);
     }
 
-    /**
-     * Show single kontrak
-     */
     public function show($id)
     {
-        $row = DB::table('kontrak')->where('id', $id)->first();
-        if (is_null($row)) {
-            return new PostResource(false, 'not found', []);
-        }
-        return new PostResource(true, 'detail kontrak', $row);
+        $contract = Contract::withTrashed()->findOrFail($id);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Detail kontrak berhasil dimuat',
+            'data' => $contract,
+        ], 200);
     }
 
-    /**
-     * Insert new kontrak
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'no_contrac' => 'required|string|max:100',
-            'judul'      => 'required|string|max:255',
-            'partner'    => 'required|string|max:255',
-            'start'      => 'nullable|date',
-            'end'        => 'required|date',
-            'pic'        => 'required|string|max:30',
-            'created_by' => 'nullable|string|max:30',
+        $validator = Validator::make($request->all(), [
+            'no_contrac' => ['required', 'string', 'max:100', 'unique:contracs,no_contrac'],
+            'judul' => ['required', 'string', 'max:255'],
+            'partner' => ['nullable', 'string', 'max:255'],
+            'start' => ['nullable', 'date'],
+            'end' => ['nullable', 'date', 'after_or_equal:start'],
+            'pic' => ['nullable', 'string', 'max:255'],
+            'created_by' => ['nullable', 'integer'],
         ]);
 
-        $insert = [
-            'no_contrac' => $validated['no_contrac'],
-            'judul'      => $validated['vjudul'],
-            'partner'    => $validated['vpartner'],
-            'start'      => isset($validated['start']) ? $validated['start'] : null,
-            'end'        => $validated['end'],
-            'pic'        => $validated['pic'],
-            'created_by' => isset($validated['created_by']) ? $validated['created_by'] : null,
-        ];
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-        $id = DB::table('kontrak')->insertGetId($insert);
-        $new = DB::table('kontrak')->where('id', $id)->first();
-        return new PostResource(true, 'created', $new);
+        $payload = $request->only(['no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by']);
+        $payload['created_by'] = $payload['created_by'] ?? auth()->id() ?? (auth()->user()?->employe_id ?? null);
+
+        $contract = Contract::create($payload);
+        $this->logHistory($contract->id, 'created');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Kontrak berhasil ditambahkan',
+            'data' => $contract,
+        ], 201);
     }
 
-    /**
-     * Update existing kontrak
-     */
     public function update(Request $request, $id)
     {
-        if (!DB::table('kontrak')->where('id', $id)->exists()) {
-            return new PostResource(false, 'not found', []);
-        }
+        $contract = Contract::withTrashed()->findOrFail($id);
 
-        $validated = $request->validate([
-            'no_contrac' => 'sometimes|required|string|max:100',
-            'judul'      => 'sometimes|required|string|max:255',
-            'partner'    => 'sometimes|required|string|max:255',
-            'start'      => 'sometimes|nullable|date',
-            'end'        => 'sometimes|required|date',
-            'pic'        => 'sometimes|required|string|max:30',
-            'created_by' => 'sometimes|nullable|string|max:30',
+        $validator = Validator::make($request->all(), [
+            'no_contrac' => ['sometimes', 'string', 'max:100', 'unique:contracs,no_contrac,' . $contract->id],
+            'judul' => ['sometimes', 'string', 'max:255'],
+            'partner' => ['nullable', 'string', 'max:255'],
+            'start' => ['nullable', 'date'],
+            'end' => ['nullable', 'date', 'after_or_equal:start'],
+            'pic' => ['nullable', 'string', 'max:255'],
+            'created_by' => ['nullable', 'integer'],
         ]);
 
-        $payload = array_intersect_key($validated, array_flip([
-            'no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by'
-        ]));
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-        DB::table('kontrak')->where('id', $id)->update($payload);
-        $updated = DB::table('kontrak')->where('id', $id)->first();
-        return new PostResource(true, 'updated', $updated);
+        $payload = $request->only(['no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by']);
+        if (isset($payload['created_by'])) {
+            $contract->created_by = $payload['created_by'];
+        }
+
+        $contract->fill($payload);
+        $contract->save();
+
+        $this->logHistory($contract->id, 'updated');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Kontrak berhasil diperbarui',
+            'data' => $contract->fresh(),
+        ], 200);
     }
 
-    /**
-     * Delete kontrak
-     */
     public function destroy($id)
     {
-        $deleted = DB::table('kontrak')->where('id', $id)->delete();
-        if ($deleted) {
-            return new PostResource(true, 'deleted', []);
-        }
-        return new PostResource(false, 'not found', []);
+        $contract = Contract::withTrashed()->findOrFail($id);
+        $contract->delete();
+
+        $this->logHistory($contract->id, 'deleted');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Kontrak berhasil dihapus',
+        ], 200);
+    }
+
+    public function history($id)
+    {
+        $contract = Contract::withTrashed()->findOrFail($id);
+
+        $histories = ContractHistory::where('contract_id', $contract->id)
+            ->orderByDesc('action_time')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Riwayat kontrak berhasil dimuat',
+            'data' => $histories,
+        ], 200);
+    }
+
+    protected function logHistory($contractId, $action)
+    {
+        ContractHistory::create([
+            'contract_id' => $contractId,
+            'action' => $action,
+            'action_by' => auth()->id() ?? (auth()->user()?->employe_id ?? 'system'),
+            'action_time' => now(),
+        ]);
     }
 }
