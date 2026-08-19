@@ -9,6 +9,8 @@ class ContractHistory extends Model
 {
     use HasFactory;
 
+    protected $connection = 'w12';
+
     protected $table = 'contract_history';
     public $timestamps = false;
 

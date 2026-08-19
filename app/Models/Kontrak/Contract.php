@@ -10,6 +10,8 @@ class Contract extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $connection = 'w12';
+
     protected $table = 'contracs';
 
     protected $fillable = [
