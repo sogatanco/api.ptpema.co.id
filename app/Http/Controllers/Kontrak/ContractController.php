@@ -70,7 +70,7 @@ class ContractController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $fileInput;
-            $directory = public_path('kontrak');
+            $directory = public_path('kontak');
 
             if (!is_dir($directory)) {
                 mkdir($directory, 0775, true);
@@ -88,7 +88,7 @@ class ContractController extends Controller
             $filename = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $file->move($directory, $filename);
 
-            $payload['file_url'] = 'kontrak/' . $filename;
+            $payload['file_url'] = 'kontak/' . $filename;
         } elseif (is_string($base64Input) && trim($base64Input) !== '') {
             $pdfData = preg_replace('/^data:application\/pdf;base64,/', '', trim($base64Input));
             $decoded = base64_decode($pdfData, true);
@@ -101,7 +101,7 @@ class ContractController extends Controller
                 ], 422);
             }
 
-            $directory = public_path('kontrak');
+            $directory = public_path('kontak');
             if (!is_dir($directory)) {
                 mkdir($directory, 0775, true);
             }
@@ -109,7 +109,7 @@ class ContractController extends Controller
             $filename = 'contract_' . time() . '_' . Str::random(8) . '.pdf';
             file_put_contents($directory . '/' . $filename, $decoded);
 
-            $payload['file_url'] = 'kontrak/' . $filename;
+            $payload['file_url'] = 'kontak/' . $filename;
         }
 
         if (isset($payload['file_url']) && !empty($payload['file_url'])) {
@@ -170,7 +170,7 @@ class ContractController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $fileInput;
-            $directory = public_path('kontrak');
+            $directory = public_path('kontak');
 
             if (!is_dir($directory)) {
                 mkdir($directory, 0775, true);
@@ -192,7 +192,7 @@ class ContractController extends Controller
             $filename = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $file->move($directory, $filename);
 
-            $payload['file_url'] = 'kontrak/' . $filename;
+            $payload['file_url'] = 'kontak/' . $filename;
         } elseif (is_string($base64Input) && trim($base64Input) !== '') {
             $pdfData = preg_replace('/^data:application\/pdf;base64,/', '', trim($base64Input));
             $decoded = base64_decode($pdfData, true);
@@ -209,7 +209,7 @@ class ContractController extends Controller
                 unlink(public_path($contract->file_url));
             }
 
-            $directory = public_path('kontrak');
+            $directory = public_path('kontak');
             if (!is_dir($directory)) {
                 mkdir($directory, 0775, true);
             }
@@ -217,7 +217,7 @@ class ContractController extends Controller
             $filename = 'contract_' . time() . '_' . Str::random(8) . '.pdf';
             file_put_contents($directory . '/' . $filename, $decoded);
 
-            $payload['file_url'] = 'kontrak/' . $filename;
+            $payload['file_url'] = 'kontak/' . $filename;
         }
 
         if (isset($payload['file_url']) && !empty($payload['file_url'])) {
