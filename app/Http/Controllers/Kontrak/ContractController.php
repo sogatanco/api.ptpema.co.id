@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kontrak\Contract;
 use App\Models\Kontrak\ContractHistory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ class ContractController extends Controller
         foreach ($candidates as $name) {
             if ($request->hasFile($name)) {
                 $file = $request->file($name);
-                $directory = public_path('kontak');
+                $directory = public_path('contracts');
 
                 if (!is_dir($directory)) {
                     mkdir($directory, 0775, true);
@@ -32,11 +33,18 @@ class ContractController extends Controller
                     unlink(public_path($existingContract->file_url));
                 }
 
-                $originalName = $file->getClientOriginalName();
-                $filename = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $file->move($directory, $filename);
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+                $filename = time() . '_' . Str::slug($originalName) . '.' . $extension;
 
-                return ['file_url' => 'kontak/' . $filename];
+                $storedPath = 'contracts/' . $filename;
+                $saved = Storage::disk('public_benda')->put($storedPath, file_get_contents($file->getRealPath()));
+
+                if (!$saved) {
+                    throw new \RuntimeException('File kontrak gagal disimpan');
+                }
+
+                return ['file_url' => $storedPath];
             }
         }
 
@@ -52,7 +60,7 @@ class ContractController extends Controller
                         throw new \RuntimeException('File kontrak tidak valid');
                     }
 
-                    $directory = public_path('kontak');
+                    $directory = public_path('contracts');
                     if (!is_dir($directory)) {
                         mkdir($directory, 0775, true);
                     }
@@ -62,12 +70,17 @@ class ContractController extends Controller
                     }
 
                     $filename = 'contract_' . time() . '_' . Str::random(8) . '.pdf';
-                    file_put_contents($directory . '/' . $filename, $decoded);
+                    $storedPath = 'contracts/' . $filename;
+                    $saved = Storage::disk('public_benda')->put($storedPath, $decoded);
 
-                    return ['file_url' => 'kontak/' . $filename];
+                    if (!$saved) {
+                        throw new \RuntimeException('File kontrak gagal disimpan');
+                    }
+
+                    return ['file_url' => $storedPath];
                 }
 
-                if (preg_match('#^kontak/#i', trim($inputValue))) {
+                if (preg_match('#^contracts/#i', trim($inputValue))) {
                     return ['file_url' => trim($inputValue)];
                 }
             }
