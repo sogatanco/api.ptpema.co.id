@@ -21,6 +21,7 @@ class Contract extends Model
         'start',
         'end',
         'pic',
+        'file_url',
         'created_by',
     ];
 

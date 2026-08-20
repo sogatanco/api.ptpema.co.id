@@ -7,6 +7,7 @@ use App\Models\Kontrak\Contract;
 use App\Models\Kontrak\ContractHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ContractController extends Controller
 {
@@ -50,7 +51,8 @@ class ContractController extends Controller
             'start' => ['nullable', 'date'],
             'end' => ['nullable', 'date', 'after_or_equal:start'],
             'pic' => ['nullable', 'string', 'max:255'],
-            'created_by' => ['nullable', 'integer'],
+            'file' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'created_by' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {
@@ -62,7 +64,22 @@ class ContractController extends Controller
         }
 
         $payload = $request->only(['no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by']);
-        $payload['created_by'] = $payload['created_by'] ?? auth()->id() ?? (auth()->user()?->employe_id ?? null);
+        $payload['created_by'] = $payload['created_by'] ?? auth()->user()?->employe_id ?? auth()->id() ?? null;
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $directory = public_path('kontrak');
+
+            if (!is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+
+            $originalName = $file->getClientOriginalName();
+            $filename = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $file->move($directory, $filename);
+
+            $payload['file_url'] = 'kontrak/' . $filename;
+        }
 
         $contract = Contract::create($payload);
         $this->logHistory($contract->id, 'created');
@@ -100,6 +117,7 @@ class ContractController extends Controller
             'start' => ['nullable', 'date'],
             'end' => ['nullable', 'date', 'after_or_equal:start'],
             'pic' => ['nullable', 'string', 'max:255'],
+            'file' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
             'created_by' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -112,6 +130,25 @@ class ContractController extends Controller
         }
 
         $payload = $request->only(['no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by']);
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $directory = public_path('kontrak');
+
+            if (!is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+
+            if (!empty($contract->file_url) && file_exists(public_path($contract->file_url))) {
+                unlink(public_path($contract->file_url));
+            }
+
+            $originalName = $file->getClientOriginalName();
+            $filename = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $file->move($directory, $filename);
+
+            $payload['file_url'] = 'kontrak/' . $filename;
+        }
 
         $employeeId = $payload['created_by'] ?? auth()->user()?->employe_id ?? auth()->id();
         $payload['created_by'] = $employeeId;
