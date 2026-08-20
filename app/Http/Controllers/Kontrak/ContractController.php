@@ -100,7 +100,7 @@ class ContractController extends Controller
             'start' => ['nullable', 'date'],
             'end' => ['nullable', 'date', 'after_or_equal:start'],
             'pic' => ['nullable', 'string', 'max:255'],
-            'created_by' => ['nullable', 'integer'],
+            'created_by' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {
@@ -112,9 +112,9 @@ class ContractController extends Controller
         }
 
         $payload = $request->only(['no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by']);
-        if (isset($payload['created_by'])) {
-            $contract->created_by = $payload['created_by'];
-        }
+
+        $employeeId = $payload['created_by'] ?? auth()->user()?->employe_id ?? auth()->id();
+        $payload['created_by'] = $employeeId;
 
         $contract->fill($payload);
         $contract->save();
