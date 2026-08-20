@@ -34,8 +34,17 @@ class ContractController extends Controller
 
     public function store(Request $request)
     {
+        $noContrac = trim((string) $request->input('no_contrac', ''));
+
+        if ($noContrac !== '' && Contract::on('w12')->where('no_contrac', $noContrac)->exists()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Nomor kontrak sudah ada',
+            ], 422);
+        }
+
         $validator = Validator::make($request->all(), [
-            'no_contrac' => ['required', 'string', 'max:100', 'unique:contracs,no_contrac'],
+            'no_contrac' => ['required', 'string', 'max:100'],
             'judul' => ['required', 'string', 'max:255'],
             'partner' => ['nullable', 'string', 'max:255'],
             'start' => ['nullable', 'date'],
@@ -69,8 +78,23 @@ class ContractController extends Controller
     {
         $contract = Contract::withTrashed()->findOrFail($id);
 
+        if ($request->has('no_contrac')) {
+            $newNoContrac = trim((string) $request->input('no_contrac'));
+            $exists = Contract::on('w12')
+                ->where('no_contrac', $newNoContrac)
+                ->where('id', '!=', $contract->id)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Nomor kontrak sudah ada',
+                ], 422);
+            }
+        }
+
         $validator = Validator::make($request->all(), [
-            'no_contrac' => ['sometimes', 'string', 'max:100', 'unique:contracs,no_contrac,' . $contract->id],
+            'no_contrac' => ['sometimes', 'string', 'max:100'],
             'judul' => ['sometimes', 'string', 'max:255'],
             'partner' => ['nullable', 'string', 'max:255'],
             'start' => ['nullable', 'date'],
