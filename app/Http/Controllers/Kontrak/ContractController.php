@@ -112,6 +112,10 @@ class ContractController extends Controller
             $payload['file_url'] = 'kontrak/' . $filename;
         }
 
+        if (isset($payload['file_url']) && !empty($payload['file_url'])) {
+            $payload['file_url'] = str_replace('\\', '/', $payload['file_url']);
+        }
+
         $contract = Contract::create($payload);
         $this->logHistory($contract->id, 'created');
 
@@ -214,6 +218,10 @@ class ContractController extends Controller
             file_put_contents($directory . '/' . $filename, $decoded);
 
             $payload['file_url'] = 'kontrak/' . $filename;
+        }
+
+        if (isset($payload['file_url']) && !empty($payload['file_url'])) {
+            $payload['file_url'] = str_replace('\\', '/', $payload['file_url']);
         }
 
         $employeeId = $payload['created_by'] ?? auth()->user()?->employe_id ?? auth()->id();
