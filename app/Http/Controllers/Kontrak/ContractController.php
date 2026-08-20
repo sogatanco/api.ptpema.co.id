@@ -51,7 +51,6 @@ class ContractController extends Controller
             'start' => ['nullable', 'date'],
             'end' => ['nullable', 'date', 'after_or_equal:start'],
             'pic' => ['nullable', 'string', 'max:255'],
-            'file' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
             'created_by' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -66,17 +65,49 @@ class ContractController extends Controller
         $payload = $request->only(['no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by']);
         $payload['created_by'] = $payload['created_by'] ?? auth()->user()?->employe_id ?? auth()->id() ?? null;
 
+        $fileInput = $request->file('file');
+        $base64Input = $request->input('file');
+
         if ($request->hasFile('file')) {
-            $file = $request->file('file');
+            $file = $fileInput;
             $directory = public_path('kontrak');
 
             if (!is_dir($directory)) {
                 mkdir($directory, 0775, true);
             }
 
+            if ($file->getError() !== UPLOAD_ERR_OK) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'File kontrak gagal diupload',
+                    'errors' => ['file' => ['The file failed to upload.']],
+                ], 422);
+            }
+
             $originalName = $file->getClientOriginalName();
             $filename = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $file->move($directory, $filename);
+
+            $payload['file_url'] = 'kontrak/' . $filename;
+        } elseif (is_string($base64Input) && trim($base64Input) !== '') {
+            $pdfData = preg_replace('/^data:application\/pdf;base64,/', '', trim($base64Input));
+            $decoded = base64_decode($pdfData, true);
+
+            if ($decoded === false) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'File kontrak tidak valid',
+                    'errors' => ['file' => ['The file failed to upload.']],
+                ], 422);
+            }
+
+            $directory = public_path('kontrak');
+            if (!is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+
+            $filename = 'contract_' . time() . '_' . Str::random(8) . '.pdf';
+            file_put_contents($directory . '/' . $filename, $decoded);
 
             $payload['file_url'] = 'kontrak/' . $filename;
         }
@@ -117,7 +148,6 @@ class ContractController extends Controller
             'start' => ['nullable', 'date'],
             'end' => ['nullable', 'date', 'after_or_equal:start'],
             'pic' => ['nullable', 'string', 'max:255'],
-            'file' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
             'created_by' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -131,12 +161,23 @@ class ContractController extends Controller
 
         $payload = $request->only(['no_contrac', 'judul', 'partner', 'start', 'end', 'pic', 'created_by']);
 
+        $fileInput = $request->file('file');
+        $base64Input = $request->input('file');
+
         if ($request->hasFile('file')) {
-            $file = $request->file('file');
+            $file = $fileInput;
             $directory = public_path('kontrak');
 
             if (!is_dir($directory)) {
                 mkdir($directory, 0775, true);
+            }
+
+            if ($file->getError() !== UPLOAD_ERR_OK) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'File kontrak gagal diupload',
+                    'errors' => ['file' => ['The file failed to upload.']],
+                ], 422);
             }
 
             if (!empty($contract->file_url) && file_exists(public_path($contract->file_url))) {
@@ -146,6 +187,31 @@ class ContractController extends Controller
             $originalName = $file->getClientOriginalName();
             $filename = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $file->move($directory, $filename);
+
+            $payload['file_url'] = 'kontrak/' . $filename;
+        } elseif (is_string($base64Input) && trim($base64Input) !== '') {
+            $pdfData = preg_replace('/^data:application\/pdf;base64,/', '', trim($base64Input));
+            $decoded = base64_decode($pdfData, true);
+
+            if ($decoded === false) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'File kontrak tidak valid',
+                    'errors' => ['file' => ['The file failed to upload.']],
+                ], 422);
+            }
+
+            if (!empty($contract->file_url) && file_exists(public_path($contract->file_url))) {
+                unlink(public_path($contract->file_url));
+            }
+
+            $directory = public_path('kontrak');
+            if (!is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+
+            $filename = 'contract_' . time() . '_' . Str::random(8) . '.pdf';
+            file_put_contents($directory . '/' . $filename, $decoded);
 
             $payload['file_url'] = 'kontrak/' . $filename;
         }
