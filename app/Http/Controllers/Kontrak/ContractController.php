@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 
 class ContractController extends Controller
 {
+    private const CONTRACT_MAX_FILE_SIZE = 100 * 1024 * 1024;
+
     private function contractStorageDisk()
     {
         if (config('filesystems.disks.public_benda')) {
@@ -19,6 +21,32 @@ class ContractController extends Controller
         }
 
         return Storage::disk('public');
+    }
+
+    private function validateContractFileSize(int $bytes, string $source = 'file')
+    {
+        if ($bytes > self::CONTRACT_MAX_FILE_SIZE) {
+            throw new \RuntimeException('Ukuran file kontrak maksimal 100 MB');
+        }
+
+        return true;
+    }
+
+    private function formatContractResponse($contract)
+    {
+        $data = $contract instanceof \Illuminate\Database\Eloquent\Model ? $contract->toArray() : $contract;
+
+        if (!empty($data['file_url'])) {
+            $fileUrl = trim((string) $data['file_url']);
+
+            if (!preg_match('#^https?://#i', $fileUrl)) {
+                $data['file_url'] = url($fileUrl);
+            }
+
+            $data['file_link'] = $data['file_url'];
+        }
+
+        return $data;
     }
 
     private function resolveContractFileData(Request $request, $existingContract = null)
@@ -37,6 +65,8 @@ class ContractController extends Controller
                 if ($file->getError() !== UPLOAD_ERR_OK) {
                     throw new \RuntimeException('File kontrak gagal diupload');
                 }
+
+                $this->validateContractFileSize((int) $file->getSize());
 
                 if ($existingContract && !empty($existingContract->file_url) && file_exists(public_path($existingContract->file_url))) {
                     unlink(public_path($existingContract->file_url));
@@ -69,6 +99,8 @@ class ContractController extends Controller
                     if ($decoded === false) {
                         throw new \RuntimeException('File kontrak tidak valid');
                     }
+
+                    $this->validateContractFileSize(strlen($decoded));
 
                     $directory = public_path('contracts');
                     if (!is_dir($directory)) {
@@ -107,7 +139,7 @@ class ContractController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'List kontrak berhasil dimuat',
-            'data' => $contracts,
+            'data' => $contracts->map(fn ($contract) => $this->formatContractResponse($contract)),
         ], 200);
     }
 
@@ -118,7 +150,7 @@ class ContractController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Detail kontrak berhasil dimuat',
-            'data' => $contract,
+            'data' => $this->formatContractResponse($contract),
         ], 200);
     }
 
