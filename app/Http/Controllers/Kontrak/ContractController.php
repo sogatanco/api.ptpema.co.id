@@ -32,17 +32,22 @@ class ContractController extends Controller
         return true;
     }
 
+    private function normalizeContractFileUrl(string $fileUrl): string
+    {
+        $normalized = str_replace('\\', '/', trim($fileUrl));
+        $normalized = preg_replace('#^/+#', '', $normalized);
+        $normalized = preg_replace('#^contracts/contracts/#i', 'contracts/', $normalized);
+
+        return $normalized;
+    }
+
     private function formatContractResponse($contract)
     {
         $data = $contract instanceof \Illuminate\Database\Eloquent\Model ? $contract->toArray() : $contract;
 
         if (!empty($data['file_url'])) {
-            $fileUrl = trim((string) $data['file_url']);
-
-            if (!preg_match('#^https?://#i', $fileUrl)) {
-                $data['file_url'] = url($fileUrl);
-            }
-
+            $fileUrl = $this->normalizeContractFileUrl((string) $data['file_url']);
+            $data['file_url'] = preg_match('#^https?://#i', $fileUrl) ? $fileUrl : url($fileUrl);
             $data['file_link'] = $data['file_url'];
         }
 
@@ -76,7 +81,7 @@ class ContractController extends Controller
                 $extension = strtolower($file->getClientOriginalExtension() ?: 'pdf');
                 $filename = time() . '_' . Str::slug($originalName) . '.' . $extension;
 
-                $storedPath = 'contracts/' . $filename;
+                $storedPath = $filename;
                 $disk = $this->contractStorageDisk();
                 $saved = $disk->put($storedPath, file_get_contents($file->getRealPath()));
 
@@ -84,7 +89,7 @@ class ContractController extends Controller
                     throw new \RuntimeException('File kontrak gagal disimpan');
                 }
 
-                return ['file_url' => $storedPath];
+                return ['file_url' => 'contracts/' . $storedPath];
             }
         }
 
@@ -112,7 +117,7 @@ class ContractController extends Controller
                     }
 
                     $filename = 'contract_' . time() . '_' . Str::random(8) . '.pdf';
-                    $storedPath = 'contracts/' . $filename;
+                    $storedPath = $filename;
                     $disk = $this->contractStorageDisk();
                     $saved = $disk->put($storedPath, $decoded);
 
@@ -120,11 +125,11 @@ class ContractController extends Controller
                         throw new \RuntimeException('File kontrak gagal disimpan');
                     }
 
-                    return ['file_url' => $storedPath];
+                    return ['file_url' => 'contracts/' . $storedPath];
                 }
 
                 if (preg_match('#^contracts/#i', trim($inputValue))) {
-                    return ['file_url' => trim($inputValue)];
+                    return ['file_url' => $this->normalizeContractFileUrl(trim($inputValue))];
                 }
             }
         }
@@ -134,7 +139,7 @@ class ContractController extends Controller
 
     public function index()
     {
-        $contracts = Contract::withTrashed()->orderByDesc('id')->get();
+        $contracts = Contract::query()->whereNull('deleted_at')->orderByDesc('id')->get();
 
         return response()->json([
             'status' => true,
