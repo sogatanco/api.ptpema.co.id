@@ -12,6 +12,15 @@ use Illuminate\Support\Str;
 
 class ContractController extends Controller
 {
+    private function contractStorageDisk()
+    {
+        if (config('filesystems.disks.public_benda')) {
+            return Storage::disk('public_benda');
+        }
+
+        return Storage::disk('public');
+    }
+
     private function resolveContractFileData(Request $request, $existingContract = null)
     {
         $candidates = ['file', 'document', 'dokumen', 'pdf', 'lampiran'];
@@ -38,7 +47,8 @@ class ContractController extends Controller
                 $filename = time() . '_' . Str::slug($originalName) . '.' . $extension;
 
                 $storedPath = 'contracts/' . $filename;
-                $saved = Storage::disk('public_benda')->put($storedPath, file_get_contents($file->getRealPath()));
+                $disk = $this->contractStorageDisk();
+                $saved = $disk->put($storedPath, file_get_contents($file->getRealPath()));
 
                 if (!$saved) {
                     throw new \RuntimeException('File kontrak gagal disimpan');
@@ -71,7 +81,8 @@ class ContractController extends Controller
 
                     $filename = 'contract_' . time() . '_' . Str::random(8) . '.pdf';
                     $storedPath = 'contracts/' . $filename;
-                    $saved = Storage::disk('public_benda')->put($storedPath, $decoded);
+                    $disk = $this->contractStorageDisk();
+                    $saved = $disk->put($storedPath, $decoded);
 
                     if (!$saved) {
                         throw new \RuntimeException('File kontrak gagal disimpan');
