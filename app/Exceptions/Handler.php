@@ -35,7 +35,7 @@ class Handler extends ExceptionHandler
         if ($exception instanceof PostTooLargeException) {
             throw new HttpResponseException(response([
                 "status" => false,
-                "message" => "'Ukuran file terlalu besar. Batas maksimal upload telah terlampaui.',"
+                "message" => "Ukuran file terlalu besar. Batas maksimal upload telah terlampaui."
             ], 413)); // 413 = Payload Too Large
         }
 
