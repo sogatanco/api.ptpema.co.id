@@ -209,7 +209,7 @@ class ContractController extends Controller
         }
 
         $contract = Contract::create($payload);
-        $this->logHistory($contract->id, 'created');
+        // $this->logHistory($contract->id, 'created');
 
         return response()->json([
             'status' => true,
@@ -280,7 +280,7 @@ class ContractController extends Controller
         $contract->fill($payload);
         $contract->save();
 
-        $this->logHistory($contract->id, 'updated');
+        // $this->logHistory($contract->id, 'updated');
 
         return response()->json([
             'status' => true,
@@ -294,7 +294,7 @@ class ContractController extends Controller
         $contract = Contract::withTrashed()->findOrFail($id);
         $contract->delete();
 
-        $this->logHistory($contract->id, 'deleted');
+        // $this->logHistory($contract->id, 'deleted');
 
         return response()->json([
             'status' => true,
