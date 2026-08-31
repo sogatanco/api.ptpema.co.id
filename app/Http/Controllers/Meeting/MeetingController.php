@@ -32,11 +32,25 @@ class MeetingController extends Controller
         ]);
     }
 
+    protected function resolveZoomCredentials(): array
+    {
+        $clientId = config('services.zoom.client_id') ?? env('ZOOM_CLIENT_ID');
+        $clientSecret = config('services.zoom.client_secret') ?? env('ZOOM_CLIENT_SECRET');
+        $accountId = config('services.zoom.account_id') ?? env('ZOOM_ACCOUNT_ID');
+
+        return [
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'account_id' => $accountId,
+        ];
+    }
+
     protected function getZoomAccessToken(): string
     {
-        $clientId = env('ZOOM_CLIENT_ID');
-        $clientSecret = env('ZOOM_CLIENT_SECRET');
-        $accountId = env('ZOOM_ACCOUNT_ID');
+        $credentials = $this->resolveZoomCredentials();
+        $clientId = $credentials['client_id'];
+        $clientSecret = $credentials['client_secret'];
+        $accountId = $credentials['account_id'];
 
         if (empty($clientId) || empty($clientSecret) || empty($accountId)) {
             throw new \RuntimeException('ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_ACCOUNT_ID must be configured.');
@@ -102,7 +116,7 @@ class MeetingController extends Controller
 
     protected function resolveZoomUserPath(): string
     {
-        $configuredUser = env('ZOOM_USER_ID');
+        $configuredUser = config('services.zoom.user_id') ?? env('ZOOM_USER_ID');
 
         if (!empty($configuredUser)) {
             return 'users/' . $configuredUser;

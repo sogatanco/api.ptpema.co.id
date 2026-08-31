@@ -18,12 +18,6 @@ class ContractReminderCommand extends Command
 
     public function handle(): int
     {
-        $now = Carbon::now();
-
-        if ((int) $now->format('H') !== 9) {
-            return self::SUCCESS;
-        }
-
         $start = now()->startOfDay();
         $end = now()->addDays(15)->endOfDay();
 

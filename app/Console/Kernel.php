@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('contract:reminder')->hourly();
+        $schedule->command('contract:reminder')->daily();
     }
 
     /**
