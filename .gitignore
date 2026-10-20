@@ -9,7 +9,8 @@
 /public/taskfiles
 /public/vendor
 /public/vendor_file
-/public
+/public/*
+!/public/.user.ini
 /storage/*.key
 /vendor
 .env

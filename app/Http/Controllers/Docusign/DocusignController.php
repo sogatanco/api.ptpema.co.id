@@ -93,7 +93,7 @@ class DocusignController extends Controller
     {
         $v = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf|max:20480',
+            'file' => 'required|file|mimes:pdf|max:128000',
             'signers' => 'required|string',
             'fields' => 'required|string',
         ]);
@@ -239,6 +239,14 @@ class DocusignController extends Controller
         return response()->json(['message' => 'Dokumen dibatalkan']);
     }
 
+    // Public signature ID derived from the secret token; it cannot be used to sign
+    private function signatureCode(DocusignDocument $doc, DocusignSigner $signer): string
+    {
+        $hash = strtoupper(substr(hash_hmac('sha256', $signer->token . '|' . $doc->uuid . '|' . $signer->signed_at, config('app.key')), 0, 16));
+
+        return implode('-', str_split($hash, 4));
+    }
+
     // ---------- Public (token based) ----------
 
     private function signerByToken(string $token): DocusignSigner
@@ -340,7 +348,9 @@ class DocusignController extends Controller
                 'order' => $s->sign_order,
                 'status' => $s->status,
                 'signed_at' => $s->signed_at,
+                'code' => $s->status === 'signed' ? $this->signatureCode($doc, $s) : null,
             ]),
+            'sign_mode' => $doc->sign_mode,
         ]]);
     }
 
