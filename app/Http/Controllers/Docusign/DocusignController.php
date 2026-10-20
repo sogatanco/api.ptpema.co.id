@@ -43,6 +43,31 @@ class DocusignController extends Controller
         $signer->update(['notified_at' => now()]);
     }
 
+    private function canSign(DocusignDocument $doc, DocusignSigner $signer): bool
+    {
+        return !$doc->signers->contains(fn ($s) => $s->sign_order < $signer->sign_order && $s->status !== 'signed');
+    }
+
+    // Email every pending signer whose turn has come and who has not been notified yet
+    private function notifyNext(DocusignDocument $doc): array
+    {
+        $doc->load('signers');
+        $failed = [];
+        foreach ($doc->signers as $signer) {
+            if ($signer->status !== 'pending' || $signer->notified_at || !$this->canSign($doc, $signer)) {
+                continue;
+            }
+            try {
+                $this->sendSignRequest($doc, $signer);
+            } catch (\Throwable $e) {
+                report($e);
+                $failed[] = $signer->email;
+            }
+        }
+
+        return $failed;
+    }
+
     private function formatDoc(DocusignDocument $doc): array
     {
         $doc->loadMissing(['signers', 'fields']);
@@ -83,15 +108,24 @@ class DocusignController extends Controller
         }
 
         $emails = [];
-        foreach ($signers as $s) {
+        $mode = $request->input('sign_mode') === 'sequential' && count($signers) > 1 ? 'sequential' : 'parallel';
+        foreach ($signers as $k => $s) {
             $email = strtolower(trim($s['email'] ?? ''));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL) || trim($s['name'] ?? '') === '') {
                 return response()->json(['message' => 'Nama dan email penanda tangan harus valid'], 422);
+            }
+            if (trim($s['position'] ?? '') === '') {
+                return response()->json(['message' => 'Jabatan penanda tangan wajib diisi'], 422);
             }
             if (in_array($email, $emails, true)) {
                 return response()->json(['message' => 'Email penanda tangan tidak boleh duplikat'], 422);
             }
             $emails[] = $email;
+            $order = $mode === 'sequential' ? (int) ($s['order'] ?? $k + 1) : 1;
+            if ($order < 1) {
+                return response()->json(['message' => 'Urutan tanda tangan tidak valid'], 422);
+            }
+            $signers[$k]['order'] = $order;
         }
 
         $covered = [];
@@ -113,10 +147,11 @@ class DocusignController extends Controller
         $path = $file->storeAs('docusign/' . $uuid, 'original.pdf', 'local');
 
         try {
-            $doc = DB::connection('adm')->transaction(function () use ($request, $signers, $fields, $uuid, $path, $file) {
+            $doc = DB::connection('adm')->transaction(function () use ($request, $signers, $fields, $uuid, $path, $file, $mode) {
                 $doc = DocusignDocument::create([
                     'uuid' => $uuid,
                     'title' => $request->title,
+                    'sign_mode' => $mode,
                     'original_path' => $path,
                     'original_hash' => hash_file('sha256', $file->getRealPath()),
                     'created_by' => auth()->user()->email,
@@ -127,6 +162,8 @@ class DocusignController extends Controller
                     $created[$i] = $doc->signers()->create([
                         'name' => trim($s['name']),
                         'email' => strtolower(trim($s['email'])),
+                        'position' => trim($s['position']),
+                        'sign_order' => $s['order'],
                         'token' => Str::random(64),
                     ]);
                 }
@@ -152,15 +189,7 @@ class DocusignController extends Controller
             return response()->json(['message' => 'Dokumen tidak dapat diproses: ' . $e->getMessage()], 422);
         }
 
-        $failed = [];
-        foreach ($doc->signers as $signer) {
-            try {
-                $this->sendSignRequest($doc, $signer);
-            } catch (\Throwable $e) {
-                report($e);
-                $failed[] = $signer->email;
-            }
-        }
+        $failed = $this->notifyNext($doc);
 
         return response()->json([
             'message' => count($failed) ? 'Dokumen dibuat, namun email gagal terkirim ke: ' . implode(', ', $failed) : 'Dokumen dibuat dan permintaan tanda tangan telah dikirim',
@@ -190,6 +219,10 @@ class DocusignController extends Controller
             return response()->json(['message' => 'Dokumen sudah tidak aktif'], 422);
         }
         $signer = $doc->signers()->where('status', 'pending')->findOrFail($signerId);
+        $doc->load('signers');
+        if (!$this->canSign($doc, $signer)) {
+            return response()->json(['message' => 'Belum giliran penanda tangan ini'], 422);
+        }
         $this->sendSignRequest($doc, $signer);
 
         return response()->json(['message' => 'Email terkirim ulang']);
@@ -217,11 +250,18 @@ class DocusignController extends Controller
     {
         $signer = $this->signerByToken($token);
         $doc = $signer->document;
+        $doc->load('signers');
+        $waiting = $doc->signers
+            ->filter(fn ($s) => $s->sign_order < $signer->sign_order && $s->status !== 'signed')
+            ->map(fn ($s) => ['name' => $s->name, 'position' => $s->position])->values();
 
         return response()->json(['data' => [
             'title' => $doc->title,
             'status' => $doc->status,
-            'signer' => ['name' => $signer->name, 'email' => $signer->email, 'status' => $signer->status, 'signed_at' => $signer->signed_at],
+            'sign_mode' => $doc->sign_mode,
+            'can_sign' => $doc->status === 'pending' && $signer->status === 'pending' && $waiting->isEmpty(),
+            'waiting_for' => $waiting,
+            'signer' => ['name' => $signer->name, 'position' => $signer->position, 'email' => $signer->email, 'status' => $signer->status, 'signed_at' => $signer->signed_at],
             'fields' => $doc->fields()->where('signer_id', $signer->id)->get(['page', 'x', 'y', 'w', 'h']),
             'others' => $doc->fields()->where('signer_id', '!=', $signer->id)->get(['signer_id', 'page', 'x', 'y', 'w', 'h']),
         ]]);
@@ -251,9 +291,13 @@ class DocusignController extends Controller
                 return ['error' => 'Anda sudah menandatangani dokumen ini', 'code' => 422];
             }
 
-            $signer->update(['status' => 'signed', 'signed_at' => now(), 'signed_ip' => $request->ip()]);
-
             $doc->load(['signers', 'fields']);
+            if (!$this->canSign($doc, $signer)) {
+                return ['error' => 'Belum giliran Anda. Dokumen harus ditandatangani penanda tangan sebelumnya terlebih dahulu', 'code' => 422];
+            }
+
+            $signer->update(['status' => 'signed', 'signed_at' => now(), 'signed_ip' => $request->ip()]);
+            $doc->load('signers');
             DocusignPdfService::render(
                 $doc,
                 $this->disk()->path($doc->original_path),
@@ -267,12 +311,14 @@ class DocusignController extends Controller
                 'completed_at' => $done ? now() : null,
             ]);
 
-            return ['ok' => true];
+            return ['ok' => true, 'doc' => $doc];
         });
 
         if (isset($result['error'])) {
             return response()->json(['message' => $result['error']], $result['code']);
         }
+
+        $this->notifyNext($result['doc']);
 
         return response()->json(['message' => 'Dokumen berhasil ditandatangani']);
     }
@@ -290,6 +336,8 @@ class DocusignController extends Controller
             'original_hash' => $doc->original_hash,
             'signers' => $doc->signers->map(fn ($s) => [
                 'name' => $s->name,
+                'position' => $s->position,
+                'order' => $s->sign_order,
                 'status' => $s->status,
                 'signed_at' => $s->signed_at,
             ]),

@@ -27,8 +27,6 @@ class DocusignPdfService
         $count = $matrix->getSize();
         $cell = $size / $count;
 
-        $pdf->SetFillColor(255, 255, 255);
-        $pdf->Rect($x - 1, $y - 1, $size + 2, $size + 2, 'F');
         $pdf->SetFillColor(0, 0, 0);
         for ($r = 0; $r < $count; $r++) {
             for ($c = 0; $c < $count; $c++) {
@@ -40,8 +38,41 @@ class DocusignPdfService
     }
 
     /**
-     * Build the output PDF from the original file: QR code in the bottom-right corner
-     * of every page plus a stamp inside each field of signers who already signed.
+     * Stamp: [QR] | "Ditandatangani secara elektronik oleh:" / JABATAN (bold) / Nama (bold, bottom)
+     */
+    private static function drawStamp(Fpdi $pdf, string $url, $signer, float $x, float $y, float $w, float $h): void
+    {
+        $pdf->SetFillColor(255, 255, 255);
+        $pdf->SetDrawColor(190, 190, 190);
+        $pdf->SetLineWidth(0.25);
+        $pdf->Rect($x, $y, $w, $h, 'DF');
+
+        $pad = min($w, $h) * 0.08;
+        $qrSize = $h - 2 * $pad;
+        self::drawQr($pdf, $url, $x + $pad, $y + $pad, $qrSize);
+
+        $tx = $x + $pad + $qrSize + $pad * 1.5;
+        $tw = $x + $w - $pad - $tx;
+        $fs = max(4.5, min(9, $h * 0.27));
+        $lh = $fs * 0.3528 * 1.2;
+
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetFont('Helvetica', '', $fs);
+        $pdf->SetXY($tx, $y + $pad);
+        $pdf->Cell($tw, $lh, self::latin1('Ditandatangani secara elektronik oleh:'), 0, 2);
+
+        $pdf->SetFont('Helvetica', 'B', $fs);
+        $pdf->SetX($tx);
+        $position = mb_strtoupper(mb_strimwidth((string) $signer->position, 0, 80, '...'));
+        $pdf->MultiCell($tw, $lh, self::latin1($position), 0, 'L');
+
+        $pdf->SetXY($tx, $y + $h - $pad - $lh);
+        $pdf->Cell($tw, $lh, self::latin1(mb_strimwidth($signer->name, 0, 60, '...')), 0, 0);
+    }
+
+    /**
+     * Build the output PDF from the original file, stamping every field
+     * of signers who already signed.
      */
     public static function render(DocusignDocument $doc, string $sourcePath, string $targetPath): void
     {
@@ -66,29 +97,8 @@ class DocusignPdfService
                 if (!$signer || $signer->status !== 'signed') {
                     continue;
                 }
-                $fx = $f->x * $w;
-                $fy = $f->y * $h;
-                $fw = $f->w * $w;
-                $fh = $f->h * $h;
-                $pdf->SetDrawColor(25, 118, 210);
-                $pdf->SetFillColor(240, 247, 255);
-                $pdf->Rect($fx, $fy, $fw, $fh, 'DF');
-                $pdf->SetTextColor(25, 118, 210);
-                $fs = max(5, min(8, $fh * 0.9));
-                $pdf->SetFont('Helvetica', 'B', $fs);
-                $pdf->SetXY($fx + 1, $fy + 1);
-                $pdf->Cell($fw - 2, $fs * 0.45, self::latin1('Ditandatangani secara elektronik'), 0, 2);
-                $pdf->SetFont('Helvetica', '', $fs);
-                $pdf->Cell($fw - 2, $fs * 0.45, self::latin1(mb_strimwidth($signer->name, 0, 40, '...')), 0, 2);
-                $pdf->Cell($fw - 2, $fs * 0.45, self::latin1(optional($signer->signed_at)->format('d-m-Y H:i') . ' WIB'), 0, 2);
+                self::drawStamp($pdf, $url, $signer, $f->x * $w, $f->y * $h, $f->w * $w, $f->h * $h);
             }
-
-            $qrSize = 18;
-            self::drawQr($pdf, $url, $w - $qrSize - 5, $h - $qrSize - 9, $qrSize);
-            $pdf->SetTextColor(80, 80, 80);
-            $pdf->SetFont('Helvetica', '', 5);
-            $pdf->SetXY($w - $qrSize - 15, $h - 7);
-            $pdf->Cell($qrSize + 10, 3, self::latin1('Scan untuk verifikasi | ' . substr($doc->uuid, 0, 8)), 0, 0, 'R');
         }
 
         $pdf->Output('F', $targetPath);
