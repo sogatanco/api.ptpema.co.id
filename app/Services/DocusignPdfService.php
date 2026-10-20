@@ -83,7 +83,7 @@ class DocusignPdfService
 
         $tx = $x + $pad + $qrSize + $pad;
         $tw = max(1, $x + $w - $pad - $tx);
-        $fs = max(3.5, min(8.5, $h * 0.24));
+        $fs = 11;
         $textHeight = max(0, $h - 2 * $pad);
         $topLineHeight = min($textHeight / 3, $fs * 0.3528 * 1.5);
         $pdf->SetTextColor(0, 0, 0);
@@ -128,6 +128,11 @@ class DocusignPdfService
             $pdf->SetFillColor(255, 255, 255);
             $pdf->Rect($pageQrX - 1, $pageQrY - 1, $pageQrSize + 2, $pageQrSize + 2, 'F');
             self::drawQr($pdf, $url, $pageQrX, $pageQrY, $pageQrSize);
+            $captionWidth = 26;
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('Helvetica', '', 4);
+            $pdf->SetXY($pageQrX + ($pageQrSize - $captionWidth) / 2, $pageQrY + $pageQrSize + 0.5);
+            $pdf->Cell($captionWidth, 2.5, 'Signed by Pema E-Sign', 0, 0, 'C');
         }
 
         $pdf->Output('F', $targetPath);
