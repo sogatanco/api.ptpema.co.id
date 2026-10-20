@@ -37,34 +37,59 @@ class DocusignPdfService
         }
     }
 
-    private static function drawFitText(Fpdi $pdf, string $text, float $x, float $y, float $width, float $height, float $fontSize, bool $bold = false, bool $bottomAligned = false, bool $topAligned = false): void
+    private static function wrapText(Fpdi $pdf, string $text, float $width): array
     {
         $text = self::latin1($text);
+        $lines = [];
+        $line = '';
+        foreach (preg_split('/\s+/', trim($text)) ?: [] as $word) {
+            if ($line !== '' && $pdf->GetStringWidth($line . ' ' . $word) > $width) {
+                $lines[] = $line;
+                $line = '';
+            }
+            if ($pdf->GetStringWidth($word) <= $width) {
+                $line = $line === '' ? $word : $line . ' ' . $word;
+                continue;
+            }
+            for ($i = 0, $length = strlen($word); $i < $length; $i++) {
+                if ($line !== '' && $pdf->GetStringWidth($line . $word[$i]) > $width) {
+                    $lines[] = $line;
+                    $line = '';
+                }
+                $line .= $word[$i];
+            }
+        }
+        if ($line !== '') {
+            $lines[] = $line;
+        }
+
+        return $lines ?: [''];
+    }
+
+    private static function drawTextLines(Fpdi $pdf, array $lines, float $x, float $y, float $width, float $height, float $fontSize, bool $bold = false, bool $bottomAligned = false): void
+    {
         $style = $bold ? 'B' : '';
         $pdf->SetFont('Helvetica', $style, $fontSize);
-        while ($pdf->GetStringWidth($text) > $width && $fontSize > 3.5) {
-            $fontSize -= 0.25;
-            $pdf->SetFont('Helvetica', $style, $fontSize);
-        }
-        while ($pdf->GetStringWidth($text) > $width && strlen($text) > 4) {
-            $text = rtrim(substr($text, 0, -1));
-        }
-        if ($pdf->GetStringWidth($text) > $width && strlen($text) > 3) {
-            $text = substr($text, 0, 3);
+        $lineHeight = $fontSize * 0.3528 * 1.15;
+        $maxLines = max(1, (int) floor($height / $lineHeight));
+        $wasTruncated = count($lines) > $maxLines;
+        $lines = array_slice($lines, 0, $maxLines);
+
+        if ($wasTruncated) {
+            $lastLine = array_pop($lines);
+            while ($lastLine !== '' && $pdf->GetStringWidth($lastLine . '...') > $width) {
+                $lastLine = substr($lastLine, 0, -1);
+            }
+            $lines[] = rtrim($lastLine) . '...';
         }
 
-        if ($bottomAligned) {
-            $pdf->Text($x, $y + $height - 0.5, $text);
-            return;
+        $fontHeight = $fontSize * 0.3528;
+        $baseline = $bottomAligned
+            ? $y + $height - 0.5 - (count($lines) - 1) * $lineHeight
+            : $y + $fontHeight;
+        foreach ($lines as $index => $line) {
+            $pdf->Text($x, $baseline + $index * $lineHeight, $line);
         }
-
-        if ($topAligned) {
-            $pdf->Text($x, $y + $fontSize * 0.3528, $text);
-            return;
-        }
-
-        $pdf->SetXY($x, $y);
-        $pdf->Cell($width, $height, $text, 0, 0, 'L');
     }
 
     /**
@@ -85,11 +110,23 @@ class DocusignPdfService
         $tw = max(1, $x + $w - $pad - $tx);
         $fs = 11;
         $textHeight = max(0, $h - 2 * $pad);
-        $topLineHeight = min($textHeight / 3, $fs * 0.3528 * 1.5);
+        $lineHeight = $fs * 0.3528 * 1.15;
+        $availableLines = max(3, (int) floor($textHeight / $lineHeight));
+        $pdf->SetFont('Helvetica', '', $fs);
+        $heading = self::wrapText($pdf, 'Ditandatangani secara elektronik oleh:', $tw);
+        $pdf->SetFont('Helvetica', 'B', $fs);
+        $position = self::wrapText($pdf, mb_strtoupper((string) $signer->position), $tw);
+        $name = self::wrapText($pdf, (string) $signer->name, $tw);
+        $headingLines = array_slice($heading, 0, min(count($heading), max(1, $availableLines - 2)));
+        $nameLines = array_slice($name, 0, min(count($name), max(1, $availableLines - count($headingLines) - 1)));
+        $positionLines = array_slice($position, 0, max(1, $availableLines - count($headingLines) - count($nameLines)));
+        $headingHeight = count($headingLines) * $lineHeight;
+        $positionHeight = count($positionLines) * $lineHeight;
+        $nameHeight = count($nameLines) * $lineHeight;
         $pdf->SetTextColor(0, 0, 0);
-        self::drawFitText($pdf, 'Ditandatangani secara elektronik oleh:', $tx, $y + $pad, $tw, $topLineHeight, $fs, false, false, true);
-        self::drawFitText($pdf, mb_strtoupper((string) $signer->position), $tx, $y + $pad + $topLineHeight, $tw, $topLineHeight, $fs, true, false, true);
-        self::drawFitText($pdf, (string) $signer->name, $tx, $y + $pad + 2 * $topLineHeight, $tw, $textHeight - 2 * $topLineHeight, $fs, true, true);
+        self::drawTextLines($pdf, $headingLines, $tx, $y + $pad, $tw, $headingHeight, $fs);
+        self::drawTextLines($pdf, $positionLines, $tx, $y + $pad + $headingHeight, $tw, $positionHeight, $fs, true);
+        self::drawTextLines($pdf, $nameLines, $tx, $y + $h - $pad - $nameHeight, $tw, $nameHeight, $fs, true, true);
     }
 
     /**
