@@ -37,7 +37,7 @@ class DocusignPdfService
         }
     }
 
-    private static function drawFitText(Fpdi $pdf, string $text, float $x, float $y, float $width, float $height, float $fontSize, bool $bold = false): void
+    private static function drawFitText(Fpdi $pdf, string $text, float $x, float $y, float $width, float $height, float $fontSize, bool $bold = false, bool $bottomAligned = false): void
     {
         $text = self::latin1($text);
         $style = $bold ? 'B' : '';
@@ -51,6 +51,11 @@ class DocusignPdfService
         }
         if ($pdf->GetStringWidth($text) > $width && strlen($text) > 3) {
             $text = substr($text, 0, 3);
+        }
+
+        if ($bottomAligned) {
+            $pdf->Text($x, $y + $height - 0.5, $text);
+            return;
         }
 
         $pdf->SetXY($x, $y);
@@ -78,7 +83,7 @@ class DocusignPdfService
         $pdf->SetTextColor(0, 0, 0);
         self::drawFitText($pdf, 'Ditandatangani secara elektronik oleh:', $tx, $y + $pad, $tw, $lineHeight, $fs);
         self::drawFitText($pdf, mb_strtoupper((string) $signer->position), $tx, $y + $pad + $lineHeight, $tw, $lineHeight, $fs, true);
-        self::drawFitText($pdf, (string) $signer->name, $tx, $y + $pad + 2 * $lineHeight, $tw, $lineHeight, $fs, true);
+        self::drawFitText($pdf, (string) $signer->name, $tx, $y + $pad + 2 * $lineHeight, $tw, $lineHeight, $fs, true, true);
     }
 
     /**
