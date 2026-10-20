@@ -108,7 +108,7 @@ class DocusignPdfService
 
         $tx = $x + $pad + $qrSize + $pad;
         $tw = max(1, $x + $w - $pad - $tx);
-        $fs = 9.9;
+        $fs = 8.415;
         $textHeight = max(0, $h - 2 * $pad);
         $lineHeight = $fs * 0.3528 * 1.15;
         $availableLines = max(3, (int) floor($textHeight / $lineHeight));
