@@ -37,6 +37,26 @@ class DocusignPdfService
         }
     }
 
+    private static function drawFitText(Fpdi $pdf, string $text, float $x, float $y, float $width, float $height, float $fontSize, bool $bold = false): void
+    {
+        $text = self::latin1($text);
+        $style = $bold ? 'B' : '';
+        $pdf->SetFont('Helvetica', $style, $fontSize);
+        while ($pdf->GetStringWidth($text) > $width && $fontSize > 3.5) {
+            $fontSize -= 0.25;
+            $pdf->SetFont('Helvetica', $style, $fontSize);
+        }
+        while ($pdf->GetStringWidth($text) > $width && strlen($text) > 4) {
+            $text = rtrim(substr($text, 0, -1));
+        }
+        if ($pdf->GetStringWidth($text) > $width && strlen($text) > 3) {
+            $text = substr($text, 0, 3);
+        }
+
+        $pdf->SetXY($x, $y);
+        $pdf->Cell($width, $height, $text, 0, 0, 'L');
+    }
+
     /**
      * Stamp: [QR] | "Ditandatangani secara elektronik oleh:" / JABATAN (bold) / Nama (bold, bottom)
      */
@@ -47,27 +67,18 @@ class DocusignPdfService
         $pdf->SetLineWidth(0.25);
         $pdf->Rect($x, $y, $w, $h, 'DF');
 
-        $pad = min($w, $h) * 0.08;
+        $pad = min($w, $h) * 0.06;
         $qrSize = $h - 2 * $pad;
         self::drawQr($pdf, $url, $x + $pad, $y + $pad, $qrSize);
 
-        $tx = $x + $pad + $qrSize + $pad * 1.5;
-        $tw = $x + $w - $pad - $tx;
-        $fs = max(4.5, min(9, $h * 0.27));
-        $lh = $fs * 0.3528 * 1.2;
-
+        $tx = $x + $pad + $qrSize + $pad;
+        $tw = max(1, $x + $w - $pad - $tx);
+        $lineHeight = ($h - 2 * $pad) / 3;
+        $fs = max(3.5, min(8.5, $h * 0.24));
         $pdf->SetTextColor(0, 0, 0);
-        $pdf->SetFont('Helvetica', '', $fs);
-        $pdf->SetXY($tx, $y + $pad);
-        $pdf->Cell($tw, $lh, self::latin1('Ditandatangani secara elektronik oleh:'), 0, 2);
-
-        $pdf->SetFont('Helvetica', 'B', $fs);
-        $pdf->SetX($tx);
-        $position = mb_strtoupper(mb_strimwidth((string) $signer->position, 0, 80, '...'));
-        $pdf->MultiCell($tw, $lh, self::latin1($position), 0, 'L');
-
-        $pdf->SetXY($tx, $y + $h - $pad - $lh);
-        $pdf->Cell($tw, $lh, self::latin1(mb_strimwidth($signer->name, 0, 60, '...')), 0, 0);
+        self::drawFitText($pdf, 'Ditandatangani secara elektronik oleh:', $tx, $y + $pad, $tw, $lineHeight, $fs);
+        self::drawFitText($pdf, mb_strtoupper((string) $signer->position), $tx, $y + $pad + $lineHeight, $tw, $lineHeight, $fs, true);
+        self::drawFitText($pdf, (string) $signer->name, $tx, $y + $pad + 2 * $lineHeight, $tw, $lineHeight, $fs, true);
     }
 
     /**
@@ -99,6 +110,13 @@ class DocusignPdfService
                 }
                 self::drawStamp($pdf, $url, $signer, $f->x * $w, $f->y * $h, $f->w * $w, $f->h * $h);
             }
+
+            $pageQrSize = min(18, min($w, $h) * 0.07);
+            $pageQrX = $w - $pageQrSize - 5;
+            $pageQrY = 5;
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect($pageQrX - 1, $pageQrY - 1, $pageQrSize + 2, $pageQrSize + 2, 'F');
+            self::drawQr($pdf, $url, $pageQrX, $pageQrY, $pageQrSize);
         }
 
         $pdf->Output('F', $targetPath);
