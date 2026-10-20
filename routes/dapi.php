@@ -15,6 +15,7 @@ use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
 use App\Http\Controllers\Asset\InvController;
 use App\Http\Controllers\eSign\Logs;
+use App\Http\Controllers\Docusign\DocusignController;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
 use App\Http\Controllers\Layar\LayarController;
@@ -171,6 +172,24 @@ Route::controller(SuratController::class)->group(function(){
      Route::post('adm/read/{id_doc}', 'readSurat')->middleware('role:Employee');
 });
 
+
+Route::controller(DocusignController::class)->group(function () {
+     Route::get('docusign', 'index')->middleware('role:Employee');
+     Route::post('docusign', 'store')->middleware('role:Employee');
+     Route::get('docusign/detail/{id}', 'show')->middleware('role:Employee');
+     Route::get('docusign/detail/{id}/file', 'file')->middleware('role:Employee');
+     Route::post('docusign/detail/{id}/cancel', 'cancel')->middleware('role:Employee');
+     Route::post('docusign/detail/{id}/resend/{signerId}', 'resend')->middleware('role:Employee');
+
+     // Public: signer link (token) and QR verification
+     Route::middleware('throttle:60,1')->group(function () {
+          Route::get('docusign/public/sign/{token}', 'signInfo');
+          Route::get('docusign/public/sign/{token}/file', 'signFile');
+          Route::post('docusign/public/sign/{token}', 'sign');
+          Route::get('docusign/public/verify/{uuid}', 'verify');
+          Route::get('docusign/public/verify/{uuid}/file', 'verifyFile');
+     });
+});
 
 Route::controller(Logs::class)->group(function(){
      Route::get("eSign/logs/{id_doc}", "getLogs")->middleware(  "role:Employee");
