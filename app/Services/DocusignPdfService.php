@@ -37,7 +37,7 @@ class DocusignPdfService
         }
     }
 
-    private static function drawFitText(Fpdi $pdf, string $text, float $x, float $y, float $width, float $height, float $fontSize, bool $bold = false, bool $bottomAligned = false): void
+    private static function drawFitText(Fpdi $pdf, string $text, float $x, float $y, float $width, float $height, float $fontSize, bool $bold = false, bool $bottomAligned = false, bool $topAligned = false): void
     {
         $text = self::latin1($text);
         $style = $bold ? 'B' : '';
@@ -55,6 +55,11 @@ class DocusignPdfService
 
         if ($bottomAligned) {
             $pdf->Text($x, $y + $height - 0.5, $text);
+            return;
+        }
+
+        if ($topAligned) {
+            $pdf->Text($x, $y + $fontSize * 0.3528, $text);
             return;
         }
 
@@ -78,12 +83,13 @@ class DocusignPdfService
 
         $tx = $x + $pad + $qrSize + $pad;
         $tw = max(1, $x + $w - $pad - $tx);
-        $lineHeight = ($h - 2 * $pad) / 3;
         $fs = max(3.5, min(8.5, $h * 0.24));
+        $textHeight = max(0, $h - 2 * $pad);
+        $topLineHeight = min($textHeight / 3, $fs * 0.3528 * 1.5);
         $pdf->SetTextColor(0, 0, 0);
-        self::drawFitText($pdf, 'Ditandatangani secara elektronik oleh:', $tx, $y + $pad, $tw, $lineHeight, $fs);
-        self::drawFitText($pdf, mb_strtoupper((string) $signer->position), $tx, $y + $pad + $lineHeight, $tw, $lineHeight, $fs, true);
-        self::drawFitText($pdf, (string) $signer->name, $tx, $y + $pad + 2 * $lineHeight, $tw, $lineHeight, $fs, true, true);
+        self::drawFitText($pdf, 'Ditandatangani secara elektronik oleh:', $tx, $y + $pad, $tw, $topLineHeight, $fs, false, false, true);
+        self::drawFitText($pdf, mb_strtoupper((string) $signer->position), $tx, $y + $pad + $topLineHeight, $tw, $topLineHeight, $fs, true, false, true);
+        self::drawFitText($pdf, (string) $signer->name, $tx, $y + $pad + 2 * $topLineHeight, $tw, $textHeight - 2 * $topLineHeight, $fs, true, true);
     }
 
     /**
