@@ -149,7 +149,7 @@ class DocusignController extends Controller
             $this->disk()->deleteDirectory('docusign/' . $uuid);
             DocusignDocument::where('uuid', $uuid)->delete();
 
-            return response()->json(['message' => 'Dokumen tidak dapat diproses. Pastikan PDF tidak terenkripsi/dilindungi.'], 422);
+            return response()->json(['message' => 'Dokumen tidak dapat diproses: ' . $e->getMessage()], 422);
         }
 
         $failed = [];
