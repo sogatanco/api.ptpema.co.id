@@ -350,7 +350,7 @@ class PengajuanController extends Controller
         }
 
         try {
-            $signed = SuratTteService::signPdf($bytes, $sppd->nomor_dokumen, $tte, $request->type, 'SPPD');
+            $signed = SuratTteService::issueSignedPdf($bytes, $sppd->nomor_dokumen, $tte, $request->type, 'SPPD');
         } catch (\Throwable $e) {
             report($e);
 

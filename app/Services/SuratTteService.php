@@ -216,6 +216,64 @@ class SuratTteService
     {
         return \Illuminate\Support\Facades\Cache::remember('verif_steps_has_chain_sha256', 300, fn () => \Illuminate\Support\Facades\Schema::connection('esign')->hasColumn('verif_steps', 'chain_sha256'));
     }
+    private static function storedPdfPath(string $noDocument, string $type): string
+    {
+        return 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument . '-' . $type) . '.pdf';
+    }
+
+    private static function hasChain(string $noDocument, string $type): bool
+    {
+        return self::hasChainColumn()
+            && VerifStep::where('id_doc', $noDocument)->where('type', $type)->where('status', 'approve')->whereNotNull('chain_sha256')->exists();
+    }
+
+    /**
+     * Sign once, then always serve the same file so its SHA-256 never changes.
+     * Only documents with a recorded chain hash (new approvals) are stored;
+     * older documents are signed on the fly exactly as before.
+     */
+    public static function issueSignedPdf(string $pdfBytes, string $noDocument, array $tte, string $type = 'sign', string $title = 'Surat'): string
+    {
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        $path = self::storedPdfPath($noDocument, $type);
+        $store = false;
+        try {
+            $store = self::hasChain($noDocument, $type);
+            if ($store && $disk->exists($path)) {
+                return $disk->get($path);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        $signed = self::signPdf($pdfBytes, $noDocument, $tte, $type, $title);
+        if ($store) {
+            try {
+                $disk->put($path, $signed);
+
+                return $disk->get($path);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $signed;
+    }
+
+    public static function storedPdfHash(string $noDocument, string $type): ?string
+    {
+        try {
+            $disk = \Illuminate\Support\Facades\Storage::disk('local');
+            $path = self::storedPdfPath($noDocument, $type);
+
+            return $disk->exists($path) ? hash('sha256', $disk->get($path)) : null;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
     public static function codeFor(string $noDocument, string $type = 'sign'): ?string
     {
         return self::find($noDocument, $type)['code'] ?? null;

@@ -262,7 +262,7 @@ class SuratController extends Controller
         }
 
         try {
-            $signed = SuratTteService::signPdf($bytes, $doc->no_document, $tte);
+            $signed = SuratTteService::issueSignedPdf($bytes, $doc->no_document, $tte);
         } catch (\Throwable $e) {
             report($e);
 

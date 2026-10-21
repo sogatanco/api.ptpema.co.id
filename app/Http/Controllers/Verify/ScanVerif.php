@@ -20,6 +20,7 @@ class ScanVerif extends Controller
             $chain = $d->tte_code ? \App\Services\SuratTteService::chain($d->id_doc, $content) : null;
             $d->chain_hash = $chain['hash'] ?? null;
             $d->chain_valid = $chain['valid'] ?? null;
+            $d->pdf_hash = $d->tte_code ? \App\Services\SuratTteService::storedPdfHash($d->id_doc, (string) $request->type) : null;
             if ((int) $d->jenis_doc === 1 && $d->tte_code) {
                 $d->original_hash = \App\Services\SuratTteService::sppdContentHash($d->id_doc);
             }
