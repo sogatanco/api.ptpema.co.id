@@ -89,26 +89,16 @@ class SuratTteService
         $signer = (object) ['name' => $tte['name'], 'position' => $tte['position']];
         $leaf = DocusignPdfService::issueSignerCertificate([$signer], $certificatePath, $privateKeyPath);
         $paraf = $tte['paraf'] ?? [];
-
-        // Paraf approvers get their own certificate, embedded in the signature
-        // so they are listed in the PDF reader's certificate details.
-        $chain = tempnam(sys_get_temp_dir(), 'ttc');
-        $chainPem = (string) file_get_contents($certificatePath);
-        foreach ($paraf as $p) {
-            $pl = DocusignPdfService::issueSignerCertificate([(object) $p], $certificatePath, $privateKeyPath);
-            $chainPem .= "\n" . file_get_contents($pl['certificate']);
-            @unlink($pl['certificate']);
-            @unlink($pl['key']);
-        }
-        file_put_contents($chain, $chainPem);
-
         $parafText = implode('; ', array_map(fn ($p) => trim($p['name'] . ($p['position'] ? ' (' . $p['position'] . ')' : '')), $paraf));
-
         try {
             file_put_contents($source, $pdfBytes);
 
             $pdf = new Fpdi();
             $pdf->SetAutoPageBreak(false);
+            $pdf->SetTitle('Surat ' . $noDocument);
+            $pdf->SetAuthor((string) $tte['name']);
+            $pdf->SetSubject(($parafText !== '' ? 'Paraf: ' . $parafText . '. ' : '') . 'Ditandatangani: ' . trim($tte['name'] . ($tte['position'] ? ' (' . $tte['position'] . ')' : '')));
+            $pdf->SetKeywords('Kode TTE ' . $tte['code']);
             $pdf->setPrintHeader(false);
             $pdf->setPrintFooter(false);
             $pageCount = $pdf->setSourceFile($source);
@@ -123,7 +113,7 @@ class SuratTteService
                 DocusignPdfService::fileUri($leaf['certificate']),
                 DocusignPdfService::fileUri($leaf['key']),
                 '',
-                $chain,
+                $certificatePath,
                 2,
                 [
                     'Name' => (string) $tte['name'],
@@ -139,7 +129,6 @@ class SuratTteService
         } finally {
             @unlink($source);
             @unlink($target);
-            @unlink($chain);
             @unlink($leaf['certificate']);
             @unlink($leaf['key']);
         }
