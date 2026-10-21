@@ -237,6 +237,9 @@ class SuratController extends Controller
         $verif->ket = $request->catatan_persetujuan;
         $verif->signature=$signature;
         if ($verif->save()) {
+            if ($request->status === 'approve') {
+                SuratTteService::recordChain($verif, SuratTteService::contentHash($id_doc));
+            }
             return new PostResource(true, 'success', $document);
         }
 

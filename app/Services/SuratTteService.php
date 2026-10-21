@@ -115,9 +115,12 @@ class SuratTteService
             if (!$s) {
                 return null;
             }
-            $strip = fn (array $row) => array_diff_key($row, ['created_at' => 1, 'updated_at' => 1]);
-            $tujuan = \App\Models\Sppd\TujuanSppd::where('id_sppd', $s->id)->orderBy('id')->get()->map(function ($t) use ($strip) {
-                $row = $strip($t->toArray());
+            // Fixed field lists: only the content set at submission, so status flags changing later don't alter the hash
+            $sppdFields = ['nomor_sppd', 'nomor_dokumen', 'employe_id', 'nama', 'jabatan', 'golongan_rate', 'narasi_st', 'submitted_by', 'ketetapan'];
+            $tujuanFields = ['jenis_sppd', 'dasar', 'file_undangan', 'klasifikasi', 'sumber', 'rkap', 'p_tiket', 'p_um', 'p_tl', 'p_us', 'p_hotel', 'kategori', 'detail_tujuan', 'tugas', 'waktu_berangkat', 'waktu_kembali', 'moda', 'bbm', 'share_with'];
+            $pick = fn (array $row, array $keys) => array_intersect_key($row, array_flip($keys));
+            $tujuan = \App\Models\Sppd\TujuanSppd::where('id_sppd', $s->id)->orderBy('id')->get()->map(function ($t) use ($pick, $tujuanFields) {
+                $row = $pick($t->toArray(), $tujuanFields);
                 $file = $t->file_undangan;
                 $row['file_undangan_sha256'] = ($file && $file !== '-' && \Illuminate\Support\Facades\Storage::disk('public_sppd')->exists($file))
                     ? hash('sha256', \Illuminate\Support\Facades\Storage::disk('public_sppd')->get($file))
@@ -127,7 +130,7 @@ class SuratTteService
             })->all();
 
             $payload = json_encode(
-                SignatureService::normalizeJson(['sppd' => $strip($s->toArray()), 'tujuan' => $tujuan]),
+                SignatureService::normalizeJson(['sppd' => $pick($s->toArray(), $sppdFields), 'tujuan' => $tujuan]),
                 JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
             );
 
@@ -139,6 +142,80 @@ class SuratTteService
         }
     }
 
+    private static function chainOf(string $prev, ?string $contentHash, $step): string
+    {
+        return hash('sha256', implode('|', [
+            $prev,
+            (string) $contentHash,
+            $step->id_employe,
+            $step->type,
+            $step->step,
+            $step->signature,
+        ]));
+    }
+
+    /**
+     * Chain hash per approval: SHA-256 over the document content hash, the
+     * previous step's chain hash and this step's signature. The last step's
+     * hash therefore covers every paraf and the signature. Only the new
+     * nullable column is written, and only on the approved step itself.
+     */
+    public static function recordChain($verif, ?string $contentHash): void
+    {
+        try {
+            if (!self::hasChainColumn() || !$verif->signature || $verif->status !== 'approve') {
+                return;
+            }
+            $prev = (string) VerifStep::where('id_doc', $verif->id_doc)
+                ->where('status', 'approve')
+                ->whereNotNull('chain_sha256')
+                ->where('step', '<', $verif->step)
+                ->orderByDesc('step')
+                ->value('chain_sha256');
+
+            VerifStep::where('id', $verif->id)->update(['chain_sha256' => self::chainOf($prev, $contentHash, $verif)]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * @return array{hash: string, valid: bool}|null latest chain hash and whether it still matches the current content
+     */
+    public static function chain(string $noDocument, ?string $contentHash): ?array
+    {
+        try {
+            if (!self::hasChainColumn()) {
+                return null;
+            }
+            $steps = VerifStep::where('id_doc', $noDocument)
+                ->where('status', 'approve')
+                ->whereNotNull('chain_sha256')
+                ->orderBy('step')
+                ->get();
+            if ($steps->isEmpty()) {
+                return null;
+            }
+            $prev = '';
+            $valid = true;
+            foreach ($steps as $s) {
+                $expected = self::chainOf($prev, $contentHash, $s);
+                $valid = $valid && hash_equals($expected, (string) $s->chain_sha256);
+                $prev = (string) $s->chain_sha256;
+            }
+
+            return ['hash' => $prev, 'valid' => $valid];
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
+    private static function hasChainColumn(): bool
+    {
+        return \Illuminate\Support\Facades\Cache::remember('verif_steps_has_chain_sha256', 300, fn () => \Illuminate\Support\Facades\Schema::connection('esign')->hasColumn('verif_steps', 'chain_sha256'));
+    }
     public static function codeFor(string $noDocument, string $type = 'sign'): ?string
     {
         return self::find($noDocument, $type)['code'] ?? null;

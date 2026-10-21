@@ -301,6 +301,9 @@ class PengajuanController extends Controller
             $verif->signature = $this->signApproval($id_doc, $verif);
         }
         if ($verif->save()) {
+            if ($request->status === 'approve') {
+                SuratTteService::recordChain($verif, SuratTteService::sppdContentHash($id_doc));
+            }
             return new PostResource(true, 'success', []);
         }
     }

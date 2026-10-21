@@ -16,6 +16,10 @@ class ScanVerif extends Controller
         $d = ListVerif::where('id_doc', $id_doc)->where('type', $request->type)->first();
         if ($d) {
             $d->tte_code = \App\Services\SuratTteService::codeFor($d->id_doc, (string) $request->type);
+            $content = (int) $d->jenis_doc === 1 ? \App\Services\SuratTteService::sppdContentHash($d->id_doc) : \App\Services\SuratTteService::contentHash($d->id_doc);
+            $chain = $d->tte_code ? \App\Services\SuratTteService::chain($d->id_doc, $content) : null;
+            $d->chain_hash = $chain['hash'] ?? null;
+            $d->chain_valid = $chain['valid'] ?? null;
             if ((int) $d->jenis_doc === 1 && $d->tte_code) {
                 $d->original_hash = \App\Services\SuratTteService::sppdContentHash($d->id_doc);
             }
