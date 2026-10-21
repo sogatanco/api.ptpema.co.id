@@ -112,43 +112,50 @@ class DocusignPdfService
         $pdf->Rect($x, $y, $w, $h, 'DF');
 
         $pad = min($w, $h) * 0.06;
-        $qrSize = $h - 2 * $pad;
+        $qrSize = min($h - 2 * $pad, ($w - 3 * $pad) * 0.34);
         self::drawQr($pdf, $url, $x + $pad, $y + $pad, $qrSize);
 
         $tx = $x + $pad + $qrSize + $pad;
-        $tw = max(1, $x + $w - $pad - $tx);
+        $tw = max(0, $x + $w - $pad - $tx);
         $fs = 8.415;
         $textHeight = max(0, $h - 2 * $pad);
         $lineHeight = $fs * 0.3528 * 1.15;
         $codeText = self::latin1('Kode TTE: ' . $code);
-        $codeFontSize = 6.2;
+        $codeFontSize = min(6.2, max(1, ($textHeight - 0.5) / (0.3528 * 1.15)));
         $pdf->SetFont('Helvetica', '', $codeFontSize);
-        while ($codeFontSize > 4.2 && $pdf->GetStringWidth($codeText) > $tw) {
+        while ($codeFontSize > 1 && $pdf->GetStringWidth($codeText) > $tw) {
             $codeFontSize -= 0.2;
             $pdf->SetFont('Helvetica', '', $codeFontSize);
         }
         $codeLineHeight = $codeFontSize * 0.3528 * 1.15;
         $codeGap = 0.4;
-        $bodyHeight = max($lineHeight, $textHeight - $codeLineHeight - $codeGap);
-        $availableLines = max(3, (int) floor($bodyHeight / $lineHeight));
+        $bodyHeight = max(0, $textHeight - $codeLineHeight - $codeGap);
+        $availableLines = max(1, (int) floor($bodyHeight / $lineHeight));
         $pdf->SetFont('Helvetica', '', $fs);
         $heading = self::wrapText($pdf, 'Ditandatangani secara elektronik oleh:', $tw);
         $pdf->SetFont('Helvetica', 'B', $fs);
         $position = self::wrapText($pdf, mb_strtoupper((string) $signer->position), $tw);
         $name = self::wrapText($pdf, (string) $signer->name, $tw);
-        $headingLines = array_slice($heading, 0, min(count($heading), max(1, $availableLines - 2)));
-        $nameLines = array_slice($name, 0, min(count($name), max(1, $availableLines - count($headingLines) - 1)));
-        $positionLines = array_slice($position, 0, max(1, $availableLines - count($headingLines) - count($nameLines)));
+        $headingLimit = $availableLines >= 3 ? min(count($heading), $availableLines - 2) : 0;
+        $positionLimit = min(count($position), max(0, $availableLines - $headingLimit - 1));
+        $nameLimit = max(1, $availableLines - $headingLimit - $positionLimit);
+        $headingLines = array_slice($heading, 0, $headingLimit);
+        $positionLines = array_slice($position, 0, $positionLimit);
+        $nameLines = array_slice($name, 0, $nameLimit);
         $headingHeight = count($headingLines) * $lineHeight;
         $positionHeight = count($positionLines) * $lineHeight;
         $nameHeight = count($nameLines) * $lineHeight;
         $pdf->SetTextColor(0, 0, 0);
-        self::drawTextLines($pdf, $headingLines, $tx, $y + $pad, $tw, $headingHeight, $fs);
-        self::drawTextLines($pdf, $positionLines, $tx, $y + $pad + $headingHeight, $tw, $positionHeight, $fs, true);
+        if ($headingLines) {
+            self::drawTextLines($pdf, $headingLines, $tx, $y + $pad, $tw, $headingHeight, $fs);
+        }
+        if ($positionLines) {
+            self::drawTextLines($pdf, $positionLines, $tx, $y + $pad + $headingHeight, $tw, $positionHeight, $fs, true);
+        }
         $nameY = $y + $pad + $bodyHeight - $nameHeight;
         self::drawTextLines($pdf, $nameLines, $tx, $nameY, $tw, $nameHeight, $fs, true, true);
         $pdf->SetFont('Helvetica', '', $codeFontSize);
-        $pdf->Text($tx, $y + $h - $pad - $codeLineHeight + $codeFontSize * 0.3528, $codeText);
+        $pdf->Text($tx, $y + $h - $pad - 0.5, $codeText);
     }
 
     /**
