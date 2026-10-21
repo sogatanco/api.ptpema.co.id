@@ -92,12 +92,12 @@ class DocusignPdfService
             $lines[] = rtrim($lastLine) . '...';
         }
 
-        $fontHeight = $fontSize * 0.3528;
-        $baseline = $bottomAligned
-            ? $y + $height - 0.5 - (count($lines) - 1) * $lineHeight
-            : $y + $fontHeight;
+        // TCPDF::Text() takes the top of the text cell, not the baseline.
+        $top = $bottomAligned
+            ? $y + $height - count($lines) * $lineHeight
+            : $y;
         foreach ($lines as $index => $line) {
-            $pdf->Text($x, $baseline + $index * $lineHeight, $line);
+            $pdf->Text($x, $top + $index * $lineHeight, $line);
         }
     }
 
@@ -118,7 +118,8 @@ class DocusignPdfService
         $tx = $x + $pad + $qrSize + $pad;
         $tw = max(0, $x + $w - $pad - $tx);
         $fs = 8.415;
-        $textHeight = max(0, $h - 2 * $pad);
+        $bottomMargin = 0.8;
+        $textHeight = max(0, $h - 2 * $pad - $bottomMargin);
         $lineHeight = $fs * 0.3528 * 1.15;
         $codeText = self::latin1('Kode TTE: ' . $code);
         $codeFontSize = min(6.2, max(1, ($textHeight - 0.5) / (0.3528 * 1.15)));
@@ -155,7 +156,7 @@ class DocusignPdfService
         $nameY = $y + $pad + $bodyHeight - $nameHeight;
         self::drawTextLines($pdf, $nameLines, $tx, $nameY, $tw, $nameHeight, $fs, true, true);
         $pdf->SetFont('Helvetica', '', $codeFontSize);
-        $pdf->Text($tx, $y + $h - $pad - 0.5, $codeText);
+        $pdf->Text($tx, $y + $h - $pad - $bottomMargin - $codeLineHeight, $codeText);
     }
 
     /**
@@ -179,6 +180,7 @@ class DocusignPdfService
 
         $pdf = new Fpdi();
         $pdf->SetAutoPageBreak(false);
+        $pdf->setCellPaddings(0, 0, 0, 0);
         $pageCount = $pdf->setSourceFile($sourcePath);
 
         for ($i = 1; $i <= $pageCount; $i++) {
@@ -219,21 +221,68 @@ class DocusignPdfService
             $pdf->Cell($captionWidth, 2.5, 'Signed by Pema E-Sign', 0, 0, 'C');
         }
 
-        $pdf->setSignature(
-            self::fileUri($certificatePath),
-            self::fileUri($privateKeyPath),
-            '',
-            '',
-            2,
-            [
-                'Name' => (string) config('docusign.signing_name'),
-                'Location' => 'Indonesia',
-                'Reason' => 'Electronic signature by PEMA E-Sign',
-                'ContactInfo' => self::verifyUrl($doc),
-            ]
-        );
-        $pdf->setSignatureAppearance(0, 0, 0, 0, $pageCount, 'PEMA E-Sign');
-        $pdf->Output($targetPath, 'F');
+        $signedSigners = $doc->signers->where('status', 'signed')->values();
+        $leaf = self::issueSignerCertificate($signedSigners->all(), $certificatePath, $privateKeyPath);
+
+        try {
+            $names = $signedSigners->map(fn ($s) => trim($s->name . ($s->position ? ' (' . $s->position . ')' : '')))->implode('; ');
+            $pdf->setSignature(
+                self::fileUri($leaf['certificate']),
+                self::fileUri($leaf['key']),
+                '',
+                $certificatePath,
+                2,
+                [
+                    'Name' => $signedSigners->pluck('name')->implode(', ') ?: (string) config('docusign.signing_name'),
+                    'Location' => 'Indonesia',
+                    'Reason' => 'Ditandatangani secara elektronik oleh ' . ($names ?: 'PEMA E-Sign'),
+                    'ContactInfo' => self::verifyUrl($doc),
+                ]
+            );
+            $pdf->setSignatureAppearance(0, 0, 0, 0, $pageCount, 'PEMA E-Sign');
+            $pdf->Output($targetPath, 'F');
+        } finally {
+            @unlink($leaf['certificate']);
+            @unlink($leaf['key']);
+        }
+    }
+
+    /**
+     * Issue a short-lived certificate carrying the signer name and position,
+     * signed by the PEMA E-Sign certificate, so they show in the PDF reader.
+     *
+     * @param DocusignSigner[] $signers
+     * @return array{certificate: string, key: string}
+     */
+    private static function issueSignerCertificate(array $signers, string $caCertificatePath, string $caKeyPath): array
+    {
+        $names = implode(', ', array_map(fn ($s) => (string) $s->name, $signers));
+        $positions = implode(', ', array_filter(array_map(fn ($s) => (string) $s->position, $signers)));
+        $dn = [
+            'countryName' => 'ID',
+            'organizationName' => (string) config('docusign.signing_organization'),
+            'commonName' => mb_substr($names ?: (string) config('docusign.signing_name'), 0, 64),
+        ];
+        if ($positions !== '') {
+            $dn['organizationalUnitName'] = mb_substr($positions, 0, 64);
+        }
+
+        $config = ['digest_alg' => 'sha256', 'private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA];
+        $key = openssl_pkey_new($config);
+        $csr = $key ? openssl_csr_new($dn, $key, $config) : false;
+        $ca = file_get_contents($caCertificatePath);
+        $caKey = openssl_pkey_get_private(file_get_contents($caKeyPath));
+        $cert = $csr && $caKey ? openssl_csr_sign($csr, $ca, $caKey, 3650, $config, random_int(1, PHP_INT_MAX)) : false;
+        if (!$cert || !openssl_x509_export($cert, $certPem) || !openssl_pkey_export($key, $keyPem)) {
+            throw new RuntimeException('Failed to issue DocuSign signer certificate: ' . openssl_error_string());
+        }
+
+        $certFile = tempnam(sys_get_temp_dir(), 'dsc');
+        $keyFile = tempnam(sys_get_temp_dir(), 'dsk');
+        file_put_contents($certFile, $certPem);
+        file_put_contents($keyFile, $keyPem);
+
+        return ['certificate' => $certFile, 'key' => $keyFile];
     }
 
     private static function fileUri(string $path): string
