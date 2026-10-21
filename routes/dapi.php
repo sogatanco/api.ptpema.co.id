@@ -168,6 +168,7 @@ Route::controller(SuratController::class)->group(function(){
      Route::get('adm/surat/{what}', 'getSurat')->middleware("role:Employee");
      Route::get('adm/surat/detail/{id}', 'detail')->middleware("role:Employee");
      Route::post("adm/surat/review/{id_doc}", 'reviewDokumen')->middleware(     'role:Employee');
+     Route::post('adm/surat/sign-pdf/{id}', 'signPdf')->middleware('role:Employee');
      Route::post('adm/update', 'update')->middleware('role:Employee');
      Route::post('adm/read/{id_doc}', 'readSurat')->middleware('role:Employee');
 });

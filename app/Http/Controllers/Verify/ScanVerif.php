@@ -14,9 +14,13 @@ class ScanVerif extends Controller
     function getDetail($id_doc, Request $request )
     {
         $d = ListVerif::where('id_doc', $id_doc)->where('type', $request->type)->first();
+        if ($d) {
+            $d->tte_code = \App\Services\SuratTteService::codeFor($d->id_doc);
+        }
         if ($d->jenis_doc==2) {
             $data=ListSurat::where('no_document',$d->id_doc)->first();
             $data['signer']=Structure::where('employe_id', $data->sign_by)->first();
+            $data['tteCode']=\App\Services\SuratTteService::codeFor($d->id_doc);
             $data['tglSurat']=$data->created_at;
             $data['nomorSurat']=$data->nomor_surat;
             $data['lampiran']=$data->j_lampiran;

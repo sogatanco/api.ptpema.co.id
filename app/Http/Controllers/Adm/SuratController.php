@@ -8,6 +8,7 @@ use App\Models\Adm\ApprovedDocument;
 use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
+use App\Services\SuratTteService;
 use App\Models\Employe;
 use App\Models\ESign\VerifStep;
 use App\Models\Structure;
@@ -147,6 +148,7 @@ class SuratController extends Controller
         $data['isiSurat'] = $d->isi_surat;
         $data['ttdBy'] = $d->sign_by;
         $data['bhs'] = $d->bhs;
+        $data['tteCode'] = SuratTteService::codeFor($d->no_document);
         if ($d->tembusans !== null && $d->tembusans !== '') {
             $data['tembusans'] = explode(',', $d->tembusans);
         } else {
@@ -239,6 +241,32 @@ class SuratController extends Controller
         }
 
         return new PostResource(true, 'success',  $document->toArray(request())['data']);
+    }
+
+    function signPdf($id, Request $request)
+    {
+        $request->validate(['pdf' => 'required|string|max:30000000']);
+
+        $doc = ListSurat::find($id);
+        $tte = $doc ? SuratTteService::find($doc->no_document) : null;
+        if (!$tte) {
+            return response()->json(['success' => false, 'message' => 'Surat ini tidak memiliki TTE'], 404);
+        }
+
+        $bytes = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $request->pdf), true);
+        if ($bytes === false || strncmp($bytes, '%PDF-', 5) !== 0) {
+            return response()->json(['success' => false, 'message' => 'File PDF tidak valid'], 422);
+        }
+
+        try {
+            $signed = SuratTteService::signPdf($bytes, $doc->no_document, $tte);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['success' => false, 'message' => 'PDF tidak dapat ditandatangani'], 500);
+        }
+
+        return new PostResource(true, 'success', ['pdf' => base64_encode($signed)]);
     }
 
     function readSurat($id_doc)

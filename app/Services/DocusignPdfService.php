@@ -254,7 +254,7 @@ class DocusignPdfService
      * @param DocusignSigner[] $signers
      * @return array{certificate: string, key: string}
      */
-    private static function issueSignerCertificate(array $signers, string $caCertificatePath, string $caKeyPath): array
+    public static function issueSignerCertificate(array $signers, string $caCertificatePath, string $caKeyPath): array
     {
         $names = implode(', ', array_map(fn ($s) => (string) $s->name, $signers));
         $positions = implode(', ', array_filter(array_map(fn ($s) => (string) $s->position, $signers)));
@@ -285,7 +285,7 @@ class DocusignPdfService
         return ['certificate' => $certFile, 'key' => $keyFile];
     }
 
-    private static function fileUri(string $path): string
+    public static function fileUri(string $path): string
     {
         $path = str_replace('\\', '/', $path);
 
