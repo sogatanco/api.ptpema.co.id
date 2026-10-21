@@ -48,24 +48,39 @@ class DocusignController extends Controller
         return !$doc->signers->contains(fn ($s) => $s->sign_order < $signer->sign_order && $s->status !== 'signed');
     }
 
-    // Email every pending signer whose turn has come and who has not been notified yet
-    private function notifyNext(DocusignDocument $doc): array
+    // Email every pending signer whose turn has come and who has not been notified yet.
+    // Sent after the HTTP response so the user never waits on SMTP; a failure for one
+    // signer does not block the others (they show "Email belum terkirim" with a resend button).
+    private function notifyNext(DocusignDocument $doc): void
     {
         $doc->load('signers');
-        $failed = [];
-        foreach ($doc->signers as $signer) {
-            if ($signer->status !== 'pending' || $signer->notified_at || !$this->canSign($doc, $signer)) {
-                continue;
-            }
-            try {
-                $this->sendSignRequest($doc, $signer);
-            } catch (\Throwable $e) {
-                report($e);
-                $failed[] = $signer->email;
-            }
+        $ids = $doc->signers
+            ->filter(fn ($s) => $s->status === 'pending' && !$s->notified_at && $this->canSign($doc, $s))
+            ->pluck('id')
+            ->all();
+        if (!$ids) {
+            return;
         }
 
-        return $failed;
+        $docId = $doc->id;
+        app()->terminating(function () use ($docId, $ids) {
+            @set_time_limit(0);
+            $doc = DocusignDocument::with('signers')->find($docId);
+            if (!$doc) {
+                return;
+            }
+            foreach ($ids as $id) {
+                $signer = $doc->signers->firstWhere('id', $id);
+                if (!$signer || $signer->notified_at) {
+                    continue;
+                }
+                try {
+                    $this->sendSignRequest($doc, $signer);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        });
     }
 
     private function formatDoc(DocusignDocument $doc): array
@@ -189,10 +204,10 @@ class DocusignController extends Controller
             return response()->json(['message' => 'Dokumen tidak dapat diproses: ' . $e->getMessage()], 422);
         }
 
-        $failed = $this->notifyNext($doc);
+        $this->notifyNext($doc);
 
         return response()->json([
-            'message' => count($failed) ? 'Dokumen dibuat, namun email gagal terkirim ke: ' . implode(', ', $failed) : 'Dokumen dibuat dan permintaan tanda tangan telah dikirim',
+            'message' => 'Dokumen dibuat, email permintaan tanda tangan sedang dikirim',
             'data' => $this->formatDoc($doc),
         ], 201);
     }
@@ -223,9 +238,13 @@ class DocusignController extends Controller
         if (!$this->canSign($doc, $signer)) {
             return response()->json(['message' => 'Belum giliran penanda tangan ini'], 422);
         }
-        $this->sendSignRequest($doc, $signer);
+        try {
+            $this->sendSignRequest($doc, $signer);
+        } catch (\Throwable $e) {
+            report($e);
 
-        return response()->json(['message' => 'Email terkirim ulang']);
+            return response()->json(['message' => 'Email gagal terkirim, coba lagi beberapa saat'], 502);
+        }
     }
 
     public function cancel($id)
