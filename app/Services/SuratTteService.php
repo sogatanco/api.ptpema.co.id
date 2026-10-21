@@ -67,6 +67,43 @@ class SuratTteService
         }
     }
 
+    /**
+     * SHA-256 of the original letter: the stored content fields plus the
+     * attachment file. Computed on demand, nothing is stored.
+     */
+    public static function contentHash(string $noDocument): ?string
+    {
+        try {
+            $s = \App\Models\Adm\Surat::where('no_document', $noDocument)->first();
+            if (!$s) {
+                return null;
+            }
+            $attachment = '';
+            if ($s->file_lampiran && is_file(public_path('adm/' . $s->file_lampiran))) {
+                $attachment = hash_file('sha256', public_path('adm/' . $s->file_lampiran));
+            }
+            $payload = json_encode([
+                'nomor_surat' => $s->nomor_surat,
+                'no_document' => $s->no_document,
+                'kepada' => $s->kepada,
+                'perihal' => $s->perihal,
+                'j_lampiran' => (int) $s->j_lampiran,
+                'jenis_lampiran' => $s->jenis_lampiran,
+                'isi_surat' => $s->isi_surat,
+                'tembusans' => (string) $s->tembusans,
+                'sign_by' => $s->sign_by,
+                'bahasa' => $s->bahasa,
+                'lampiran_sha256' => $attachment,
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            return hash('sha256', $payload);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
     public static function codeFor(string $noDocument): ?string
     {
         return self::find($noDocument)['code'] ?? null;

@@ -21,6 +21,7 @@ class ScanVerif extends Controller
             $data=ListSurat::where('no_document',$d->id_doc)->first();
             $data['signer']=Structure::where('employe_id', $data->sign_by)->first();
             $data['tteCode']=\App\Services\SuratTteService::codeFor($d->id_doc);
+            $d->original_hash=\App\Services\SuratTteService::contentHash($d->id_doc);
             $data['tglSurat']=$data->created_at;
             $data['nomorSurat']=$data->nomor_surat;
             $data['lampiran']=$data->j_lampiran;
