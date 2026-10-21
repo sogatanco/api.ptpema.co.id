@@ -3,15 +3,24 @@
 namespace App\Services;
 
 use App\Models\Docusign\DocusignDocument;
+use App\Models\Docusign\DocusignSigner;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
-use setasign\Fpdi\Fpdi;
+use RuntimeException;
+use setasign\Fpdi\Tcpdf\Fpdi;
 
 class DocusignPdfService
 {
     public static function verifyUrl(DocusignDocument $doc): string
     {
         return rtrim(env('FRONTEND_URL', 'https://sys.pema.co.id'), '/') . '/docusign/verify/' . $doc->uuid;
+    }
+
+    public static function signatureCode(DocusignDocument $doc, DocusignSigner $signer): string
+    {
+        $hash = strtoupper(substr(hash_hmac('sha256', $signer->token . '|' . $doc->uuid . '|' . $signer->signed_at, config('app.key')), 0, 16));
+
+        return implode('-', str_split($hash, 4));
     }
 
     private static function latin1(string $s): string
@@ -93,9 +102,9 @@ class DocusignPdfService
     }
 
     /**
-     * Stamp: [QR] | "Ditandatangani secara elektronik oleh:" / JABATAN (bold) / Nama (bold, bottom)
+     * Stamp: QR, signer identity, and a selectable TTE verification code.
      */
-    private static function drawStamp(Fpdi $pdf, string $url, $signer, float $x, float $y, float $w, float $h): void
+    private static function drawStamp(Fpdi $pdf, string $url, DocusignSigner $signer, string $code, float $x, float $y, float $w, float $h): void
     {
         $pdf->SetFillColor(255, 255, 255);
         $pdf->SetDrawColor(190, 190, 190);
@@ -111,7 +120,17 @@ class DocusignPdfService
         $fs = 8.415;
         $textHeight = max(0, $h - 2 * $pad);
         $lineHeight = $fs * 0.3528 * 1.15;
-        $availableLines = max(3, (int) floor($textHeight / $lineHeight));
+        $codeText = self::latin1('Kode TTE: ' . $code);
+        $codeFontSize = 6.2;
+        $pdf->SetFont('Helvetica', '', $codeFontSize);
+        while ($codeFontSize > 4.2 && $pdf->GetStringWidth($codeText) > $tw) {
+            $codeFontSize -= 0.2;
+            $pdf->SetFont('Helvetica', '', $codeFontSize);
+        }
+        $codeLineHeight = $codeFontSize * 0.3528 * 1.15;
+        $codeGap = 0.4;
+        $bodyHeight = max($lineHeight, $textHeight - $codeLineHeight - $codeGap);
+        $availableLines = max(3, (int) floor($bodyHeight / $lineHeight));
         $pdf->SetFont('Helvetica', '', $fs);
         $heading = self::wrapText($pdf, 'Ditandatangani secara elektronik oleh:', $tw);
         $pdf->SetFont('Helvetica', 'B', $fs);
@@ -126,7 +145,10 @@ class DocusignPdfService
         $pdf->SetTextColor(0, 0, 0);
         self::drawTextLines($pdf, $headingLines, $tx, $y + $pad, $tw, $headingHeight, $fs);
         self::drawTextLines($pdf, $positionLines, $tx, $y + $pad + $headingHeight, $tw, $positionHeight, $fs, true);
-        self::drawTextLines($pdf, $nameLines, $tx, $y + $h - $pad - $nameHeight, $tw, $nameHeight, $fs, true, true);
+        $nameY = $y + $pad + $bodyHeight - $nameHeight;
+        self::drawTextLines($pdf, $nameLines, $tx, $nameY, $tw, $nameHeight, $fs, true, true);
+        $pdf->SetFont('Helvetica', '', $codeFontSize);
+        $pdf->Text($tx, $y + $h - $pad - $codeLineHeight + $codeFontSize * 0.3528, $codeText);
     }
 
     /**
@@ -138,6 +160,15 @@ class DocusignPdfService
         $doc->loadMissing(['signers', 'fields']);
         $signers = $doc->signers->keyBy('id');
         $url = self::verifyUrl($doc);
+        $certificatePath = config('docusign.signing_certificate');
+        $privateKeyPath = config('docusign.signing_private_key');
+
+        if (!is_file($certificatePath) || !is_readable($certificatePath)) {
+            throw new RuntimeException('DocuSign signing certificate is missing or unreadable. Run php artisan docusign:generate-signing-certificate.');
+        }
+        if (!is_file($privateKeyPath) || !is_readable($privateKeyPath)) {
+            throw new RuntimeException('DocuSign signing private key is missing or unreadable. Run php artisan docusign:generate-signing-certificate.');
+        }
 
         $pdf = new Fpdi();
         $pdf->SetAutoPageBreak(false);
@@ -156,7 +187,16 @@ class DocusignPdfService
                 if (!$signer || $signer->status !== 'signed') {
                     continue;
                 }
-                self::drawStamp($pdf, $url, $signer, $f->x * $w, $f->y * $h, $f->w * $w, $f->h * $h);
+                self::drawStamp(
+                    $pdf,
+                    $url,
+                    $signer,
+                    self::signatureCode($doc, $signer),
+                    $f->x * $w,
+                    $f->y * $h,
+                    $f->w * $w,
+                    $f->h * $h
+                );
             }
 
             $pageQrSize = min(18, min($w, $h) * 0.07);
@@ -172,6 +212,27 @@ class DocusignPdfService
             $pdf->Cell($captionWidth, 2.5, 'Signed by Pema E-Sign', 0, 0, 'C');
         }
 
-        $pdf->Output('F', $targetPath);
+        $pdf->setSignature(
+            self::fileUri($certificatePath),
+            self::fileUri($privateKeyPath),
+            '',
+            '',
+            2,
+            [
+                'Name' => (string) config('docusign.signing_name'),
+                'Location' => 'Indonesia',
+                'Reason' => 'Electronic signature by PEMA E-Sign',
+                'ContactInfo' => self::verifyUrl($doc),
+            ]
+        );
+        $pdf->setSignatureAppearance(0, 0, 0, 0, $pageCount, 'PEMA E-Sign');
+        $pdf->Output($targetPath, 'F');
+    }
+
+    private static function fileUri(string $path): string
+    {
+        $path = str_replace('\\', '/', $path);
+
+        return 'file://' . $path;
     }
 }

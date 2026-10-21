@@ -84,6 +84,18 @@ foreach ($numbers as $number) {
 
 Contoh implementasi real di module meeting bisa dilihat di [app/Http/Controllers/Meeting/MeetingController.php](app/Http/Controllers/Meeting/MeetingController.php).
 
+## DocuSign PDF Signatures
+
+DocuSign output PDFs are cryptographically signed with a self-signed certificate. Generate it once in each environment before creating or signing documents:
+
+```bash
+php artisan docusign:generate-signing-certificate
+```
+
+By default, the certificate and private key are stored under `storage/app/private`. Keep the private key restricted to the application service account, back it up securely, and share the same key securely with every application server that signs PDFs. Do not commit either file to source control. Paths and the displayed signer name can be configured with `DOCUSIGN_SIGNING_CERTIFICATE`, `DOCUSIGN_SIGNING_PRIVATE_KEY`, `DOCUSIGN_SIGNING_NAME`, and `DOCUSIGN_SIGNING_ORGANIZATION`.
+
+The signature cryptographically protects the PDF and appears in compatible PDF Reader signature panels. Because this certificate is self-signed, readers will report that its identity is untrusted unless users manually trust it. This server signature identifies PEMA E-Sign and does not independently certify the identity of each human signer; the document's TTE codes and verification page provide the application-level signer record.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
