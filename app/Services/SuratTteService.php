@@ -14,9 +14,9 @@ use setasign\Fpdi\Tcpdf\Fpdi;
  */
 class SuratTteService
 {
-    public static function verifyUrl(string $noDocument): string
+    public static function verifyUrl(string $noDocument, string $type = 'sign'): string
     {
-        return rtrim(env('FRONTEND_URL', 'https://sys.pema.co.id'), '/') . '/verification/' . $noDocument . '?type=sign';
+        return rtrim(env('FRONTEND_URL', 'https://sys.pema.co.id'), '/') . '/verification/' . $noDocument . '?type=' . $type;
     }
 
     public static function code(string $signature, string $noDocument): string
@@ -29,15 +29,15 @@ class SuratTteService
     /**
      * @return array{code: string, name: ?string, position: ?string, signed_at: mixed}|null
      */
-    public static function find(string $noDocument): ?array
+    public static function find(string $noDocument, string $type = 'sign'): ?array
     {
         try {
-            $step = ListVerif::where('id_doc', $noDocument)->where('type', 'sign')->where('status', 'approve')->first();
+            $step = ListVerif::where('id_doc', $noDocument)->where('type', $type)->where('status', 'approve')->first();
             if (!$step) {
                 return null;
             }
             $signature = VerifStep::where('id_doc', $noDocument)
-                ->where('type', 'sign')
+                ->where('type', $type)
                 ->where('status', 'approve')
                 ->where('id_employe', $step->id_employe)
                 ->value('signature');
@@ -104,16 +104,51 @@ class SuratTteService
         }
     }
 
-    public static function codeFor(string $noDocument): ?string
+    /**
+     * SHA-256 of the original SPPD: the stored SPPD fields, its destinations
+     * and each invitation file. Computed on demand, nothing is stored.
+     */
+    public static function sppdContentHash(string $noDocument): ?string
     {
-        return self::find($noDocument)['code'] ?? null;
+        try {
+            $s = \App\Models\Sppd\Sppd::where('nomor_dokumen', $noDocument)->first();
+            if (!$s) {
+                return null;
+            }
+            $strip = fn (array $row) => array_diff_key($row, ['created_at' => 1, 'updated_at' => 1]);
+            $tujuan = \App\Models\Sppd\TujuanSppd::where('id_sppd', $s->id)->orderBy('id')->get()->map(function ($t) use ($strip) {
+                $row = $strip($t->toArray());
+                $file = $t->file_undangan;
+                $row['file_undangan_sha256'] = ($file && $file !== '-' && \Illuminate\Support\Facades\Storage::disk('public_sppd')->exists($file))
+                    ? hash('sha256', \Illuminate\Support\Facades\Storage::disk('public_sppd')->get($file))
+                    : '';
+
+                return $row;
+            })->all();
+
+            $payload = json_encode(
+                SignatureService::normalizeJson(['sppd' => $strip($s->toArray()), 'tujuan' => $tujuan]),
+                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            );
+
+            return hash('sha256', $payload);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
+    public static function codeFor(string $noDocument, string $type = 'sign'): ?string
+    {
+        return self::find($noDocument, $type)['code'] ?? null;
     }
 
     /**
      * Embed a cryptographic signature (certificate carries signer name and
      * position) into the given PDF and return the signed bytes.
      */
-    public static function signPdf(string $pdfBytes, string $noDocument, array $tte): string
+    public static function signPdf(string $pdfBytes, string $noDocument, array $tte, string $type = 'sign', string $title = 'Surat'): string
     {
         $certificatePath = config('docusign.signing_certificate');
         $privateKeyPath = config('docusign.signing_private_key');
@@ -132,7 +167,7 @@ class SuratTteService
 
             $pdf = new Fpdi();
             $pdf->SetAutoPageBreak(false);
-            $pdf->SetTitle('Surat ' . $noDocument);
+            $pdf->SetTitle($title . ' ' . $noDocument);
             $pdf->SetAuthor((string) $tte['name']);
             $pdf->SetSubject(($parafText !== '' ? 'Paraf: ' . $parafText . '. ' : '') . 'Ditandatangani: ' . trim($tte['name'] . ($tte['position'] ? ' (' . $tte['position'] . ')' : '')));
             $pdf->SetKeywords('Kode TTE ' . $tte['code']);
@@ -156,7 +191,7 @@ class SuratTteService
                     'Name' => (string) $tte['name'],
                     'Location' => 'Indonesia',
                     'Reason' => ($parafText !== '' ? 'Paraf: ' . $parafText . '. ' : '') . 'Ditandatangani secara elektronik oleh ' . trim($tte['name'] . ($tte['position'] ? ' (' . $tte['position'] . ')' : '')) . ' - Kode TTE ' . $tte['code'],
-                    'ContactInfo' => self::verifyUrl($noDocument),
+                    'ContactInfo' => self::verifyUrl($noDocument, $type),
                 ]
             );
             $pdf->setSignatureAppearance(0, 0, 0, 0, $pageCount, 'PEMA E-Sign');

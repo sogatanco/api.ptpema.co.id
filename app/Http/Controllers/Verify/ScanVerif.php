@@ -15,7 +15,10 @@ class ScanVerif extends Controller
     {
         $d = ListVerif::where('id_doc', $id_doc)->where('type', $request->type)->first();
         if ($d) {
-            $d->tte_code = \App\Services\SuratTteService::codeFor($d->id_doc);
+            $d->tte_code = \App\Services\SuratTteService::codeFor($d->id_doc, (string) $request->type);
+            if ((int) $d->jenis_doc === 1 && $d->tte_code) {
+                $d->original_hash = \App\Services\SuratTteService::sppdContentHash($d->id_doc);
+            }
         }
         if ($d->jenis_doc==2) {
             $data=ListSurat::where('no_document',$d->id_doc)->first();

@@ -11,7 +11,9 @@ use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
 use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
-use App\Models\ESign\VerifStep;
+use App\Services\CryptoService;
+use App\Services\SignatureService;
+use App\Services\SuratTteService;use App\Models\ESign\VerifStep;
 use App\Models\Sppd\ApprovedSppd;
 use App\Models\Sppd\CheklistDoc;
 use App\Models\Sppd\CheklistDokRealisasi;
@@ -295,9 +297,63 @@ class PengajuanController extends Controller
         $verif = VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->limit(1)->first();
         $verif->status = $request->status;
         $verif->ket = $request->catatan_persetujuan;
+        if ($request->status === 'approve') {
+            $verif->signature = $this->signApproval($id_doc, $verif);
+        }
         if ($verif->save()) {
             return new PostResource(true, 'success', []);
         }
+    }
+
+    // Same RSA signature the adm letters use; the TTE code is derived from it
+    private function signApproval($id_doc, $verif)
+    {
+        try {
+            $employeId = Employe::employeId();
+            if (is_null(CryptoService::getPublicKey($employeId))) {
+                CryptoService::generateKeys($employeId);
+            }
+
+            return SignatureService::signDocument($employeId, [
+                'id_doc' => $id_doc,
+                'type' => $verif->type,
+                'step' => $verif->step,
+                'employe_id' => $employeId,
+                'ket' => $verif->ket,
+                'content_sha256' => SuratTteService::sppdContentHash($id_doc),
+                'signed_at' => now()->toIso8601String(),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
+    function signPdf($id, Request $request)
+    {
+        $request->validate(['pdf' => 'required|string|max:30000000', 'type' => 'required|string|max:50']);
+
+        $sppd = Sppd::find($id);
+        $tte = $sppd ? SuratTteService::find($sppd->nomor_dokumen, $request->type) : null;
+        if (!$tte) {
+            return response()->json(['success' => false, 'message' => 'Dokumen ini tidak memiliki TTE'], 404);
+        }
+
+        $bytes = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $request->pdf), true);
+        if ($bytes === false || strncmp($bytes, '%PDF-', 5) !== 0) {
+            return response()->json(['success' => false, 'message' => 'File PDF tidak valid'], 422);
+        }
+
+        try {
+            $signed = SuratTteService::signPdf($bytes, $sppd->nomor_dokumen, $tte, $request->type, 'SPPD');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['success' => false, 'message' => 'PDF tidak dapat ditandatangani'], 500);
+        }
+
+        return new PostResource(true, 'success', ['pdf' => base64_encode($signed)]);
     }
 
     function getRomawi($bln)

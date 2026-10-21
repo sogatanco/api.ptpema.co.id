@@ -129,6 +129,7 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::get('sppd/pengajuan/{id}', 'getDetail')->middleware("role:Employee");
      Route::post('sppd/pengajuan/update/{id}', 'updatePengajuan')->middleware("role:Employee");
      Route::post('sppd/pengajuan/review/{id_doc}', 'persetujuan')->middleware("role:Employee");
+    Route::post('sppd/pengajuan/sign-pdf/{id}', 'signPdf')->middleware("role:Employee");
      Route::post('sppd/pengajuan/realisasi', 'submitRealisasi')->middleware("role:Employee");
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
      Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
