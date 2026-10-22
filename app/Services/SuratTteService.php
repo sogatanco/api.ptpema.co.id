@@ -232,6 +232,23 @@ class SuratTteService
      * Only documents with a recorded chain hash (new approvals) are stored;
      * older documents are signed on the fly exactly as before.
      */
+    public static function storedPdf(string $noDocument, string $type, string $kind = ''): ?string
+    {
+        try {
+            if (!self::hasChain($noDocument, $type)) {
+                return null;
+            }
+            $disk = \Illuminate\Support\Facades\Storage::disk('local');
+            $path = self::storedPdfPath($noDocument, $type, $kind);
+
+            return $disk->exists($path) ? $disk->get($path) : null;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
     public static function issueSignedPdf(string $pdfBytes, string $noDocument, array $tte, string $type = 'sign', string $title = 'Surat', string $kind = ''): string
     {
         $disk = \Illuminate\Support\Facades\Storage::disk('local');
@@ -249,9 +266,14 @@ class SuratTteService
         $signed = self::signPdf($pdfBytes, $noDocument, $tte, $type, $title);
         if ($store) {
             try {
-                $disk->put($path, $signed);
+                // Lock so two simultaneous first prints can't store different bytes
+                return \Illuminate\Support\Facades\Cache::lock('tte-pdf-' . md5($path), 60)->block(20, function () use ($disk, $path, $signed) {
+                    if (!$disk->exists($path)) {
+                        $disk->put($path, $signed);
+                    }
 
-                return $disk->get($path);
+                    return $disk->get($path);
+                });
             } catch (\Throwable $e) {
                 report($e);
             }
@@ -265,11 +287,9 @@ class SuratTteService
         try {
             $disk = \Illuminate\Support\Facades\Storage::disk('local');
             if ($kind === null) {
-                // Kind unknown (public verification): only answer when exactly one file matches
-                $prefix = 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument . '-' . $type);
-                $files = array_values(array_filter($disk->files('tte-pdf'), fn ($f) => $f === $prefix . '.pdf' || str_starts_with($f, $prefix . '-')));
+                $all = self::storedPdfHashes($noDocument, $type);
 
-                return count($files) === 1 ? hash('sha256', $disk->get($files[0])) : null;
+                return count($all) === 1 ? $all[0]['hash'] : null;
             }
             $path = self::storedPdfPath($noDocument, $type, $kind);
 
@@ -278,6 +298,37 @@ class SuratTteService
             report($e);
 
             return null;
+        }
+    }
+
+    /**
+     * Every stored signed PDF of this document step (one per kind, e.g. ST, SPPD), for the public verification page.
+     *
+     * @return array<int, array{kind: string, hash: string}>
+     */
+    public static function storedPdfHashes(string $noDocument, string $type): array
+    {
+        try {
+            $disk = \Illuminate\Support\Facades\Storage::disk('local');
+            $prefix = 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument . '-' . $type);
+            $out = [];
+            foreach ($disk->files('tte-pdf') as $f) {
+                if ($f === $prefix . '.pdf') {
+                    $kind = '';
+                } elseif (str_starts_with($f, $prefix . '-') && str_ends_with($f, '.pdf')) {
+                    $kind = substr($f, strlen($prefix) + 1, -4);
+                } else {
+                    continue;
+                }
+                $out[] = ['kind' => $kind, 'hash' => hash('sha256', $disk->get($f))];
+            }
+            usort($out, fn ($a, $b) => strcmp($a['kind'], $b['kind']));
+
+            return $out;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return [];
         }
     }
 

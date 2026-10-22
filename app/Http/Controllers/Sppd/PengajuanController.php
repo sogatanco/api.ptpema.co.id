@@ -138,17 +138,20 @@ class PengajuanController extends Controller
 
 
 
-    function getDetail($id)
+    function getDetail($id, Request $request)
     {
+       // Undangan base64 is only needed by the edit form; skip the heavy encoding otherwise
+       $withFile = $request->boolean('file');
         $data = ListSppd::find($id);
         $tujuans = HitunganBiaya::where('id_sppd', $id)->get();
+        $tigaPuluhIds = TigaPuluh::whereIn('id_tujuan', $tujuans->pluck('id'))->pluck('id_tujuan')->all();
         foreach ($tujuans as $t) {
-            if ($t->file_undangan !== '-') {
+            if ($withFile && $t->file_undangan !== '-') {
                 $t->base64_undangan = base64_encode(Storage::disk('public_sppd')->get($t->file_undangan));
             } else {
                 $t->base64_undangan = '-';
             }
-            $t->tigapuluh = TigaPuluh::where('id_tujuan', $t->id)->first();
+            $t->tigapuluh = in_array($t->id, $tigaPuluhIds) ? TigaPuluh::where('id_tujuan', $t->id)->first() : null;
             if ($t->tigapuluh === null) {
                 $data['tigap']=false;
             }else{
@@ -298,19 +301,21 @@ class PengajuanController extends Controller
         $verif = VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->limit(1)->first();
         $verif->status = $request->status;
         $verif->ket = $request->catatan_persetujuan;
+        $contentHash = null;
         if ($request->status === 'approve') {
-            $verif->signature = $this->signApproval($id_doc, $verif);
+            $contentHash = SuratTteService::sppdContentHash($id_doc);
+            $verif->signature = $this->signApproval($id_doc, $verif, $contentHash);
         }
         if ($verif->save()) {
             if ($request->status === 'approve') {
-                SuratTteService::recordChain($verif, SuratTteService::sppdContentHash($id_doc));
+                SuratTteService::recordChain($verif, $contentHash);
             }
             return new PostResource(true, 'success', []);
         }
     }
 
     // Same RSA signature the adm letters use; the TTE code is derived from it
-    private function signApproval($id_doc, $verif)
+    private function signApproval($id_doc, $verif, $contentHash)
     {
         try {
             $employeId = Employe::employeId();
@@ -322,7 +327,7 @@ class PengajuanController extends Controller
                 'step' => $verif->step,
                 'employe_id' => $employeId,
                 'ket' => $verif->ket,
-                'content_sha256' => SuratTteService::sppdContentHash($id_doc),
+                'content_sha256' => $contentHash,
                 'signed_at' => now()->toIso8601String(),
             ]);
         } catch (\Throwable $e) {
@@ -335,7 +340,7 @@ class PengajuanController extends Controller
 
     function signPdf($id, Request $request)
     {
-        $request->validate(['pdf' => 'required|string|max:30000000', 'type' => 'required|string|max:50', 'kind' => 'nullable|string|max:50']);
+        $request->validate(['pdf' => 'required_unless:cached,1,true|nullable|string|max:30000000', 'type' => 'required|string|max:50', 'kind' => 'nullable|string|max:50', 'cached' => 'nullable']);
 
         $sppd = Sppd::find($id);
         $tte = $sppd ? SuratTteService::find($sppd->nomor_dokumen, $request->type) : null;
@@ -349,6 +354,13 @@ class PengajuanController extends Controller
                 ->map(fn ($s) => "{$s->type}#{$s->step}:" . ($s->status ?? 'null') . ':' . ($s->signature ? 'sig' : 'nosig'))->implode(', ') : '';
 
             return response()->json(['success' => false, 'reason' => $reason, 'message' => 'Dokumen ini tidak memiliki TTE (' . $reason . '). Langkah: ' . $steps], 404);
+        }
+
+        // Probe: serve the already signed file so the browser can skip generating the PDF
+        if ($request->boolean('cached')) {
+            $stored = SuratTteService::storedPdf($sppd->nomor_dokumen, $request->type, (string) $request->kind);
+
+            return new PostResource(true, 'success', ['pdf' => $stored ? base64_encode($stored) : null]);
         }
 
         $bytes = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $request->pdf), true);
