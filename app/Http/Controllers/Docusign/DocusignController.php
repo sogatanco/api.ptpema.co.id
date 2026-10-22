@@ -61,16 +61,18 @@ class DocusignController extends Controller
                 continue;
             }
             $sent = false;
+            $reason = '';
             for ($try = 1; $try <= 2 && !$sent; $try++) {
                 try {
                     $this->sendSignRequest($doc, $signer);
                     $sent = true;
                 } catch (\Throwable $e) {
                     report($e);
+                    $reason = $e->getMessage();
                 }
             }
             if (!$sent) {
-                $failed[] = $signer->name;
+                $failed[] = $signer->name . ' (' . mb_substr(strtok($reason, "\n"), 0, 160) . ')';
             }
         }
 
