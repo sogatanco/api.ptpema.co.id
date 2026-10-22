@@ -49,38 +49,32 @@ class DocusignController extends Controller
     }
 
     // Email every pending signer whose turn has come and who has not been notified yet.
-    // Sent after the HTTP response so the user never waits on SMTP; a failure for one
-    // signer does not block the others (they show "Email belum terkirim" with a resend button).
-    private function notifyNext(DocusignDocument $doc): void
+    // Sent inside the request (a background callback proved unreliable on the server).
+    // One failure does not stop the others; returns the names that failed.
+    private function notifyNext(DocusignDocument $doc): array
     {
+        @set_time_limit(180);
         $doc->load('signers');
-        $ids = $doc->signers
-            ->filter(fn ($s) => $s->status === 'pending' && !$s->notified_at && $this->canSign($doc, $s))
-            ->pluck('id')
-            ->all();
-        if (!$ids) {
-            return;
-        }
-
-        $docId = $doc->id;
-        app()->terminating(function () use ($docId, $ids) {
-            @set_time_limit(0);
-            $doc = DocusignDocument::with('signers')->find($docId);
-            if (!$doc) {
-                return;
+        $failed = [];
+        foreach ($doc->signers as $signer) {
+            if ($signer->status !== 'pending' || $signer->notified_at || !$this->canSign($doc, $signer)) {
+                continue;
             }
-            foreach ($ids as $id) {
-                $signer = $doc->signers->firstWhere('id', $id);
-                if (!$signer || $signer->notified_at) {
-                    continue;
-                }
+            $sent = false;
+            for ($try = 1; $try <= 2 && !$sent; $try++) {
                 try {
                     $this->sendSignRequest($doc, $signer);
+                    $sent = true;
                 } catch (\Throwable $e) {
                     report($e);
                 }
             }
-        });
+            if (!$sent) {
+                $failed[] = $signer->name;
+            }
+        }
+
+        return $failed;
     }
 
     private function formatDoc(DocusignDocument $doc): array
@@ -204,10 +198,13 @@ class DocusignController extends Controller
             return response()->json(['message' => 'Dokumen tidak dapat diproses: ' . $e->getMessage()], 422);
         }
 
-        $this->notifyNext($doc);
+        $failed = $this->notifyNext($doc);
+        $doc->refresh();
 
         return response()->json([
-            'message' => 'Dokumen dibuat, email permintaan tanda tangan sedang dikirim',
+            'message' => $failed
+                ? 'Dokumen dibuat, tetapi email belum terkirim ke: ' . implode(', ', $failed) . '. Gunakan tombol Kirim ulang.'
+                : 'Dokumen dibuat dan email permintaan tanda tangan sudah terkirim',
             'data' => $this->formatDoc($doc),
         ], 201);
     }
@@ -219,10 +216,26 @@ class DocusignController extends Controller
         return response()->json(['data' => $this->formatDoc($doc)]);
     }
 
+    // signed.pdf may be missing (e.g. the record was created on another machine sharing the DB)
+    private function existingPath(DocusignDocument $doc, bool $original = false): ?string
+    {
+        $candidates = $original ? [$doc->original_path] : [$doc->signed_path, $doc->original_path];
+        foreach ($candidates as $p) {
+            if ($p && $this->disk()->exists($p)) {
+                return $p;
+            }
+        }
+
+        return null;
+    }
+
     public function file(Request $request, $id)
     {
         $doc = DocusignDocument::where('created_by', auth()->user()->email)->findOrFail($id);
-        $path = $request->query('type') === 'original' ? $doc->original_path : ($doc->signed_path ?: $doc->original_path);
+        $path = $this->existingPath($doc, $request->query('type') === 'original');
+        if (!$path) {
+            return response()->json(['message' => 'File dokumen tidak ditemukan di server'], 404);
+        }
 
         return $this->disk()->response($path, Str::slug($doc->title) . '.pdf', ['Content-Type' => 'application/pdf']);
     }
@@ -368,7 +381,11 @@ class DocusignController extends Controller
     public function verifyFile($uuid)
     {
         $doc = DocusignDocument::where('uuid', $uuid)->firstOrFail();
+        $path = $this->existingPath($doc);
+        if (!$path) {
+            return response()->json(['message' => 'File dokumen tidak ditemukan di server'], 404);
+        }
 
-        return $this->disk()->response($doc->signed_path ?: $doc->original_path, Str::slug($doc->title) . '.pdf', ['Content-Type' => 'application/pdf']);
+        return $this->disk()->response($path, Str::slug($doc->title) . '.pdf', ['Content-Type' => 'application/pdf']);
     }
 }
