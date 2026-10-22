@@ -216,9 +216,9 @@ class SuratTteService
     {
         return \Illuminate\Support\Facades\Cache::remember('verif_steps_has_chain_sha256', 300, fn () => \Illuminate\Support\Facades\Schema::connection('esign')->hasColumn('verif_steps', 'chain_sha256'));
     }
-    private static function storedPdfPath(string $noDocument, string $type): string
+    private static function storedPdfPath(string $noDocument, string $type, string $kind = ''): string
     {
-        return 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument . '-' . $type) . '.pdf';
+        return 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument . '-' . $type . ($kind !== '' ? '-' . $kind : '')) . '.pdf';
     }
 
     private static function hasChain(string $noDocument, string $type): bool
@@ -232,10 +232,10 @@ class SuratTteService
      * Only documents with a recorded chain hash (new approvals) are stored;
      * older documents are signed on the fly exactly as before.
      */
-    public static function issueSignedPdf(string $pdfBytes, string $noDocument, array $tte, string $type = 'sign', string $title = 'Surat'): string
+    public static function issueSignedPdf(string $pdfBytes, string $noDocument, array $tte, string $type = 'sign', string $title = 'Surat', string $kind = ''): string
     {
         $disk = \Illuminate\Support\Facades\Storage::disk('local');
-        $path = self::storedPdfPath($noDocument, $type);
+        $path = self::storedPdfPath($noDocument, $type, $kind);
         $store = false;
         try {
             $store = self::hasChain($noDocument, $type);
@@ -260,11 +260,18 @@ class SuratTteService
         return $signed;
     }
 
-    public static function storedPdfHash(string $noDocument, string $type): ?string
+    public static function storedPdfHash(string $noDocument, string $type, ?string $kind = ''): ?string
     {
         try {
             $disk = \Illuminate\Support\Facades\Storage::disk('local');
-            $path = self::storedPdfPath($noDocument, $type);
+            if ($kind === null) {
+                // Kind unknown (public verification): only answer when exactly one file matches
+                $prefix = 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument . '-' . $type);
+                $files = array_values(array_filter($disk->files('tte-pdf'), fn ($f) => $f === $prefix . '.pdf' || str_starts_with($f, $prefix . '-')));
+
+                return count($files) === 1 ? hash('sha256', $disk->get($files[0])) : null;
+            }
+            $path = self::storedPdfPath($noDocument, $type, $kind);
 
             return $disk->exists($path) ? hash('sha256', $disk->get($path)) : null;
         } catch (\Throwable $e) {

@@ -329,6 +329,7 @@ class PengajuanController extends Controller
             ]);
         } catch (\Throwable $e) {
             report($e);
+            \Log::warning('Approval signature could not be created', ['id_doc' => $id_doc]);
 
             return null;
         }
@@ -336,12 +337,14 @@ class PengajuanController extends Controller
 
     function signPdf($id, Request $request)
     {
-        $request->validate(['pdf' => 'required|string|max:30000000', 'type' => 'required|string|max:50']);
+        $request->validate(['pdf' => 'required|string|max:30000000', 'type' => 'required|string|max:50', 'kind' => 'nullable|string|max:50']);
 
         $sppd = Sppd::find($id);
         $tte = $sppd ? SuratTteService::find($sppd->nomor_dokumen, $request->type) : null;
         if (!$tte) {
-            return response()->json(['success' => false, 'message' => 'Dokumen ini tidak memiliki TTE'], 404);
+            \Log::info('SPPD sign-pdf skipped: no approved step with signature', ['sppd_id' => $id, 'type' => $request->type]);
+
+            return response()->json(['success' => false, 'message' => 'Persetujuan ini belum memiliki TTE (disetujui sebelum fitur TTE aktif atau signature kosong)'], 404);
         }
 
         $bytes = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $request->pdf), true);
@@ -350,11 +353,11 @@ class PengajuanController extends Controller
         }
 
         try {
-            $signed = SuratTteService::issueSignedPdf($bytes, $sppd->nomor_dokumen, $tte, $request->type, 'SPPD');
+            $signed = SuratTteService::issueSignedPdf($bytes, $sppd->nomor_dokumen, $tte, $request->type, 'SPPD', (string) $request->kind);
         } catch (\Throwable $e) {
             report($e);
 
-            return response()->json(['success' => false, 'message' => 'PDF tidak dapat ditandatangani'], 500);
+            return response()->json(['success' => false, 'message' => 'PDF tidak dapat ditandatangani: ' . mb_substr($e->getMessage(), 0, 200)], 500);
         }
 
         return new PostResource(true, 'success', ['pdf' => base64_encode($signed)]);
