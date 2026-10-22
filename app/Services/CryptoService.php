@@ -31,6 +31,20 @@ class CryptoService
         Storage::put("keys/private_{$employe_id}.pem", encrypt($privateKey));
     }
 
+    // Creates keys only when the private key file is missing or unreadable; working keys are never replaced
+    public static function ensureKeys($employe_id)
+    {
+        $usable = false;
+        try {
+            $usable = !is_null(self::getPublicKey($employe_id)) && Storage::exists("keys/private_{$employe_id}.pem") && self::getPrivateKey($employe_id);
+        } catch (\Throwable $e) {
+            $usable = false;
+        }
+        if (!$usable) {
+            self::generateKeys($employe_id);
+        }
+    }
+
     public static function getPrivateKey($employe_id)
     {
         $encryptedPrivateKey = Storage::get("keys/private_{$employe_id}.pem");

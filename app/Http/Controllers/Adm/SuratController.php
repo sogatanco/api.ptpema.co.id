@@ -226,9 +226,7 @@ class SuratController extends Controller
         // $document['signer']['first_name'] = $signer->employe_name;
         // $document['signer']['position_name'] = $signer->id_current_position;
 
-        if(is_null(CryptoService::getPublicKey(Employe::employeId()))){
-            CryptoService::generateKeys(Employe::employeId());
-        }
+        CryptoService::ensureKeys(Employe::employeId());
 
         $signature = SignatureService::signDocument(Employe::employeId(), $document->toArray(request())['data']);
 

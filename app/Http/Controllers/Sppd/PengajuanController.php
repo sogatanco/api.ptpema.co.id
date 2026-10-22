@@ -314,9 +314,7 @@ class PengajuanController extends Controller
     {
         try {
             $employeId = Employe::employeId();
-            if (is_null(CryptoService::getPublicKey($employeId))) {
-                CryptoService::generateKeys($employeId);
-            }
+            CryptoService::ensureKeys($employeId);
 
             return SignatureService::signDocument($employeId, [
                 'id_doc' => $id_doc,
@@ -329,7 +327,7 @@ class PengajuanController extends Controller
             ]);
         } catch (\Throwable $e) {
             report($e);
-            \Log::warning('Approval signature could not be created', ['id_doc' => $id_doc]);
+            \Log::warning('Approval signature could not be created', ['id_doc' => $id_doc, 'error' => $e->getMessage(), 'at' => $e->getFile() . ':' . $e->getLine()]);
 
             return null;
         }
@@ -347,7 +345,10 @@ class PengajuanController extends Controller
                 : ($approved->isEmpty() ? 'step_not_approved' : ($approved->contains(fn ($s) => $s->signature) ? 'lookup_failed' : 'no_signature'));
             \Log::info('SPPD sign-pdf skipped', ['sppd_id' => $id, 'type' => $request->type, 'reason' => $reason]);
 
-            return response()->json(['success' => false, 'reason' => $reason, 'message' => 'Dokumen ini tidak memiliki TTE (' . $reason . ')'], 404);
+            $steps = $sppd ? VerifStep::where('id_doc', $sppd->nomor_dokumen)->orderBy('step')->get(['step', 'type', 'status', 'signature'])
+                ->map(fn ($s) => "{$s->type}#{$s->step}:" . ($s->status ?? 'null') . ':' . ($s->signature ? 'sig' : 'nosig'))->implode(', ') : '';
+
+            return response()->json(['success' => false, 'reason' => $reason, 'message' => 'Dokumen ini tidak memiliki TTE (' . $reason . '). Langkah: ' . $steps], 404);
         }
 
         $bytes = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $request->pdf), true);
