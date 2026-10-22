@@ -342,9 +342,12 @@ class PengajuanController extends Controller
         $sppd = Sppd::find($id);
         $tte = $sppd ? SuratTteService::find($sppd->nomor_dokumen, $request->type) : null;
         if (!$tte) {
-            \Log::info('SPPD sign-pdf skipped: no approved step with signature', ['sppd_id' => $id, 'type' => $request->type]);
+            $approved = $sppd ? VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', $request->type)->where('status', 'approve')->get() : collect();
+            $reason = !$sppd ? 'sppd_not_found'
+                : ($approved->isEmpty() ? 'step_not_approved' : ($approved->contains(fn ($s) => $s->signature) ? 'lookup_failed' : 'no_signature'));
+            \Log::info('SPPD sign-pdf skipped', ['sppd_id' => $id, 'type' => $request->type, 'reason' => $reason]);
 
-            return response()->json(['success' => false, 'message' => 'Persetujuan ini belum memiliki TTE (disetujui sebelum fitur TTE aktif atau signature kosong)'], 404);
+            return response()->json(['success' => false, 'reason' => $reason, 'message' => 'Dokumen ini tidak memiliki TTE (' . $reason . ')'], 404);
         }
 
         $bytes = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $request->pdf), true);
