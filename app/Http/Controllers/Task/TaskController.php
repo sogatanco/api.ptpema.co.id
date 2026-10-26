@@ -50,7 +50,7 @@ class TaskController extends Controller
         if($request->hasFile('files')){
             $files = $request->file('files');
 
-            $thefile = $files[0]->getClientOriginalName();
+            $thefile = \App\Support\SafeUpload::name($files[0]->getClientOriginalName());
             $savedFile  = Storage::disk("public_taskfiles")->put('', $files[0]);
         }
 
@@ -741,7 +741,7 @@ class TaskController extends Controller
         if($request->hasFile('files')){
             $files = $request->file('files');
 
-            $thefile = $files[0]->getClientOriginalName();
+            $thefile = \App\Support\SafeUpload::name($files[0]->getClientOriginalName());
             $savedFile  = Storage::disk("public_taskfiles")->put($thefile, file_get_contents($files[0]));
 
             // $file = $request->file('files');

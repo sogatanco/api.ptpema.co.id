@@ -53,7 +53,7 @@ class EmployeController extends Controller
 
         $newUser = new User();
         $newUser->email = $request->email;
-        $newUser->password = Hash::make('asdasdasd');
+        $newUser->password = Hash::make(\Illuminate\Support\Str::random(40)); // no shared default password; first sign-in goes through forgot-password
         $newUser->roles = ["Employee"];
 
 

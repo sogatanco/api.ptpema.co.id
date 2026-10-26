@@ -104,7 +104,7 @@ class Auth2Controller extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email:filter'],
             'password' => ['required']
         ]);
 
@@ -238,7 +238,7 @@ class Auth2Controller extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email:filter',
         ]);
 
         $emailIsExist = UserVendor::where('email', $request->email)->count();

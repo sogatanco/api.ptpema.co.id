@@ -78,7 +78,7 @@ class ContractController extends Controller
                 }
 
                 $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+                $extension = \App\Support\SafeUpload::extension($file->getClientOriginalExtension() ?: 'pdf', ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'zip', 'rar']);
                 $filename = time() . '_' . Str::slug($originalName) . '.' . $extension;
 
                 $storedPath = $filename;

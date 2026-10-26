@@ -27,3 +27,20 @@ order allow,deny
 allow from all
 </Files>
 
+# --- Security: only the Laravel front controller may run as PHP ---
+# Uploaded files live under public/ (inven, taskfiles, project, layar, ...); a script dropped there
+# must never execute. Also hide logs and PHP config files.
+<FilesMatch "\.(php[0-9]?|phtml|phar|pht|phps|pgif|shtml|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>
+<Files "index.php">
+    Require all granted
+</Files>
+<Files "403.shtml">
+    Require all granted
+</Files>
+<FilesMatch "^(error_log|\.user\.ini|\.htaccess|.*\.log|.*\.sql|.*\.env)$">
+    Require all denied
+</FilesMatch>
+Options -ExecCGI
+

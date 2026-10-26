@@ -678,7 +678,7 @@ class ProjectController extends Controller
 
         if($request->hasFile('file')){
             $file = $request->file('file');
-            $thefile = $file[0]->getClientOriginalName();
+            $thefile = \App\Support\SafeUpload::name($file[0]->getClientOriginalName());
             $savedFile  = Storage::disk("public_project")->put($thefile, file_get_contents($file[0]));
         };
 

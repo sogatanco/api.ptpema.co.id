@@ -42,6 +42,8 @@ class LayarController extends Controller
                     $base64 = substr($base64, strpos($base64, ',') + 1);
                     $ext = strtolower($type[1]);
                     if ($ext === 'jpeg') $ext = 'jpg';
+                    // the extension comes from the data URI the client sent
+                    $ext = \App\Support\SafeUpload::extension($ext, ['png', 'jpg', 'gif', 'webp']);
                     $fileName = pathinfo($fileName, PATHINFO_FILENAME);
                     // Normalisasi ulang setelah ganti ekstensi
                     $fileName = preg_replace('/[^A-Za-z0-9.\s_-]/', '', $fileName);

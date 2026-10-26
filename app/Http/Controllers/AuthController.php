@@ -79,7 +79,7 @@ class AuthController extends Controller
     public function login(Request $request) 
     {
         $validator = Validator::make($request->all(), [
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email:filter'],
             'password' => ['required']
         ]);
 
@@ -136,17 +136,44 @@ class AuthController extends Controller
 
     public function loginSso(Request $request)
     {
+        // Only trust an email that comes inside a token signed by the SSO issuer (HS256, SSO_SHARED_SECRET).
+        // A bare email used to be enough to get a session for any account.
+        $secret = config('services.sso.secret');
+        if (!$secret) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Login SSO tidak aktif."
+            ], 403));
+        }
+
         $validator = Validator::make($request->all(), [
-            'email' => ['required', 'email'],
+            'token' => ['required', 'string', 'max:4096'],
         ]);
-        
+
         if ($validator->fails()) {
             throw new HttpResponseException(response([
                 "message" => $validator->errors()
             ], 400));
         }
-        
-        $user = User::where('email', $request->email)->first();
+
+        try {
+            $claims = \Firebase\JWT\JWT::decode($request->token, new \Firebase\JWT\Key($secret, 'HS256'));
+        } catch (\Throwable $e) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Token SSO tidak valid."
+            ], 401));
+        }
+
+        $email = $claims->email ?? null;
+        if (!is_string($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !isset($claims->exp)) {
+            throw new HttpResponseException(response([
+                "status" => false,
+                "message" => "Token SSO tidak valid."
+            ], 401));
+        }
+
+        $user = User::where('email', $email)->first();
         
         if (!$user) {
             throw new HttpResponseException(response([
@@ -230,7 +257,7 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email:filter',
         ]);
 
         $emailIsExist = User::where('email', $request->email)->count();

@@ -43,4 +43,9 @@ return [
         'user_id' => env('ZOOM_USER_ID'),
     ],
 
+    // Shared secret used to verify SSO tokens on /api/auth/login-sso; SSO login stays off while empty
+    'sso' => [
+        'secret' => env('SSO_SHARED_SECRET'),
+    ],
+
 ];

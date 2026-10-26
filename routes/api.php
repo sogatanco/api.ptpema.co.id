@@ -37,29 +37,33 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 // Auth Route
 Route::controller(AuthController::class)->group(function(){
-    Route::post('/auth/register', 'register');
-    Route::post('/auth/login', 'login');
-    Route::post('/auth/login-sso', 'loginSso');
+    // Internal accounts are created from HR data only; public self-registration handed out the Employee role
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/auth/login', 'login');
+        Route::post('/auth/login-sso', 'loginSso');
+        Route::post('auth/forgot-password', 'forgotPassword');
+        Route::post('auth/new-password', 'newPassword');
+    });
     Route::get('/auth/logout', 'logout');
     Route::get('/auth/refresh', 'refresh');
     Route::get('auth/welcome/test', 'welcome');
     Route::post('auth/change-pas', 'changePas');
-    Route::post('auth/forgot-password', 'forgotPassword');
     Route::GET('/auth/forgot-password/{token}', 'checkToken');
-    Route::post('auth/new-password', 'newPassword');
 });
 
 Route::controller(Auth2Controller::class)->group(function(){
-    Route::post('/auth2/register', 'register');
-    Route::post('/auth2/login', 'login');
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/auth2/register', 'register');
+        Route::post('/auth2/login', 'login');
+        Route::post('/auth2/forgot-password', 'forgotPassword');
+        Route::post('/auth2/new-password', 'newPassword');
+    });
     Route::get('/auth2/logout', 'logout');
     Route::get('/auth2/refresh', 'refresh');
     Route::get('/auth2/resend/{id}', 'kirimEmail');
     Route::get('/auth2/verif/{id}', 'verifEmail');
     Route::post('auth2/change-pas', 'changePas');
-    Route::post('/auth2/forgot-password', 'forgotPassword');
     Route::GET('/auth2/forgot-password/{token}', 'checkToken');
-    Route::post('/auth2/new-password', 'newPassword');
 });
 
 // Employee Routes
@@ -68,9 +72,9 @@ Route::controller(EmployeController::class)->group(function(){
     Route::get("/employe/assignment-list", 'assignmentList')->middleware("role:Employee");
     Route::post('/employe/store', 'store')->middleware("client");
     Route::put('/employe/update/{employe_id}/personal', 'update')->middleware("client");
-    Route::get('/employe/{employe_id}', 'show');
-    Route::delete("/employe/{employe_id}", 'destroy');
-    Route::get("/employe/division/{employe_id}", 'getEmployeDivision');
+    Route::get('/employe/{employe_id}', 'show')->middleware("role:Employee");
+    Route::delete("/employe/{employe_id}", 'destroy')->middleware("client");
+    Route::get("/employe/division/{employe_id}", 'getEmployeDivision')->middleware("role:Employee");
     Route::get("/employe/notification/list", 'notification')->middleware("role:Employee");
     Route::patch("/employe/notification/read/{notif_id}", 'updateNotif')->middleware("role:Employee");
     Route::get("/employe/structure/check/{emploId}", 'checkStructure');

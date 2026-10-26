@@ -22,7 +22,7 @@ class ValidateClient
 
         if($query){
             $client = Client::where('client_id', $query)->first();
-            if($client && $client->client_secret == $token){
+            if($client && is_string($token) && hash_equals((string) $client->client_secret, $token)){
                 return $next($request);
             }else{
                 throw new HttpResponseException(response([

@@ -109,4 +109,3 @@ Route::controller(FileController2::class)->group(function(){
     Route::get('file/download', 'download');
 });
 
-Route::get('phpinfo', fn () => phpinfo());
