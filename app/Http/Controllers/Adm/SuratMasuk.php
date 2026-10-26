@@ -50,35 +50,59 @@ class SuratMasuk extends Controller
         $data = [];
         if ($what == 'to_me') {
             $data = ListSuratMasuk::where('live_receiver', Employe::employeId())->whereNull('tindak_lanjut')->latest('diterima')->get();
+            $counts = $this->disposisiTotals($data->pluck('id_surat'));
             foreach ($data as $d) {
-                $d->diproses = count(Disposisi::where('id_surat', $d->id_surat)->get());
+                $d->diproses = $counts->get($d->id_surat) ?? 0;
             }
         } else if ($what == 'tinjut') {
             $data = ListSuratMasuk::where('live_receiver', Employe::employeId())->whereNotNull('tindak_lanjut')->latest('ditinjut')->get();
+            $counts = $this->disposisiTotals($data->pluck('id_surat'));
             foreach ($data as $d) {
-                $d->diproses = count(Disposisi::where('id_surat', $d->id_surat)->get());
+                $d->diproses = $counts->get($d->id_surat) ?? 0;
             }
         } else if ($what == 'all') {
             $data = SM::latest('created_at')->get();
+
+            // Looked up position/employee name and disposisi status per row (2-5 queries each);
+            // the "all" list runs for every surat masuk ever created, so this took minutes to load.
+            // Batched below into a handful of queries regardless of row count.
+            $positionIds = $data->pluck('id_direksi')->filter()->unique();
+            $employeIds = $data->pluck('insert_by')->filter()->unique();
+            $byPosition = Structure::whereIn('position_id', $positionIds)->get()->unique('position_id')->keyBy('position_id');
+            $byEmploye = Structure::whereIn('employe_id', $employeIds)->get()->unique('employe_id')->keyBy('employe_id');
+
+            $dispoStats = Disposisi::whereIn('id_surat', $data->pluck('id'))
+                ->selectRaw('id_surat, count(*) as total, sum(case when tindak_lanjut is null then 1 else 0 end) as null_total')
+                ->groupBy('id_surat')
+                ->get()
+                ->keyBy('id_surat');
+
             foreach ($data as $d) {
-                $d->nama_dir = Structure::where('position_id', $d->id_direksi)->value('first_name') ?? '-';
-                $d->by_name = Structure::where('employe_id', $d->insert_by)->value('first_name') ?? '-';
-                if(count(Disposisi::where('id_surat', $d->id)->get())==1){
-                    if(count(Disposisi::where('id_surat', $d->id)->whereNull('tindak_lanjut')->get())<1){
-                        $c=2;
-                    }else{
-                        $c=1;
-                    }
-                }else{
-                    $c=count(Disposisi::where('id_surat', $d->id)->get() );
-                }
-                $d->diproses = $c;
+                $d->nama_dir = $byPosition->get($d->id_direksi)->first_name ?? '-';
+                $d->by_name = $byEmploye->get($d->insert_by)->first_name ?? '-';
+
+                $stat = $dispoStats->get($d->id);
+                $total = $stat->total ?? 0;
+                $nullTotal = $stat->null_total ?? 0;
+                // Same rule as before: a single disposisi already followed up counts as 2 steps,
+                // a single disposisi still pending counts as 1, otherwise the raw count is used.
+                $d->diproses = $total == 1 ? ($nullTotal < 1 ? 2 : 1) : $total;
             }
         }else if ($what == 'cc') {
             $data=ListCC::where('live_cc', Employe::employeId())->latest('cc_at')->get();
         }
 
         return new PostResource(true, 'data Surat Masuk', $data);
+    }
+
+    // Total disposisi rows per surat, batched for a whole list in one query
+    private function disposisiTotals($suratIds)
+    {
+        return Disposisi::whereIn('id_surat', $suratIds)
+            ->selectRaw('id_surat, count(*) as total')
+            ->groupBy('id_surat')
+            ->get()
+            ->pluck('total', 'id_surat');
     }
 
     public function getDetail($id)

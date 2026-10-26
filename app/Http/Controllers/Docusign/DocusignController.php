@@ -79,6 +79,47 @@ class DocusignController extends Controller
         return $failed;
     }
 
+    // Email every signer once the document is fully signed, with the public verification link
+    // (no login needed) so they can view, download and verify the completed document.
+    // Same retry/resilience pattern as notifyNext: one failure does not stop the others.
+    private function notifyCompletion(DocusignDocument $doc): array
+    {
+        @set_time_limit(180);
+        // The caller (sign()) already has a freshly-loaded signers relation; avoid re-querying it
+        $doc->loadMissing('signers');
+        $link = DocusignPdfService::verifyUrl($doc);
+        $title = e($doc->title);
+        $failed = [];
+
+        foreach ($doc->signers as $signer) {
+            $name = e($signer->name);
+            $html = "<p>Yth. {$name},</p>"
+                . "<p>Dokumen <b>{$title}</b> telah selesai ditandatangani oleh seluruh pihak.</p>"
+                . "<p>Klik tombol berikut untuk melihat atau mengunduh dokumen yang telah ditandatangani, beserta riwayat dan kode verifikasi tanda tangan setiap pihak:</p>"
+                . "<p><a href=\"{$link}\" style=\"background:#1976d2;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px\">Lihat Dokumen</a></p>"
+                . "<p>Jika tombol tidak berfungsi, salin tautan ini: {$link}</p>";
+
+            $sent = false;
+            $reason = '';
+            for ($try = 1; $try <= 2 && !$sent; $try++) {
+                try {
+                    Mail::html($html, function ($m) use ($signer, $doc) {
+                        $m->to($signer->email, $signer->name)->subject('Dokumen Selesai Ditandatangani: ' . $doc->title);
+                    });
+                    $sent = true;
+                } catch (\Throwable $e) {
+                    report($e);
+                    $reason = $e->getMessage();
+                }
+            }
+            if (!$sent) {
+                $failed[] = $signer->name . ' (' . mb_substr(strtok($reason, "\n"), 0, 160) . ')';
+            }
+        }
+
+        return $failed;
+    }
+
     private function formatDoc(DocusignDocument $doc): array
     {
         $doc->loadMissing(['signers', 'fields']);
@@ -352,7 +393,11 @@ class DocusignController extends Controller
             return response()->json(['message' => $result['error']], $result['code']);
         }
 
-        $this->notifyNext($result['doc']);
+        if ($result['doc']->status === 'completed') {
+            $this->notifyCompletion($result['doc']);
+        } else {
+            $this->notifyNext($result['doc']);
+        }
 
         return response()->json(['message' => 'Dokumen berhasil ditandatangani']);
     }
