@@ -13,6 +13,8 @@ use App\Models\Employe;
 use App\Http\Resources\PostResource;
 use App\Models\Structure;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Notification\NotificationController;
 
 class InvController extends Controller
@@ -21,83 +23,70 @@ class InvController extends Controller
     function index()
     {
         $data = Asset::get();
-        foreach ($data as $d) {
-            $member = explode(',', $d->responsible);
-            $memberNew = [];
-            for ($i = 0; $i < count($member); $i++) {
-                $m = str_replace('//', '', $member[$i]);
-                $memberNew[$i] = Structure::where('employe_id', $m)->first();
-            }
-            $d->responsible_list = $memberNew;
-            $d->type_name = assetCat::where('code', $d->type)->first()->name;
-            $child = AssetChild::where('id_parent', $d->id)->get();
-            foreach ($child as $c) {
-                $newn = [];
-                if ($c->responsible !== NULL) {
-                    $cres = explode(',', $c->responsible);
-
-                    for ($a = 0; $a < count($cres); $a++) {
-                        $n = str_replace('//', '', $cres[$a]);
-                        $newn[$a] = Structure::where('employe_id', $n)->first();
-                    }
-                }
-                $c->res_list = $newn;
-            }
-
-            $d->child = $child;
-            $d->amount = count($child);
-            $d->price = $d->amount * $d->price;
-            $d->current = round($d->price - ($this->getAnnual($d->acquisition) * assetCat::where('code', $d->type)->first()->depreciation / 100 * $d->price), 0);
-            // harga beli - (umur aset x persentase penyusutan pertahun x harga beli)
-            $d->old = $this->getUmur($d->acquisition, date("Y-m-d"));
-        }
+        $this->withDetails($data);
         return new PostResource(true, 'data asset', $data);
     }
 
     function show($id)
     {
         $d = Asset::where('id', $id)->first();
-        $member = explode(',', $d->responsible);
-        $memberNew = [];
-        for ($i = 0; $i < count($member); $i++) {
-            $m = str_replace('//', '', $member[$i]);
-            $memberNew[$i] = Structure::where('employe_id', $m)->first();
+        if (!$d) {
+            return response()->json(['success' => false, 'message' => 'Asset tidak ditemukan', 'data' => null], 404);
         }
-        $d->responsible_list = $memberNew;
-        $d->type_name = assetCat::where('code', $d->type)->first()->name;
+        $this->withDetails(collect([$d]));
         $d->file_image=$this->convertImageToBase64(public_path('inven'. $d->file));
-
-        $child = AssetChild::where('id_parent', $d->id)->get();
-        foreach ($child as $c) {
-            $newn = [];
-            if ($c->responsible !== NULL) {
-                $cres = explode(',', $c->responsible);
-
-                for ($a = 0; $a < count($cres); $a++) {
-                    $n = str_replace('//', '', $cres[$a]);
-                    $newn[$a] = Structure::where('employe_id', $n)->first();
-                }
-            }
-            $c->res_list = $newn;
-        }
-        $d->amount = count($child);
-        $d->price = $d->amount * $d->price;
-        $d->current = round($d->price - ($this->getAnnual($d->acquisition) * assetCat::where('code', $d->type)->first()->depreciation / 100 * $d->price), 0);
-        // harga beli - (umur aset x persentase penyusutan pertahun x harga beli)
-        $d->child = $child;
-        $d->old = $this->getUmur($d->acquisition, date("Y-m-d"));
         return new PostResource(true, 'data asset', $d);
+    }
+
+    // Looks up children, categories and responsible employees once for all rows
+    // (struktur_lengkap_oke per row took ~2 minutes for the full list)
+    private function withDetails($assets)
+    {
+        $children = AssetChild::whereIn('id_parent', $assets->pluck('id'))->get()->groupBy('id_parent');
+        $cats = assetCat::get()->keyBy('code');
+        $people = $this->people($assets->pluck('responsible')->merge($children->flatten()->pluck('responsible')));
+
+        foreach ($assets as $d) {
+            $cat = $cats->get($d->type);
+            $d->responsible_list = $this->responsibleList($d->responsible, $people);
+            $d->type_name = $cat->name ?? null;
+            $child = $children->get($d->id, collect())->values();
+            foreach ($child as $c) {
+                $c->res_list = $c->responsible !== NULL ? $this->responsibleList($c->responsible, $people) : [];
+            }
+            $d->child = $child;
+            $d->amount = count($child);
+            $d->price = $d->amount * $d->price;
+            // harga beli - (umur aset x persentase penyusutan pertahun x harga beli), tidak kurang dari 0
+            $d->current = max(0, round($d->price - ($this->getAnnual($d->acquisition) * ($cat->depreciation ?? 0) / 100 * $d->price), 0));
+            $d->old = $this->getUmur($d->acquisition, date("Y-m-d"));
+        }
+
+        return $assets;
+    }
+
+    // responsible is stored as "//id1//,//id2//"
+    private function people($responsibles)
+    {
+        $ids = $responsibles->filter()->flatMap(fn ($r) => explode(',', str_replace('//', '', $r)))->unique()->values();
+
+        return Structure::whereIn('employe_id', $ids)->get()->unique('employe_id')->keyBy('employe_id');
+    }
+
+    private function responsibleList($responsible, $people)
+    {
+        return array_map(fn ($m) => $people->get(str_replace('//', '', $m)), explode(',', (string) $responsible));
     }
 
     function getUmur($start, $end)
     {
-        $umur = strtotime($end) - strtotime($start);
-        if ($umur < (30 * 60 * 60 * 24)) {
-            return ($umur / (60 * 60 * 24)) . ' day';
-        } else if ($umur < (365 * 60 * 60 * 24)) {
-            return (round($umur / (30 * 60 * 60 * 24), 0)) . ' month ' . (($umur % (30 * 60 * 60 * 24)) / (60 * 60 * 24)) . ' day';
+        $umur = (new \DateTime($start))->diff(new \DateTime($end));
+        if ($umur->y === 0 && $umur->m === 0) {
+            return $umur->d . ' day';
+        } else if ($umur->y === 0) {
+            return $umur->m . ' month ' . $umur->d . ' day';
         } else {
-            return (round($umur / (365 * 60 * 60 * 24), 0)) . ' year ' . round(($umur % (365 * 60 * 60 * 24)) / (30 * 60 * 60 * 24), 0) . ' month';
+            return $umur->y . ' year ' . $umur->m . ' month';
         }
     }
 
@@ -107,44 +96,88 @@ class InvController extends Controller
         return $umur / (365 * 60 * 60 * 24);
     }
 
+    private function invalid($validator)
+    {
+        return response()->json(['success' => false, 'message' => $validator->errors()->first(), 'data' => $validator->errors()], 422);
+    }
+
     function store(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'type' => 'required|exists:asset_cats,code',
+            'price' => 'required|integer|min:0',
+            'vendor' => 'nullable|string|max:255',
+            'acquisition' => 'required|date|before_or_equal:today',
+            'amount' => 'required|integer|min:1|max:999',
+            'file' => 'required|string',
+            'location' => 'required|string|max:255',
+            'responsible' => 'required|string|max:255',
+        ], [], ['name' => 'nama', 'type' => 'jenis', 'price' => 'harga beli', 'acquisition' => 'tanggal perolehan', 'amount' => 'jumlah', 'file' => 'gambar', 'location' => 'lokasi', 'responsible' => 'penanggung jawab']);
+        if ($validator->fails()) {
+            return $this->invalid($validator);
+        }
         $dataImage = explode(',', $request->file);
-        $image = base64_decode($dataImage[1], true);
+        $image = base64_decode($dataImage[1] ?? '', true);
+        if (!$image || !@getimagesizefromstring($image)) {
+            return response()->json(['success' => false, 'message' => 'Gambar tidak valid'], 422);
+        }
         $image_name = '/' . time() . '_' . $request->type . '.png';
-        if (Storage::disk('public_inven')->put($image_name, $image)) {
+        if (!Storage::disk('public_inven')->put($image_name, $image)) {
+            return new PostResource(false, 'Gambar gagal disimpan', []);
+        }
+
+        $db = DB::transaction(function () use ($request, $image_name) {
+            // Lock the category row so two saves at once can't take the same number (a trigger bumps last_number on insert)
+            $cat = assetCat::where('code', $request->type)->lockForUpdate()->first();
             $db = new Asset();
             $d = strtotime($request->acquisition);
-            $db->asset_number = sprintf("%03d", assetCat::where('code', $request->type)->first()->last_number + 1) . '-PEMA-' . $request->type . '-' . $this->numberToRoman(date('m', $d)) . '-' . date('Y', $d);
+            $db->asset_number = sprintf("%03d", $cat->last_number + 1) . '-PEMA-' . $request->type . '-' . $this->numberToRoman(date('m', $d)) . '-' . date('Y', $d);
             $db->name = $request->name;
             $db->type = $request->type;
             $db->price = $request->price;
             $db->vendor = $request->vendor;
-            $db->acquisition = date('Y-m-d', strtotime($request->acquisition));
+            $db->acquisition = date('Y-m-d', $d);
             $db->file = $image_name;
             $db->location = $request->location;
             $db->responsible = $request->responsible;
-            // return new PostResource(false, 'sdgsg', [$this->numberToRoman(3)]);
+            $db->save();
 
-            if ($db->save()) {
-                $numb = explode('-PEMA-', $db->asset_number);
-                for ($i = 1; $i <= (int) $request->amount; $i++) {
-                    AssetChild::create(['asset_number' => $numb[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $numb[1], 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
-                }
-                $l = new AssetLog();
-                $l->id_asset = $db->id;
-                $l->id_employee = Employe::employeId();
-                $l->activity = 'Add new Asset data';
-                if ($l->save()) {
-                    return new PostResource(true, 'sdgsg', $db->acquisition);
-                }
+            $numb = explode('-PEMA-', $db->asset_number);
+            for ($i = 1; $i <= (int) $request->amount; $i++) {
+                AssetChild::create(['asset_number' => $numb[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $numb[1], 'responsible' => $request->responsible, 'id_parent' => $db->id,]);
             }
-        }
-        return new PostResource(false, 'failed', $request->all());
+            $this->log($db->id, 'Add new Asset data');
+
+            return $db;
+        });
+
+        return new PostResource(true, 'Asset ' . $db->asset_number . ' berhasil disimpan', $db->acquisition);
+    }
+
+    private function log($idAsset, $activity)
+    {
+        $l = new AssetLog();
+        $l->id_asset = $idAsset;
+        $l->id_employee = Employe::employeId();
+        $l->activity = $activity;
+        $l->save();
     }
 
     function updateAsset(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|exists:assets,id',
+            'name' => 'required|string|max:255',
+            'price' => 'required|integer|min:0',
+            'vendor' => 'nullable|string|max:255',
+            'acquisition' => 'required|date|before_or_equal:today',
+            'location' => 'required|string|max:255',
+            'responsible' => 'required|string|max:255',
+        ], [], ['name' => 'nama', 'price' => 'harga beli', 'acquisition' => 'tanggal perolehan', 'location' => 'lokasi', 'responsible' => 'penanggung jawab']);
+        if ($validator->fails()) {
+            return $this->invalid($validator);
+        }
         $db = Asset::find($request->id);
         $db->name = $request->name;
         $db->price = $request->price;
@@ -153,33 +186,24 @@ class InvController extends Controller
         $db->location = $request->location;
         $db->responsible = $request->responsible;
         if ($db->save()) {
-            $l = new AssetLog();
-            $l->id_asset = $request->id;
-            $l->id_employee = Employe::employeId();
-            $l->activity = 'Update asset data';
-            if ($l->save()) {
-                return new PostResource(true, 'updated succesfully', []);
-            }
-        } else {
-            return new PostResource(false, 'failed', []);
+            $this->log($request->id, 'Update asset data');
+            return new PostResource(true, 'updated succesfully', []);
         }
+        return new PostResource(false, 'failed', []);
     }
 
     function uChild(Request $request)
     {
         $db = AssetChild::find($request->id);
+        if (!$db) {
+            return new PostResource(false, 'Asset tidak ditemukan', []);
+        }
         $db->responsible = $request->responsible;
         if ($db->save()) {
-            $l = new AssetLog();
-            $l->id_asset = $db->id_parent;
-            $l->id_employee = Employe::employeId();
-            $l->activity = 'Update Responsible for asset child ' . $db->asset_number;
-            if ($l->save()) {
-                return new PostResource(true, 'Changed Succesfully !!', []);
-            }
-        } else {
-            return new PostResource(false, 'sgsdg', []);
+            $this->log($db->id_parent, 'Update Responsible for asset child ' . $db->asset_number);
+            return new PostResource(true, 'Changed Succesfully !!', []);
         }
+        return new PostResource(false, 'failed', []);
     }
 
     function deleteChild(Request $request)
@@ -212,36 +236,51 @@ class InvController extends Controller
 
     function deleteAsset(Request $request)
     {
-        $ids = array();
-        foreach ($request->data as $d) {
-            array_push($ids, $d['id']);
+        $ids = collect($request->data)->pluck('id')->filter()->values()->all();
+        if (!$ids) {
+            return new PostResource(false, 'Pilih asset yang akan dihapus', []);
         }
-        if (Asset::destroy($ids)) {
+        // Children go too, otherwise they stay on people's "my responsibility" list without a parent
+        $deleted = DB::transaction(function () use ($ids) {
+            AssetChild::whereIn('id_parent', $ids)->delete();
+            return Asset::destroy($ids);
+        });
+        if ($deleted) {
             return new PostResource(true, 'Deleted Successfully !!', $ids);
         }
+        return new PostResource(false, 'Asset tidak ditemukan', []);
     }
     function addChild(Request $request)
     {
-        $num = explode('-PEMA-', AssetChild::where('id_parent', $request->id_parent)->orderBy('asset_number', 'DESC')->get()->first()->asset_number);
+        $validator = Validator::make($request->all(), [
+            'id_parent' => 'required|exists:assets,id',
+            'amount' => 'required|integer|min:1|max:999',
+        ], [], ['amount' => 'jumlah']);
+        if ($validator->fails()) {
+            return $this->invalid($validator);
+        }
+        $last = AssetChild::where('id_parent', $request->id_parent)->orderBy('asset_number', 'DESC')->first();
+        if (!$last) {
+            return new PostResource(false, 'Asset ini belum punya nomor turunan', []);
+        }
+        $num = explode('-PEMA-', $last->asset_number);
         $numP = explode('-', $num[0]);
         $resp = Asset::find($request->id_parent)->responsible;
         for ($i = $numP[1] + 1; $i <= $numP[1] + $request->amount; $i++) {
             AssetChild::create(['asset_number' => $numP[0] . '-' . sprintf("%03d", $i) . '-PEMA-' . $num[1], 'id_parent' => $request->id_parent, 'responsible' => $resp]);
         }
-        $l = new AssetLog();
-        $l->id_asset = $request->id_parent;
-        $l->id_employee = Employe::employeId();
-        $l->activity = 'Add ' . $request->amount . ' childs to asset';
-        if ($l->save()) {
-            return new PostResource(true, 'sucess', []);
-        }
+        $this->log($request->id_parent, 'Add ' . $request->amount . ' childs to asset');
+        return new PostResource(true, 'sucess', []);
     }
 
     function changeImage(Request $request)
     {
         $db = Asset::find($request->id);
-        $dataImage = explode(',', $request->file);
-        $image = base64_decode($dataImage[1], true);
+        $dataImage = explode(',', (string) $request->file);
+        $image = base64_decode($dataImage[1] ?? '', true);
+        if (!$db || !$image || !@getimagesizefromstring($image)) {
+            return response()->json(['success' => false, 'message' => 'Gambar tidak valid'], 422);
+        }
         if ($db->file === '/placeholder_asset.jpeg') {
             $image_name = '/' . $db->asset_number . '.png';
         } else {
@@ -260,29 +299,25 @@ class InvController extends Controller
                 return new PostResource(true, 'Changed Succesfully !!', []);
             }
         }
+        return new PostResource(false, 'Gambar gagal disimpan', []);
     }
 
     function getAssetOnMe()
     {
-        $data = AssetChild::where('responsible', 'like', '%//' . Employe::employeId() . '//%')->get();
+        $data = AssetChild::where('responsible', 'like', '%//' . Employe::employeId() . '//%')
+            ->whereIn('id_parent', Asset::select('id'))->get();
+        $parents = Asset::whereIn('id', $data->pluck('id_parent'))->get()->keyBy('id');
+        $cats = assetCat::get()->keyBy('code');
+        $inService = AssetServis::whereIn('asset_child', $data->pluck('id'))->whereNotIn('status', ['done', 'reject'])->pluck('asset_child')->flip();
+        $people = $this->people($data->pluck('responsible'));
         foreach ($data as $d) {
-            $d->name = Asset::find($d->id_parent)->name?? 'Parent tidak ditemukan';
-            if (count(AssetServis::where('asset_child', $d->id)->whereNotIn('status', ['done', 'reject'])->get()) > 0) {
-                $d->request_service = true;
-            } else {
-                $d->request_service = false;
-            }
-
-            $d->location = Asset::find($d->id_parent)->location?? 'Parent tidak ditemukan';
-            $d->file = Asset::find($d->id_parent)->file?? 'Parent tidak ditemukan';
-            $d->type_name = assetCat::where('code', Asset::find($d->id_parent)->type??0)->first()->name?? 'Parent tidak ditemukan';
-            $newn = [];
-            $cres = explode(',', $d->responsible);
-            for ($a = 0; $a < count($cres); $a++) {
-                $n = str_replace('//', '', $cres[$a]);
-                $newn[$a] = Structure::where('employe_id', $n)->first();
-            }
-            $d->res_list = $newn;
+            $parent = $parents->get($d->id_parent);
+            $d->name = $parent->name;
+            $d->request_service = $inService->has($d->id);
+            $d->location = $parent->location;
+            $d->file = $parent->file;
+            $d->type_name = $cats->get($parent->type)->name ?? '-';
+            $d->res_list = $this->responsibleList($d->responsible, $people);
         }
 
         return new PostResource(true, 'data asset', $data);
@@ -336,14 +371,19 @@ class InvController extends Controller
         } else {
             $data = AssetServis::where('request_by', Employe::employeId())->latest()->get();
         }
+        $children = AssetChild::whereIn('id', $data->pluck('asset_child'))->get()->keyBy('id');
+        $parents = Asset::whereIn('id', $children->pluck('id_parent'))->get()->keyBy('id');
+        $requesters = Employe::whereIn('employe_id', $data->pluck('request_by'))->pluck('first_name', 'employe_id');
         foreach ($data as $d) {
-            $d->requester = Employe::where('employe_id', $d->request_by)->first()->first_name;
-            $d->asset_number = AssetChild::find($d->asset_child)->asset_number;
-            $d->asset_name = Asset::find(AssetChild::find($d->asset_child)->id_parent)->name;
-            $d->asset_id = Asset::find(AssetChild::find($d->asset_child)->id_parent)->id;
-            $d->location = Asset::find(AssetChild::find($d->asset_child)->id_parent)->location;
+            $child = $children->get($d->asset_child);
+            $parent = $child ? $parents->get($child->id_parent) : null;
+            $d->requester = $requesters->get($d->request_by);
+            $d->asset_number = $child->asset_number ?? '(asset sudah dihapus)';
+            $d->asset_name = $parent->name ?? '(asset sudah dihapus)';
+            $d->asset_id = $parent->id ?? null;
+            $d->location = $parent->location ?? '-';
         }
-        return new PostResource(true, 'dsgsdg', $data);
+        return new PostResource(true, 'data service', $data);
     }
 
     function updateStatus(Request $request)
