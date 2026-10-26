@@ -522,7 +522,8 @@ class PengajuanController extends Controller
         $rillSppd = $rill->groupBy('id_sppd')->map(fn ($r) => $r->whereNotNull('jumlah')->isEmpty() ? null : $r->sum('jumlah'));
         $rillRkap = $rill->groupBy('id_rkap')->map(fn ($r) => $r->sum('jumlah'));
 
-        $verified = ListSppdRingan::where('realisasi_status', 'verified')->get(['id', 'employe_id', 'nama', 'jabatan', 'mulai_tugas']);
+        $sppds = ListSppdRingan::get(['id', 'employe_id', 'nama', 'jabatan', 'mulai_tugas', 'selesai_tugas', 'current_status', 'realisasi_status']);
+        $verified = $sppds->where('realisasi_status', 'verified')->values();
         // MySQL groups and compares these case-insensitively
         $ci = fn ($v) => mb_strtolower((string) $v);
         $perKaryawan = fn ($rows, $key) => $rows->groupBy(fn ($s) => $ci($key($s)))->map(function ($g) use ($rillSppd, $ci) {
@@ -539,10 +540,20 @@ class PengajuanController extends Controller
         })->sortByDesc('budget')->values();
 
         $year = (string) now()->year;
+        $now = now()->format('Y-m-d H:i:s');
+        $verifiedThisYear = $verified->filter(fn ($s) => substr((string) $s->mulai_tugas, 0, 4) === $year);
         $data = [];
-        $data['dashboard'] = $perKaryawan($verified->filter(fn ($s) => substr((string) $s->mulai_tugas, 0, 4) === $year), fn ($s) => $s->employe_id . '|' . $s->nama)->first();
+        $data['dashboard'] = $perKaryawan($verifiedThisYear, fn ($s) => $s->employe_id . '|' . $s->nama)->first() ?? [];
+        // Summary cards on the SPPD dashboard
+        $data['dashboard']['pengajuan'] = $sppds->where('current_status', 'under_review')->count();
+        $data['dashboard']['aktif'] = $sppds->filter(fn ($s) => $s->current_status === 'signed' && $s->mulai_tugas <= $now && $now <= $s->selesai_tugas)->count();
+        $data['dashboard']['selesai'] = $verifiedThisYear->count();
+        $data['dashboard']['total_aktual'] = $verifiedThisYear->sum(fn ($s) => $rillSppd->get($s->id) ?? 0);
 
-        $rkap = DB::connection('mysql4')->table('renbis')->whereYear('tahun', 2024)->get();
+        // tahun is a YEAR column (whereYear would wrap it in YEAR() and match nothing); show the latest year whose RKAP is filled in
+        $tahunRkap = DB::connection('mysql4')->table('renbis')->where('rkap', '>', 0)->max('tahun');
+        $rkap = DB::connection('mysql4')->table('renbis')->where('tahun', $tahunRkap)->get();
+        $data['tahun_rkap'] = $tahunRkap;
         $data['label'] = $rkap->pluck('renbis')->all();
         $data['value'] = $rkap->map(fn ($r) => $r->rkap ? $rillRkap->get($r->id, 0) / $r->rkap * 100 : null)->all();
 
