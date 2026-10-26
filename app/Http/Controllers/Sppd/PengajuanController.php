@@ -515,23 +515,38 @@ class PengajuanController extends Controller
 
     function dataDashboard()
     {
+        // The dasboard, groupByKar and realisasi_rkap views each rebuild list_sppd and realisasi_biaya
+        // (~1.5s apiece), so read both once and aggregate here the same way the views do
+        $rill = DB::connection('mysql4')->table('realisasi_biaya')
+            ->selectRaw('id_sppd, id_rkap, sum(jumlah_rill) as jumlah')->groupBy('id_sppd', 'id_rkap')->get();
+        $rillSppd = $rill->groupBy('id_sppd')->map(fn ($r) => $r->whereNotNull('jumlah')->isEmpty() ? null : $r->sum('jumlah'));
+        $rillRkap = $rill->groupBy('id_rkap')->map(fn ($r) => $r->sum('jumlah'));
+
+        $verified = ListSppdRingan::where('realisasi_status', 'verified')->get(['id', 'employe_id', 'nama', 'jabatan', 'mulai_tugas']);
+        // MySQL groups and compares these case-insensitively
+        $ci = fn ($v) => mb_strtolower((string) $v);
+        $perKaryawan = fn ($rows, $key) => $rows->groupBy(fn ($s) => $ci($key($s)))->map(function ($g) use ($rillSppd, $ci) {
+            $rills = $g->map(fn ($s) => $rillSppd->get($s->id))->filter(fn ($v) => $v !== null);
+
+            return [
+                'employe_id' => $g->first()->employe_id,
+                'nama' => $g->first()->nama,
+                'jabatan' => $g->reduce(fn ($max, $s) => $max === null || $ci($s->jabatan) >= $ci($max) ? $s->jabatan : $max),
+                'last_berangkat' => $g->max('mulai_tugas'),
+                'budget' => $rills->isEmpty() ? null : $rills->sum(),
+                'qty' => $g->count(),
+            ];
+        })->sortByDesc('budget')->values();
+
+        $year = (string) now()->year;
         $data = [];
-        $dashboard = Dashboard::first();
-        $data['dashboard'] = $dashboard;
+        $data['dashboard'] = $perKaryawan($verified->filter(fn ($s) => substr((string) $s->mulai_tugas, 0, 4) === $year), fn ($s) => $s->employe_id . '|' . $s->nama)->first();
 
-        $label = [];
-        $value = [];
-        $rkap = RealisasiRkap::whereYear('tahun', 2024)->get();
-        foreach ($rkap as $r) {
-            array_push($label, $r->renbis);
-            array_push($value, $r->persen);
-        }
+        $rkap = DB::connection('mysql4')->table('renbis')->whereYear('tahun', 2024)->get();
+        $data['label'] = $rkap->pluck('renbis')->all();
+        $data['value'] = $rkap->map(fn ($r) => $r->rkap ? $rillRkap->get($r->id, 0) / $r->rkap * 100 : null)->all();
 
-        $data['label'] = $label;
-        $data['value'] = $value;
-
-        $gKar = GroupByKar::orderBy('budget', 'DESC')->get();
-        $data['groupKar'] = $gKar;
+        $data['groupKar'] = $perKaryawan($verified, fn ($s) => $s->nama)->map(fn ($k) => collect($k)->except('employe_id')->all())->values();
         return new PostResource(true, 'dashboard', $data);
     }
 
