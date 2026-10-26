@@ -25,7 +25,8 @@ use App\Models\Sppd\PenomoranSppd;
 use App\Models\Sppd\KetetapanSppd;
 use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Sppd\ListSppd;
+use App\Models\Sppd\ListSppdRingan;
+use Illuminate\Support\Facades\DB;
 use App\Models\Sppd\UnderReview;
 use App\Models\Sppd\LogPengajuan;
 use App\Models\Sppd\Proses;
@@ -97,19 +98,19 @@ class PengajuanController extends Controller
     function getSubmitted(Request $request)
     {
         if ($request->ref == 'mine') {
-            $data = ListSppd::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
+            $data = ListSppdRingan::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'review') {
             $data = UnderReview::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'approved_by') {
             $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
         } elseif ($request->ref == 'by_umum') {
-            $data = ListSppd::where('current_status', 'signed')->where('by_umum', 0)->get();
+            $data = ListSppdRingan::where('current_status', 'signed')->where('by_umum', 0)->get();
             foreach ($data as $d) {
                 $d->type_proses = 'pemesanan_tiket';
                 $d->id_unique = rand(1, 100) * $d->id;
             }
         } elseif ($request->ref == 'by_keuangan') {
-            $data1 = ListSppd::where('uangmuka', 0)->where('current_status', 'signed')->get();
+            $data1 = ListSppdRingan::where('uangmuka', 0)->where('current_status', 'signed')->get();
 
             $data1 = $data1->map(function ($d1) {
                 $d1->type_proses = 'uangmuka';
@@ -119,7 +120,7 @@ class PengajuanController extends Controller
             });
 
 
-            $data2 = ListSppd::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
+            $data2 = ListSppdRingan::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
             $data2 = $data2->map(function ($d2) {
                 $d2->type_proses = 'realisasi';
                 $d2array = $d2->toArray();
@@ -129,10 +130,18 @@ class PengajuanController extends Controller
             $tempCollection = collect([$data1, $data2]);
             $data = $tempCollection->flatten(1);
         } else {
-            $data = ListSppd::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
+            $data = ListSppdRingan::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
 
         return new PostResource(true, $request->ref, $data);
+    }
+
+    // realisasi_biaya rebuilds hitungan_biaya (~0.5s), so skip it for an SPPD without realisasi
+    private function hasRealisasi($id)
+    {
+        return DB::connection('mysql4')->table('realisasi_tujuan as a')
+            ->join('tujuan_sppds as t', 't.id', '=', 'a.id_tujuan')
+            ->where('t.id_sppd', $id)->exists();
     }
 
 
@@ -142,7 +151,14 @@ class PengajuanController extends Controller
     {
        // Undangan base64 is only needed by the edit form; skip the heavy encoding otherwise
        $withFile = $request->boolean('file');
-        $data = ListSppd::find($id);
+        $data = ListSppdRingan::find($id);
+        // Not in list_sppd_ringan: summing them inside the view rebuilds hitungan_biaya for every SPPD
+        $biaya = DB::connection('mysql4')->table('hitungan_biaya')
+            ->selectRaw('sum(total_biaya) as perkiraan_total, sum(uang_muka) as uang_muka')->where('id_sppd', $id)->first();
+        if ($data) {
+            $data->perkiraan_total = $biaya->perkiraan_total;
+            $data->uang_muka = $biaya->uang_muka;
+        }
         $tujuans = HitunganBiaya::where('id_sppd', $id)->get();
         $tigaPuluhIds = TigaPuluh::whereIn('id_tujuan', $tujuans->pluck('id'))->pluck('id_tujuan')->all();
         foreach ($tujuans as $t) {
@@ -227,7 +243,17 @@ class PengajuanController extends Controller
 
         $data['check_doc'] = CheklistDoc::where('id_sppd', $id)->get();
 
-        $data['realisasi_biaya'] = RealisasiBiaya::where('id_sppd', $id)->get();
+        // Sum in the same query so realisasi_biaya (which rebuilds hitungan_biaya) is read only once
+        $rb = !$this->hasRealisasi($id) ? collect() : RealisasiBiaya::where('id_sppd', $id)
+            ->select('*', DB::raw('sum(jumlah_rill) over () as sum_rill_biaya, sum(rill_tiket) over () as sum_rill_tiket'))->get();
+        if ($data) {
+            $data->rill_biaya = $rb->first()->sum_rill_biaya ?? null;
+            $data->rill_tiket = $rb->first()->sum_rill_tiket ?? null;
+        }
+        foreach ($rb as $r) {
+            unset($r->sum_rill_biaya, $r->sum_rill_tiket);
+        }
+        $data['realisasi_biaya'] = $rb;
         $data['approval'] = ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
         $data['log_pengajuan'] = LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
         $data['proses'] = Proses::where('id_sppd', $id)->get();
@@ -477,7 +503,7 @@ class PengajuanController extends Controller
     function getNomorSppd(Request $request)
     {
         $wb = new DateTime($request->wb);
-        $data = ListSppd::whereDate('mulai_tugas', '>=', $wb)->get();
+        $data = ListSppdRingan::whereDate('mulai_tugas', '>=', $wb)->get();
         foreach ($data as $d) {
             $date = new DateTime($d->mulai_tugas);
             $d->berangkat = $date->format('Y-m-d');
@@ -512,8 +538,9 @@ class PengajuanController extends Controller
     function getTujuanById($id)
     {
         $data = TujuanSppd::where('id_sppd', $id)->get();
+        $tigaPuluh = TigaPuluh::whereIn('id_tujuan', $data->pluck('id'))->get()->unique('id_tujuan')->keyBy('id_tujuan');
         foreach ($data as $t) {
-            $t->tigapuluh = TigaPuluh::where('id_tujuan', $t->id)->first();
+            $t->tigapuluh = $tigaPuluh->get($t->id);
         }
         return new PostResource(true, 'success', $data);
     }

@@ -1,0 +1,7 @@
+-- Kembalikan approved_sppd ke definisi lama dan hapus list_sppd_ringan.
+-- Kembalikan juga PengajuanController ke versi lama sebelum menjalankan ini.
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `approved_sppd` AS
+select `b`.`id` AS `id_unique`,`b`.`id_employe` AS `approval_id`,`b`.`type` AS `type`,`ptpemaco_apam`.`c`.`first_name` AS `approval_name`,`b`.`status` AS `status`,`b`.`updated_at` AS `approved_at`,`a`.`id` AS `id`,`a`.`nomor_sppd` AS `nomor_sppd`,`a`.`nomor_dokumen` AS `nomor_dokumen`,`a`.`employe_id` AS `employe_id`,`a`.`nama` AS `nama`,`a`.`jabatan` AS `jabatan`,`a`.`submitted_by` AS `submitted_by`,`a`.`first_name` AS `first_name`,`a`.`golongan_rate` AS `golongan_rate`,`a`.`golongan` AS `golongan`,`a`.`id_pihak` AS `id_pihak`,`a`.`pihak_name` AS `pihak_name`,`a`.`ketetapan` AS `ketetapan`,`a`.`dasar_ketetapan` AS `dasar_ketetapan`,`a`.`created_at` AS `created_at`,`a`.`updated_at` AS `updated_at`,`a`.`current_status` AS `current_status`,`a`.`realisasi_status` AS `realisasi_status`,`a`.`current_reviewer` AS `current_reviewer`,`a`.`current_type` AS `current_type`,`a`.`perkiraan_total` AS `perkiraan_total`,`a`.`rill_biaya` AS `rill_biaya` from ((`list_sppd` `a` join `ptpemaco_esign`.`verif_steps` `b`) join `ptpemaco_apam`.`struktur_lengkap_oke` `c`) where ((`b`.`id_doc` = `a`.`nomor_dokumen`) and (`b`.`status` = 'approve') and (`b`.`id_employe` = `ptpemaco_apam`.`c`.`employe_id`)) order by `b`.`updated_at` desc;
+
+DROP VIEW `list_sppd_ringan`;
