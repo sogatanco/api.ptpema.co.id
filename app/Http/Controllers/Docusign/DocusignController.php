@@ -79,8 +79,14 @@ class DocusignController extends Controller
         return $failed;
     }
 
-    // Email every signer once the document is fully signed, with the public verification link
-    // (no login needed) so they can view, download and verify the completed document.
+    // Attachments this size or smaller are sent as-is. Larger documents are skipped (base64
+    // overhead plus headers would push many SMTP relays past their size limit) and the signer
+    // falls back to the verify-page link, which has no size limit of its own.
+    private const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
+
+    // Email every signer once the document is fully signed: the signed PDF itself attached
+    // (what was asked for), plus the public verification link (no login needed) so they can
+    // still view, download and verify the document even if the attachment is skipped or lost.
     // Same retry/resilience pattern as notifyNext: one failure does not stop the others.
     private function notifyCompletion(DocusignDocument $doc): array
     {
@@ -91,10 +97,24 @@ class DocusignController extends Controller
         $title = e($doc->title);
         $failed = [];
 
+        $signedPath = $this->existingPath($doc);
+        $attachmentPath = null;
+        if ($signedPath) {
+            $absolute = $this->disk()->path($signedPath);
+            $size = @filesize($absolute);
+            if ($size !== false && $size <= self::MAX_ATTACHMENT_BYTES) {
+                $attachmentPath = $absolute;
+            } else {
+                report(new \RuntimeException("Docusign doc {$doc->uuid}: signed PDF too large or unreadable to attach ({$size} bytes), sending link only"));
+            }
+        }
+        $attachmentName = Str::slug($doc->title) . '.pdf';
+
         foreach ($doc->signers as $signer) {
             $name = e($signer->name);
             $html = "<p>Yth. {$name},</p>"
-                . "<p>Dokumen <b>{$title}</b> telah selesai ditandatangani oleh seluruh pihak.</p>"
+                . "<p>Dokumen <b>{$title}</b> telah selesai ditandatangani oleh seluruh pihak."
+                . ($attachmentPath ? ' Dokumen yang telah ditandatangani terlampir pada email ini.' : '') . "</p>"
                 . "<p>Klik tombol berikut untuk melihat atau mengunduh dokumen yang telah ditandatangani, beserta riwayat dan kode verifikasi tanda tangan setiap pihak:</p>"
                 . "<p><a href=\"{$link}\" style=\"background:#1976d2;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px\">Lihat Dokumen</a></p>"
                 . "<p>Jika tombol tidak berfungsi, salin tautan ini: {$link}</p>";
@@ -103,8 +123,11 @@ class DocusignController extends Controller
             $reason = '';
             for ($try = 1; $try <= 2 && !$sent; $try++) {
                 try {
-                    Mail::html($html, function ($m) use ($signer, $doc) {
+                    Mail::html($html, function ($m) use ($signer, $doc, $attachmentPath, $attachmentName) {
                         $m->to($signer->email, $signer->name)->subject('Dokumen Selesai Ditandatangani: ' . $doc->title);
+                        if ($attachmentPath) {
+                            $m->attach($attachmentPath, ['as' => $attachmentName, 'mime' => 'application/pdf']);
+                        }
                     });
                     $sent = true;
                 } catch (\Throwable $e) {

@@ -179,6 +179,12 @@ class DocusignPdfService
         }
 
         $pdf = new Fpdi();
+        // TCPDF prints its own default header/footer on every AddPage() unless told not to: an empty
+        // title/string plus a rule line across the top, and a "1 / N" page counter plus a rule line
+        // across the bottom. We import the original page as-is and stamp specific fields on it, so
+        // both must stay off or every page gets a stray line (the one visible above the corner QR).
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
         $pdf->SetAutoPageBreak(false);
         $pdf->setCellPaddings(0, 0, 0, 0);
         $pageCount = $pdf->setSourceFile($sourcePath);
