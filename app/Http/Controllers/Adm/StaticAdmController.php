@@ -86,7 +86,7 @@ class StaticAdmController extends Controller
             }
             $data['divisions'] = Structure::getPukDivision();
             foreach ($data['divisions'] as $d) {
-                $d->value = $d->organization_id;
+                $d->value = $d->puk_organization_id;
                 $d->type = 'division';
                 $d->label = $d->position_name;
             }
@@ -95,7 +95,7 @@ class StaticAdmController extends Controller
         if ($base == 6) {
             $data['divisions'] = Structure::getPukDivisionUnderMe(Employe::employeId());
             foreach ($data['divisions'] as $d) {
-                $d->value = $d->organization_id;
+                $d->value = $d->puk_organization_id;
                 $d->type = 'division';
                 $d->label = $d->position_name;
             }
