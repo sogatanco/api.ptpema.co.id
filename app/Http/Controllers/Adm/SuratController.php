@@ -78,6 +78,9 @@ class SuratController extends Controller
         $surat->sign_by = $request->ttdBy;
         $surat->bahasa = $request->bhs;
         if ($surat->save()) {
+            // isi surat berubah: PDF bertanda tangan yang tersimpan sebelumnya sudah tidak berlaku
+            SuratTteService::forgetStoredPdfs($surat->no_document);
+
             return new PostResource(true, 'Data Updated', []);
         }
     }

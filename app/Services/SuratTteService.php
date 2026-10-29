@@ -282,6 +282,25 @@ class SuratTteService
         return $signed;
     }
 
+    /**
+     * Drop the stored signed PDFs of a document. Call it when the letter's content changes: stored files
+     * are served as-is by issueSignedPdf(), so without this the re-signing would still return the old letter.
+     */
+    public static function forgetStoredPdfs(string $noDocument): void
+    {
+        try {
+            $disk = \Illuminate\Support\Facades\Storage::disk('local');
+            $prefix = 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument) . '-';
+            foreach ($disk->files('tte-pdf') as $f) {
+                if (str_starts_with($f, $prefix) && str_ends_with($f, '.pdf')) {
+                    $disk->delete($f);
+                }
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
     public static function storedPdfHash(string $noDocument, string $type, ?string $kind = ''): ?string
     {
         try {
