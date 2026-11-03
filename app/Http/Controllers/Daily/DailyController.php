@@ -394,7 +394,7 @@ public function dashboard(Request $request)
                     },
                     'pics.employee' => function ($q) {
                         $q->select('employe_id', 'first_name', 'last_name', 'position_id')
-                        ->with('position:position_id,position_name');
+                        ->with('position:id,position_name');
                     }
                 ])->when($search, function ($query, $search) {
                     $query->where('task_title', 'like', '%' . $search . '%');
@@ -721,7 +721,7 @@ public function dashboard(Request $request)
                             },
                             'approval', 'pics.employee' => function ($q) {
                                 $q->select('employe_id', 'first_name', 'last_name', 'position_id')
-                                ->with('position:position_id,position_name');
+                                ->with('position:id,position_name');
                             }])
                             ->orderBy('task_title');
                         }
@@ -1113,7 +1113,7 @@ public function dashboard(Request $request)
                     ->with('approval')
                     ->with(['pics.employee' => function ($empQ) {
                         $empQ->select('employe_id', 'first_name', 'last_name', 'position_id')
-                            ->with('position:position_id,position_name');
+                            ->with('position:id,position_name');
                     }])
                     // Muat Daily Activity yang sedang di-review (dengan filter tambahan)
                     ->with(['daily' => function ($d) use ($reviewStatus, $is_priority, $type) {
@@ -1288,7 +1288,7 @@ public function dashboard(Request $request)
                     ->with('approval')
                     ->with(['pics.employee' => function ($empQ) {
                         $empQ->select('employe_id', 'first_name', 'last_name', 'position_id')
-                            ->with('position:position_id,position_name');
+                            ->with('position:id,position_name');
                     }])
                     // Muat Daily Activity yang sedang di-review (dengan filter tambahan)
                     ->with(['daily' => function ($d) use ($is_priority, $type) {

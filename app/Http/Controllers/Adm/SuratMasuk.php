@@ -8,7 +8,7 @@ use App\Models\Adm\Disposisi;
 use App\Models\Adm\ListSuratMasuk;
 use App\Models\Division;
 use App\Models\Employe;
-use App\Models\Position;
+use App\Models\Hr\Position as HrPosition;
 use App\Models\Structure;
 use App\Models\Adm\CC;
 use App\Models\Adm\ListCC;
@@ -95,6 +95,12 @@ class SuratMasuk extends Controller
         return new PostResource(true, 'data Surat Masuk', $data);
     }
 
+    // Id jabatan di disposisi/cc/surat masuk adalah id jabatan HR (sama dengan struktur_lengkap_oke.position_id)
+    private function positionName($positionId)
+    {
+        return HrPosition::where('id', $positionId)->value('position_name');
+    }
+
     // Total disposisi rows per surat, batched for a whole list in one query
     private function disposisiTotals($suratIds)
     {
@@ -170,7 +176,7 @@ class SuratMasuk extends Controller
 
             $data=CC::where('id_dispo', $r->id)->get();
             foreach ($data as $c) {
-                array_push($cc, ($c->cc_to=='position'?Position::where('position_id',$c->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$c->id_penerima)->first('organization_name')->organization_name));
+                array_push($cc, ($c->cc_to=='position'?$this->positionName($c->id_penerima):Division::where('organization_id',$c->id_penerima)->first('organization_name')->organization_name));
             }
 
            if($r->tindak_lanjut== 'tinjut'){
@@ -182,13 +188,13 @@ class SuratMasuk extends Controller
                 'employe_id' => $r->employe_id,
                 'position' => $r->position,
                 'dispo'=>true,
-                'to'=>$r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name,
+                'to'=>$r->dispo_to=='position'?$this->positionName($r->id_penerima):Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name,
                 'nama' => Employe::where('employe_id', $r->employe_id)->first('first_name')->first_name,
-                'activity' =>  str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:'')
+                'activity' =>  str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?$this->positionName($r->id_penerima):'')
 
                 :
 
-                'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
+                'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?$this->positionName($r->id_penerima):Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
                 'cc'=>$cc,
                 'waktu'=>$r->created_at,
             ]);
@@ -211,14 +217,14 @@ class SuratMasuk extends Controller
                 'detail'=>$dt,
                 'employe_id' => $r->employe_id,
                 'dispo'=>true,
-                'to'=>$r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name,
+                'to'=>$r->dispo_to=='position'?$this->positionName($r->id_penerima):Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name,
                 'position' => $r->position,
                 'nama' => Employe::where('employe_id', $r->employe_id)->first('first_name')->first_name,
-                'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:'')
+                'activity' => str_contains($r->position, 'Administrator')?'Dokumen disampaikan kepada '.($r->dispo_to=='position'?$this->positionName($r->id_penerima):'')
 
                 :
 
-                'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?Position::where('position_id',$r->id_penerima)->first('position_name')->position_name:Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
+                'Dokumen didisposisikan kepada '.($r->dispo_to=='position'?$this->positionName($r->id_penerima):Division::where('organization_id',$r->id_penerima)->first('organization_name')->organization_name),
                 'cc'=>$cc,
                 'waktu'=>$r->created_at,
             ]);

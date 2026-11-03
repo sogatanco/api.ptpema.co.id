@@ -18,8 +18,8 @@ class CommentController extends Controller
      */
     public function index($taskId)
     {
-        $task = Comment::select('comment_id', 'comments.comment', 'comments.created_at', 'comments.employe_id', 'employees.first_name')
-                ->join('employees', 'employees.employe_id', '=', 'comments.employe_id')    
+        $task = Comment::select('comment_id', 'comments.comment', 'comments.created_at', 'comments.employe_id', 'employees_hr.first_name')
+                ->join('employees_hr', 'employees_hr.employe_id', '=', 'comments.employe_id')    
                 ->where('task_id', $taskId)
                 ->get();
 
