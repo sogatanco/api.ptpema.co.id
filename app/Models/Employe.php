@@ -10,13 +10,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Employe extends Model
 {
     use HasFactory;
     protected $connection = 'mysql';
-    // View employees_hr (db/hr_sync/21_employees_hr_view.sql): nama, jabatan (id HR), status aktif dari HR; public_key/user_id dari tabel employees.
-    // Penulisan lewat App\Models\EmployeBase.
+    // View employees_hr (db/hr_sync/35): semua data karyawan dari HR; user_id lewat users.employe_id; public_key dari HR employee_public_keys. Hanya-baca.
     protected $table = 'employees_hr';
     protected $primaryKey = 'employe_id';
     public $incrementing = false;
@@ -58,13 +58,11 @@ class Employe extends Model
    public static function employeId()
    {
         $user = auth()->user();
-        $employe = EmployeBase::where('user_id', $user->id)->first('employe_id');
-        if (!$employe) {
-            // karyawan baru dari HR yang belum punya baris di tabel employees: kaitan lewat email akun (employees_hr)
-            $employe = Employe::where('user_id', $user->id)->first('employe_id');
-        }
+        // users.employe_id menaut akun apam ke karyawan HR; cadangan lewat view employees_hr
+        $id = DB::table('users')->where('id', $user->id)->value('employe_id')
+            ?: Employe::where('user_id', $user->id)->value('employe_id');
 
-        return $employe->employe_id;
+        return $id;
    }
 
    public static function getEmployeDivision($employe_id){
@@ -76,11 +74,13 @@ class Employe extends Model
            return $row;
        }
 
-       // Karyawan yang tidak ada di HR (nonaktif/dihapus): data lama di tabel employees
-       return EmployeBase::where('employees.employe_id', '=' , $employe_id)
-                    ->leftJoin('positions', 'employees.position_id', '=', 'positions.position_id')
-                    ->leftJoin('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-                    ->select('positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name', 'organizations.board_id')
+       // Karyawan HR tanpa baris di view struktur (mis. nonaktif): jabatan dan divisi langsung dari tabel HR
+       $hr = config('database.connections.hr.database');
+       return DB::table('employees_hr as e')
+                    ->join($hr . '.positions as p', 'p.id', '=', 'e.position_id')
+                    ->join($hr . '.divisions as d', 'd.id', '=', 'p.division_id')
+                    ->where('e.employe_id', $employe_id)
+                    ->select('p.id as position_id', 'p.position_name', 'd.id as organization_id', 'd.division_name as organization_name', 'd.board_id')
                     ->first();
     }
 

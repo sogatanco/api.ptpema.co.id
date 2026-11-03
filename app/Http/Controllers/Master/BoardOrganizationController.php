@@ -3,104 +3,44 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\BoardOrganization;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
+// Data board dibaca dari HR (view apam.board_organizations = HR board_organizations); tidak ada lagi tabel board di apam.
+// Endpoint tulis dipertahankan agar otomasi HR tidak gagal, tetapi tidak mengubah apa pun.
 class BoardOrganizationController extends Controller
 {
-    
-    public function store(Request $request)
+    private function managedByHr()
     {
-        $data = BoardOrganization::create([
-            'company_id' => 1,
-            'board_code' => $request->board_code,
-            'board_name' => $request->board_name,
-        ]);
-
-        if(!$data){
-            throw new HttpResponseException(response([
-                'status' => false,
-                'message' => 'Failed to create board'
-            ], 500));
-        }
-
         return response()->json([
             'status' => true,
-            'message' => 'Successfully created board',
+            'message' => 'Data board dikelola di HR; tidak ada perubahan di apam.',
         ], 200);
     }
 
-    public function update(Request $request)
+    public function store()
     {
-        $data = BoardOrganization::where('board_code', $request->board_code)->first();
-
-        if(!$data){
-
-           BoardOrganization::create([
-                'company_id' => 1,
-               'board_code' => $request->board_code,
-               'board_name' => $request->board_name,
-           ]);
-
-        } else {
-
-            $isSaved = BoardOrganization::where('board_code', $request->board_code)
-                                ->update([
-                                    'board_name' => $request->board_name,
-                                ]);
-    
-            if(!$isSaved){
-               throw new HttpResponseException(response([
-                   'status' => false,
-                   'message' => 'Failed to update board'
-               ], 500));
-            }
-
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Successfully updated board',
-        ], 200);
+        return $this->managedByHr();
     }
 
-    public function delete(Request $request)
+    public function update()
     {
-        BoardOrganization::where('board_code', $request->board_code)->delete();
+        return $this->managedByHr();
+    }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Successfully deleted board',
-        ], 200);
+    public function delete()
+    {
+        return $this->managedByHr();
     }
 
     public function insertCode()
     {
-        $data = BoardOrganization::all();
-
-        // generate 4 digit random number
-        for ($i=0; $i < count($data); $i++) { 
-            $code = mt_rand(1000, 9999);
-            $data[$i]['board_code'] = 'BOA'.$code;
-
-            BoardOrganization::where('board_id', $data[$i]['board_id'])
-                                ->update([
-                                    'board_code' => 'BOA'.$code
-                                ]);
-        }
-
-        return response()->json([
-            'data' => $data
-        ], 200);
+        return $this->managedByHr();
     }
 
     public function allBoard()
     {
-        $data = BoardOrganization::all();
-
         return response()->json([
-            'data' => $data
+            'data' => BoardOrganization::all()
         ], 200);
     }
 }

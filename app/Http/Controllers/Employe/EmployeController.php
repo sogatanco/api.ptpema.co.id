@@ -8,9 +8,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Models\Employe;
-use App\Models\EmployeBase;
 use App\Models\Structure;
-use App\Models\Position;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -37,13 +35,12 @@ class EmployeController extends Controller
         ], 200);
     }
 
+    // Karyawan dikelola di HR. Di apam hanya akun login (users) yang dibuat, ditautkan lewat users.employe_id.
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'employe_id' => ['required', 'unique:employees'],
-            'email' => ['required'],
-            'first_name' => ['required', 'max:100'],
-            'position_code' => ['required'],
+            'employe_id' => ['required', 'unique:users,employe_id'],
+            'email' => ['required', 'unique:users,email'],
         ]);
 
         if($validator->fails()){
@@ -53,11 +50,18 @@ class EmployeController extends Controller
             ]);
         }
 
+        if(!Employe::where('employe_id', $request->employe_id)->exists()){
+            return response()->json([
+                "status" => false,
+                "message" => "Employe ID not found in HR."
+            ], 404);
+        }
+
         $newUser = new User();
         $newUser->email = $request->email;
+        $newUser->employe_id = $request->employe_id;
         $newUser->password = Hash::make(\Illuminate\Support\Str::random(40)); // no shared default password; first sign-in goes through forgot-password
         $newUser->roles = ["Employee"];
-
 
         if(!$newUser->save()){
             return response()->json([
@@ -65,23 +69,6 @@ class EmployeController extends Controller
                 "message" => "Failed to create user."
             ], 500);
         }
-
-        $position = Position::where('position_code', $request->position_code)->first();
-
-        if(!$position){
-            return response()->json([
-                "status" => false,
-                "message" => "Position not found."
-            ], 404);
-        }
-
-        $newEmploye = new EmployeBase();
-        $newEmploye->user_id = $newUser->id;
-        $newEmploye->employe_id = $request->employe_id;
-        $newEmploye->first_name = $request->first_name;
-        $newEmploye->last_name = $request->last_name;
-        $newEmploye->position_id = $position->position_id;
-        $newEmploye->save();
 
         return response()->json([
             "status" => true,
@@ -91,38 +78,10 @@ class EmployeController extends Controller
 
     public function update(Request $request, $employe_id)
     {
-        $positionCode = $request->position_code ?? null;
-
-        if($positionCode != null){
-            $position = Position::where('position_code', $positionCode)->first();
-
-            $data = [
-                'position_id' => $position->position_id,
-                'as_pic' => $request->as_pic,
-                'employe_active' => $request->employe_active
-            ];
-
-        }else{
-
-            $data = [
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-            ];
-
-        }
-
-        $savedUpdate = EmployeBase::where('employe_id', $employe_id)->update($data);
-
-        if(!$savedUpdate){
-            throw new HttpResponseException(response()->json([
-                "status" => false,
-                "message" => "Data update failed."
-            ], 500));
-        }
-
+        // Nama, jabatan, dan status karyawan dibaca langsung dari HR; tidak ada data karyawan di apam yang perlu diubah.
         return response()->json([
             "status" => true,
-            "message" => "Employe has been updated.",
+            "message" => "Data karyawan dikelola di HR; tidak ada perubahan di apam.",
          ], 200);
     }
 
@@ -145,19 +104,11 @@ class EmployeController extends Controller
 
     public function destroy($employe_id)
     {
-        $deletedEmploye = EmployeBase::where("employe_id", $employe_id)->delete();
-
-        if($deletedEmploye){
-            return response()->json([
-                "status" => true,
-                "message" => "Employe has been deleted."
-            ], 200);
-        }else{
-            return response()->json([
-                "Status" => false,
-                "message" => "Delete data failed."
-            ], 500);
-        }
+        // Karyawan dikelola di HR (nonaktif/hapus di HR); riwayat dan akun login di apam dibiarkan.
+        return response()->json([
+            "status" => true,
+            "message" => "Data karyawan dikelola di HR; tidak ada perubahan di apam."
+        ], 200);
     }
 
     public function getEmployeDivision($employe_id)
