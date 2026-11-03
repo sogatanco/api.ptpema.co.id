@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employe;
+use App\Models\EmployeBase;
 use App\Models\User;
 use App\Models\Position;
 use App\Models\Structure;
@@ -24,9 +25,9 @@ class ClientController extends Controller
     public function employees()
     {
 
-        $list = Employe::select('employees.*', 'users.email', 'users.password', 'positions.position_name')
-                ->join('users', 'users.id', '=', 'employees.user_id')
-                ->leftJoin('positions', 'employees.position_id', '=', 'positions.position_id')
+        $list = Employe::select('employees_hr.*', 'users.email', 'users.password', 'positions.position_name')
+                ->join('users', 'users.id', '=', 'employees_hr.user_id')
+                ->leftJoin(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
                 ->get();
 
         $total = $list->count();
@@ -72,7 +73,7 @@ class ClientController extends Controller
         }
 
         if($newUser->save()){
-            $newEmploye = new Employe();
+            $newEmploye = new EmployeBase();
             $newEmploye->employe_id = $request->employe_id;
             $newEmploye->user_id = $newUser->id;
             $newEmploye->as_pic = $request->as_pic;

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Projects;
 
 use App\Http\Controllers\Controller;
+use App\Models\Hr\Division as HrDivision;
+use App\Models\Hr\Position as HrPosition;
 use App\Models\Projects\Project;
 use App\Models\Projects\ProjectHistory;
 use App\Models\Projects\ProjectPartner;
@@ -40,13 +42,13 @@ class ProjectController extends Controller
         $user = auth()->user();
 
         if(in_array("Presdir", $user->roles)){
-            $divisions  = Organization::where('organization_id', '>', 10)
+            $divisions  = HrDivision::asOrganizations()->where('divisions.id', '>', 10)
                         ->get();
 
         }else{
             $employeId = Employe::employeId();
             $employeDivision = Employe::getEmployeDivision($employeId);
-            $divisions = Organization::where('board_id', $employeDivision->board_id)
+            $divisions = HrDivision::asOrganizations()->where('divisions.board_id', $employeDivision->board_id)
                         ->get();
         }
 
@@ -58,7 +60,7 @@ class ProjectController extends Controller
         }
 
         $projects = Project::whereIn('division', $divisionIds)
-            ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+            ->leftJoin(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'projects.division')
             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
             ->orderBy('project_id', 'desc')
             ->get();
@@ -68,10 +70,10 @@ class ProjectController extends Controller
             for ($p=0; $p < count($projects); $p++) {
 
                 // cari pic project active
-                $projects[$p]['pic_active'] = ProjectHistory::select('employees.employe_id', 'employees.first_name', 'positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
-                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                $projects[$p]['pic_active'] = ProjectHistory::select('employees_hr.employe_id', 'employees_hr.first_name', 'positions.id as position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
+                        ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+                        ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                        ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
                         ->where(['project_id' => $projects[$p]->project_id, 'active' => 1])
                         ->first();
 
@@ -247,7 +249,7 @@ class ProjectController extends Controller
         // $isEmployeeAccessDivision = Employe::getEmployeDivision($isEmployeeAccess);
 
         $data = Project::join(
-                    'employees AS a',
+                    'employees_hr AS a',
                     'a.employe_id', '=', 'projects.created_by',
                 )
                 ->select(
@@ -292,10 +294,10 @@ class ProjectController extends Controller
 
 
         // cari pic project active
-        $data['pic_active'] = ProjectHistory::select('employees.employe_id','employees.first_name', 'positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
-                    ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                    ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-                    ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+        $data['pic_active'] = ProjectHistory::select('employees_hr.employe_id','employees_hr.first_name', 'positions.id as position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
+                    ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+                    ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                    ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
                     ->where(['project_id' => $projectId, 'active' => 1])
                     ->first();
 
@@ -439,15 +441,15 @@ class ProjectController extends Controller
                 'project_histories.updated_at',
                 'project_histories.status',
                 'project_histories.active',
-                'employees.first_name',
-                'employees.img',
+                'employees_hr.first_name',
+                'employees_hr.img',
                 'organizations.organization_id',
                 'organizations.organization_name'
                 )
                 ->join('project_histories', 'project_histories.project_id', '=', 'projects.project_id')
-                ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                ->leftJoin('positions', 'employees.position_id', '=', 'positions.position_id')
-                ->leftJoin('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+                ->leftJoin(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                ->leftJoin(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
                 ->where(['projects.project_id' => $projectId])
                 ->orderBy('history_id', 'desc')
                 ->get();
@@ -478,10 +480,10 @@ class ProjectController extends Controller
 
         $totalTaskByMember = array_count_values($totalData);
 
-        $mem = Employe::select('employees.employe_id', 'employees.first_name', 'positions.position_name', 'organizations.organization_name')
+        $mem = Employe::select('employees_hr.employe_id', 'employees_hr.first_name', 'positions.position_name', 'organizations.organization_name')
                 ->whereIn('employe_id', $membersFiltered)
-                ->join('positions', "positions.position_id", "=", 'employees.position_id')
-                ->join('organizations', "organizations.organization_id", "=", 'positions.organization_id')
+                ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                ->join(HrDivision::organizationsTable(), "organizations.organization_id", "=", 'positions.division_id')
                 ->get();
 
         return response()->json([
@@ -503,13 +505,13 @@ class ProjectController extends Controller
             // replace divisi jadi manajer
             $managerDivision = implode(" ", array_replace($organizationArray, $manajerValue));
                  // cari id jabatan by manajer
-            $position = Position::select('position_id')
+            $position = HrPosition::select('id')
                             ->where('position_name', $managerDivision)
                             ->first();
 
             // cari si manajer
             $manager = Employe::select('employe_id', 'first_name')
-                        ->where('position_id', $position->position_id)
+                        ->where('position_id', $position->id)
                         ->first();
 
             return $manager;
@@ -533,9 +535,9 @@ class ProjectController extends Controller
                 $where = ['task_id' => $tasks[$i]->task_id, 'project_task_files.employe_id' => $employeId];
             }
 
-            $files[$i] = TaskFile::select('file_id',  'task_id', 'file_name', 'employees.first_name as employee', 'project_task_files.created_at')
+            $files[$i] = TaskFile::select('file_id',  'task_id', 'file_name', 'employees_hr.first_name as employee', 'project_task_files.created_at')
                         ->where($where)
-                        ->leftJoin('employees', 'employees.employe_id', '=', 'project_task_files.employe_id')
+                        ->leftJoin('employees_hr', 'employees_hr.employe_id', '=', 'project_task_files.employe_id')
                         ->orderBy('file_id', 'DESC')
                         ->get();
 
@@ -556,23 +558,23 @@ class ProjectController extends Controller
     {
         $data = ProjectHistory::select(
                      'project_histories.*',
-                     'employees.first_name as new_pic',
-                     'employees.employe_id as new_pic_id',
+                     'employees_hr.first_name as new_pic',
+                     'employees_hr.employe_id as new_pic_id',
                      'positions.position_name as new_pic_position',
                      'organizations.organization_name as new_pic_division',
                 )
                 ->where(['project_id' => $projectId, 'status' => 'review', 'review_by' => $directorId])
-                ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-                ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+                ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
                 ->first();
 
         if($data){
             // cari divisi lama active dengan status done
             $activeBy = ProjectHistory::where(['project_id' => $projectId, 'active' => 1, 'status' => 'done'])
-                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                        ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+                        ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                        ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
                         ->first();
 
             $data->old_pic = $activeBy->first_name;
@@ -766,8 +768,8 @@ class ProjectController extends Controller
                         'status' => 'handover'
                     ]
                 )
-                ->select('project_histories.*', 'employees.first_name')
-                ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
+                ->select('project_histories.*', 'employees_hr.first_name')
+                ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
                 ->first();
 
         if($data){
@@ -790,13 +792,13 @@ class ProjectController extends Controller
                                     ->first();
 
             // cari pic active sebelumnya
-            $projectHistoryActive = ProjectHistory::select('project_histories.employe_id','employees.first_name')
+            $projectHistoryActive = ProjectHistory::select('project_histories.employe_id','employees_hr.first_name')
                                 ->where([
                                         'project_id' => $projectId,
                                         'active' => 1,
                                         'status' => 'done'
                                     ])
-                                ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
+                                ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
                                 ->first();
 
             $oldDivision = Employe::getEmployeDivision($projectHistoryActive->employe_id);
@@ -952,7 +954,7 @@ class ProjectController extends Controller
             // $projectIds[] = $projectByRecentUpdate[$pi]->project_id;
 
             $meles[] = Project::where('project_id', $projectByRecentUpdate[$pi]->project_id)
-                        ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+                        ->leftJoin(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'projects.division')
                         ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
                         ->first();
         };
@@ -972,10 +974,10 @@ class ProjectController extends Controller
                 }
 
                 // cari pic project active
-                $meles[$m]['pic_active'] = ProjectHistory::select('employees.employe_id', 'employees.first_name', 'positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
-                                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-                                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                $meles[$m]['pic_active'] = ProjectHistory::select('employees_hr.employe_id', 'employees_hr.first_name', 'positions.id as position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
+                                        ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+                                        ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                                        ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
                                         ->where(['project_id' => $meles[$m]->project_id, 'active' => 1])
                                         ->first();
 
@@ -1014,7 +1016,7 @@ class ProjectController extends Controller
         }
 
         // $projects = Project::whereIn('project_id', $projectIds)
-        //             ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+        //             ->leftJoin(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'projects.division')
         //             ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
         //             // ->orderBy('project_id', 'desc')
         //             ->get();
@@ -1034,10 +1036,10 @@ class ProjectController extends Controller
         //             }
 
         //             // cari pic project active
-        //             $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
-        //                     ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-        //                     ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-        //                     ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+        //             $data[$p]['pic_active'] = ProjectHistory::select('employees_hr.first_name', 'positions.id as position_id', 'organizations.organization_id')
+        //                     ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+        //                     ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+        //                     ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
         //                     ->where(['project_id' => $projects[$p]->project_id, 'active' => 1])
         //                     ->first();
 
@@ -1143,7 +1145,7 @@ class ProjectController extends Controller
 
         // ambil semua projek
         $projects = Project::select('project_id', 'project_name', 'organizations.organization_name')
-                ->join('organizations', 'organizations.organization_id', '=', 'projects.division')
+                ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'projects.division')
                 ->orderBy('project_id', 'desc')
                 ->get();
 
@@ -1277,7 +1279,7 @@ class ProjectController extends Controller
 
         $projects = TaskPic::where('project_task_pics.employe_id', $employeId)
                     ->join('projects', 'project_task_pics.project_id', '=', 'projects.project_id')
-                    ->leftJoin('organizations', 'organizations.organization_id', '=', 'projects.division')
+                    ->leftJoin(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'projects.division')
                     ->leftJoin('activity_levels', 'activity_levels.level_id', '=', 'projects.level_id')
                     ->where('projects.division', '!=', $employeDivision->organization_id)
                     ->get();
@@ -1286,10 +1288,10 @@ class ProjectController extends Controller
             for ($p=0; $p < count($projects); $p++) {
 
                 // cari pic project active
-                $data[$p]['pic_active'] = ProjectHistory::select('employees.first_name', 'positions.position_id', 'organizations.organization_id')
-                        ->join('employees', 'employees.employe_id', '=', 'project_histories.employe_id')
-                        ->join('positions', 'positions.position_id', '=', 'employees.position_id')
-                        ->join('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
+                $data[$p]['pic_active'] = ProjectHistory::select('employees_hr.first_name', 'positions.id as position_id', 'organizations.organization_id')
+                        ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_histories.employe_id')
+                        ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                        ->join(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
                         ->where(['project_id' => $projects[$p]->project_id, 'active' => 1])
                         ->first();
 

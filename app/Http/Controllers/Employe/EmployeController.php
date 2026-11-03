@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Employe;
 
 use App\Http\Controllers\Controller;
+use App\Models\Hr\Division as HrDivision;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Models\Employe;
+use App\Models\EmployeBase;
 use App\Models\Structure;
 use App\Models\Position;
 use App\Models\Notification;
@@ -73,7 +75,7 @@ class EmployeController extends Controller
             ], 404);
         }
 
-        $newEmploye = new Employe();
+        $newEmploye = new EmployeBase();
         $newEmploye->user_id = $newUser->id;
         $newEmploye->employe_id = $request->employe_id;
         $newEmploye->first_name = $request->first_name;
@@ -109,7 +111,7 @@ class EmployeController extends Controller
 
         }
 
-        $savedUpdate = Employe::where('employe_id', $employe_id)->update($data);
+        $savedUpdate = EmployeBase::where('employe_id', $employe_id)->update($data);
 
         if(!$savedUpdate){
             throw new HttpResponseException(response()->json([
@@ -143,7 +145,7 @@ class EmployeController extends Controller
 
     public function destroy($employe_id)
     {
-        $deletedEmploye = Employe::where("employe_id", $employe_id)->delete();
+        $deletedEmploye = EmployeBase::where("employe_id", $employe_id)->delete();
 
         if($deletedEmploye){
             return response()->json([
@@ -160,10 +162,10 @@ class EmployeController extends Controller
 
     public function getEmployeDivision($employe_id)
     {
-        $position = Employe::where('employees.employe_id', '=' , $employe_id)
-                    ->leftJoin('positions', 'employees.position_id', '=', 'positions.position_id')
-                    ->leftJoin('organizations', 'organizations.organization_id', '=', 'positions.organization_id')
-                    ->select('positions.position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
+        $position = Employe::where('employees_hr.employe_id', '=' , $employe_id)
+                    ->leftJoin(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                    ->leftJoin(HrDivision::organizationsTable(), 'organizations.organization_id', '=', 'positions.division_id')
+                    ->select('positions.id as position_id', 'positions.position_name', 'organizations.organization_id', 'organizations.organization_name')
                     ->first();
 
         if(!$position){
@@ -190,7 +192,7 @@ class EmployeController extends Controller
         if($query === 'all'){
 
             $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                    ->join('users', 'users.id', '=', 'employees.user_id')
+                    ->join('users', 'users.id', '=', 'employees_hr.user_id')
                     ->where('employe_active', 1)
                     ->get();
 
@@ -210,7 +212,7 @@ class EmployeController extends Controller
                 // JIKA USER ADALAH MANAGER
                 // LIST MANAGER SUPERVISOR DAN STAFF
                 $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                ->join('users', 'users.id', '=', 'employees.user_id')
+                ->join('users', 'users.id', '=', 'employees_hr.user_id')
                 ->where('users.roles', 'like' , '%Manager%')
                 ->orWhere('users.roles', 'like' , '%Supervisor%')
                 ->orWhere('users.roles', 'like' , '%Staff%')
@@ -220,7 +222,7 @@ class EmployeController extends Controller
                 // JIKA USER ADALAH SUPERVISOR
                 // LIST SUPERVISOR DAN STAFF
                 $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                    ->join('users', 'users.id', '=', 'employees.user_id')
+                    ->join('users', 'users.id', '=', 'employees_hr.user_id')
                     ->where('users.roles', 'like' , '%Supervisor%')
                     ->orWhere('users.roles', 'like' , '%Staff%')
                     ->get();
@@ -232,14 +234,14 @@ class EmployeController extends Controller
                 // JIKA USER ADALAH MANAGER
                 // LIST SELEVEL MANAGER
                 $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                        ->join('users', 'users.id', '=', 'employees.user_id')
+                        ->join('users', 'users.id', '=', 'employees_hr.user_id')
                         ->where('users.roles', 'like' , '%Manager%')
                         ->get();
 
             }elseif(in_array("Supervisor", $userRoles)){
                 // JIKA USER ADALAH SUPERVISOR
                 $list = Employe::select('employe_id', 'first_name', 'users.roles')
-                    ->join('users', 'users.id', '=', 'employees.user_id')
+                    ->join('users', 'users.id', '=', 'employees_hr.user_id')
                     ->where('users.roles', 'like' , '%Supervisor%')
                     ->get();
             }
@@ -275,11 +277,11 @@ class EmployeController extends Controller
                     'title',
                     'desc',
                     'category',
-                    'employees.first_name',
+                    'employees_hr.first_name',
                     'project_notifications.created_at'
                 )
                 ->where(['project_notifications.to_employe' => $employeId, 'read_status' => 0])
-                ->join('employees', 'employees.employe_id', '=', 'project_notifications.from_employe')
+                ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_notifications.from_employe')
                 ->orderBy('project_notifications.created_at', 'desc')
                 ->get();
 

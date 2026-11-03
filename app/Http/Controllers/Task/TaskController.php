@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Task;
 
 use App\Http\Controllers\Controller;
+use App\Models\Hr\Division as HrDivision;
 use App\Models\Tasks\Task;
 use App\Models\Tasks\TaskApproval;
 use App\Models\Tasks\TaskPic;
@@ -163,9 +164,9 @@ class TaskController extends Controller
                 ->select('task_latest_status.*', 'a.progress')
                 ->first();
 
-        $task['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+        $task['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                     ->where('task_id', $taskId)
-                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                    ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                     ->get();
 
         return response()->json([
@@ -357,9 +358,9 @@ class TaskController extends Controller
                                                 ->select('task_latest_status.*', TaskStatus::raw('(SELECT COUNT(*) FROM comments WHERE comments.task_id = task_latest_status.task_id) AS comments'))
                                                 ->get() ;
 
-                $pic_parent[$pp]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                $pic_parent[$pp]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                                             ->where('task_id', $pic_parent[$pp]->task_id)
-                                            ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                            ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                                             ->get();
 
                 for ($stf1=0; $stf1 < count($pic_parent[$pp]['subtasks']); $stf1++) {
@@ -367,9 +368,9 @@ class TaskController extends Controller
                                                                     ->where('task_id', $pic_parent[$pp]['subtasks'][$stf1]->task_id)
                                                                     ->get();
 
-                    $pic_parent[$pp]['subtasks'][$stf1]['pics'] =  TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                    $pic_parent[$pp]['subtasks'][$stf1]['pics'] =  TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                                                                     ->where('task_id', $pic_parent[$pp]['subtasks'][$stf1]->task_id)
-                                                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                                                    ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                                                                     ->get();
                 }
             }
@@ -400,9 +401,9 @@ class TaskController extends Controller
                                             ->join('project_task_pics', 'project_task_pics.task_id', '=', 'task_latest_status.task_id')
                                             ->get() ;
 
-            $pic_subtask[$ps]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+            $pic_subtask[$ps]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                                         ->where('task_id', $pic_subtask[$ps]->task_id)
-                                        ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                        ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                                         ->get();
 
             for ($stf=0; $stf < count($pic_subtask[$ps]['subtasks']); $stf++) {
@@ -410,9 +411,9 @@ class TaskController extends Controller
                                                                 ->where('task_id', $pic_subtask[$ps]['subtasks'][$stf]->task_id)
                                                                 ->get();
 
-                $pic_subtask[$ps]['subtasks'][$stf]['pics'] =  TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                $pic_subtask[$ps]['subtasks'][$stf]['pics'] =  TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                                                                 ->where('task_id', $pic_subtask[$ps]['subtasks'][$stf]->task_id)
-                                                                ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                                                ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                                                                 ->get();
             }
         }
@@ -447,10 +448,10 @@ class TaskController extends Controller
                     'task_desc',
                     'task_progress',
                     'project_tasks.created_at',
-                    'employees.first_name as created_by'
+                    'employees_hr.first_name as created_by'
                 )
                 ->where($whereParent)->orderBy('project_tasks.task_id', 'desc')
-                ->join('employees', 'employees.employe_id', '=', 'project_tasks.created_by')
+                ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_tasks.created_by')
                 ->get();
         $count = count($parent);
 
@@ -470,14 +471,14 @@ class TaskController extends Controller
                 $parent[$p]->end_date =  $lastHistory[$p]->end_date;
 
                 // $parent[$p]->pics = TaskPic::select('pic_id', 'first_name', 'project_task_pics.employe_id', 'progress', 'file')
-                //                     ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                //                     ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_task_pics.employe_id')
                 //                     ->where('task_id', $parent[$p]->task_id)
                 //                     ->get();
 
                 // pics
                 $parent[$p]->pics = TaskApproval::select('project_task_approval.employe_id', 'first_name', 'progress', 'file')
                                 ->where('task_id', $parent[$p]->task_id)
-                                ->join('employees', 'employees.employe_id', '=', 'project_task_approval.employe_id')
+                                ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_task_approval.employe_id')
                                 ->get();
 
                 // comments
@@ -502,7 +503,7 @@ class TaskController extends Controller
 
                     $parent[$p]->subtasks[$p]->pics = TaskApproval::select('project_task_approval.employe_id', 'first_name', 'progress', 'file')
                                                     ->where('task_id', $subtask[$p][$sp]->task_id)
-                                                    ->join('employees', 'employees.employe_id', '=', 'project_task_approval.employe_id')
+                                                    ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_task_approval.employe_id')
                                                     ->get();
                 }
 
@@ -554,10 +555,10 @@ class TaskController extends Controller
     public function taskHistory($taskId)
     {
         // $employeId = Employe::employeId();
-        $history = TaskApproval::join('employees AS A', 'A.employe_id', '=', 'project_task_approval.employe_id')
-                    ->join('employees AS B', 'B.employe_id', '=', 'project_task_approval.status_by')
+        $history = TaskApproval::join('employees_hr AS A', 'A.employe_id', '=', 'project_task_approval.employe_id')
+                    ->join('employees_hr AS B', 'B.employe_id', '=', 'project_task_approval.status_by')
                     ->join('project_tasks AS C', 'C.task_id', '=', 'project_task_approval.task_id')
-                    ->join('employees AS D', 'D.employe_id', '=', 'C.created_by')
+                    ->join('employees_hr AS D', 'D.employe_id', '=', 'C.created_by')
                     ->select(
                         'project_task_approval.approval_id',
                         'project_task_approval.status',
@@ -880,7 +881,7 @@ class TaskController extends Controller
         //                 'approval_id',
         //                 'project_task_approval.task_id',
         //                 'project_task_approval.employe_id',
-        //                 'employees.first_name',
+        //                 'employees_hr.first_name',
         //                 'project_tasks.task_title',
         //                 'project_tasks.task_desc',
         //                 'status',
@@ -890,7 +891,7 @@ class TaskController extends Controller
         //                 'file',
         //                 'project_task_approval.created_at'
         //             )
-        //             ->join('employees', 'employees.employe_id', '=', 'project_task_approval.employe_id')
+        //             ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_task_approval.employe_id')
         //             ->join('project_tasks', 'project_tasks.task_id', '=', 'project_task_approval.task_id')
         //             ->where('project_task_approval.task_id', $taskIds[$rt])
         //             ->orderBy('approval_id', 'desc')
@@ -932,7 +933,7 @@ class TaskController extends Controller
                 ->where($wherePhase)
                 ->join('projects', 'projects.project_id', '=', 'project_stages.project_id')
                 ->leftJoin('project_phases', 'project_phases.id', '=', 'project_stages.phase')
-                ->leftJoin('organizations', 'organizations.organization_id','=', 'project_stages.division')
+                ->leftJoin(HrDivision::organizationsTable(), 'organizations.organization_id','=', 'project_stages.division')
                 ->leftJoin('project_partners', 'project_partners.id', '=', 'project_stages.partner')
                 ->first();
 
@@ -1014,9 +1015,9 @@ class TaskController extends Controller
 
         if(count($all) > 0) {
             for ($at=0; $at < count($all); $at++) {
-                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                                     ->where('task_id', $all[$at]->task_id)
-                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                                     ->get();
 
                 $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
@@ -1182,7 +1183,7 @@ class TaskController extends Controller
         $employeId = Employe::employeId();
         $employeDivision = Employe::getEmployeDivision($employeId);
 
-        $divisions = Organization::where('board_id', $employeDivision->board_id)
+        $divisions = HrDivision::asOrganizations()->where('divisions.board_id', $employeDivision->board_id)
                     ->get();
 
         $divisionIds = [];
@@ -1215,9 +1216,9 @@ class TaskController extends Controller
 
         if(count($listTask) > 0){
             for ($lt=0; $lt < count($listTask); $lt++) {
-                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                             ->where('task_id', $listTask[$lt]->task_id)
-                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_task_pics.employe_id')
                             ->get();
             }
         }
@@ -1267,7 +1268,7 @@ class TaskController extends Controller
         $employeId = Employe::employeId();
         $employeDivision = Employe::getEmployeDivision($employeId);
 
-        $divisions = Organization::where('board_id', $employeDivision->board_id)
+        $divisions = HrDivision::asOrganizations()->where('divisions.board_id', $employeDivision->board_id)
                     ->get();
 
         $divisionIds = [];
@@ -1283,9 +1284,9 @@ class TaskController extends Controller
 
         if(count($listTask) > 0){
             for ($lt=0; $lt < count($listTask); $lt++) {
-                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                $listTask[$lt]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                             ->where('task_id', $listTask[$lt]->task_id)
-                            ->join('employees', 'employees.employe_id', '=', 'project_task_pics.employe_id')
+                            ->join('employees_hr', 'employees_hr.employe_id', '=', 'project_task_pics.employe_id')
                             ->get();
 
                 $isFavorite[$lt] = TaskFavorite::where(['employe_id' => $employeId, 'task_id' => $listTask[$lt]->task_id])
@@ -1402,9 +1403,9 @@ class TaskController extends Controller
 
         if(count($all) > 0) {
             for ($at=0; $at < count($all); $at++) {
-                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                                     ->where('task_id', $all[$at]->task_id)
-                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                                     ->get();
 
                 $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();
@@ -1621,9 +1622,9 @@ class TaskController extends Controller
 
         if(count($all) > 0) {
             for ($at=0; $at < count($all); $at++) {
-                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees.first_name')
+                $all[$at]['pics'] = TaskPic::select('project_task_pics.id', 'project_task_pics.employe_id', 'employees_hr.first_name')
                                     ->where('task_id', $all[$at]->task_id)
-                                    ->join('employees', 'employees.employe_id','=','project_task_pics.employe_id')
+                                    ->join('employees_hr', 'employees_hr.employe_id','=','project_task_pics.employe_id')
                                     ->get();
 
                 $all[$at]['comments'] = Comment::where('task_id', $all[$at]->task_id)->count();

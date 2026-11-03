@@ -2,6 +2,9 @@
 
 namespace App\Services;
 use App\Models\Employe;
+use App\Models\EmployeBase;
+use App\Models\Hr\EmployeePublicKey;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Facades\Storage;
 
@@ -22,10 +25,24 @@ class CryptoService
         // Ekstrak Public Key
         $publicKey = openssl_pkey_get_details($keyPair)['key'];
 
-        // Simpan Public Key di Database
-        $user = Employe::find($employe_id);
-        $user->public_key = $publicKey;
-        $user->save();
+        // Simpan Public Key: HR (sumber utama, tabel employee_public_keys) dan tabel employees apam (cadangan/kompatibel mundur).
+        // Gagal menulis ke salah satunya tidak membatalkan selama yang lain berhasil.
+        $saved = false;
+        try {
+            EmployeePublicKey::updateOrCreate(['employe_id' => $employe_id], ['public_key' => $publicKey]);
+            $saved = true;
+        } catch (\Throwable $e) {
+            Log::warning("Public key {$employe_id} tidak tersimpan di HR: " . $e->getMessage());
+        }
+        $base = EmployeBase::find($employe_id);
+        if ($base) {
+            $base->public_key = $publicKey;
+            $base->save();
+            $saved = true;
+        }
+        if (!$saved) {
+            throw new \RuntimeException("Public key {$employe_id} gagal disimpan (tidak ada di HR maupun tabel employees).");
+        }
 
         // Simpan Private Key secara terenkripsi di storage Laravel
         Storage::put("keys/private_{$employe_id}.pem", encrypt($privateKey));
@@ -53,6 +70,7 @@ class CryptoService
 
     public static function getPublicKey($employe_id)
     {
+        // employees_hr: public_key dari HR, cadangan tabel employees
         $user = Employe::where('employe_id', $employe_id)->first();
         return $user->public_key;
     }

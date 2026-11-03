@@ -11,7 +11,7 @@ use App\Models\Adm\Surat;
 use App\Models\AtasanTerkait;
 use App\Models\Employe;
 use App\Models\Organization;
-use App\Models\Position;
+use App\Models\Hr\Position as HrPosition;
 use App\Models\Structure;
 use App\Models\Adm\SuratMasuk as SM;
 use Auth;
@@ -57,7 +57,13 @@ class StaticAdmController extends Controller
 
     public function getDirektur()
     {
-        $data = Position::where('id_base', 3)->orWhere('id_base', 4)->get();
+        // Jabatan direksi dari HR; position_id = id jabatan HR (Direktur Utama = id_base 3, level Direktur = 4)
+        $data = HrPosition::selectRaw("id as position_id, division_id as organization_id, position_code, position_name, if(trim(position_name) = 'Direktur Utama', 3, 4) as id_base")
+            ->where(function ($q) {
+                $q->whereRaw("trim(position_name) = 'Direktur Utama'")->orWhere('position_level', 'Direktur');
+            })
+            ->orderBy('id')
+            ->get();
         return new PostResource(true, 'Pilihan direktur', $data);
     }
 
