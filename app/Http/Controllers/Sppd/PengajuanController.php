@@ -305,6 +305,9 @@ class PengajuanController extends Controller
                     'share_with' => $tujuans[$i]['shareWith'],
                 ]);
             }
+            // isi SPPD berubah: PDF bertanda tangan yang tersimpan sebelumnya sudah tidak berlaku
+            SuratTteService::forgetStoredPdfs($sppd->nomor_dokumen);
+
             return new PostResource(true, 'success', []);
         }
     }
