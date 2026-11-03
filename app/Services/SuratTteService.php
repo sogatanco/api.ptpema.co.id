@@ -286,13 +286,19 @@ class SuratTteService
      * Drop the stored signed PDFs of a document. Call it when the letter's content changes: stored files
      * are served as-is by issueSignedPdf(), so without this the re-signing would still return the old letter.
      */
-    public static function forgetStoredPdfs(string $noDocument): void
+    public static function forgetStoredPdfs(string $noDocument, ?string $type = null): void
     {
         try {
             $disk = \Illuminate\Support\Facades\Storage::disk('local');
             $prefix = 'tte-pdf/' . preg_replace('/[^A-Za-z0-9_-]/', '_', $noDocument) . '-';
+            $typePart = $type === null ? null : preg_replace('/[^A-Za-z0-9_-]/', '_', $type);
             foreach ($disk->files('tte-pdf') as $f) {
-                if (str_starts_with($f, $prefix) && str_ends_with($f, '.pdf')) {
+                if (!str_starts_with($f, $prefix) || !str_ends_with($f, '.pdf')) {
+                    continue;
+                }
+                // dengan $type: hanya PDF jenis itu (tanpa atau dengan kind), jenis lain tidak disentuh
+                $rest = substr($f, strlen($prefix), -4);
+                if ($typePart === null || $rest === $typePart || str_starts_with($rest, $typePart . '-')) {
                     $disk->delete($f);
                 }
             }

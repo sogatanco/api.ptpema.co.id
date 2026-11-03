@@ -338,6 +338,8 @@ class PengajuanController extends Controller
         if ($verif->save()) {
             if ($request->status === 'approve') {
                 SuratTteService::recordChain($verif, $contentHash);
+                // paraf/TTE baru: PDF jenis ini dibuat ulang dari isi terbaru saat dibuka
+                SuratTteService::forgetStoredPdfs($id_doc, $verif->type);
             }
             return new PostResource(true, 'success', []);
         }
