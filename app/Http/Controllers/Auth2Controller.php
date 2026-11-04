@@ -72,7 +72,7 @@ class Auth2Controller extends Controller
 
                     // create notification
                     $recipient = User::select('employees.employe_id')
-                                ->join('employees', 'employees.user_id', '=', 'users.id')
+                                ->join('employees_hr as employees', 'employees.user_id', '=', 'users.id')
                                 ->where('roles', 'like', '%'.$whereAdminRole.'%')
                                 ->first()
                                 ->employe_id;

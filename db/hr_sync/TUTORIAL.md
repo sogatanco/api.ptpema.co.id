@@ -9,16 +9,18 @@ Aturan: kerjakan berurutan; bila TES sebuah langkah tidak sesuai, jalankan ROLLB
 | 1 | `19_hr_add_sekkom.sql` | HR: jabatan Sekretaris Komisaris (id 68) untuk SEKKOM-01 (Saifan) | `20` |
 | 2 | `13_views_live_apply.sql` | view `struktur_lengkap_oke`, `divisions`, `atasan_terkait` membaca HR | `14` |
 | 3 | `17_triggers_apply.sql` | id jabatan tetap di 5 trigger disesuaikan ke id HR | `18` |
+| 3B | `33_triggers_sppd_positions_hr.sql` | 2 trigger SPPD: nama jabatan id 13 dari tabel jabatan HR (bukan `apam.positions`); sesudah 17 | `34` |
 | 4 | `21_employees_hr_view.sql` | view `employees_hr` + 5 view dialihkan | `22` |
 | 5 | deploy kode branch `synch` | kode membaca HR | `git checkout main` |
 | 6 | `27_employees_sync_from_hr.sql` | nama + status aktif `employees` mengikuti HR (43 karyawan) | `28` |
 | 7 | `29_project_pic_sync_from_hr.sql` | PIC project (147) yang nonaktif di HR diganti | `30` |
 | opsional | `23_hr_public_keys_apply.sql` | public key e-sign dipusatkan di HR (perlu persetujuan HR) | `24` |
+| 9 | `35_apam_tanpa_employees_apply.sql` | apam tanpa tabel employees/positions/organizations/board_organizations (diganti view HR); hanya `users` + kolom `employe_id`; kode branch `hr-only` | `36` |
 | nanti | `25_apam_cleanup_apply.sql` | tabel apam tak terpakai diganti nama `zz_hapus_*` | `26` |
 
 ## Langkah 0. Persiapan
 - Backup: `mysqldump --single-transaction --routines --triggers --events` untuk `ptpemaco_apam`, `ptpemaco_admnew`, `ptpemaco_sppdnew`, `ptpemaco_esign`, `ptpemaco_hr_production`; kompres, uji `gzip -t`, simpan juga di luar server DB.
-- Siapkan berkas rollback 14, 18, 20, 22, 28, 30 (dan 24 bila 23 dipakai) di server. Pilih jam sepi (sekitar 30-45 menit untuk semuanya).
+- Siapkan berkas rollback 14, 18, 20, 22, 28, 30, 34 (bila 33 dipakai) (dan 24 bila 23 dipakai) di server. Pilih jam sepi (sekitar 30-45 menit untuk semuanya).
 - Catat baseline:
 ```sql
 SELECT COUNT(*) AS baris FROM ptpemaco_apam.struktur_lengkap_oke;
@@ -64,6 +66,12 @@ ROLLBACK;
 ```
 - ROLLBACK: `mysql --comments -u <user> -p < 18_triggers_rollback.sql`; TES: kolom `sama_dengan_backup` = 1 semua.
 
+## Langkah 4B. Trigger SPPD: nama jabatan dari HR (33), setelah 17
+`add_step_verif_1` dan `after_update1` memuat 9 kali `JOIN ptpemaco_apam.positions p ON p.position_id = 13` (nama jabatan id 13). 33 menggantinya ke `ptpemaco_hr_production.positions p ON p.id = 13` (id 13 sama di apam dan HR). Setelah ini trigger SPPD, ADM, dan e-sign tidak membaca tabel jabatan/karyawan apam; notifikasi tetap ditulis ke `ptpemaco_apam.notifications` (tabel aplikasi).
+Jalankan `mysql --comments -u <user> -p < 33_triggers_sppd_positions_hr.sql`. Berhenti sendiri bila definisi trigger berbeda dari yang dipakai skrip atau sudah pernah dijalankan.
+- TES: laporan 2 baris, `rujukan_apam_positions` = 0 dan `rujukan_hr_positions` = 9. Lalu ajukan SPPD uji sampai langkah verifikasi biaya: nama jabatan pada notifikasi/langkah sama seperti sebelumnya (Manajer Keuangan).
+- ROLLBACK: `mysql --comments -u <user> -p < 34_triggers_sppd_positions_rollback.sql`; TES: `sama_dengan_backup` = 1 untuk 2 baris.
+
 ## Langkah 5. View karyawan `employees_hr` (21)
 Membuat view `employees_hr` (kolom sama dengan `employees`; nama, jabatan id HR, status aktif, data pribadi dari HR; `public_key` dan `user_id` dari apam) dan mengalihkan 5 view (`task_latest_status`, `pic_task`, `list_detail_pic_task`, `send_message`, `list_task_final`). Tidak menulis data. WAJIB terpasang SEBELUM kode `synch` di-deploy.
 Jalankan `mysql --comments -u <user> -p < 21_employees_hr_view.sql`.
@@ -94,15 +102,25 @@ Semua skrip membuat tabel backup sendiri dan berhenti bila dijalankan dua kali.
 - TES: `tersalin` = `key_di_apam` - `tidak_ikut`, `terbaca_lewat_view` = `tersalin`; login karyawan yang punya key berhasil dan e-sign dokumen uji berhasil.
 - ROLLBACK: `24_hr_public_keys_rollback.sql`; TES: `tabel_hr_tersisa` = 0.
 
+## Langkah 9. Apam tanpa tabel employees, positions, organizations, board_organizations (35); hanya `users` yang tersisa
+Semua data karyawan, jabatan, divisi, dan board dibaca dari HR. 35 (a) menambah `users.employe_id` (penaut akun apam ke karyawan HR, diisi dari tautan lama), (b) mendefinisikan ulang `employees_hr` tanpa membaca `apam.employees` (public_key dari HR), (c) melepas 18 foreign key ke `employees`/`organizations`, (d) mengganti nama 4 tabel menjadi `zz_hapus_*` (data utuh), (e) membuat view bernama lama `employees`, `organizations`, `board_organizations` yang membaca HR agar view/kode lain yang masih menyebut nama itu tetap jalan. `positions` tidak diberi view (tidak ada pemakai aktif).
+Prasyarat: 13, 17, 21, 23 (public key sudah di HR), 27 sudah dijalankan; dump `ptpemaco_apam` ada. Jalankan di jendela maintenance bersamaan dengan deploy kode branch `hr-only` (kode yang tidak lagi menulis ke tabel itu): maintenance ON -> 35 -> deploy `hr-only` -> maintenance OFF.
+`mysql -u <user> -p < 35_apam_tanpa_employees_apply.sql` (berhenti sendiri bila prasyarat tidak terpenuhi atau dijalankan dua kali).
+- TES: laporan `employees_view` = `users_hr`, `organizations_view` = 25, `board_view` = 10 (11 bila board 'Komite' masih ada di HR), `users_tertaut` = 156 (karyawan HR yang punya akun apam), `aktif_tanpa_akun` hanya akun uji. Lalu: login seorang karyawan; halaman Project/Daily/Task/Tiket/Notifikasi tampil normal dengan nama HR; Surat Masuk, SPPD (daftar approval), e-sign (daftar verifikasi) terbuka; tanda tangan e-sign dokumen uji berhasil (public key dari HR); angka `pic_task`, `list_task_final`, `task_latest_status`, `sppdnew.list_sppd` sama dengan baseline langkah 0.
+- Dampak: view `employees`/`organizations`/`board_organizations` hanya-baca. Endpoint integrasi (`/employe/store|update|delete`, `/client/employees/store`, `/master/*`) tetap menjawab tetapi tidak menulis data karyawan/master; `store` hanya membuat akun login di `users`. Employee id yang tidak ada di HR (mis. `3`, 13 baris riwayat notifikasi/approval) tampil tanpa nama.
+- OPSIONAL, sebelum atau sesudah 35: `37_hapus_riwayat_karyawan_3.sql` menghapus 13 baris riwayat karyawan `3` (Edwar Salim, tidak ada di HR) setelah dicadangkan ke `bak37_*`; rollback `38_hapus_riwayat_karyawan_3_rollback.sql`. TES: kolom `sisa_*` = 0.
+- ROLLBACK: kembalikan kode (`git checkout main`), lalu `mysql -u <user> -p < 36_apam_tanpa_employees_rollback.sql` (mengembalikan 4 tabel, 18 FK, dan `employees_hr` sebelumnya). TES: `employees_tabel` terisi, `fk_terpasang` = 19.
+
 ## Rollback total (urutan terbalik)
-Maintenance ON -> `30` -> `28` -> kembalikan kode (`git checkout main`) -> `22` -> `18` (`--comments`) -> `14` -> maintenance OFF -> cek baseline langkah 0. Data HR (langkah 1) dibatalkan terpisah dengan 20; 24 bila 23 dijalankan. Cadangan terakhir: pulihkan dump langkah 0.
+Maintenance ON -> `36` (bila 35 dijalankan) -> `30` -> `28` -> kembalikan kode (`git checkout main`) -> `22` -> `34` (`--comments`, bila 33 dijalankan) -> `18` (`--comments`) -> `14` -> maintenance OFF -> cek baseline langkah 0. Data HR (langkah 1) dibatalkan terpisah dengan 20; 24 bila 23 dijalankan. Cadangan terakhir: pulihkan dump langkah 0.
 
 ## Setelah stabil (1-2 minggu): bersihkan
 1. Hapus cadangan (setelah ini 14, 18, 22, 28, 30 tidak bisa dipakai lagi; arsipkan dump langkah 0):
 ```sql
 DROP VIEW ptpemaco_apam.atasan_terkait_backup, ptpemaco_apam.divisions_backup, ptpemaco_apam.struktur_lengkap_oke_backup;
 DROP TABLE ptpemaco_sppdnew.bak_trigger_defs;
+DROP TABLE ptpemaco_sppdnew.bak_trigger_defs2;   -- bila 33 dijalankan
 DROP TABLE ptpemaco_apam.employees_sync_bak, ptpemaco_apam.project_pic_sync_bak;
 ```
 2. Objek apam tak terpakai: `25_apam_cleanup_apply.sql` mengganti namanya menjadi `zz_hapus_*` (data utuh; rollback `26`): tabel `nota_dinas` (digantikan `pic` di HR), `struktur` (cerminan jabatan lama), `personal_access_tokens`, `task_approvals`, view `gsdgsd`, `kpi_divisi2`. Setelah 1-2 minggu lagi tanpa masalah, hapus permanen (dump dulu): lihat baris DROP di akhir 25.
-3. **Tetap dipakai, jangan dihapus**: `employees` (FK 16 kolom, menyimpan `user_id` dan `public_key`), `users`, `base_positions` (tarif SPPD), `project_stages`, `organizations` (`is_division = 1`, FK projects), `app_clients`, `positions` dan `board_organizations` (masih dirujuk FK dan trigger; kandidat tahap berikut).
+3. Setelah 35: `zz_hapus_employees`, `zz_hapus_positions`, `zz_hapus_organizations`, `zz_hapus_board_organizations` boleh di-`DROP` setelah stabil 1-2 minggu (dump dulu). **Tetap dipakai, jangan dihapus**: `users`, `base_positions` (tarif SPPD), `project_stages`, `organizations` (`is_division = 1`, FK projects), `app_clients`, `positions` dan `board_organizations` (masih dirujuk FK dan trigger; kandidat tahap berikut).

@@ -3,117 +3,44 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Position;
-use App\Models\Organization;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Models\Hr\Position as HrPosition;
 
+// Jabatan dibaca dari HR (ptpemaco_hr_production.positions); tidak ada lagi tabel jabatan di apam.
+// Endpoint tulis dipertahankan agar otomasi HR tidak gagal, tetapi tidak mengubah apa pun.
 class PositionController extends Controller
 {
-    public function store(Request $request)
+    private function managedByHr()
     {
-        $organization = Organization::where('organization_code', $request->organization_code)->first();
-
-        $parent = Position::where('position_code', $request->parent_code)->first();
-
-        $positionSaved = Position::create([
-            'organization_id' => $organization->organization_id,
-            'position_code' => $request->position_code,
-            'position_name' => $request->position_name,
-            'id_base' => null
-        ]);
-
-        // return response()->json([
-        //     'status' => true,
-        //     'posisi_baru' => $positionSaved,
-        //     'id1' => $positionSaved->id,
-        //     'id2' => $positionSaved['id'],
-        //     'parent' => $parent
-        // ], 200);
-
-        if(!$positionSaved){
-            throw new HttpResponseException(response([
-                'status' => false,
-                'message' => 'Failed to create position'
-            ], 500));
-        }
-
         return response()->json([
             'status' => true,
-            'message' => 'Successfully created position',
+            'message' => 'Data jabatan dikelola di HR; tidak ada perubahan di apam.',
         ], 200);
     }
 
-    public function update(Request $request)
+    public function store()
     {
-
-        $organization = Organization::where('organization_code', $request->organization_code)->first();
-
-        $position = Position::where('position_code', $request->position_code)->first();
-
-        if(!$position){
-
-            throw new HttpResponseException(response([
-                'status' => false,
-                'message' => 'Position not found',
-            ], 404));
-
-        }
-
-        $isUpdated = Position::where('position_id', $position->position_id)
-                                ->update([
-                                    'organization_id' => $organization->organization_id,
-                                    'position_name' => $request->position_name,
-                                ]);
-
-        if($isUpdated){
-
-        } else {
-            throw new HttpResponseException(response([
-                'status' => false,
-                'message' => 'Failed to update position'
-            ], 500));
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Successfully updated position',
-        ], 200);
+        return $this->managedByHr();
     }
 
-    public function delete(Request $request)
+    public function update()
     {
-        Position::where('position_code', $request->position_code)->delete();
+        return $this->managedByHr();
+    }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Successfully deleted position',
-        ], 200);
+    public function delete()
+    {
+        return $this->managedByHr();
     }
 
     public function insertCode()
     {
-        $data = Position::all();
-
-        // generate 4 digit random number
-
-        for ($i=0; $i < count($data); $i++) {
-            $code = mt_rand(1000, 9999);
-
-            Position::where('position_id', $data[$i]['position_id'])
-                                ->update([
-                                    'position_code' => 'PO'.$code.'S'
-                                ]);
-        }
-
-        return response()->json([
-            'data' => $data
-        ], 200);
+        return $this->managedByHr();
     }
 
     public function allPosition()
     {
-        $data = Position::all();
+        // bentuk sama dengan tabel positions lama: position_id kini id jabatan HR
+        $data = HrPosition::selectRaw('id as position_id, division_id as organization_id, position_name, position_code, position_level, parent_id, created_at, updated_at')->get();
 
         return response()->json([
             'data' => $data
