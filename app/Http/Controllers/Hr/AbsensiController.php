@@ -108,6 +108,21 @@ class AbsensiController extends Controller
             ->get();
     }
 
+    // Struktur organisasi: satu baris per karyawan aktif beserta atasan langsungnya (direct_atasan); pohonnya disusun di frontend
+    // mulai dari Direktur Utama (id_base 3). Diambil dari struktur_lengkap_oke, yaitu data HR.
+    public function strukturOrganisasi()
+    {
+        $rows = Cache::remember('hr_struktur_organisasi', 600, function () {
+            return DB::table('struktur_lengkap_oke')
+                ->where('employe_active', 1)
+                ->select('employe_id', 'direct_atasan', 'first_name as nama', 'position_name as jabatan', 'organization_name as divisi', 'id_base')
+                ->orderBy('id_base')
+                ->orderBy('first_name')
+                ->get();
+        });
+        return new PostResource(true, 'data', $rows);
+    }
+
     // Statistik kehadiran: per hari (bulan ini) dan per bulan (tahun ini), dalam jumlah karyawan per hari kerja.
     //  tepat_waktu / terlambat : sudah clock in
     //  dengan_keterangan       : tidak clock in, tetapi ada cuti/dinas (disetujui atau menunggu) pada hari itu
