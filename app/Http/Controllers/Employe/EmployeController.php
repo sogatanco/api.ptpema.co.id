@@ -142,9 +142,9 @@ class EmployeController extends Controller
         $query = $request->query('search');
         if($query === 'all'){
 
-            $list = Employe::select('employe_id', 'first_name', 'users.roles')
+            $list = Employe::select('employees_hr.employe_id', 'first_name', 'users.roles')
                     ->join('users', 'users.id', '=', 'employees_hr.user_id')
-                    ->where('employe_active', 1)
+                    ->where('employees_hr.employe_active', 1)
                     ->get();
 
         }elseif($query === 'subordinate'){
@@ -152,7 +152,7 @@ class EmployeController extends Controller
             // LIST BAWAHAN AJA
             $employeId = Employe::employeId();
 
-            $list = Structure::select('employe_id', 'first_name', 'users.roles')
+            $list = Structure::select('struktur_lengkap_oke.employe_id', 'first_name', 'users.roles')
                     ->join('users', 'users.id', '=', 'struktur_lengkap_oke.user_id')
                     ->where('struktur_lengkap_oke.direct_atasan', $employeId)
                     ->get();
@@ -162,7 +162,7 @@ class EmployeController extends Controller
             if(in_array("Manager", $userRoles)){
                 // JIKA USER ADALAH MANAGER
                 // LIST MANAGER SUPERVISOR DAN STAFF
-                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                $list = Employe::select('employees_hr.employe_id', 'first_name', 'users.roles')
                 ->join('users', 'users.id', '=', 'employees_hr.user_id')
                 ->where('users.roles', 'like' , '%Manager%')
                 ->orWhere('users.roles', 'like' , '%Supervisor%')
@@ -172,7 +172,7 @@ class EmployeController extends Controller
             }elseif(in_array("Supervisor", $userRoles)){
                 // JIKA USER ADALAH SUPERVISOR
                 // LIST SUPERVISOR DAN STAFF
-                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                $list = Employe::select('employees_hr.employe_id', 'first_name', 'users.roles')
                     ->join('users', 'users.id', '=', 'employees_hr.user_id')
                     ->where('users.roles', 'like' , '%Supervisor%')
                     ->orWhere('users.roles', 'like' , '%Staff%')
@@ -184,14 +184,14 @@ class EmployeController extends Controller
             if(in_array("Manager", $userRoles)){
                 // JIKA USER ADALAH MANAGER
                 // LIST SELEVEL MANAGER
-                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                $list = Employe::select('employees_hr.employe_id', 'first_name', 'users.roles')
                         ->join('users', 'users.id', '=', 'employees_hr.user_id')
                         ->where('users.roles', 'like' , '%Manager%')
                         ->get();
 
             }elseif(in_array("Supervisor", $userRoles)){
                 // JIKA USER ADALAH SUPERVISOR
-                $list = Employe::select('employe_id', 'first_name', 'users.roles')
+                $list = Employe::select('employees_hr.employe_id', 'first_name', 'users.roles')
                     ->join('users', 'users.id', '=', 'employees_hr.user_id')
                     ->where('users.roles', 'like' , '%Supervisor%')
                     ->get();

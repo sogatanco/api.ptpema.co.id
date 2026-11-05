@@ -1993,7 +1993,7 @@ public function dashboard(Request $request)
 
             $listBawahan = Structure::join('users', 'users.id', '=', 'struktur_lengkap_oke.user_id')
                 ->where('struktur_lengkap_oke.direct_atasan', $employeId)
-                ->select('first_name', 'employe_id', 'position_name')
+                ->select('first_name', 'struktur_lengkap_oke.employe_id', 'position_name')
                 ->get()
                 ->map(function ($item) {
                     $profil = Profil::where('employe_id', $item->employe_id)->first();
@@ -2176,7 +2176,7 @@ public function dashboard(Request $request)
 
             $listBawahan = Structure::join('users', 'users.id', '=', 'struktur_lengkap_oke.user_id')
                 ->where('struktur_lengkap_oke.direct_atasan', $employeId)
-                ->select('first_name', 'employe_id', 'position_name')
+                ->select('first_name', 'struktur_lengkap_oke.employe_id', 'position_name')
                 ->get()
                 ->map(function ($item) {
                     $profil = Profil::where('employe_id', $item->employe_id)->first();
@@ -2311,7 +2311,7 @@ public function dashboard(Request $request)
 
             $saya = Structure::join('users', 'users.id', '=', 'struktur_lengkap_oke.user_id')
                 ->where('struktur_lengkap_oke.employe_id', $employeId)
-                ->select('first_name', 'employe_id', 'position_name')
+                ->select('first_name', 'struktur_lengkap_oke.employe_id', 'position_name')
                 ->first();
             if ($saya) {
                 $profil = Profil::where('employe_id', $saya->employe_id)->first();
@@ -2322,7 +2322,7 @@ public function dashboard(Request $request)
 
             $listBawahan = Structure::join('users', 'users.id', '=', 'struktur_lengkap_oke.user_id')
                 ->where('struktur_lengkap_oke.direct_atasan', $employeId)
-                ->select('first_name', 'employe_id', 'position_name')
+                ->select('first_name', 'struktur_lengkap_oke.employe_id', 'position_name')
                 ->get()
                 ->map(function ($item) {
                     $profil = Profil::where('employe_id', $item->employe_id)->first();
