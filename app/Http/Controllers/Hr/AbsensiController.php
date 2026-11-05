@@ -113,11 +113,18 @@ class AbsensiController extends Controller
     public function strukturOrganisasi()
     {
         $rows = Cache::remember('hr_struktur_organisasi', 600, function () {
-            return DB::table('struktur_lengkap_oke')
-                ->where('employe_active', 1)
-                ->select('employe_id', 'direct_atasan', 'first_name as nama', 'position_name as jabatan', 'organization_name as divisi', 'id_base')
-                ->orderBy('id_base')
-                ->orderBy('first_name')
+            // grade (mis. Staf, Assisten Staf, Senior Staf) = grade dari skor CF aktif terbaru di HR
+            $grade = DB::table('ptpemaco_hr_production.employee_cf_scores as c')
+                ->join('ptpemaco_hr_production.salary_grades as sg', 'sg.id', '=', 'c.salary_grade_id')
+                ->join('ptpemaco_hr_production.positions_grades as pg', 'pg.id', '=', 'sg.position_grade_id')
+                ->whereRaw('c.id = (select x.id from ptpemaco_hr_production.employee_cf_scores x where x.employe_id = c.employe_id and x.active = 1 order by x.periode desc, x.id desc limit 1)')
+                ->select('c.employe_id', 'pg.grade_name');
+            return DB::table('struktur_lengkap_oke as s')
+                ->leftJoinSub($grade, 'g', 'g.employe_id', '=', 's.employe_id')
+                ->where('s.employe_active', 1)
+                ->select('s.employe_id', 's.direct_atasan', 's.first_name as nama', 's.position_name as jabatan', 's.organization_name as divisi', 's.id_base', 'g.grade_name as grade')
+                ->orderBy('s.id_base')
+                ->orderBy('s.first_name')
                 ->get();
         });
         return new PostResource(true, 'data', $rows);
