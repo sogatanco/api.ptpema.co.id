@@ -143,14 +143,23 @@ class AbsensiController extends Controller
                 $holder[$r->position_id] = $r->employe_id;
             }
             $levels = ['Direktur' => 4, 'Manajer' => 7, 'Supervisor' => 8, 'Staf' => 9, 'Tenaga Pendukung' => 10];
-            $vacant = [];
             $positions = DB::table('ptpemaco_hr_production.positions as p')
                 ->join('ptpemaco_hr_production.divisions as d', 'd.id', '=', 'p.division_id')
                 ->get(['p.id', 'p.parent_id', 'p.position_name', 'p.position_level', 'd.division_name']);
+            // jabatan kosong yang ditampilkan: bukan Komisaris, bukan "Manajer Eksekutif", dan punya atasan
+            $vacantPos = [];
             foreach ($positions as $p) {
-                if (isset($holder[$p->id]) || $p->position_level === 'Komisaris' || !$p->parent_id) {
+                if (isset($holder[$p->id]) || $p->position_level === 'Komisaris' || !$p->parent_id || stripos($p->position_name, 'Manajer Eksekutif') === 0) {
                     continue;
                 }
+                $vacantPos[$p->id] = $p;
+            }
+            $parentOf = [];
+            foreach ($positions as $p) {
+                $parentOf[$p->id] = $p->parent_id;
+            }
+            $vacant = [];
+            foreach ($vacantPos as $p) {
                 $vacant[] = (object) [
                     'employe_id' => 'VAKAN-' . $p->id,
                     'direct_atasan' => $holder[$p->parent_id] ?? ('VAKAN-' . $p->parent_id),
@@ -161,6 +170,14 @@ class AbsensiController extends Controller
                     'grade' => null,
                     'vakan' => true,
                 ];
+            }
+            // karyawan yang jabatan atasannya kosong dipasang di bawah kartu kosong itu (bukan melompat ke atasan di atasnya),
+            // supaya hierarkinya utuh: manajer -> supervisor -> staf
+            foreach ($emp as $r) {
+                $q = $parentOf[$r->position_id] ?? null;
+                if ($q && isset($vacantPos[$q])) {
+                    $r->direct_atasan = 'VAKAN-' . $q;
+                }
             }
             return $emp->map(function ($r) {
                 unset($r->position_id);
