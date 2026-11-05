@@ -241,10 +241,11 @@ class AbsensiController extends Controller
 
             $clock = Attandence::where('date', $date)
                 ->whereNotNull('time_in')
-                ->selectRaw('employe_id, MIN(time_in) as time_in, MAX(is_late) as is_late')
+                ->selectRaw('employe_id, MIN(time_in) as time_in, MAX(is_late) as is_late, MIN(schedule_id) as schedule_id')
                 ->groupBy('employe_id')
                 ->get()
                 ->keyBy('employe_id');
+            $schedules = DB::table($hr . '.schedules')->get()->keyBy('id');
 
             // pengajuan absensi untuk clock in hari ini (pengajuan terlambat): disetujui didahulukan, lalu menunggu, lalu ditolak
             $pengajuan = [];
@@ -255,12 +256,12 @@ class AbsensiController extends Controller
                 ->whereNotNull('r.clock_in')
                 ->where('r.clock_in', '<>', '')
                 ->whereIn('r.status', ['approved', 'pending', 'rejected'])
-                ->select('r.employe_id', 'r.status', 'u.name as alasan')
+                ->select('r.employe_id', 'r.status', 'r.clock_in', 'u.name as alasan')
                 ->orderByRaw("FIELD(r.status, 'approved', 'pending', 'rejected')")
                 ->get();
             foreach ($reqRows as $r) {
                 if (!isset($pengajuan[$r->employe_id])) {
-                    $pengajuan[$r->employe_id] = ['status' => $r->status, 'alasan' => $r->alasan];
+                    $pengajuan[$r->employe_id] = ['status' => $r->status, 'alasan' => $r->alasan, 'jam' => substr(trim($r->clock_in), 0, 5)];
                 }
             }
 
@@ -295,7 +296,24 @@ class AbsensiController extends Controller
             // karyawan yang kemarin sudah clock in tetapi belum clock out; tidak ditampilkan bila kemarin hari libur
             $kemarin = Carbon::parse($date)->subDay()->toDateString();
             $noOut = collect();
+            $outReq = [];
             if ($liburKet($kemarin) === null) {
+                // pengajuan clock out kemarin: yang disetujui dianggap sudah clock out; yang menunggu/ditolak diberi tanda
+                $outRows = DB::table($hr . '.request_attendances as r')
+                    ->leftJoin($hr . '.unplanned_reasons as u', 'u.id', '=', 'r.unplanned_reason_id')
+                    ->where('r.date', $kemarin)
+                    ->where('r.request_type_id', 2)
+                    ->whereNotNull('r.clock_out')
+                    ->where('r.clock_out', '<>', '')
+                    ->whereIn('r.status', ['approved', 'pending', 'rejected'])
+                    ->select('r.employe_id', 'r.status', 'r.clock_out', 'u.name as alasan')
+                    ->orderByRaw("FIELD(r.status, 'approved', 'pending', 'rejected')")
+                    ->get();
+                foreach ($outRows as $r) {
+                    if (!isset($outReq[$r->employe_id])) {
+                        $outReq[$r->employe_id] = ['status' => $r->status, 'alasan' => $r->alasan, 'jam' => substr(trim($r->clock_out), 0, 5)];
+                    }
+                }
                 $noOut = Attandence::where('date', $kemarin)
                     ->whereNotNull('time_in')
                     ->whereNull('time_out')
@@ -319,11 +337,29 @@ class AbsensiController extends Controller
                     'divisi' => $e->organization_name,
                 ];
                 if (isset($noOut[$e->employe_id])) {
-                    $belumOut[] = $base + ['clock_in' => substr($noOut[$e->employe_id]->time_in, 0, 5), '_t' => $noOut[$e->employe_id]->time_in];
+                    $po = $outReq[$e->employe_id] ?? null;
+                    if (!($po && $po['status'] === 'approved')) {
+                        $belumOut[] = $base + ['clock_in' => substr($noOut[$e->employe_id]->time_in, 0, 5), 'pengajuan' => $po, '_t' => $noOut[$e->employe_id]->time_in];
+                    }
                 }
-                if (isset($clock[$e->employe_id])) {
-                    $c = $clock[$e->employe_id];
-                    $hadir[] = $base + ['clock_in' => substr($c->time_in, 0, 5), 'terlambat' => (bool) $c->is_late, 'pengajuan' => $pengajuan[$e->employe_id] ?? null, '_t' => $c->time_in];
+                $pg = $pengajuan[$e->employe_id] ?? null;
+                $approvedJam = ($pg && $pg['status'] === 'approved' && $pg['jam'] !== '') ? $pg['jam'] : null;
+                if (isset($clock[$e->employe_id]) || $approvedJam) {
+                    $c = $clock[$e->employe_id] ?? null;
+                    if ($approvedJam) {
+                        // pengajuan disetujui: jam clock in mengikuti pengajuan; terlambat dihitung ulang terhadap jadwal kerja
+                        $sid = $c->schedule_id ?? (Carbon::parse($date)->isFriday() ? 8 : 7);
+                        $s = $schedules[$sid] ?? null;
+                        $limit = $s ? Carbon::createFromFormat('H:i:s', $s->time_in)->addMinutes((int) $s->late_tolerance)->format('H:i') : null;
+                        $jam = $approvedJam;
+                        $late = $limit !== null ? $jam > $limit : (bool) ($c->is_late ?? false);
+                        $dariPengajuan = true;
+                    } else {
+                        $jam = substr($c->time_in, 0, 5);
+                        $late = (bool) $c->is_late;
+                        $dariPengajuan = false;
+                    }
+                    $hadir[] = $base + ['clock_in' => $jam, 'terlambat' => $late, 'dari_pengajuan' => $dariPengajuan, 'pengajuan' => $pg, '_t' => $jam . ':00'];
                 } elseif (!$libur) {
                     $l = $leaves[$e->employe_id] ?? null;
                     $tidakHadir[] = $base + [
