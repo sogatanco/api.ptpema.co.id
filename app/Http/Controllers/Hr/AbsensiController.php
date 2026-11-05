@@ -13,6 +13,7 @@ use App\Models\Hr\Users;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 use Carbon\Carbon;
@@ -90,4 +91,114 @@ class AbsensiController extends Controller
         return new PostResource(true, 'data', $landing);
     }
 
+    // Dashboard absensi: karyawan aktif yang sudah clock in hari ini (urut clock in pertama) dan yang belum/tidak hadir
+    // beserta keterangan cuti dari HR (approved = disetujui, pending = menunggu, none = tanpa keterangan).
+    public function dashboard(Request $request)
+    {
+        $date = Carbon::now()->toDateString();
+        $hr = config('database.connections.hr.database');
+
+        $payload = Cache::remember('dashboard-absensi-' . $date, 20, function () use ($date, $hr) {
+            $employees = DB::table('employees_hr as e')
+                ->leftJoin('struktur_lengkap_oke as s', 's.employe_id', '=', 'e.employe_id')
+                ->where('e.employe_active', 1)
+                ->select('e.employe_id', 'e.first_name', 's.position_name', 's.organization_name')
+                ->get();
+
+            $clock = Attandence::where('date', $date)
+                ->whereNotNull('time_in')
+                ->selectRaw('employe_id, MIN(time_in) as time_in, MAX(is_late) as is_late')
+                ->groupBy('employe_id')
+                ->get()
+                ->keyBy('employe_id');
+
+            // cuti yang mencakup hari ini (approved didahulukan dari pending)
+            $leaves = [];
+            $rows = DB::table($hr . '.request_time_offs as r')
+                ->join($hr . '.time_off_masters as m', 'm.id', '=', 'r.master_id')
+                ->leftJoin($hr . '.time_off_sub_masters as sm', 'sm.id', '=', 'r.sub_master_id')
+                ->whereIn('r.status', ['approved', 'pending'])
+                ->whereDate('r.date_start', '<=', $date)
+                ->whereDate('r.date_end', '>=', $date)
+                ->select('r.employe_id', 'r.status', 'r.excluded_dates', 'm.type as jenis', 'sm.name as sub')
+                ->orderByRaw("r.status = 'approved' DESC")
+                ->get();
+            foreach ($rows as $r) {
+                $excluded = json_decode($r->excluded_dates ?? '[]', true) ?: [];
+                if (in_array($date, $excluded, true) || isset($leaves[$r->employe_id])) {
+                    continue;
+                }
+                $leaves[$r->employe_id] = ['status' => $r->status, 'jenis' => trim($r->jenis . ($r->sub ? ' - ' . $r->sub : ''))];
+            }
+
+            // karyawan yang kemarin sudah clock in tetapi belum clock out
+            $kemarin = Carbon::parse($date)->subDay()->toDateString();
+            $noOut = Attandence::where('date', $kemarin)
+                ->whereNotNull('time_in')
+                ->whereNull('time_out')
+                ->selectRaw('employe_id, MIN(time_in) as time_in')
+                ->groupBy('employe_id')
+                ->get()
+                ->keyBy('employe_id');
+
+            $holiday = DB::table($hr . '.holidays')->where('holiday_date', $date)->where('is_deleted', 0)->value('description');
+            $isWeekend = Carbon::parse($date)->isWeekend();
+            $libur = $holiday !== null || $isWeekend;
+
+            $hadir = [];
+            $tidakHadir = [];
+            $belumOut = [];
+            foreach ($employees as $e) {
+                $base = [
+                    'employe_id' => $e->employe_id,
+                    'nama' => $e->first_name,
+                    'jabatan' => $e->position_name,
+                    'divisi' => $e->organization_name,
+                ];
+                if (isset($noOut[$e->employe_id])) {
+                    $belumOut[] = $base + ['clock_in' => substr($noOut[$e->employe_id]->time_in, 0, 5), '_t' => $noOut[$e->employe_id]->time_in];
+                }
+                if (isset($clock[$e->employe_id])) {
+                    $c = $clock[$e->employe_id];
+                    $hadir[] = $base + ['clock_in' => substr($c->time_in, 0, 5), 'terlambat' => (bool) $c->is_late, '_t' => $c->time_in];
+                } elseif (!$libur) {
+                    $l = $leaves[$e->employe_id] ?? null;
+                    $tidakHadir[] = $base + [
+                        'status' => $l['status'] ?? 'none',
+                        'jenis' => $l['jenis'] ?? null,
+                    ];
+                }
+            }
+
+            usort($hadir, fn ($a, $b) => strcmp($a['_t'], $b['_t']) ?: strcmp($a['nama'], $b['nama']));
+            $hadir = array_map(function ($h) { unset($h['_t']); return $h; }, $hadir);
+
+            usort($belumOut, fn ($a, $b) => strcmp($a['_t'], $b['_t']) ?: strcmp($a['nama'], $b['nama']));
+            $belumOut = array_map(function ($h) { unset($h['_t']); return $h; }, $belumOut);
+
+            $order = ['approved' => 0, 'pending' => 1, 'none' => 2];
+            usort($tidakHadir, fn ($a, $b) => ($order[$a['status']] <=> $order[$b['status']]) ?: strcmp($a['nama'], $b['nama']));
+
+            return [
+                'tanggal' => $date,
+                'diperbarui' => Carbon::now()->format('H:i:s'),
+                'libur' => $libur ? ($holiday ?? 'Akhir pekan') : null,
+                'ringkasan' => [
+                    'total' => count($employees),
+                    'hadir' => count($hadir),
+                    'tidak_hadir' => count($tidakHadir),
+                    'cuti_disetujui' => count(array_filter($tidakHadir, fn ($x) => $x['status'] === 'approved')),
+                    'cuti_menunggu' => count(array_filter($tidakHadir, fn ($x) => $x['status'] === 'pending')),
+                    'tanpa_keterangan' => count(array_filter($tidakHadir, fn ($x) => $x['status'] === 'none')),
+                    'belum_clock_out_kemarin' => count($belumOut),
+                ],
+                'hadir' => $hadir,
+                'tidak_hadir' => $tidakHadir,
+                'tanggal_kemarin' => $kemarin,
+                'belum_clock_out' => $belumOut,
+            ];
+        });
+
+        return new PostResource(true, 'data', $payload);
+    }
 }

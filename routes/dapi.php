@@ -217,6 +217,7 @@ Route::controller(ProfilController::class)->group(function(){
 Route::controller(AbsensiController::class)->group(function(){
      Route::post('hr/clock_in', 'clock_in')->middleware("role:Employee");
      Route::get('hr/office', 'getOffice')->middleware("role:Employee");
+     Route::get('hr/dashboard-absensi', 'dashboard')->middleware("role:Employee");
 });
 
 Route::controller(MobilController::class)->group(function(){
