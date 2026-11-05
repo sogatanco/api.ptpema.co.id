@@ -119,13 +119,53 @@ class AbsensiController extends Controller
                 ->join('ptpemaco_hr_production.positions_grades as pg', 'pg.id', '=', 'sg.position_grade_id')
                 ->whereRaw('c.id = (select x.id from ptpemaco_hr_production.employee_cf_scores x where x.employe_id = c.employe_id and x.active = 1 order by x.periode desc, x.id desc limit 1)')
                 ->select('c.employe_id', 'pg.grade_name');
-            return DB::table('struktur_lengkap_oke as s')
+            $emp = DB::table('struktur_lengkap_oke as s')
                 ->leftJoinSub($grade, 'g', 'g.employe_id', '=', 's.employe_id')
                 ->where('s.employe_active', 1)
-                ->select('s.employe_id', 's.direct_atasan', 's.first_name as nama', 's.position_name as jabatan', 's.organization_name as divisi', 's.id_base', 'g.grade_name as grade')
+                ->select('s.employe_id', 's.position_id', 's.direct_atasan', 's.first_name as nama', 's.position_name as jabatan', 's.organization_name as divisi', 's.id_base', 'g.grade_name as grade')
                 ->orderBy('s.id_base')
                 ->orderBy('s.first_name')
                 ->get();
+
+            // Jabatan kosong (vacant): jabatan di HR yang tidak dipegang siapa pun (bukan jabatan utama karyawan aktif dan tidak ada PS/PIC aktif),
+            // ditempelkan di bawah pemegang jabatan atasannya; bila atasannya juga kosong, di bawah jabatan kosong itu.
+            $holder = [];
+            foreach ($emp as $r) {
+                $holder[$r->position_id] = $r->employe_id;
+            }
+            $pics = DB::table('ptpemaco_hr_production.pic as c')
+                ->join('ptpemaco_hr_production.users as u', 'u.employe_id', '=', 'c.employe_id')
+                ->where('u.active', 1)
+                ->whereRaw('curdate() between c.start_date and c.end_date')
+                ->whereNotNull('c.position_id')
+                ->get(['c.position_id', 'c.employe_id']);
+            foreach ($pics as $r) {
+                $holder[$r->position_id] = $r->employe_id;
+            }
+            $levels = ['Direktur' => 4, 'Manajer' => 7, 'Supervisor' => 8, 'Staf' => 9, 'Tenaga Pendukung' => 10];
+            $vacant = [];
+            $positions = DB::table('ptpemaco_hr_production.positions as p')
+                ->join('ptpemaco_hr_production.divisions as d', 'd.id', '=', 'p.division_id')
+                ->get(['p.id', 'p.parent_id', 'p.position_name', 'p.position_level', 'd.division_name']);
+            foreach ($positions as $p) {
+                if (isset($holder[$p->id]) || $p->position_level === 'Komisaris' || !$p->parent_id) {
+                    continue;
+                }
+                $vacant[] = (object) [
+                    'employe_id' => 'VAKAN-' . $p->id,
+                    'direct_atasan' => $holder[$p->parent_id] ?? ('VAKAN-' . $p->parent_id),
+                    'nama' => 'Vacant',
+                    'jabatan' => $p->position_name,
+                    'divisi' => $p->division_name,
+                    'id_base' => $levels[$p->position_level] ?? 9,
+                    'grade' => null,
+                    'vakan' => true,
+                ];
+            }
+            return $emp->map(function ($r) {
+                unset($r->position_id);
+                return $r;
+            })->concat($vacant)->values();
         });
         return new PostResource(true, 'data', $rows);
     }
