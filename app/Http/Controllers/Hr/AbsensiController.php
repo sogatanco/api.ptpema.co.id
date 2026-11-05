@@ -113,7 +113,7 @@ class AbsensiController extends Controller
     //  dengan_keterangan       : tidak clock in, tetapi ada cuti/dinas (disetujui atau menunggu) pada hari itu
     //  tanpa_keterangan        : tidak clock in dan tidak ada keterangan apa pun
     // Hanya hari kerja (Senin-Jumat, bukan libur HR); hari ini baru dihitung setelah pukul 17:00.
-    // Seorang karyawan dihitung sejak hari pertama ia clock in.
+    // Seorang karyawan dihitung sejak hari pertama ia clock in (atau punya pengajuan clock in yang disetujui).
     public function statistik()
     {
         $now = Carbon::now();
@@ -144,11 +144,41 @@ class AbsensiController extends Controller
                     ->whereBetween('a.date', [$yearStart->toDateString(), $upToS])
                     ->whereNotNull('a.time_in')
                     ->whereIn('a.employe_id', $ids)
-                    ->selectRaw('a.date, a.employe_id, MAX(CASE WHEN a.is_late = 1 OR (a.date < ? AND s.id IS NOT NULL AND a.time_in > ADDTIME(s.time_in, SEC_TO_TIME(s.late_tolerance * 60))) THEN 1 ELSE 0 END) as late', [$firstFlag])
+                    ->selectRaw('a.date, a.employe_id, MAX(CASE WHEN a.is_late = 1 OR (a.date < ? AND s.id IS NOT NULL AND a.time_in > ADDTIME(s.time_in, SEC_TO_TIME(s.late_tolerance * 60))) THEN 1 ELSE 0 END) as late, MIN(a.schedule_id) as sid', [$firstFlag])
                     ->groupBy('a.date', 'a.employe_id')
                     ->get();
                 foreach ($rows as $r) {
-                    $att[$r->date][$r->employe_id] = (int) $r->late;
+                    $att[$r->date][$r->employe_id] = ['late' => (int) $r->late, 'sid' => $r->sid];
+                }
+            }
+
+            // pengajuan absensi yang disetujui (terlambat/Unplanned dan absen luar area): jam pengajuan menggantikan jam absen asli,
+            // dan karyawan dianggap hadir walau tidak punya absen
+            $limits = [];
+            foreach (DB::table($hr . '.schedules')->get() as $s) {
+                $limits[$s->id] = Carbon::createFromFormat('H:i:s', $s->time_in)->addMinutes((int) $s->late_tolerance)->format('H:i');
+            }
+            $req = [];
+            if ($upTo->gte($yearStart)) {
+                $reqRows = DB::table($hr . '.request_attendances')
+                    ->where('status', 'approved')
+                    ->where(function ($q) {
+                        $q->where('request_type_id', 2)->orWhereNull('request_type_id');
+                    })
+                    ->whereNotNull('clock_in')
+                    ->where('clock_in', '<>', '')
+                    ->whereBetween('date', [$yearStart->toDateString(), $upToS])
+                    ->whereIn('employe_id', $ids)
+                    ->select('employe_id', 'date', 'clock_in')
+                    ->get();
+                foreach ($reqRows as $r) {
+                    $jam = substr(trim($r->clock_in), 0, 5);
+                    if (!isset($req[$r->date][$r->employe_id]) || $jam < $req[$r->date][$r->employe_id]) {
+                        $req[$r->date][$r->employe_id] = $jam;
+                    }
+                    if (!isset($first[$r->employe_id]) || $r->date < $first[$r->employe_id]) {
+                        $first[$r->employe_id] = $r->date;
+                    }
                 }
             }
 
@@ -198,8 +228,15 @@ class AbsensiController extends Controller
                     if (!isset($first[$id]) || $first[$id] > $ds) {
                         continue;
                     }
-                    if (isset($att[$ds][$id])) {
-                        $c[$att[$ds][$id] ? 'terlambat' : 'tepat_waktu']++;
+                    $a = $att[$ds][$id] ?? null;
+                    $rq = $req[$ds][$id] ?? null;
+                    if ($a || $rq) {
+                        $late = $a ? (int) $a['late'] : 0;
+                        if ($rq) {
+                            $limit = $limits[$a['sid'] ?? (Carbon::parse($ds)->isFriday() ? 8 : 7)] ?? null;
+                            $late = $limit !== null ? (int) ($rq > $limit) : $late;
+                        }
+                        $c[$late ? 'terlambat' : 'tepat_waktu']++;
                     } elseif (isset($leave[$ds][$id])) {
                         $c['dengan_keterangan']++;
                     } else {
