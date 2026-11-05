@@ -146,11 +146,11 @@ class AbsensiController extends Controller
             $positions = DB::table('ptpemaco_hr_production.positions as p')
                 ->join('ptpemaco_hr_production.divisions as d', 'd.id', '=', 'p.division_id')
                 ->get(['p.id', 'p.parent_id', 'p.position_name', 'p.position_level', 'd.division_name']);
-            // jabatan kosong yang ditampilkan: bukan Komisaris, bukan "Manajer Eksekutif", bukan jabatan "Koordinator" (mis. Koordinator Driver:
+            // jabatan kosong yang ditampilkan: hanya tingkat manajer dan supervisor (staf kosong tidak ditampilkan), bukan Komisaris, bukan "Manajer Eksekutif", bukan jabatan "Koordinator" (mis. Koordinator Driver:
             // bawahannya langsung di bawah atasan koordinator itu), dan punya atasan
             $vacantPos = [];
             foreach ($positions as $p) {
-                if (isset($holder[$p->id]) || $p->position_level === 'Komisaris' || !$p->parent_id || stripos($p->position_name, 'Manajer Eksekutif') === 0 || stripos($p->position_name, 'Koordinator') !== false) {
+                if (isset($holder[$p->id]) || $p->position_level === 'Komisaris' || !$p->parent_id || stripos($p->position_name, 'Manajer Eksekutif') === 0 || stripos($p->position_name, 'Koordinator') !== false || ($levels[$p->position_level] ?? 9) >= 9) {
                     continue;
                 }
                 $vacantPos[$p->id] = $p;
