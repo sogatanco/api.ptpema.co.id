@@ -102,6 +102,11 @@ class AbsensiController extends Controller
             $employees = DB::table('employees_hr as e')
                 ->leftJoin('struktur_lengkap_oke as s', 's.employe_id', '=', 'e.employe_id')
                 ->where('e.employe_active', 1)
+                // komisaris, direktur (id_base 1-4) dan Sekretaris Komisaris (SEKKOM-01) tidak ditampilkan
+                ->where(function ($q) {
+                    $q->whereNull('s.id_base')->orWhereNotIn('s.id_base', [1, 2, 3, 4]);
+                })
+                ->where('e.employe_id', '<>', 'SEKKOM-01')
                 ->select('e.employe_id', 'e.first_name', 's.position_name', 's.organization_name')
                 ->get();
 
