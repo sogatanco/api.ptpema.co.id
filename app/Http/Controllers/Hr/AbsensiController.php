@@ -247,21 +247,30 @@ class AbsensiController extends Controller
                 ->keyBy('employe_id');
             $schedules = DB::table($hr . '.schedules')->get()->keyBy('id');
 
-            // pengajuan absensi untuk clock in hari ini (pengajuan terlambat): disetujui didahulukan, lalu menunggu, lalu ditolak
+            // pengajuan absensi untuk clock in hari ini: pengajuan terlambat (tipe Unplanned) dan absen dari luar area (tanpa tipe);
+            // disetujui didahulukan, lalu menunggu, lalu ditolak. Keterangan bebas yang diisi karyawan sengaja tidak ditampilkan.
             $pengajuan = [];
             $reqRows = DB::table($hr . '.request_attendances as r')
                 ->leftJoin($hr . '.unplanned_reasons as u', 'u.id', '=', 'r.unplanned_reason_id')
                 ->where('r.date', $date)
-                ->where('r.request_type_id', 2)
+                ->where(function ($q) {
+                    $q->where('r.request_type_id', 2)->orWhereNull('r.request_type_id');
+                })
                 ->whereNotNull('r.clock_in')
                 ->where('r.clock_in', '<>', '')
                 ->whereIn('r.status', ['approved', 'pending', 'rejected'])
-                ->select('r.employe_id', 'r.status', 'r.clock_in', 'u.name as alasan')
+                ->select('r.employe_id', 'r.status', 'r.clock_in', 'r.request_type_id', 'u.name as alasan')
                 ->orderByRaw("FIELD(r.status, 'approved', 'pending', 'rejected')")
                 ->get();
             foreach ($reqRows as $r) {
                 if (!isset($pengajuan[$r->employe_id])) {
-                    $pengajuan[$r->employe_id] = ['status' => $r->status, 'alasan' => $r->alasan, 'jam' => substr(trim($r->clock_in), 0, 5)];
+                    $luarArea = $r->request_type_id === null;
+                    $pengajuan[$r->employe_id] = [
+                        'status' => $r->status,
+                        'alasan' => $luarArea ? 'Absen luar area' : $r->alasan,
+                        'jam' => substr(trim($r->clock_in), 0, 5),
+                        'jenis' => $luarArea ? 'luar_area' : 'terlambat',
+                    ];
                 }
             }
 
@@ -362,9 +371,17 @@ class AbsensiController extends Controller
                     $hadir[] = $base + ['clock_in' => $jam, 'terlambat' => $late, 'dari_pengajuan' => $dariPengajuan, 'pengajuan' => $pg, '_t' => $jam . ':00'];
                 } elseif (!$libur) {
                     $l = $leaves[$e->employe_id] ?? null;
+                    $status = $l['status'] ?? 'none';
+                    $jenis = $l['jenis'] ?? null;
+                    if (!$l && $pg && $pg['status'] === 'pending') {
+                        // belum clock in, tetapi ada pengajuan yang menunggu persetujuan
+                        $status = 'pending';
+                        $jenis = $pg['jenis'] === 'luar_area' ? 'Pengajuan absen luar area' : 'Pengajuan clock in';
+                    }
                     $tidakHadir[] = $base + [
-                        'status' => $l['status'] ?? 'none',
-                        'jenis' => $l['jenis'] ?? null,
+                        'status' => $status,
+                        'jenis' => $jenis,
+                        'pengajuan' => ($pg && $pg['status'] === 'rejected') ? $pg : null,
                     ];
                 }
             }
