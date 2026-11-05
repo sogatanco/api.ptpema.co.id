@@ -131,19 +131,30 @@ class AbsensiController extends Controller
                 $leaves[$r->employe_id] = ['status' => $r->status, 'jenis' => trim($r->jenis . ($r->sub ? ' - ' . $r->sub : ''))];
             }
 
-            // karyawan yang kemarin sudah clock in tetapi belum clock out
-            $kemarin = Carbon::parse($date)->subDay()->toDateString();
-            $noOut = Attandence::where('date', $kemarin)
-                ->whereNotNull('time_in')
-                ->whereNull('time_out')
-                ->selectRaw('employe_id, MIN(time_in) as time_in')
-                ->groupBy('employe_id')
-                ->get()
-                ->keyBy('employe_id');
+            // hari libur = Sabtu/Minggu atau tercatat di tabel holidays HR
+            $liburKet = function ($d) use ($hr) {
+                $holiday = DB::table($hr . '.holidays')->where('holiday_date', $d)->where('is_deleted', 0)->value('description');
+                if ($holiday !== null) {
+                    return $holiday !== '' ? $holiday : 'Hari libur';
+                }
+                return Carbon::parse($d)->isWeekend() ? 'Akhir pekan' : null;
+            };
 
-            $holiday = DB::table($hr . '.holidays')->where('holiday_date', $date)->where('is_deleted', 0)->value('description');
-            $isWeekend = Carbon::parse($date)->isWeekend();
-            $libur = $holiday !== null || $isWeekend;
+            // karyawan yang kemarin sudah clock in tetapi belum clock out; tidak ditampilkan bila kemarin hari libur
+            $kemarin = Carbon::parse($date)->subDay()->toDateString();
+            $noOut = collect();
+            if ($liburKet($kemarin) === null) {
+                $noOut = Attandence::where('date', $kemarin)
+                    ->whereNotNull('time_in')
+                    ->whereNull('time_out')
+                    ->selectRaw('employe_id, MIN(time_in) as time_in')
+                    ->groupBy('employe_id')
+                    ->get()
+                    ->keyBy('employe_id');
+            }
+
+            $liburHariIni = $liburKet($date);
+            $libur = $liburHariIni !== null;
 
             $hadir = [];
             $tidakHadir = [];
@@ -182,7 +193,7 @@ class AbsensiController extends Controller
             return [
                 'tanggal' => $date,
                 'diperbarui' => Carbon::now()->format('H:i:s'),
-                'libur' => $libur ? ($holiday ?? 'Akhir pekan') : null,
+                'libur' => $liburHariIni,
                 'ringkasan' => [
                     'total' => count($employees),
                     'hadir' => count($hadir),
