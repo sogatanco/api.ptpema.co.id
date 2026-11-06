@@ -284,6 +284,7 @@ class MeetingController extends Controller
             . "Waktu: {$booking->start_time} - {$booking->end_time}\n"
             . "Peserta: {$booking->participants}\n"
             . "Detail Konsumsi: " . ($booking->consumption_detail ?: '-') . "\n"
+            . "Project / Renbis: " . ($booking->renbis_name ?: '-') . "\n"
             . "No HP PIC: {$requesterPhoneLabel}\n"
             . "PIC: {$creatorName}";
 
@@ -360,6 +361,7 @@ class MeetingController extends Controller
         $zoomRequired = $request->input('zoom');
         $consumptionRequired = $request->input('consumption');
         $consumptionDetail = $request->input('consumption_detail');
+        $renbisId = $request->input('renbis_id');
         $room = $request->input('room');
         $agenda = $request->input('agenda', $topic);
         $timezone = $request->input('timezone', config('app.timezone', 'Asia/Jakarta'));
@@ -377,6 +379,20 @@ class MeetingController extends Controller
 
         if (Carbon::parse($normalizedEnd)->lessThanOrEqualTo(Carbon::parse($normalizedStart))) {
             return new PostResource(false, 'end_time must be after start_time', []);
+        }
+
+        $renbisName = null;
+
+        if ((int) $consumptionRequired === 1) {
+            $renbis = empty($renbisId) ? null : \App\Models\Sppd\Renbis::find($renbisId);
+
+            if (!$renbis) {
+                return new PostResource(false, 'Project / renbis wajib dipilih untuk permintaan konsumsi', []);
+            }
+
+            $renbisName = $renbis->renbis;
+        } else {
+            $renbisId = null;
         }
 
         $roomConflict = $this->getRoomConflict($room, $normalizedStart, $normalizedEnd);
@@ -432,6 +448,8 @@ class MeetingController extends Controller
             'zoom_required' => $zoomRequired,
             'consumption_required' => $consumptionRequired,
             'consumption_detail' => $consumptionDetail,
+            'renbis_id' => $renbisId,
+            'renbis_name' => $renbisName,
             'room' => $room,
             'zoom_id' => $zoomId,
             'created_by' => Employe::employeId(),

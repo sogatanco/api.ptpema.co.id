@@ -20,6 +20,8 @@ class BookingRoom extends Model
         'zoom_required',
         'consumption_required',
         'consumption_detail',
+        'renbis_id',
+        'renbis_name',
         'room',
         'zoom_id',
         'created_by',
