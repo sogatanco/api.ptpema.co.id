@@ -148,6 +148,8 @@ class DashboardTvController extends Controller
             'items' => $data['items'],
             'ringkasan' => collect($data['items'])->countBy('status')->all(),
             'pusat' => config('traffic.pusat'),
+            // lapisan warna jalan langsung (hijau lancar, kuning padat, merah macet) untuk peta; diperbarui TomTom sekitar tiap menit
+            'tile_url' => 'https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=' . $key,
         ]);
     }
 
