@@ -153,7 +153,7 @@ class DashboardTvController extends Controller
 
     protected function ukurTitik(array $t, string $key, array $batas): array
     {
-        $out = ['nama' => $t['nama'], 'status' => 'tidak_ada_data', 'kecepatan' => null, 'normal' => null, 'rasio' => null];
+        $out = ['nama' => $t['nama'], 'lat' => $t['lat'], 'lon' => $t['lon'], 'status' => 'tidak_ada_data', 'kecepatan' => null, 'normal' => null, 'rasio' => null];
 
         try {
             $res = Http::timeout(8)->get('https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json', [
