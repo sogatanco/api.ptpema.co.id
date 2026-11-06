@@ -4,6 +4,7 @@ use App\Http\Controllers\Adm\StaticAdmController;
 use App\Http\Controllers\Adm\SuratController;
 use App\Http\Controllers\Adm\SuratMasuk;
 use App\Http\Controllers\Hr\AbsensiController;
+use App\Http\Controllers\Hr\DashboardTvController;
 use App\Http\Controllers\Hr\ProfilController;
 use App\Http\Controllers\MobilOp\MobilController;
 use Illuminate\Http\Request;
@@ -220,6 +221,11 @@ Route::controller(AbsensiController::class)->group(function(){
      Route::get('hr/dashboard-absensi', 'dashboard')->middleware("role:Employee");
      Route::get('hr/dashboard-absensi/statistik', 'statistik')->middleware("role:Employee");
      Route::get('hr/struktur-organisasi', 'strukturOrganisasi')->middleware("role:Employee");
+});
+
+Route::controller(DashboardTvController::class)->group(function(){
+     Route::get('hr/dashboard-tv/slides', 'slides')->middleware("role:Employee");
+     Route::put('hr/dashboard-tv/slides', 'updateSlides')->middleware("role:PICDashboard");
 });
 
 Route::controller(MobilController::class)->group(function(){
