@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 
 class DashboardTvController extends Controller
@@ -111,5 +113,82 @@ class DashboardTvController extends Controller
         });
 
         return $this->slides();
+    }
+
+    // kondisi lalu lintas per titik: Lengang / Ramai / Macet dari kecepatan sekarang dibanding kecepatan lancar
+    public function lalulintas()
+    {
+        $key = config('traffic.tomtom_key');
+
+        if (empty($key)) {
+            return new PostResource(true, 'lalu lintas', ['configured' => false, 'items' => [], 'pusat' => config('traffic.pusat')]);
+        }
+
+        $data = Cache::remember('dashboard_tv_lalulintas', (int) config('traffic.cache_seconds', 300), function () use ($key) {
+            $batas = config('traffic.batas');
+            $items = [];
+
+            foreach (config('traffic.titik') as $t) {
+                $items[] = $this->ukurTitik($t, $key, $batas);
+            }
+
+            $ada = array_values(array_filter($items, fn ($i) => $i['status'] !== 'tidak_ada_data'));
+
+            // gagal total (kunci salah / kuota habis): jangan simpan, coba lagi pada permintaan berikutnya
+            return ['ok' => count($ada) > 0, 'updated_at' => now()->toIso8601String(), 'items' => $items];
+        });
+
+        if (!$data['ok']) {
+            Cache::forget('dashboard_tv_lalulintas');
+        }
+
+        return new PostResource(true, 'lalu lintas', [
+            'configured' => true,
+            'updated_at' => $data['updated_at'],
+            'items' => $data['items'],
+            'ringkasan' => collect($data['items'])->countBy('status')->all(),
+            'pusat' => config('traffic.pusat'),
+        ]);
+    }
+
+    protected function ukurTitik(array $t, string $key, array $batas): array
+    {
+        $out = ['nama' => $t['nama'], 'status' => 'tidak_ada_data', 'kecepatan' => null, 'normal' => null, 'rasio' => null];
+
+        try {
+            $res = Http::timeout(8)->get('https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json', [
+                'point' => $t['lat'] . ',' . $t['lon'],
+                'unit' => 'KMPH',
+                'key' => $key,
+            ]);
+
+            $f = $res->successful() ? $res->json('flowSegmentData') : null;
+
+            if (!$f || empty($f['freeFlowSpeed'])) {
+                return $out;
+            }
+
+            $now = (float) ($f['currentSpeed'] ?? 0);
+            $free = (float) $f['freeFlowSpeed'];
+
+            if (!empty($f['roadClosure'])) {
+                $now = 0.0;
+            }
+
+            $rasio = $free > 0 ? min(1, $now / $free) : null;
+
+            if ($rasio === null) {
+                return $out;
+            }
+
+            $out['kecepatan'] = (int) round($now);
+            $out['normal'] = (int) round($free);
+            $out['rasio'] = round($rasio, 2);
+            $out['status'] = $rasio >= $batas['lengang'] ? 'lengang' : ($rasio >= $batas['ramai'] ? 'ramai' : 'macet');
+        } catch (\Throwable $e) {
+            // satu titik gagal tidak menghentikan titik lain
+        }
+
+        return $out;
     }
 }

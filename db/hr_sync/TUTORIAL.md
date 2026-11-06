@@ -17,6 +17,7 @@ Aturan: kerjakan berurutan; bila TES sebuah langkah tidak sesuai, jalankan ROLLB
 | opsional | `23_hr_public_keys_apply.sql` | public key e-sign dipusatkan di HR (perlu persetujuan HR) | `24` |
 | 9 | `35_apam_tanpa_employees_apply.sql` | apam tanpa tabel employees/positions/organizations/board_organizations (diganti view HR); hanya `users` + kolom `employe_id`; kode branch `hr-only` | `36` |
 | opsional | `51_surat_approval_tanpa_ganda.sql` | trigger surat (buat dan update): satu orang satu langkah approval (tanpa paraf ganda / paraf + sign), hanya untuk surat berikutnya; surat yang sudah ada tidak diubah; `mysql --comments` | `52` |
+| opsional | `55_surat_alur_divisi_bawah_dirut.sql` | surat dari divisi langsung di bawah Direktur Utama (Sekretariat Perusahaan, SPI, Manajemen Resiko) yang ditandatangani Direktur Utama: paraf PUK, paraf Direktur Umum dan Keuangan, sign Direktur Utama; sesudah 51; `mysql --comments` | `56` |
 | nanti | `25_apam_cleanup_apply.sql` | tabel apam tak terpakai diganti nama `zz_hapus_*` | `26` |
 
 ## Langkah 0. Persiapan

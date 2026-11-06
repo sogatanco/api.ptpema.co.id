@@ -226,6 +226,7 @@ Route::controller(AbsensiController::class)->group(function(){
 Route::controller(DashboardTvController::class)->group(function(){
      Route::get('hr/dashboard-tv/slides', 'slides')->middleware("role:Employee");
      Route::put('hr/dashboard-tv/slides', 'updateSlides')->middleware("role:PICDashboard");
+     Route::get('hr/dashboard-tv/lalu-lintas', 'lalulintas')->middleware("role:Employee");
 });
 
 Route::controller(MobilController::class)->group(function(){
