@@ -10,6 +10,7 @@ use App\Models\Adm\SuratBackdate;
 use App\Models\Employe;
 use App\Models\Structure;
 use App\Services\SuratBackdateService;
+use App\Services\SuratLogService;
 use App\Services\SuratTtdBasahService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -156,6 +157,13 @@ class SuratBackdateController extends Controller
                 $basah = filter_var($p['ttdBasah'] ?? false, FILTER_VALIDATE_BOOLEAN);
                 $batas = $basah ? SuratTtdBasahService::batasNotifikasi() : 0;
                 $surat->save();
+                $pilihan = collect(SuratBackdateService::saran($d))->firstWhere('nomor', (string) $request->nomor);
+                SuratLogService::catat($surat->no_document, $req->requested_by, 'Mengajukan surat bertanggal mundur (backdate) untuk tanggal ' . $d->format('d/m/Y'), $req->created_at);
+                SuratLogService::catat(
+                    $surat->no_document,
+                    Employe::employeId(),
+                    'Memilih nomor ' . $surat->nomor_surat . ' untuk surat bertanggal mundur (' . (($pilihan['mode'] ?? '') === 'kosong' ? 'nomor kosong' : 'nomor sisipan') . '), tanggal surat ' . $d->format('d/m/Y')
+                );
                 if ($basah) {
                     SuratTtdBasahService::tandai($surat, $batas);
                 }

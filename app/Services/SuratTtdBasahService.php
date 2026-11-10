@@ -34,5 +34,6 @@ class SuratTtdBasahService
     {
         SuratTtdBasah::firstOrCreate(['surat_id' => $s->id]);
         self::hapusNotifikasi($s, $batas);
+        SuratLogService::catat($s->no_document, $s->submitted_by, 'Membuat surat tanda tangan manual (tanpa paraf dan tanda tangan di sistem)');
     }
 }

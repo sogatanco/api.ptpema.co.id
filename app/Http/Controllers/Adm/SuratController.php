@@ -10,6 +10,7 @@ use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
 use App\Models\Adm\SuratTtdBasah;
 use App\Models\Adm\SuratVoid;
+use App\Services\SuratLogService;
 use App\Services\SuratTtdBasahService;
 use Illuminate\Support\Facades\DB;
 use App\Services\SuratTteService;
@@ -95,6 +96,7 @@ class SuratController extends Controller
         }
 
         SuratVoid::create(['surat_id' => $surat->id, 'nomor_surat' => $surat->nomor_surat, 'voided_by' => $me, 'alasan' => (string) $request->alasan]);
+        SuratLogService::catat($surat->no_document, $me, 'Menandai surat void (nomor ' . $surat->nomor_surat . ' tidak digunakan lagi)' . (trim((string) $request->alasan) !== '' ? ': ' . trim((string) $request->alasan) : ''));
 
         return new PostResource(true, 'Surat ' . $surat->nomor_surat . ' ditandai void; nomornya bisa dipakai untuk backdate.', []);
     }
@@ -134,6 +136,7 @@ class SuratController extends Controller
         Storage::disk('public_adm')->put($nama, $isi);
         $lama = $baris->file_ttd;
         $baris->update(['file_ttd' => $nama, 'mime' => $mime, 'uploaded_by' => Employe::employeId()]);
+        SuratLogService::catat($surat->no_document, Employe::employeId(), $lama ? 'Mengganti berkas surat bertanda tangan manual' : 'Mengunggah berkas surat bertanda tangan manual');
         if ($lama && $lama !== $nama) {
             Storage::disk('public_adm')->delete($lama);
         }
