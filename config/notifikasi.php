@@ -9,7 +9,7 @@ return [
         'aktif' => env('NOTIF_WA_AKTIF', false),
         // hanya event yang butuh tindakan penerima yang dikirim ke WhatsApp
         'event' => [
-            'adm.review', 'adm.surat_masuk', 'adm.cc',
+            'adm.review', 'adm.backdate_diajukan', 'adm.surat_masuk', 'adm.cc',
             'sppd.review', 'mobil.permintaan', 'asset.permintaan_service',
         ],
     ],

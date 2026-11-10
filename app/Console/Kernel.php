@@ -13,6 +13,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('contract:reminder')->daily();
+        // satu pesan WA notifikasi per menit
+        $schedule->command('notifikasi:kirim-wa')->everyMinute()->withoutOverlapping();
     }
 
     /**

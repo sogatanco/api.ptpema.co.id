@@ -5,6 +5,7 @@ namespace App\Services\Notifikasi;
 use App\Models\Adm\CC;
 use App\Models\Adm\Disposisi;
 use App\Models\Adm\Surat;
+use App\Models\Adm\SuratBackdate;
 use App\Models\Adm\SuratMasuk;
 use App\Models\Adm\SuratTtdBasah;
 use App\Models\Adm\SuratVoid;
@@ -29,8 +30,11 @@ class Peristiwa
     {
         // ADM: surat keluar
         Surat::created(fn ($s) => self::aman(fn () => self::suratReview($s)));
-        Surat::updated(fn ($s) => self::aman(fn () => self::suratReview($s)));
+        Surat::updated(fn ($s) => self::aman(fn () => self::suratReview($s, true)));
         VerifStep::updated(fn ($v) => self::aman(fn () => self::langkahSelesai($v)));
+        // ADM: permintaan nomor surat bertanggal mundur (backdate)
+        SuratBackdate::created(fn ($r) => self::aman(fn () => self::backdateDiajukan($r)));
+        SuratBackdate::updated(fn ($r) => self::aman(fn () => self::backdateDiproses($r)));
         // ADM: surat masuk, disposisi, cc
         SuratMasuk::created(fn ($m) => self::aman(fn () => self::suratMasuk($m)));
         Disposisi::created(fn ($d) => self::aman(fn () => self::disposisi($d)));
@@ -80,38 +84,44 @@ class Peristiwa
 
     // ---------- ADM surat keluar ----------
 
-    private static function suratReview(Surat $s): void
+    private static function suratReview(Surat $s, bool $diperbarui = false): void
     {
         $id = (int) $s->id;
-        $s->getConnection()->afterCommit(function () use ($id) {
+        $s->getConnection()->afterCommit(function () use ($id, $diperbarui) {
             // surat TTD manual tidak melewati alur review, surat void sudah tidak dipakai
             if (array_key_exists($id, SuratTtdBasah::peta()) || in_array($id, SuratVoid::ids(), true)) {
                 return;
             }
-            self::aman(function () use ($id) {
+            self::aman(function () use ($id, $diperbarui) {
                 $surat = Surat::find($id);
                 $penerima = $surat ? VerifStep::where('id_doc', $surat->no_document)->orderBy('step')->value('id_employe') : null;
-                if (!$penerima) {
-                    return;
+                if ($penerima) {
+                    self::reviewSurat($surat, $penerima, $surat->submitted_by, $diperbarui);
                 }
-                $pengaju = self::nama($surat->submitted_by);
-                Hub::kirim($penerima, $surat->submitted_by, [
-                    'modul' => 'adm',
-                    'event' => 'adm.review',
-                    'judul' => 'Mohon approval surat ' . $surat->nomor_surat,
-                    'isi' => "Mohon approval dokumen surat nomor {$surat->nomor_surat} perihal \"{$surat->perihal}\" kepada {$surat->kepada}. Diajukan oleh {$pengaju}.",
-                    'url' => 'adm',
-                    'ref' => $surat->no_document,
-                    'data' => ['nomor_surat' => $surat->nomor_surat],
-                ]);
             });
         });
+    }
+
+    /** permintaan approval surat ke satu reviewer (langkah pertama saat diajukan atau diperbarui, langkah berikutnya setelah reviewer sebelumnya approve) */
+    private static function reviewSurat(Surat $surat, string $penerima, ?string $actor, bool $diperbarui = false): void
+    {
+        $pengaju = self::nama($surat->submitted_by);
+        Hub::kirim($penerima, $actor, [
+            'modul' => 'adm',
+            'event' => 'adm.review',
+            'judul' => ($diperbarui ? 'Surat diperbarui, mohon approval ulang ' : 'Mohon approval surat ') . $surat->nomor_surat,
+            'isi' => ($diperbarui ? "Surat nomor {$surat->nomor_surat} telah diperbarui oleh {$pengaju} dan perlu di-approve ulang. " : '') . "Mohon approval dokumen surat nomor {$surat->nomor_surat} perihal \"{$surat->perihal}\" kepada {$surat->kepada}. Diajukan oleh {$pengaju}.",
+            'url' => 'adm',
+            'ref' => $surat->no_document,
+            'data' => ['nomor_surat' => $surat->nomor_surat],
+        ]);
     }
 
     /** satu langkah verifikasi selesai: surat (ADM) memberi kabar ke pembuat, SPPD ke pemohon dan reviewer berikutnya */
     private static function langkahSelesai(VerifStep $v): void
     {
-        if (!$v->wasChanged('status') || !in_array($v->status, ['approve', 'reject'], true)) {
+        // frontend ADM dan SPPD mengirim 'rejected'
+        if (!$v->wasChanged('status') || !in_array($v->status, ['approve', 'reject', 'rejected'], true)) {
             return;
         }
         $setuju = $v->status === 'approve';
@@ -134,6 +144,14 @@ class Peristiwa
                 'url' => 'adm',
                 'ref' => $v->id_doc,
             ]);
+            // reviewer langkah berikutnya baru diminta approval setelah langkah ini disetujui
+            if ($setuju && $surat) {
+                $surat = Surat::where('no_document', $v->id_doc)->first();
+                $berikut = VerifStep::where('id_doc', $v->id_doc)->where('step', '>', $v->step)->orderBy('step')->value('id_employe');
+                if ($surat && $berikut) {
+                    self::reviewSurat($surat, $berikut, $v->id_employe);
+                }
+            }
 
             return;
         }
@@ -159,6 +177,59 @@ class Peristiwa
                 self::reviewSppd($sppd, $berikut, $sppd->submitted_by, $laporan ? 'laporan realisasi SPPD' : 'dokumen SPPD');
             }
         }
+    }
+
+    // ---------- ADM backdate ----------
+
+    private static function backdateDiajukan(SuratBackdate $r): void
+    {
+        $id = (int) $r->id;
+        $r->getConnection()->afterCommit(function () use ($id) {
+            self::aman(function () use ($id) {
+                $r = SuratBackdate::find($id);
+                if (!$r) {
+                    return;
+                }
+                $p = json_decode((string) $r->payload, true) ?: [];
+                $tgl = self::tgl(substr((string) $r->getRawOriginal('tanggal'), 0, 10));
+                Hub::kirim(Structure::where('roles', 'like', '%PICAdm%')->pluck('employe_id')->all(), $r->requested_by, [
+                    'modul' => 'adm',
+                    'event' => 'adm.backdate_diajukan',
+                    'judul' => 'Permintaan nomor surat backdate ' . $tgl,
+                    'isi' => 'Mohon pilih nomor untuk surat bertanggal mundur ' . $tgl . ' perihal "' . ($p['perihal'] ?? '-') . '" kepada ' . ($p['kepada'] ?? '-') . '. Diajukan oleh ' . self::nama($r->requested_by) . '.',
+                    'url' => 'adm',
+                    'ref' => 'backdate-' . $id,
+                ]);
+            });
+        });
+    }
+
+    /** permintaan backdate selesai diproses PICAdm: kabari admin yang mengajukan */
+    private static function backdateDiproses(SuratBackdate $r): void
+    {
+        if (!$r->wasChanged('status') || !in_array($r->status, ['selesai', 'ditolak'], true)) {
+            return;
+        }
+        $id = (int) $r->id;
+        $r->getConnection()->afterCommit(function () use ($id) {
+            self::aman(function () use ($id) {
+                $r = SuratBackdate::find($id);
+                if (!$r) {
+                    return;
+                }
+                $selesai = $r->status === 'selesai';
+                Hub::kirim($r->requested_by, $r->processed_by, [
+                    'modul' => 'adm',
+                    'event' => $selesai ? 'adm.backdate_disetujui' : 'adm.backdate_ditolak',
+                    'judul' => $selesai ? 'Permintaan backdate disetujui: ' . $r->nomor_surat : 'Permintaan backdate ditolak',
+                    'isi' => $selesai
+                        ? self::nama($r->processed_by) . " memilih nomor {$r->nomor_surat} untuk surat bertanggal mundur Anda. Surat sudah masuk alur approval."
+                        : self::nama($r->processed_by) . ' menolak permintaan nomor surat backdate Anda.' . (trim((string) $r->alasan_tolak) !== '' ? " Alasan: {$r->alasan_tolak}" : ''),
+                    'url' => 'adm',
+                    'ref' => 'backdate-' . $id,
+                ]);
+            });
+        });
     }
 
     // ---------- ADM surat masuk ----------

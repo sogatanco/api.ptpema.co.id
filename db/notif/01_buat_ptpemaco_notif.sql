@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS notification_deliveries (
     notification_id BIGINT UNSIGNED NOT NULL,
     channel ENUM('webpush','fcm','wa') NOT NULL,
     status ENUM('pending','sent','failed','skipped') NOT NULL DEFAULT 'pending',
-    target VARCHAR(255) NULL COMMENT 'endpoint push, token FCM atau nomor WA (disamarkan)',
+    target VARCHAR(255) NULL COMMENT 'endpoint push, token FCM atau nomor WA (WA antre: nomor utuh, setelah terkirim disamarkan)',
     attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
     error VARCHAR(500) NULL,
     sent_at DATETIME NULL,
