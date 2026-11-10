@@ -9,6 +9,7 @@ use App\Models\Structure;
 use App\Models\Vendor\Perusahaan;
 use App\Models\Notification\NotificationEntityType;
 use App\Models\Notification\Notification;
+use App\Models\Notif\Notifikasi as NotifikasiBaru;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
@@ -135,12 +136,51 @@ class NotificationController extends Controller
 
         return response()->json([
             'status' => true,
-            'data' => $data,
+            'data' => $this->gabungNotifikasiBaru($data, $employeId),
         ], 200);
+    }
+
+    /**
+     * Notifikasi modul ADM, SPPD, Mobil Operasional dan Asset ada di ptpemaco_notif. Bentuknya disamakan dengan notifikasi lama
+     * (id diberi awalan "n") supaya bel di frontend tidak berubah. Kegagalan database baru tidak boleh merusak bel.
+     */
+    private function gabungNotifikasiBaru($lama, $employeId)
+    {
+        if (!config('notifikasi.aktif')) {
+            return $lama;
+        }
+        try {
+            $baru = NotifikasiBaru::where('recipient', $employeId)->whereNull('read_at')->orderByDesc('id')->limit(100)->get()
+                ->map(fn ($n) => [
+                    'id' => 'n' . $n->id,
+                    'entity_id' => null,
+                    'created_at' => $n->created_at,
+                    'type' => strtoupper($n->event),
+                    'message' => $n->isi,
+                    'url' => $n->url,
+                    'query_key' => null,
+                    'entity' => strtoupper($n->modul),
+                    'actor' => $n->actor_name ?: '-',
+                    'position' => $n->judul,
+                ])->all();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $lama;
+        }
+        $gabung = array_merge(is_array($lama) ? $lama : $lama->toArray(), $baru);
+        usort($gabung, fn ($a, $b) => strcmp((string) $b['created_at'], (string) $a['created_at']));
+
+        return $gabung;
     }
 
     public function delete($id)
     {
+        if (is_string($id) && str_starts_with($id, 'n')) {
+            NotifikasiBaru::where('id', (int) substr($id, 1))->where('recipient', Employe::employeId())->update(['read_at' => now()]);
+
+            return response()->json(['status' => true, 'message' => 'Notification has been deleted'], 200);
+        }
         $notification = Notification::find($id);
         $notification->status = 1;
         $notification->save();

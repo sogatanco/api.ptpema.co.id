@@ -223,6 +223,27 @@ return [
             ]) : [],
         ],
 
+        // database notifikasi (web push, FCM, WhatsApp); terpisah dari ptpemaco_apam.notifications yang dipakai daily dan project
+        'notif' => [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('NOTIF_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('NOTIF_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('NOTIF_DB_DATABASE', 'ptpemaco_notif'),
+            'username' => env('NOTIF_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('NOTIF_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
          'layar' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),

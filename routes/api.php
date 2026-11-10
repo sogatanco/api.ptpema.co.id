@@ -176,6 +176,15 @@ Route::controller(NotificationController::class)->group(function(){
     Route::delete('/notification/{id}', "delete")->middleware("role:Employee");
 });
 
+// Web Push dan token perangkat (FCM)
+Route::controller(\App\Http\Controllers\Notification\PushController::class)->group(function(){
+    Route::get('/notifikasi/push/kunci', "kunci")->middleware("role:Employee");
+    Route::post('/notifikasi/push/langganan', "langganan")->middleware("role:Employee");
+    Route::post('/notifikasi/push/berhenti', "berhenti")->middleware("role:Employee");
+    Route::post('/notifikasi/push/uji', "uji")->middleware("role:Employee");
+    Route::post('/notifikasi/perangkat', "perangkat")->middleware("role:Employee");
+});
+
 // client routes
 Route::controller(ClientController::class)->group(function(){
     Route::get('/client', "index")->middleware("client");

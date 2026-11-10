@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Notification\NotificationController;
+use App\Services\Notifikasi\Peristiwa;
 
 class InvController extends Controller
 {
@@ -357,7 +358,9 @@ class InvController extends Controller
 
                 $recipients = Structure::select('employe_id')->where('roles', 'like', '%PicAsset%')->get();
                 $entityId = '#request';
-                NotificationController::new('REQUEST_SERVICE', $recipients, $entityId);
+                if (!Peristiwa::asetService('permintaan', $db, Employe::employeId())) {
+                    NotificationController::new('REQUEST_SERVICE', $recipients, $entityId);
+                }
                 return new PostResource(true, 'success !!', []);
             }
             // return new PostResource(true, 'success', []);
@@ -399,10 +402,12 @@ class InvController extends Controller
 
                 $recipients = $db->request_by;
                 $entityId = '#request';
-                if ($request->status === 'progress') {
-                    NotificationController::new('SERVICE_APPROVED', $recipients, $entityId);
-                } else {
-                    NotificationController::new('SERVICE_REJECTED', $recipients, $entityId);
+                if (!Peristiwa::asetService($request->status === 'progress' ? 'disetujui' : 'ditolak', $db, Employe::employeId())) {
+                    if ($request->status === 'progress') {
+                        NotificationController::new('SERVICE_APPROVED', $recipients, $entityId);
+                    } else {
+                        NotificationController::new('SERVICE_REJECTED', $recipients, $entityId);
+                    }
                 }
 
                 return new PostResource(true, 'success !!', []);
@@ -433,7 +438,9 @@ class InvController extends Controller
             if ($l->save()) {
                 $recipients = $db->request_by;
                 $entityId = '#request';
-                NotificationController::new('SERVICE_DONE', $recipients, $entityId);
+                if (!Peristiwa::asetService('selesai', $db, Employe::employeId())) {
+                    NotificationController::new('SERVICE_DONE', $recipients, $entityId);
+                }
                 return new PostResource(true, 'success !!', []);
             }
         }
