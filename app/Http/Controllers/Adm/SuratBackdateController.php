@@ -113,7 +113,8 @@ class SuratBackdateController extends Controller
     public function setujui(Request $request, $id)
     {
         try {
-            return DB::connection('adm')->transaction(function () use ($request, $id) {
+            $hapus = null;
+            $hasil = DB::connection('adm')->transaction(function () use ($request, $id, &$hapus) {
                 $pen = PenomoranSurat::where('type', 'main')->lockForUpdate()->first();
                 $req = SuratBackdate::lockForUpdate()->findOrFail($id);
                 if ($req->status !== 'menunggu') {
@@ -132,7 +133,7 @@ class SuratBackdateController extends Controller
                     $akhir = 'lampiran/' . $d->year . '/' . $request->nomor . '.pdf';
                     if (Storage::disk('public_adm')->put($akhir, Storage::disk('public_adm')->get($req->file_lampiran))) {
                         $surat->file_lampiran = $akhir;
-                        Storage::disk('public_adm')->delete($req->file_lampiran);
+                        $hapus = $req->file_lampiran;
                     }
                 }
                 $surat->nomor_surat = $this->nomorLengkap((string) $request->nomor, $pen->kode, $d);
@@ -152,7 +153,8 @@ class SuratBackdateController extends Controller
                 $surat->created_at = $d->copy()->setTimeFrom(now());
                 $surat->save();
                 // trigger update_nomor2 menambah last_number pada setiap surat baru; surat backdate tidak boleh memakai nomor hari ini
-                PenomoranSurat::where('type', 'main')->update(['last_number' => $sebelum]);
+                // query builder, bukan model: tabel penomoran_surat tidak punya kolom updated_at
+                DB::connection('adm')->table('penomoran_surat')->where('type', 'main')->update(['last_number' => $sebelum]);
 
                 $req->update([
                     'status' => 'selesai',
@@ -164,6 +166,12 @@ class SuratBackdateController extends Controller
 
                 return new PostResource(true, 'Surat dibuat dengan nomor ' . $surat->nomor_surat, ['nomor_surat' => $surat->nomor_surat]);
             });
+            // file sementara baru dihapus setelah transaksi berhasil; bila dibatalkan, permintaan tetap utuh dan bisa diulang
+            if ($hapus) {
+                Storage::disk('public_adm')->delete($hapus);
+            }
+
+            return $hasil;
         } catch (InvalidArgumentException $e) {
             return $this->gagal($e->getMessage());
         }
