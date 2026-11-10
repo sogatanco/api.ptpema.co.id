@@ -204,6 +204,7 @@ class Peristiwa
                     'isi' => 'Mohon pilih nomor untuk surat bertanggal mundur ' . $tgl . ' perihal "' . ($p['perihal'] ?? '-') . '" kepada ' . ($p['kepada'] ?? '-') . '. Diajukan oleh ' . self::nama($r->requested_by) . '.',
                     'url' => 'adm',
                     'ref' => 'backdate-' . $id,
+                    'termasuk_pelaku' => true,
                 ]);
             });
         });
@@ -232,6 +233,7 @@ class Peristiwa
                         : self::nama($r->processed_by) . ' menolak permintaan nomor surat backdate Anda.' . (trim((string) $r->alasan_tolak) !== '' ? " Alasan: {$r->alasan_tolak}" : ''),
                     'url' => 'adm',
                     'ref' => 'backdate-' . $id,
+                    'termasuk_pelaku' => true,
                 ]);
             });
         });

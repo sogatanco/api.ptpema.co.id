@@ -29,8 +29,10 @@ class Hub
         }
 
         try {
-            // pelaku tidak perlu diberi tahu tentang tindakannya sendiri
-            $daftar = array_values(array_unique(array_filter((array) $penerima, fn ($x) => is_string($x) && $x !== '' && $x !== '-' && $x !== $actor)));
+            // pelaku tidak perlu diberi tahu tentang tindakannya sendiri, kecuali pesan meminta 'termasuk_pelaku'
+            // (mis. backdate: satu orang bisa menjadi AdminAdm sekaligus PICAdm dan tetap perlu menerima permintaannya)
+            $termasukPelaku = !empty($p['termasuk_pelaku']);
+            $daftar = array_values(array_unique(array_filter((array) $penerima, fn ($x) => is_string($x) && $x !== '' && $x !== '-' && ($termasukPelaku || $x !== $actor))));
             if (!$daftar) {
                 return;
             }
