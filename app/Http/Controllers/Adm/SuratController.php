@@ -8,6 +8,7 @@ use App\Models\Adm\ApprovedDocument;
 use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
+use App\Models\Adm\SuratVoid;
 use App\Services\SuratTteService;
 use App\Models\Employe;
 use App\Models\ESign\VerifStep;
@@ -55,9 +56,37 @@ class SuratController extends Controller
 
     }
 
+    // Tandai surat void: surat tidak terpakai lagi dan belum ditandatangani (belum approved penuh). Hanya pembuat surat (atau PICAdm) yang boleh.
+    public function void(Request $request, $id)
+    {
+        $surat = Surat::find($id);
+        if (!$surat) {
+            return response()->json(['success' => false, 'message' => 'Surat tidak ditemukan.'], 404);
+        }
+        $me = Employe::employeId();
+        $dokumen = \DB::connection('esign')->table('documents')->where('doc_id', $surat->no_document)->first();
+        if (($dokumen->created_by ?? null) !== $me && !in_array('PICAdm', auth()->user()->roles ?? [], true)) {
+            return response()->json(['success' => false, 'message' => 'Hanya pembuat surat yang bisa menandai void.'], 403);
+        }
+        if (in_array((int) $surat->id, SuratVoid::ids(), true)) {
+            return response()->json(['success' => false, 'message' => 'Surat ini sudah ditandai void.'], 422);
+        }
+        // boleh selama belum final: paraf sebagian atau penolakan tidak menghalangi; yang sudah ditandatangani tidak bisa di-void
+        if (VerifStep::where('id_doc', $surat->no_document)->where('type', 'sign')->where('status', 'approve')->exists()) {
+            return response()->json(['success' => false, 'message' => 'Surat sudah ditandatangani (approved), tidak bisa di-void.'], 422);
+        }
+
+        SuratVoid::create(['surat_id' => $surat->id, 'nomor_surat' => $surat->nomor_surat, 'voided_by' => $me, 'alasan' => (string) $request->alasan]);
+
+        return new PostResource(true, 'Surat ' . $surat->nomor_surat . ' ditandai void; nomornya bisa dipakai untuk backdate.', []);
+    }
+
     public function update(Request $request)
     {
         $surat = Surat::find($request->id);
+        if ($surat && in_array((int) $surat->id, SuratVoid::ids(), true)) {
+            return response()->json(['success' => false, 'message' => 'Surat ini sudah di-void.'], 422);
+        }
         if ($request->lampiran + 0 > 0 && $surat->file_lampiran !== '') {
             $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->fileLampiran), true);
             $fileName = 'lampiran/' . date('Y') . '/' . strtok($surat->nomor_surat, '/') . '.pdf';
@@ -90,11 +119,16 @@ class SuratController extends Controller
         if ($what === 'approved') {
             $data = ApprovedDocument::where('id_employe', Employe::employeId())->get();
         } elseif ($what === 'review') {
-            $data = ListSurat::where('current_reviewer', Employe::employeId())->latest()->get();
+            // surat void tidak lagi perlu direview
+            $data = ListSurat::where('current_reviewer', Employe::employeId())->whereNotIn('id', SuratVoid::ids())->latest()->get();
         } elseif ($what === 'signed') {
             $data = ApprovedDocument::where('type', 'sign')->latest('created_at')->get();
         } else {
             $data = ListSurat::where('created_by', Employe::employeId())->latest()->get();
+            $void = array_flip(SuratVoid::ids());
+            $data->each(function ($s) use ($void) {
+                $s->void = isset($void[(int) $s->id]);
+            });
         }
 
         return new PostResource(true, 'data surat', $data);
@@ -201,7 +235,11 @@ class SuratController extends Controller
 
     function reviewDokumen($id_doc, Request $request)
     {
-        $document=self::detail1(Surat::where('no_document', $id_doc)->first('id')->id);
+        $suratId = Surat::where('no_document', $id_doc)->first('id')->id;
+        if (in_array((int) $suratId, SuratVoid::ids(), true)) {
+            return response()->json(['success' => false, 'message' => 'Surat ini sudah di-void.'], 422);
+        }
+        $document=self::detail1($suratId);
         // $doc = Surat::where('no_document', $id_doc)->first();
         // $signer = ListVerif::where('id_doc', $id_doc)->where('type', 'sign')->first();
 

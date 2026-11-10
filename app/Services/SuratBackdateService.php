@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Adm\Surat;
+use App\Models\Adm\SuratVoid;
 use Carbon\Carbon;
 use InvalidArgumentException;
 
@@ -27,7 +28,12 @@ class SuratBackdateService
         $semua = Surat::where('nomor_surat', 'like', '%/' . $year)->orderBy('id')->get(['id', 'nomor_surat', 'created_at']);
         $parsed = [];
         $awal = null;
+        // surat void tidak dihitung: nomornya kosong kembali dan bisa dipilih untuk backdate
+        $void = array_flip(SuratVoid::ids());
         foreach ($semua as $s) {
+            if (isset($void[(int) $s->id])) {
+                continue;
+            }
             if (!preg_match('/^(\d+)(?:-([A-Z]+))?\//', (string) $s->nomor_surat, $m)) {
                 continue;
             }

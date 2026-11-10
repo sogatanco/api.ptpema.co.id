@@ -180,6 +180,7 @@ Route::controller(SuratController::class)->group(function(){
      Route::post("adm/surat/review/{id_doc}", 'reviewDokumen')->middleware(     'role:Employee');
      Route::post('adm/surat/sign-pdf/{id}', 'signPdf')->middleware('role:Employee');
      Route::post('adm/update', 'update')->middleware('role:Employee');
+     Route::post('adm/void/{id}', 'void')->middleware('role:AdminAdm,PICAdm');
      Route::post('adm/read/{id_doc}', 'readSurat')->middleware('role:Employee');
 });
 
