@@ -165,6 +165,14 @@ Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/dashboard/{dt}', 'dashboard')->middleware('role:Employee');
 });
 
+Route::controller(\App\Http\Controllers\Adm\SuratBackdateController::class)->group(function(){
+     Route::post('adm/backdate/ajukan', 'ajukan')->middleware("role:AdminAdm");
+     Route::get('adm/backdate/daftar', 'daftar')->middleware("role:AdminAdm,PICAdm");
+     Route::get('adm/backdate/{id}/saran', 'saran')->middleware("role:PICAdm");
+     Route::post('adm/backdate/{id}/setujui', 'setujui')->middleware("role:PICAdm");
+     Route::post('adm/backdate/{id}/tolak', 'tolak')->middleware("role:PICAdm");
+});
+
 Route::controller(SuratController::class)->group(function(){
      Route::post('adm/insert', 'insert')->middleware("role:Employee");
      Route::get('adm/surat/{what}', 'getSurat')->middleware("role:Employee");
