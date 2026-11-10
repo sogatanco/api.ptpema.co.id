@@ -111,7 +111,8 @@ class Peristiwa
             'event' => 'adm.review',
             'judul' => ($diperbarui ? 'Surat diperbarui, mohon approval ulang ' : 'Mohon approval surat ') . $surat->nomor_surat,
             'isi' => ($diperbarui ? "Surat nomor {$surat->nomor_surat} telah diperbarui oleh {$pengaju} dan perlu di-approve ulang. " : '') . "Mohon approval dokumen surat nomor {$surat->nomor_surat} perihal \"{$surat->perihal}\" kepada {$surat->kepada}. Diajukan oleh {$pengaju}.",
-            'url' => 'adm',
+            // tab Review (#2) dan membuka dokumennya langsung
+            'url' => 'adm?dok=' . rawurlencode((string) $surat->no_document) . '#2',
             'ref' => $surat->no_document,
             'data' => ['nomor_surat' => $surat->nomor_surat],
         ]);
@@ -141,7 +142,8 @@ class Peristiwa
                 'event' => $setuju ? 'adm.disetujui' : 'adm.ditolak',
                 'judul' => ($setuju ? 'Surat disetujui: ' : 'Surat tidak disetujui: ') . $nomor,
                 'isi' => "{$pelaku} {$aksi} surat nomor {$nomor}" . (!empty($surat->perihal) ? " perihal \"{$surat->perihal}\"." : '.') . $catatan,
-                'url' => 'adm',
+                // tab Surat Saya (#1) dan membuka progres approval dokumennya
+                'url' => 'adm?dok=' . rawurlencode((string) $v->id_doc) . '#1',
                 'ref' => $v->id_doc,
             ]);
             // reviewer langkah berikutnya baru diminta approval setelah langkah ini disetujui
@@ -162,17 +164,20 @@ class Peristiwa
         }
         $laporan = in_array($v->type, ['check_document', 'verif_realisasi'], true);
         $objek = $laporan ? 'laporan realisasi SPPD' : 'SPPD';
-        $penerima = [$sppd->submitted_by, $sppd->employe_id];
-        Hub::kirim($penerima, $v->id_employe, [
+        $pesan = [
             'modul' => 'sppd',
             'event' => ($laporan ? 'sppd.laporan_' : 'sppd.') . ($setuju ? 'disetujui' : 'ditolak'),
             'judul' => ucfirst($objek) . ($setuju ? ' disetujui' : ' ditolak'),
             'isi' => "{$pelaku} " . ($setuju ? 'menyetujui' : 'menolak') . " {$objek} a.n. {$sppd->nama} (nomor {$sppd->nomor_sppd}).{$catatan}",
-            'url' => 'sppd',
             'ref' => $v->id_doc,
-        ]);
+        ];
+        // pengaju melihatnya di tab pengajuan (#1), pemilik SPPD di tab SPPD saya (#2)
+        Hub::kirim($sppd->submitted_by, $v->id_employe, $pesan + ['url' => self::urlSppd($v->id_doc, 1)]);
+        if ($sppd->employe_id && $sppd->employe_id !== $sppd->submitted_by) {
+            Hub::kirim($sppd->employe_id, $v->id_employe, $pesan + ['url' => self::urlSppd($v->id_doc, 2)]);
+        }
         if ($setuju) {
-            $berikut = VerifStep::where('id_doc', $v->id_doc)->where('step', $v->step + 1)->value('id_employe');
+            $berikut = VerifStep::where('id_doc', $v->id_doc)->where('step', '>', $v->step)->orderBy('step')->value('id_employe');
             if ($berikut) {
                 self::reviewSppd($sppd, $berikut, $sppd->submitted_by, $laporan ? 'laporan realisasi SPPD' : 'dokumen SPPD');
             }
@@ -243,7 +248,7 @@ class Peristiwa
             'event' => 'adm.surat_masuk',
             'judul' => 'Surat masuk baru' . ($m->nomor ? ': ' . $m->nomor : ''),
             'isi' => "Ada surat masuk baru dari {$m->pengirim} perihal \"{$m->perihal}\"" . ($m->nomor ? " nomor {$m->nomor}" : '') . ', tanggal surat ' . self::tgl($m->tgl_surat) . '. Mohon segera diperiksa. Dicatat oleh ' . self::nama($m->insert_by) . '.',
-            'url' => 'adm',
+            'url' => 'adm?masuk=' . $m->id . '#4',
             'ref' => (string) $m->id,
         ]);
     }
@@ -256,7 +261,7 @@ class Peristiwa
             'event' => 'adm.surat_masuk',
             'judul' => 'Disposisi surat masuk' . ($masuk && $masuk->nomor ? ': ' . $masuk->nomor : ''),
             'isi' => self::nama($d->employe_id) . ' mendisposisikan surat masuk' . ($masuk ? " dari {$masuk->pengirim} perihal \"{$masuk->perihal}\"" : '') . '.' . (trim((string) $d->catatan) !== '' ? " Catatan: {$d->catatan}" : '') . ' Mohon segera diperiksa.',
-            'url' => 'adm',
+            'url' => 'adm?masuk=' . $d->id_surat . '#4',
             'ref' => (string) $d->id_surat,
         ]);
     }
@@ -270,7 +275,7 @@ class Peristiwa
             'event' => 'adm.cc',
             'judul' => 'CC surat masuk' . ($masuk && $masuk->nomor ? ': ' . $masuk->nomor : ''),
             'isi' => 'Anda mendapat CC surat masuk' . ($masuk ? " dari {$masuk->pengirim} perihal \"{$masuk->perihal}\"" : '') . ($d ? ', disposisi dari ' . self::nama($d->employe_id) : '') . '. Mohon segera diperiksa.',
-            'url' => 'adm',
+            'url' => $d ? 'adm?masuk=' . $d->id_surat . '#5' : 'adm#5',
             'ref' => $d ? (string) $d->id_surat : null,
         ]);
     }
@@ -291,9 +296,15 @@ class Peristiwa
             'event' => 'sppd.review',
             'judul' => 'Mohon review ' . $objek . ' ' . $s->nomor_sppd,
             'isi' => 'Mohon review ' . $objek . ' ' . self::ringkasSppd($s) . '. Diajukan oleh ' . self::nama($actor) . '.',
-            'url' => 'sppd',
+            'url' => self::urlSppd($s->nomor_dokumen, 3),
             'ref' => $s->nomor_dokumen,
         ]);
+    }
+
+    /** halaman SPPD dengan tab (1 pengajuan, 2 SPPD saya, 3 review) dan dokumen yang dibuka otomatis */
+    private static function urlSppd(string $nomorDokumen, int $tab): string
+    {
+        return 'sppd?dok=' . rawurlencode($nomorDokumen) . '#' . $tab;
     }
 
     private static function sppdDiajukan(Sppd $s, bool $diubah = false): void
@@ -312,7 +323,7 @@ class Peristiwa
                         'event' => 'sppd.diajukan',
                         'judul' => 'Pengajuan SPPD ' . ($diubah ? 'diperbarui' : 'diajukan'),
                         'isi' => self::nama($sppd->submitted_by) . ($diubah ? ' memperbarui' : ' mengajukan') . ' SPPD ' . self::ringkasSppd($sppd) . ' untuk Anda.',
-                        'url' => 'sppd',
+                        'url' => self::urlSppd($sppd->nomor_dokumen, 2),
                         'ref' => $sppd->nomor_dokumen,
                     ]);
                 }
@@ -337,7 +348,7 @@ class Peristiwa
             'event' => 'sppd.laporan_diajukan',
             'judul' => 'Laporan SPPD disubmit',
             'isi' => 'Laporan realisasi SPPD ' . self::ringkasSppd($sppd) . ' telah disubmit oleh ' . self::nama($r->submitted_by) . '.',
-            'url' => 'sppd',
+            'url' => self::urlSppd($sppd->nomor_dokumen, 2),
             'ref' => $sppd->nomor_dokumen,
         ]);
     }
@@ -356,7 +367,7 @@ class Peristiwa
             'event' => 'sppd.review',
             'judul' => 'Mohon review penambahan hari SPPD ' . $sppd->nomor_sppd,
             'isi' => 'Mohon review ' . $isi . '. Diajukan oleh ' . self::nama($e->submitted_by) . '.',
-            'url' => 'sppd',
+            'url' => self::urlSppd($sppd->nomor_dokumen, 3),
             'ref' => $sppd->nomor_dokumen,
         ]);
         Hub::kirim($sppd->employe_id, $e->submitted_by, [
@@ -364,7 +375,7 @@ class Peristiwa
             'event' => 'sppd.ekstend_diajukan',
             'judul' => 'Pengajuan penambahan hari SPPD',
             'isi' => 'Pengajuan ' . $isi . '.',
-            'url' => 'sppd',
+            'url' => self::urlSppd($sppd->nomor_dokumen, 2),
             'ref' => $sppd->nomor_dokumen,
         ]);
     }
@@ -385,7 +396,7 @@ class Peristiwa
                     'modul' => 'asset', 'event' => 'asset.permintaan_service',
                     'judul' => 'Permintaan service aset ' . $nomor,
                     'isi' => "{$pemohon} mengajukan service untuk aset {$nomor}. Keluhan: {$servis->complaint}. Mohon ditinjau.",
-                    'url' => 'asset', 'ref' => (string) $servis->id,
+                    'url' => 'asset?servis=' . $servis->id . '#request', 'ref' => (string) $servis->id,
                 ]);
 
                 return;
@@ -399,7 +410,7 @@ class Peristiwa
                 'modul' => 'asset', 'event' => 'asset.service_' . $tahap,
                 'judul' => $teks[0],
                 'isi' => $teks[1] . ' Diproses oleh ' . self::nama($actor) . '.',
-                'url' => 'asset', 'ref' => (string) $servis->id,
+                'url' => 'asset#request', 'ref' => (string) $servis->id,
             ]);
         });
 
@@ -416,7 +427,7 @@ class Peristiwa
             'event' => 'mobil.permintaan',
             'judul' => 'Permintaan kendaraan operasional',
             'isi' => self::nama($p->created_by) . " meminta kendaraan operasional untuk \"{$p->keperluan}\", " . self::tgl($p->mulai) . ' s.d. ' . self::tgl($p->hingga) . ($p->sopir ? ', dengan sopir' : ', tanpa sopir') . '. Mohon ditinjau.',
-            'url' => 'mobil-operational',
+            'url' => 'mobil-operational?permintaan=' . $p->id . '#2',
             'ref' => (string) $p->id,
         ]);
     }
@@ -432,7 +443,7 @@ class Peristiwa
             'event' => $setuju ? 'mobil.disetujui' : 'mobil.ditolak',
             'judul' => $setuju ? 'Permintaan kendaraan disetujui' : 'Permintaan kendaraan belum bisa disetujui',
             'isi' => "Permintaan kendaraan operasional untuk \"{$p->keperluan}\" (" . self::tgl($p->mulai) . ' s.d. ' . self::tgl($p->hingga) . ') ' . ($setuju ? 'telah disetujui' : 'belum bisa disetujui') . ' oleh ' . self::nama($p->review_by) . '.' . (trim((string) $p->ket) !== '' ? " Keterangan: {$p->ket}" : ''),
-            'url' => 'mobil-operational',
+            'url' => 'mobil-operational?permintaan=' . $p->id . '#2',
             'ref' => (string) $p->id,
         ]);
     }

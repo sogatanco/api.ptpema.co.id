@@ -89,6 +89,8 @@ class NotificationController extends Controller
                             ->join('notification_entity', 'notification_entity.id', '=', 'notification_entity_type.entity_id')
                             ->join('employees_hr', 'employees_hr.employe_id', '=', 'notifications.actor')
                             ->join(config('database.connections.hr.database').'.positions as positions', 'positions.id', '=', 'employees_hr.position_id')
+                            // modul yang sudah pindah ke ptpemaco_notif: notifikasi lamanya tidak ditampilkan lagi di bel
+                            ->when(config('notifikasi.aktif') && config('notifikasi.sembunyikan_lama'), fn ($q) => $q->whereNotIn('notification_entity.entity', ['ADM', 'ASSET', 'KNDR', 'SPPD']))
                             ->orderBy('notifications.id', 'DESC')
                             ->get();
 
@@ -158,6 +160,7 @@ class NotificationController extends Controller
                     'type' => strtoupper($n->event),
                     'message' => $n->isi,
                     'url' => $n->url,
+                    'link' => $n->link ?: \App\Services\Notifikasi\Hub::link($n->url),
                     'query_key' => null,
                     'entity' => strtoupper($n->modul),
                     'actor' => $n->actor_name ?: '-',

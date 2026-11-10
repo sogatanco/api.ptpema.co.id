@@ -5,6 +5,10 @@ return [
     // Ubah menjadi true bersamaan dengan menjalankan db/notif/02_hapus_trigger_notifikasi.sql supaya tidak ganda.
     'aktif' => env('NOTIF_BARU_AKTIF', false),
 
+    // true: notifikasi lama modul ADM, SPPD, Mobil Operasional dan Asset (dari trigger di ptpemaco_apam.notifications) disembunyikan dari bel.
+    // Datanya tidak dihapus; ubah ke false untuk menampilkannya lagi. Hanya berlaku saat 'aktif' true.
+    'sembunyikan_lama' => env('NOTIF_SEMBUNYIKAN_LAMA', true),
+
     'wa' => [
         'aktif' => env('NOTIF_WA_AKTIF', false),
         // hanya event yang butuh tindakan penerima yang dikirim ke WhatsApp
