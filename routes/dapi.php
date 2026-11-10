@@ -181,6 +181,8 @@ Route::controller(SuratController::class)->group(function(){
      Route::post('adm/surat/sign-pdf/{id}', 'signPdf')->middleware('role:Employee');
      Route::post('adm/update', 'update')->middleware('role:Employee');
      Route::post('adm/void/{id}', 'void')->middleware('role:AdminAdm,PICAdm');
+     Route::post('adm/surat/{id}/ttd-basah', 'uploadTtdBasah')->middleware('role:AdminAdm,PICAdm');
+     Route::get('adm/surat/{id}/ttd-basah', 'unduhTtdBasah')->middleware('role:Employee');
      Route::post('adm/read/{id_doc}', 'readSurat')->middleware('role:Employee');
 });
 

@@ -10,6 +10,7 @@ use App\Models\Adm\SuratBackdate;
 use App\Models\Employe;
 use App\Models\Structure;
 use App\Services\SuratBackdateService;
+use App\Services\SuratTtdBasahService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +49,7 @@ class SuratBackdateController extends Controller
         $req = SuratBackdate::create([
             'requested_by' => Employe::employeId(),
             'tanggal' => $d->toDateString(),
-            'payload' => json_encode($request->only(['kepada', 'perihal', 'lampiran', 'jenislampiran', 'isiSurat', 'tembusans', 'divisi', 'ttdBy', 'bhs']), JSON_UNESCAPED_UNICODE),
+            'payload' => json_encode($request->only(['kepada', 'perihal', 'lampiran', 'jenislampiran', 'isiSurat', 'tembusans', 'divisi', 'ttdBy', 'bhs', 'ttdBasah']), JSON_UNESCAPED_UNICODE),
             'status' => 'menunggu',
         ]);
 
@@ -84,6 +85,7 @@ class SuratBackdateController extends Controller
                 'pemohon' => $names[$r->requested_by] ?? $r->requested_by,
                 'perihal' => $p['perihal'] ?? '',
                 'kepada' => $p['kepada'] ?? '',
+                'ttd_basah' => filter_var($p['ttdBasah'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'nomor_surat' => $r->nomor_surat,
                 'alasan_tolak' => $r->alasan_tolak,
                 'created_at' => $r->created_at,
@@ -151,7 +153,12 @@ class SuratBackdateController extends Controller
                 $surat->sign_by = $p['ttdBy'] ?? null;
                 $surat->bahasa = $p['bhs'] ?? 'id';
                 $surat->created_at = $d->copy()->setTimeFrom(now());
+                $basah = filter_var($p['ttdBasah'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $batas = $basah ? SuratTtdBasahService::batasNotifikasi() : 0;
                 $surat->save();
+                if ($basah) {
+                    SuratTtdBasahService::tandai($surat, $batas);
+                }
                 // trigger update_nomor2 menambah last_number pada setiap surat baru; surat backdate tidak boleh memakai nomor hari ini
                 // query builder, bukan model: tabel penomoran_surat tidak punya kolom updated_at
                 DB::connection('adm')->table('penomoran_surat')->where('type', 'main')->update(['last_number' => $sebelum]);

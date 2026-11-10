@@ -8,7 +8,10 @@ use App\Models\Adm\ApprovedDocument;
 use App\Models\Adm\ListSurat;
 use App\Models\Adm\PenomoranSurat;
 use App\Models\Adm\Surat;
+use App\Models\Adm\SuratTtdBasah;
 use App\Models\Adm\SuratVoid;
+use App\Services\SuratTtdBasahService;
+use Illuminate\Support\Facades\DB;
 use App\Services\SuratTteService;
 use App\Models\Employe;
 use App\Models\ESign\VerifStep;
@@ -50,6 +53,17 @@ class SuratController extends Controller
         $surat->sign_by = $request->ttdBy;
         $surat->bahasa = $request->bhs;
 
+        if ($request->boolean('ttdBasah')) {
+            // surat tanda tangan basah: tanpa alur paraf di sistem (lihat SuratTtdBasahService)
+            DB::connection('adm')->transaction(function () use ($surat) {
+                $batas = SuratTtdBasahService::batasNotifikasi();
+                $surat->save();
+                SuratTtdBasahService::tandai($surat, $batas);
+            });
+
+            return new PostResource(true, 'Data Inserted', ['id' => $surat->id, 'nomor_surat' => $surat->nomor_surat]);
+        }
+
         if ($surat->save()) {
             return new PostResource(true, 'Data Inserted', []);
         }
@@ -71,6 +85,10 @@ class SuratController extends Controller
         if (in_array((int) $surat->id, SuratVoid::ids(), true)) {
             return response()->json(['success' => false, 'message' => 'Surat ini sudah ditandai void.'], 422);
         }
+        // surat TTD manual: boleh di-void selama berkas ber-ttd belum diunggah; sesudahnya surat dianggap sudah ditandatangani
+        if (SuratTtdBasah::peta()[(int) $surat->id] ?? false) {
+            return response()->json(['success' => false, 'message' => 'Surat TTD manual yang sudah diunggah berkas ber-ttd tidak bisa di-void.'], 422);
+        }
         // boleh selama belum final: paraf sebagian atau penolakan tidak menghalangi; yang sudah ditandatangani tidak bisa di-void
         if (VerifStep::where('id_doc', $surat->no_document)->where('type', 'sign')->where('status', 'approve')->exists()) {
             return response()->json(['success' => false, 'message' => 'Surat sudah ditandatangani (approved), tidak bisa di-void.'], 422);
@@ -81,11 +99,70 @@ class SuratController extends Controller
         return new PostResource(true, 'Surat ' . $surat->nomor_surat . ' ditandai void; nomornya bisa dipakai untuk backdate.', []);
     }
 
+    // Akses ke berkas ber-ttd: pembuat surat, penandatangan surat, PICAdm, SuperAdminAdm, atau Director (yang membuka Surat Keluar)
+    private function bolehTtdBasah(Surat $surat): bool
+    {
+        $roles = auth()->user()->roles ?? [];
+        $dokumen = DB::connection('esign')->table('documents')->where('doc_id', $surat->no_document)->first();
+        $me = Employe::employeId();
+
+        return ($dokumen->created_by ?? null) === $me || (string) $surat->sign_by === (string) $me || array_intersect(['PICAdm', 'SuperAdminAdm', 'Director'], $roles) !== [];
+    }
+
+    // Unggah surat yang sudah ditandatangani basah (PDF, JPG, atau PNG, maksimal 10 MB); unggahan baru menggantikan yang lama
+    public function uploadTtdBasah(Request $request, $id)
+    {
+        $surat = Surat::find($id);
+        $baris = $surat ? SuratTtdBasah::where('surat_id', $surat->id)->first() : null;
+        if (!$baris) {
+            return response()->json(['success' => false, 'message' => 'Surat ini bukan surat tanda tangan basah.'], 422);
+        }
+        if (!$this->bolehTtdBasah($surat)) {
+            return response()->json(['success' => false, 'message' => 'Tidak berhak mengunggah berkas surat ini.'], 403);
+        }
+        $isi = base64_decode(preg_replace('#^data:[^;]*;base64,#', '', (string) $request->file), true);
+        if ($isi === false || $isi === '' || strlen($isi) > 10 * 1024 * 1024) {
+            return response()->json(['success' => false, 'message' => 'Berkas tidak valid atau lebih dari 10 MB.'], 422);
+        }
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($isi);
+        $ext = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png'][$mime] ?? null;
+        if (!$ext) {
+            return response()->json(['success' => false, 'message' => 'Berkas harus PDF, JPG, atau PNG.'], 422);
+        }
+
+        $nama = 'ttd_basah/' . date('Y') . '/' . $surat->id . '-' . \Illuminate\Support\Str::random(16) . '.' . $ext;
+        Storage::disk('public_adm')->put($nama, $isi);
+        $lama = $baris->file_ttd;
+        $baris->update(['file_ttd' => $nama, 'mime' => $mime, 'uploaded_by' => Employe::employeId()]);
+        if ($lama && $lama !== $nama) {
+            Storage::disk('public_adm')->delete($lama);
+        }
+
+        return new PostResource(true, 'Berkas surat ber-ttd tersimpan', []);
+    }
+
+    public function unduhTtdBasah($id)
+    {
+        $surat = Surat::find($id);
+        $baris = $surat ? SuratTtdBasah::where('surat_id', $surat->id)->first() : null;
+        if (!$baris || !$baris->file_ttd || !Storage::disk('public_adm')->exists($baris->file_ttd)) {
+            return response()->json(['success' => false, 'message' => 'Belum ada berkas surat ber-ttd.'], 404);
+        }
+        if (!$this->bolehTtdBasah($surat)) {
+            return response()->json(['success' => false, 'message' => 'Tidak berhak membuka berkas surat ini.'], 403);
+        }
+
+        return new PostResource(true, 'berkas', ['file' => base64_encode(Storage::disk('public_adm')->get($baris->file_ttd)), 'mime' => $baris->mime]);
+    }
+
     public function update(Request $request)
     {
         $surat = Surat::find($request->id);
         if ($surat && in_array((int) $surat->id, SuratVoid::ids(), true)) {
             return response()->json(['success' => false, 'message' => 'Surat ini sudah di-void.'], 422);
+        }
+        if ($surat && (SuratTtdBasah::peta()[(int) $surat->id] ?? false)) {
+            return response()->json(['success' => false, 'message' => 'Surat TTD manual yang sudah diunggah berkas ber-ttd tidak bisa diubah.'], 422);
         }
         if ($request->lampiran + 0 > 0 && $surat->file_lampiran !== '') {
             $file = base64_decode(str_replace('data:application/pdf;base64,', '', $request->fileLampiran), true);
@@ -106,7 +183,13 @@ class SuratController extends Controller
         $surat->submitted_current_position = (Structure::where('employe_id', $surat->submitted_by)->first('position_name')->position_name);
         $surat->sign_by = $request->ttdBy;
         $surat->bahasa = $request->bhs;
+        // surat ttd basah: trigger update membuat ulang langkah paraf dan notifikasi review; notifikasinya dibatalkan lagi
+        $basah = array_key_exists((int) $surat->id, SuratTtdBasah::peta());
+        $batas = $basah ? SuratTtdBasahService::batasNotifikasi() : 0;
         if ($surat->save()) {
+            if ($basah) {
+                SuratTtdBasahService::hapusNotifikasi($surat, $batas);
+            }
             // isi surat berubah: PDF bertanda tangan yang tersimpan sebelumnya sudah tidak berlaku
             SuratTteService::forgetStoredPdfs($surat->no_document);
 
@@ -114,20 +197,55 @@ class SuratController extends Controller
         }
     }
 
+    // Surat ttd basah yang berkas ber-ttd-nya sudah diunggah dianggap sudah ditandatangani penandatangannya: tampil seperti baris
+    // approved_document (type sign) di Surat Keluar dan di daftar surat yang sudah ditandatangani penandatangan ($signer = id penandatangan).
+    private function barisTtdBasah(?string $signer = null)
+    {
+        $void = array_flip(SuratVoid::ids());
+        $ids = array_values(array_filter(array_keys(array_filter(SuratTtdBasah::peta())), fn ($id) => !isset($void[$id])));
+        if (!$ids) {
+            return collect();
+        }
+        $q = ListSurat::whereIn('id', $ids);
+        if ($signer !== null) {
+            $q->where('sign_by', $signer);
+        }
+        $surat = $q->get();
+        $unggah = SuratTtdBasah::whereIn('surat_id', $ids)->pluck('updated_at', 'surat_id');
+        $orang = Structure::whereIn('employe_id', $surat->pluck('sign_by')->unique())->get(['employe_id', 'first_name', 'position_name'])->keyBy('employe_id');
+
+        return $surat->each(function ($s) use ($unggah, $orang) {
+            $s->unique_id = 'basah-' . $s->id;
+            $s->type = 'sign';
+            $s->id_employe = $s->sign_by;
+            $s->status = 'signed';
+            $s->updated_at = $unggah[$s->id] ?? $s->created_at;
+            $s->reviewer = $orang[$s->sign_by]->first_name ?? null;
+            $s->position_reviewer = $orang[$s->sign_by]->position_name ?? null;
+            $s->ttd_basah = true;
+            $s->file_ttd = true;
+        });
+    }
+
     public function getSurat($what)
     {
         if ($what === 'approved') {
-            $data = ApprovedDocument::where('id_employe', Employe::employeId())->get();
+            $data = ApprovedDocument::where('id_employe', Employe::employeId())->get()
+                ->concat($this->barisTtdBasah(Employe::employeId()))->sortByDesc('updated_at')->values();
         } elseif ($what === 'review') {
             // surat void tidak lagi perlu direview
-            $data = ListSurat::where('current_reviewer', Employe::employeId())->whereNotIn('id', SuratVoid::ids())->latest()->get();
+            $data = ListSurat::where('current_reviewer', Employe::employeId())->whereNotIn('id', array_merge(SuratVoid::ids(), array_keys(SuratTtdBasah::peta())))->latest()->get();
         } elseif ($what === 'signed') {
-            $data = ApprovedDocument::where('type', 'sign')->latest('created_at')->get();
+            $data = ApprovedDocument::where('type', 'sign')->latest('created_at')->get()
+                ->concat($this->barisTtdBasah())->sortByDesc('created_at')->values();
         } else {
             $data = ListSurat::where('created_by', Employe::employeId())->latest()->get();
             $void = array_flip(SuratVoid::ids());
-            $data->each(function ($s) use ($void) {
+            $basah = SuratTtdBasah::peta();
+            $data->each(function ($s) use ($void, $basah) {
                 $s->void = isset($void[(int) $s->id]);
+                $s->ttd_basah = array_key_exists((int) $s->id, $basah);
+                $s->file_ttd = $basah[(int) $s->id] ?? false;
             });
         }
 
@@ -186,6 +304,9 @@ class SuratController extends Controller
         $data['ttdBy'] = $d->sign_by;
         $data['bhs'] = $d->bhs;
         $data['tteCode'] = SuratTteService::codeFor($d->no_document);
+        $basah = SuratTtdBasah::peta();
+        $data['ttdBasah'] = array_key_exists((int) $d->id, $basah);
+        $data['fileTtd'] = $basah[(int) $d->id] ?? false;
         if ($d->tembusans !== null && $d->tembusans !== '') {
             $data['tembusans'] = explode(',', $d->tembusans);
         } else {
@@ -238,6 +359,9 @@ class SuratController extends Controller
         $suratId = Surat::where('no_document', $id_doc)->first('id')->id;
         if (in_array((int) $suratId, SuratVoid::ids(), true)) {
             return response()->json(['success' => false, 'message' => 'Surat ini sudah di-void.'], 422);
+        }
+        if (array_key_exists((int) $suratId, SuratTtdBasah::peta())) {
+            return response()->json(['success' => false, 'message' => 'Surat ini ditandatangani basah, tidak diproses di sistem.'], 422);
         }
         $document=self::detail1($suratId);
         // $doc = Surat::where('no_document', $id_doc)->first();
