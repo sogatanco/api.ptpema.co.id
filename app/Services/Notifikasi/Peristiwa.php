@@ -313,6 +313,28 @@ class Peristiwa
         return 'sppd?dok=' . rawurlencode($nomorDokumen) . '#' . $tab;
     }
 
+    /** SPPD di-void: pemilik, pengaju dan reviewer yang sedang menunggu diberi tahu beserta alasannya */
+    public static function sppdVoid(Sppd $s, string $alasan, ?string $actor): void
+    {
+        self::aman(function () use ($s, $alasan, $actor) {
+            $menunggu = VerifStep::where('id_doc', $s->nomor_dokumen)->whereNull('status')->orderBy('step')->value('id_employe');
+            $pesan = [
+                'modul' => 'sppd',
+                'event' => 'sppd.void',
+                'judul' => 'SPPD di-void: ' . $s->nomor_sppd,
+                'isi' => 'SPPD ' . self::ringkasSppd($s) . ' ditandai void oleh ' . self::nama($actor) . ". Alasan: {$alasan}",
+                'ref' => $s->nomor_dokumen,
+            ];
+            Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd($s->nomor_dokumen, 1)]);
+            if ($s->employe_id && $s->employe_id !== $s->submitted_by) {
+                Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd($s->nomor_dokumen, 2)]);
+            }
+            if ($menunggu && $menunggu !== $s->employe_id && $menunggu !== $s->submitted_by) {
+                Hub::kirim($menunggu, $actor, $pesan + ['url' => 'sppd#3']);
+            }
+        });
+    }
+
     private static function sppdDiajukan(Sppd $s, bool $diubah = false): void
     {
         // nomor_dokumen dan langkah verifikasi dibuat trigger sppds, jadi baca ulang barisnya

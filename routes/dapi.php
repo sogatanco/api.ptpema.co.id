@@ -133,6 +133,7 @@ Route::controller(PengajuanController::class)->group(function(){
     Route::post('sppd/pengajuan/sign-pdf/{id}', 'signPdf')->middleware("role:Employee");
      Route::post('sppd/pengajuan/realisasi', 'submitRealisasi')->middleware("role:Employee");
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
+     Route::post('sppd/pengajuan/{id}/void', 'void')->middleware("role:Employee");
      Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
      Route::get('sppd/dashboard', 'dataDashboard')->middleware("role:Employee");
      Route::get('sppd/tujuan/{id}', 'getTujuanById')->middleware("role:Employee");

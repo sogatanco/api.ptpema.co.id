@@ -21,6 +21,8 @@ return [
             // kabar untuk pembuat dokumen setiap langkah approval (disetujui atau ditolak)
             'adm.disetujui', 'adm.ditolak',
             'sppd.disetujui', 'sppd.ditolak', 'sppd.laporan_disetujui', 'sppd.laporan_ditolak',
+            // pengingat void SPPD yang tidak jadi berangkat, dan kabar SPPD di-void
+            'sppd.ingatkan_void', 'sppd.void',
         ],
     ],
 

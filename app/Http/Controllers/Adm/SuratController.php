@@ -136,7 +136,8 @@ class SuratController extends Controller
         Storage::disk('public_adm')->put($nama, $isi);
         $lama = $baris->file_ttd;
         $baris->update(['file_ttd' => $nama, 'mime' => $mime, 'uploaded_by' => Employe::employeId()]);
-        SuratLogService::catat($surat->no_document, Employe::employeId(), $lama ? 'Mengganti berkas surat bertanda tangan manual' : 'Mengunggah berkas surat bertanda tangan manual');
+        $rincian = ' (' . strtoupper($ext) . ', ' . number_format(strlen($isi) / 1024, 0, ',', '.') . ' KB)';
+        SuratLogService::catat($surat->no_document, Employe::employeId(), ($lama ? 'Mengganti berkas surat bertanda tangan manual' : 'Mengunggah berkas surat bertanda tangan manual') . $rincian);
         if ($lama && $lama !== $nama) {
             Storage::disk('public_adm')->delete($lama);
         }
@@ -251,6 +252,14 @@ class SuratController extends Controller
                 $s->file_ttd = $basah[(int) $s->id] ?? false;
             });
         }
+
+        // penanda jenis surat di setiap daftar: backdate, TTD manual, atau normal (tidak keduanya)
+        $backdate = array_flip(SuratBackdate::suratIds());
+        $basah = SuratTtdBasah::peta();
+        $data->each(function ($s) use ($backdate, $basah) {
+            $s->backdate = isset($backdate[(int) $s->id]);
+            $s->ttd_basah = array_key_exists((int) $s->id, $basah);
+        });
 
         return new PostResource(true, 'data surat', $data);
     }

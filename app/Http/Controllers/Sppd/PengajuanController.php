@@ -9,6 +9,9 @@ use App\Models\Sppd\EkstendView;
 use App\Models\Sppd\TigaPuluh;
 use Illuminate\Http\Request;
 use App\Models\Sppd\Sppd;
+use App\Models\Sppd\SppdVoid;
+use App\Services\Notifikasi\Peristiwa;
+use App\Services\SuratLogService;
 use App\Models\Sppd\TujuanSppd;
 use App\Models\Employe;
 use App\Services\CryptoService;
@@ -95,22 +98,40 @@ class PengajuanController extends Controller
         }
     }
 
+    // SPPD void tidak lagi masuk antrean review dan proses; di daftar lain tetap tampil dengan penanda dan alasannya
+    private function tandaiVoid($data, array $void)
+    {
+        return collect($data)->map(function ($d) use ($void) {
+            $id = (int) (is_array($d) ? ($d['id'] ?? 0) : $d->id);
+            $alasan = $void[$id] ?? null;
+            if (is_array($d)) {
+                return $d + ['void' => $alasan !== null, 'alasan_void' => $alasan];
+            }
+            $d->void = $alasan !== null;
+            $d->alasan_void = $alasan;
+
+            return $d;
+        })->values();
+    }
+
     function getSubmitted(Request $request)
     {
+        $void = SppdVoid::peta();
+        $voidIds = array_map('intval', array_keys($void));
         if ($request->ref == 'mine') {
             $data = ListSppdRingan::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'review') {
-            $data = UnderReview::where('current_reviewer', Employe::employeId())->orderBy('id', 'DESC')->get();
+            $data = UnderReview::where('current_reviewer', Employe::employeId())->whereNotIn('id', $voidIds)->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'approved_by') {
             $data = ApprovedSppd::where('approval_id', Employe::employeId())->get();
         } elseif ($request->ref == 'by_umum') {
-            $data = ListSppdRingan::where('current_status', 'signed')->where('by_umum', 0)->get();
+            $data = ListSppdRingan::where('current_status', 'signed')->where('by_umum', 0)->whereNotIn('id', $voidIds)->get();
             foreach ($data as $d) {
                 $d->type_proses = 'pemesanan_tiket';
                 $d->id_unique = rand(1, 100) * $d->id;
             }
         } elseif ($request->ref == 'by_keuangan') {
-            $data1 = ListSppdRingan::where('uangmuka', 0)->where('current_status', 'signed')->get();
+            $data1 = ListSppdRingan::where('uangmuka', 0)->where('current_status', 'signed')->whereNotIn('id', $voidIds)->get();
 
             $data1 = $data1->map(function ($d1) {
                 $d1->type_proses = 'uangmuka';
@@ -120,7 +141,7 @@ class PengajuanController extends Controller
             });
 
 
-            $data2 = ListSppdRingan::where('realisasi_status', 'verified')->where('by_keuangan', 0)->get();
+            $data2 = ListSppdRingan::where('realisasi_status', 'verified')->where('by_keuangan', 0)->whereNotIn('id', $voidIds)->get();
             $data2 = $data2->map(function ($d2) {
                 $d2->type_proses = 'realisasi';
                 $d2array = $d2->toArray();
@@ -133,7 +154,47 @@ class PengajuanController extends Controller
             $data = ListSppdRingan::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
         }
 
-        return new PostResource(true, $request->ref, $data);
+        return new PostResource(true, $request->ref, $this->tandaiVoid($data, $void));
+    }
+
+    // Tandai SPPD void (belum atau sudah di-approve) dengan alasan; tidak bisa lagi setelah verifikasi realisasi selesai.
+    // Hanya AdminSPPD atau admin yang mengajukan SPPD itu.
+    function void(Request $request, $id)
+    {
+        $sppd = Sppd::find($id);
+        if (!$sppd) {
+            return response()->json(['success' => false, 'message' => 'SPPD tidak ditemukan.'], 404);
+        }
+        $me = Employe::employeId();
+        if (!in_array('AdminSPPD', auth()->user()->roles ?? [], true) && (string) $sppd->submitted_by !== (string) $me) {
+            return response()->json(['success' => false, 'message' => 'Hanya admin SPPD atau pengaju SPPD yang bisa menandai void.'], 403);
+        }
+        $alasan = trim((string) $request->alasan);
+        if (mb_strlen($alasan) < 5) {
+            return response()->json(['success' => false, 'message' => 'Alasan void wajib diisi (minimal 5 karakter).'], 422);
+        }
+        if (SppdVoid::where('sppd_id', $sppd->id)->exists()) {
+            return response()->json(['success' => false, 'message' => 'SPPD ini sudah ditandai void.'], 422);
+        }
+        if (ListSppdRingan::where('id', $sppd->id)->where('realisasi_status', 'verified')->exists()) {
+            return response()->json(['success' => false, 'message' => 'Verifikasi realisasi SPPD ini sudah selesai, tidak bisa di-void.'], 422);
+        }
+
+        SppdVoid::create(['sppd_id' => $sppd->id, 'nomor_sppd' => $sppd->nomor_sppd, 'voided_by' => $me, 'alasan' => $alasan]);
+        SuratLogService::catat($sppd->nomor_dokumen, $me, 'Menandai SPPD void (tidak jadi berangkat/tidak digunakan lagi): ' . $alasan);
+        Peristiwa::sppdVoid($sppd, $alasan, $me);
+
+        return new PostResource(true, 'SPPD ' . $sppd->nomor_sppd . ' ditandai void.', []);
+    }
+
+    // SPPD void tidak bisa diubah, disetujui, atau direalisasikan lagi
+    private function tolakBilaVoid($sppd)
+    {
+        if ($sppd && in_array((int) $sppd->id, SppdVoid::ids(), true)) {
+            return response()->json(['success' => false, 'message' => 'SPPD ini sudah ditandai void.'], 422);
+        }
+
+        return null;
     }
 
     // realisasi_biaya rebuilds hitungan_biaya (~0.5s), so skip it for an SPPD without realisasi
@@ -264,6 +325,9 @@ class PengajuanController extends Controller
     function updatePengajuan(Request $request, $id)
     {
         $sppd = Sppd::find($id);
+        if ($tolak = $this->tolakBilaVoid($sppd)) {
+            return $tolak;
+        }
 
         $sppd->nama = $request->name;
         $sppd->jabatan = $request->jabatann;
@@ -314,6 +378,9 @@ class PengajuanController extends Controller
 
     function persetujuan(Request $request, $id_doc)
     {
+        if ($tolak = $this->tolakBilaVoid(Sppd::where('nomor_dokumen', $id_doc)->first())) {
+            return $tolak;
+        }
         if ($request->type == 'check_document') {
 
             if (CheklistDokRealisasi::where('id_sppd', Sppd::where('nomor_dokumen', $id_doc)->first()->id)->delete()) {
@@ -446,6 +513,9 @@ class PengajuanController extends Controller
     // realisasi
     function submitRealisasi(Request $request)
     {
+        if ($tolak = $this->tolakBilaVoid(Sppd::find($request->id_sppd))) {
+            return $tolak;
+        }
 
         if (Realisasi::where('id_sppd', $request->id_sppd)->exists()) {
             Realisasi::where('id_sppd', $request->id_sppd)->delete();
