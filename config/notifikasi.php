@@ -15,6 +15,9 @@ return [
         'event' => [
             'adm.review', 'adm.backdate_diajukan', 'adm.surat_masuk', 'adm.cc',
             'sppd.review', 'mobil.permintaan', 'asset.permintaan_service',
+            'project.review_task', 'project.bast_review', 'project.handover_konfirmasi',
+            'pengajuan.review', 'tender.ba_submitted',
+            'vendor.registered', 'vendor.review_submit', 'vendor.review_update',
         ],
     ],
 

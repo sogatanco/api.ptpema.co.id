@@ -42,6 +42,8 @@ class DailyCommentController extends Controller
             'attachment_file' => $attachmentPath,
         ]);
 
+        \App\Services\Notifikasi\TipeLama::daily($comment);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Komentar berhasil disimpan',

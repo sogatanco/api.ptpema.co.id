@@ -663,16 +663,6 @@ class TaskController extends Controller
                         $reviewer = $structure->direct_atasan;
                     }
 
-                    // data notif
-                    $NotifData = [
-                        'from_employe' => $request->employe_id,
-                        'to_employe' => $reviewer,
-                        'project_id' => $project->project_id,
-                        'task_id' => $taskId,
-                        'title' => 'Project Task',
-                        'desc' => 'Meminta persetujuan Anda',
-                        'category' => 'task',
-                    ];
 
                     // notif baru
                     NotificationController::new('REVIEW_TASK', $reviewer, $project->project_id."/".$taskId);
@@ -680,39 +670,17 @@ class TaskController extends Controller
                 // jika status done
                 }elseif($request->status === 3){
 
-                    // data notif
-                    $NotifData = [
-                        'from_employe' => $statusBy,
-                        'to_employe' => $request->employe_id,
-                        'project_id' => $project->project_id,
-                        'task_id' => $taskId,
-                        'title' => 'Project Task',
-                        'desc' => 'Menyetujui task Anda',
-                        'category' => 'task',
-                    ];
 
                     // notif baru
                     NotificationController::new('APPROVED_TASK', $request->employe_id, $project->project_id."/".$taskId);
 
                 }elseif($request->status === 4){
 
-                    // data notif
-                    $NotifData = [
-                        'from_employe' => $statusBy,
-                        'to_employe' => $request->employe_id,
-                        'project_id' => $project->project_id,
-                        'task_id' => $taskId,
-                        'title' => 'Project Task',
-                        'desc' => 'Merevisi task Anda',
-                        'category' => 'task',
-                    ];
 
                     // notif baru
                     NotificationController::new('REVISED_TASK', $request->employe_id,  $project->project_id."/".$taskId);
                 }
 
-                $newNotification = new Notification($NotifData);
-                $newNotification->save();
             }else{
                 // jika task pertama inprogress
                 // cek status project

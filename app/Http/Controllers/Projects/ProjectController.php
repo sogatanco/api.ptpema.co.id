@@ -651,17 +651,15 @@ class ProjectController extends Controller
 
         if($updated){
 
-            $NotifData = [
-                'from_employe' => $request->status === 'revision' ? $request->review_by : $request->old_pic,
-                'to_employe' => $request->notif_to,
-                'project_id' => $request->project_id,
-                'title' => $request->status === 'revision' ? 'BAST Review' : 'Project Handover',
-                'desc' => $request->status === 'revision' ? 'Merevisi BAST Anda' : 'Meminta konfirmasi handover projek',
-                'category' => $request->status === 'revision' ? 'bast' : 'project',
-            ];
-
-            $newNotification = new Notification($NotifData);
-            $newNotification->save();
+            $revisi = $request->status === 'revision';
+            \App\Services\Notifikasi\TipeLama::proyek(
+                $revisi ? $request->review_by : $request->old_pic,
+                $request->notif_to,
+                $request->project_id,
+                $revisi ? 'bast_direvisi' : 'handover_konfirmasi',
+                $revisi ? 'BAST project perlu direvisi' : 'Konfirmasi handover project',
+                $revisi ? 'merevisi BAST Anda' : 'meminta konfirmasi handover'
+            );
 
             return response()->json([
                 "status" => true,
@@ -732,18 +730,8 @@ class ProjectController extends Controller
                             ->update($updateStageData);
             }
 
-            // simpan notifikasi
-            $NotifData = [
-                'from_employe' => $employeId,
-                'to_employe' => $structure->direct_atasan,
-                'project_id' => $request->project_id,
-                'title' => 'Project Handover',
-                'desc' => 'Meminta persetujuan BAST projek',
-                'category' => 'project',
-            ];
-
-            $newNotification = new Notification($NotifData);
-            $newNotification->save();
+            // notifikasi ke atasan
+            \App\Services\Notifikasi\TipeLama::proyek($employeId, $structure->direct_atasan, $request->project_id, 'bast_review', 'Persetujuan BAST project', 'meminta persetujuan BAST');
 
             return response()->json([
                 "status" => true,

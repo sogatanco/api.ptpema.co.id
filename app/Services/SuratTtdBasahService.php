@@ -18,16 +18,12 @@ class SuratTtdBasahService
     /** id notifikasi terbesar sebelum surat disimpan; dipakai untuk menghapus hanya notifikasi yang dibuat trigger pada transaksi ini */
     public static function batasNotifikasi(): int
     {
-        return (int) DB::connection('adm')->table('ptpemaco_apam.notifications')->max('id');
+        // trigger notifikasi lama sudah dihapus dan tabelnya tidak dipakai lagi; Peristiwa melewati surat TTD manual sendiri
+        return 0;
     }
 
     public static function hapusNotifikasi(Surat $s, int $batas): void
     {
-        DB::connection('adm')->table('ptpemaco_apam.notifications')
-            ->where('id', '>', $batas)
-            ->where('actor', $s->submitted_by)
-            ->where('entity_type_id', self::TIPE_REVIEW)
-            ->delete();
     }
 
     public static function tandai(Surat $s, int $batas): void

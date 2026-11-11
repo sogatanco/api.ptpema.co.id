@@ -202,7 +202,8 @@ class Peristiwa
                     'event' => 'adm.backdate_diajukan',
                     'judul' => 'Permintaan nomor surat backdate ' . $tgl,
                     'isi' => 'Mohon pilih nomor untuk surat bertanggal mundur ' . $tgl . ' perihal "' . ($p['perihal'] ?? '-') . '" kepada ' . ($p['kepada'] ?? '-') . '. Diajukan oleh ' . self::nama($r->requested_by) . '.',
-                    'url' => 'adm',
+                    // tab PICAdm (#7) dan membuka panel "Pilih nomor" untuk permintaan ini
+                    'url' => 'adm?backdate=' . $id . '#7',
                     'ref' => 'backdate-' . $id,
                     'termasuk_pelaku' => true,
                 ]);
@@ -224,6 +225,9 @@ class Peristiwa
                     return;
                 }
                 $selesai = $r->status === 'selesai';
+                // sudah bernomor: buka progres approval suratnya (tab Surat Saya); ditolak: tab Backdate, permintaan beserta alasannya
+                $noDokumen = $selesai && $r->surat_id ? Surat::where('id', $r->surat_id)->value('no_document') : null;
+                $url = $noDokumen ? 'adm?dok=' . rawurlencode((string) $noDokumen) . '#1' : ($selesai ? 'adm#1' : 'adm?sub=backdate#1');
                 Hub::kirim($r->requested_by, $r->processed_by, [
                     'modul' => 'adm',
                     'event' => $selesai ? 'adm.backdate_disetujui' : 'adm.backdate_ditolak',
@@ -231,7 +235,7 @@ class Peristiwa
                     'isi' => $selesai
                         ? self::nama($r->processed_by) . " memilih nomor {$r->nomor_surat} untuk surat bertanggal mundur Anda. Surat sudah masuk alur approval."
                         : self::nama($r->processed_by) . ' menolak permintaan nomor surat backdate Anda.' . (trim((string) $r->alasan_tolak) !== '' ? " Alasan: {$r->alasan_tolak}" : ''),
-                    'url' => 'adm',
+                    'url' => $url,
                     'ref' => 'backdate-' . $id,
                     'termasuk_pelaku' => true,
                 ]);
