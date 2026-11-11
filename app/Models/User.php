@@ -40,6 +40,16 @@ class User extends Authenticatable implements JWTSubject
         'password',
     ];
 
+    protected static function booted(): void
+    {
+        // password diubah (ganti password, lupa password): dicatat untuk pengingat keamanan akun
+        static::saved(function (User $u) {
+            if (!$u->wasRecentlyCreated && $u->wasChanged('password')) {
+                \App\Services\PengingatKeamanan::catatPasswordDiubah($u->employe_id);
+            }
+        });
+    }
+
     public function employe(): HasOne
     {
         return $this->hasOne(Employe::class, 'user_id', 'id ');

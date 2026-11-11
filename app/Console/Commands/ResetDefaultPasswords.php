@@ -30,7 +30,8 @@ class ResetDefaultPasswords extends Command
 
         foreach ($affected as $user) {
             $user->password = Hash::make(Str::random(40));
-            $user->save();
+            // bukan perubahan oleh pengguna: tidak dicatat sebagai password diubah (pengingat keamanan)
+            $user->saveQuietly();
         }
         $this->info('Password ' . $affected->count() . ' akun telah diganti. Pengguna masuk kembali lewat "Lupa Password".');
 
