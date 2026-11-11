@@ -516,6 +516,9 @@ class PengajuanController extends Controller
         if ($tolak = $this->tolakBilaVoid(Sppd::find($request->id_sppd))) {
             return $tolak;
         }
+        if (ListSppdRingan::where('id', $request->id_sppd)->where('realisasi_status', 'verified')->exists()) {
+            return response()->json(['success' => false, 'message' => 'Realisasi SPPD ini sudah diverifikasi, tidak bisa diubah lagi.'], 422);
+        }
 
         if (Realisasi::where('id_sppd', $request->id_sppd)->exists()) {
             Realisasi::where('id_sppd', $request->id_sppd)->delete();
