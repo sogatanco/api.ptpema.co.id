@@ -76,7 +76,9 @@ class SuperAdminController extends Controller
     {
         $q = trim((string) $request->query('q'));
         $baris = User::query()
-            ->leftJoin('struktur_lengkap_oke as s', 's.employe_id', '=', 'users.employe_id')
+            // hanya pegawai aktif
+            ->join('struktur_lengkap_oke as s', 's.employe_id', '=', 'users.employe_id')
+            ->where('s.employe_active', 1)
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('users.email', 'like', "%{$q}%")->orWhere('s.first_name', 'like', "%{$q}%")))
             ->orderBy('s.first_name')
             ->select('users.id', 'users.email', 'users.employe_id', 'users.roles', 's.first_name as nama', 's.position_name as jabatan')
@@ -119,22 +121,28 @@ class SuperAdminController extends Controller
     {
         $antre = DB::connection('notif')->table('notification_deliveries')->where('channel', 'wa')->where('status', 'pending')->count();
 
+        $g = Pengaturan::gateway();
+
         return response()->json(['status' => true, 'data' => [
-            'aktif' => Pengaturan::waAktif(),
+            'aktif' => !Pengaturan::dijeda() && $g['aktif'],
+            'dijeda' => Pengaturan::dijeda(),
+            'gateway' => ['hidup' => $g['hidup'], 'terhubung' => $g['terhubung'], 'http' => $g['http'], 'pesan' => $g['pesan'], 'respons' => $g['respons']],
             'notif_dasar_aktif' => (bool) config('notifikasi.aktif'),
             'antre' => $antre,
         ]], 200);
     }
 
+    // jeda atau lanjutkan pengiriman; status gateway sendiri tidak bisa diubah dari sini
     public function ubahWa(Request $request)
     {
-        $sebelum = Pengaturan::waAktif();
-        Pengaturan::setWaAktif($request->boolean('aktif'), Employe::employeId());
-        if ($sebelum && !$request->boolean('aktif')) {
+        $jeda = !$request->boolean('aktif');
+        $sebelum = Pengaturan::dijeda();
+        Pengaturan::setDijeda($jeda, Employe::employeId());
+        if ($jeda && !$sebelum) {
             $oleh = DB::table('struktur_lengkap_oke')->where('employe_id', Employe::employeId())->value('first_name') ?: Employe::employeId();
-            PeringatanWa::kirim('dimatikan', 'WhatsApp notifikasi dimatikan', "Pengiriman WhatsApp notifikasi dimatikan oleh {$oleh} lewat menu Setting. Pesan yang antre tertahan sampai diaktifkan lagi.");
+            PeringatanWa::kirim('dijeda', 'Pengiriman WhatsApp notifikasi dijeda', "Pengiriman WhatsApp notifikasi dijeda oleh {$oleh} lewat menu Setting. Pesan yang antre tertahan sampai dilanjutkan lagi.");
         }
-        Log::info('Status WhatsApp notifikasi diubah', ['aktif' => $request->boolean('aktif'), 'oleh' => Employe::employeId()]);
+        Log::info('Jeda WhatsApp notifikasi diubah', ['dijeda' => $jeda, 'oleh' => Employe::employeId()]);
 
         return $this->wa();
     }

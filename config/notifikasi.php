@@ -11,21 +11,8 @@ return [
 
     'wa' => [
         'aktif' => env('NOTIF_WA_AKTIF', false),
-        // hanya event yang butuh tindakan penerima yang dikirim ke WhatsApp
-        'event' => [
-            'adm.review', 'adm.backdate_diajukan', 'adm.surat_masuk', 'adm.cc',
-            'sppd.review', 'mobil.permintaan', 'asset.permintaan_service',
-            'project.review_task', 'project.bast_review', 'project.handover_konfirmasi',
-            'pengajuan.review', 'tender.ba_submitted',
-            'vendor.registered', 'vendor.review_submit', 'vendor.review_update',
-            // kabar untuk pembuat dokumen setiap langkah approval (disetujui atau ditolak)
-            'adm.disetujui', 'adm.ditolak', 'adm.backdate_disetujui', 'adm.backdate_ditolak',
-            'sppd.disetujui', 'sppd.ditolak', 'sppd.laporan_disetujui', 'sppd.laporan_ditolak',
-            'mobil.disetujui', 'mobil.ditolak', 'asset.service_disetujui', 'asset.service_ditolak',
-            'project.task_disetujui', 'project.task_direvisi', 'tender.ba_approved', 'tender.ba_revised',
-            // pengingat void SPPD yang tidak jadi berangkat, dan kabar SPPD di-void
-            'sppd.ingatkan_void', 'sppd.void',
-        ],
+        // event yang dikirim ke WhatsApp: "*" = semua event notifikasi (sama seperti push). Untuk membatasi, isi daftar event, mis. ["adm.review", "sppd.review"]
+        'event' => ['*'],
     ],
 
     'webpush' => [

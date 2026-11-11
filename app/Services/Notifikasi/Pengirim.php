@@ -36,11 +36,12 @@ class Pengirim
     private static function wa(Notifikasi $n): void
     {
         if (!Pengaturan::waAktif()) {
-            Hub::catatPengiriman($n->id, 'wa', 'skipped', null, 'WhatsApp dinonaktifkan (halaman Setting Super Admin atau NOTIF_WA_AKTIF)');
+            Hub::catatPengiriman($n->id, 'wa', 'skipped', null, 'WhatsApp tidak aktif (gateway mati atau pengiriman dijeda di menu Setting)');
 
             return;
         }
-        if (!in_array($n->event, config('notifikasi.wa.event'), true)) {
+        $daftar = (array) config('notifikasi.wa.event');
+        if (!in_array('*', $daftar, true) && !in_array($n->event, $daftar, true)) {
             Hub::catatPengiriman($n->id, 'wa', 'skipped', null, "Event {$n->event} tidak ada di daftar WA (config/notifikasi.php)");
 
             return;

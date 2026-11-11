@@ -103,7 +103,8 @@ class AuthController extends Controller
         $userData = Employe::select('employe_id', 'first_name', 'employe_active', 'public_key')
                     ->where("user_id", $user->id)->first();
 
-        if($userData->employe_active == 0){
+        if(!$userData || $userData->employe_active == 0){
+            Auth::logout();
             throw new HttpResponseException(response([
                 "status" => false,
                 "message" => "Your account has been deactivated."
@@ -185,7 +186,7 @@ class AuthController extends Controller
         $userData = Employe::select('employe_id', 'first_name', 'employe_active')
             ->where("user_id", $user->id)->first();
         
-        if ($userData && $userData->employe_active == 0) {
+        if (!$userData || $userData->employe_active == 0) {
             throw new HttpResponseException(response([
                 "status" => false,
                 "message" => "Your account has been deactivated."
@@ -224,6 +225,9 @@ class AuthController extends Controller
 
     public function refresh()
     {
+        if (Auth::user() && !User::masihAktif((int) Auth::id())) {
+            return response()->json(["status" => false, "message" => "Your account has been deactivated."], 401);
+        }
         $token = Auth::refresh();
         $user = Auth::user();
 

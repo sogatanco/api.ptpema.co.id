@@ -50,6 +50,14 @@ class User extends Authenticatable implements JWTSubject
         });
     }
 
+    /** pegawai pemilik akun masih aktif; hasilnya disimpan semenit agar tidak menambah query di setiap request */
+    public static function masihAktif(int $userId): bool
+    {
+        return \Illuminate\Support\Facades\Cache::remember('akun_aktif:' . $userId, 60, function () use ($userId) {
+            return (int) \Illuminate\Support\Facades\DB::table('employees_hr')->where('user_id', $userId)->value('employe_active') === 1;
+        });
+    }
+
     public function employe(): HasOne
     {
         return $this->hasOne(Employe::class, 'user_id', 'id ');

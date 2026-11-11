@@ -24,6 +24,14 @@ class Role
             ], 401);
         }
 
+        // akun pegawai yang sudah tidak aktif: token yang masih berlaku pun ditolak
+        if (!\App\Models\User::masihAktif((int) $user->id)) {
+            return response()->json([
+                "status" => false,
+                "message" => "Your account has been deactivated."
+            ], 401);
+        }
+
         if(in_array("Super Admin", $user->roles)){
             // return $next($request)
             return response()->json([
