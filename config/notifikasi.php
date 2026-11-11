@@ -19,7 +19,7 @@ return [
             'pengajuan.review', 'tender.ba_submitted',
             'vendor.registered', 'vendor.review_submit', 'vendor.review_update',
             // kabar untuk pembuat dokumen setiap langkah approval (disetujui atau ditolak)
-            'adm.disetujui', 'adm.ditolak',
+            'adm.disetujui', 'adm.ditolak', 'adm.backdate_disetujui', 'adm.backdate_ditolak',
             'sppd.disetujui', 'sppd.ditolak', 'sppd.laporan_disetujui', 'sppd.laporan_ditolak',
             // pengingat void SPPD yang tidak jadi berangkat, dan kabar SPPD di-void
             'sppd.ingatkan_void', 'sppd.void',
