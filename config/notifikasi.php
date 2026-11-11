@@ -18,6 +18,9 @@ return [
             'project.review_task', 'project.bast_review', 'project.handover_konfirmasi',
             'pengajuan.review', 'tender.ba_submitted',
             'vendor.registered', 'vendor.review_submit', 'vendor.review_update',
+            // kabar untuk pembuat dokumen setiap langkah approval (disetujui atau ditolak)
+            'adm.disetujui', 'adm.ditolak',
+            'sppd.disetujui', 'sppd.ditolak', 'sppd.laporan_disetujui', 'sppd.laporan_ditolak',
         ],
     ],
 
