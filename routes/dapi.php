@@ -19,7 +19,6 @@ use App\Http\Controllers\eSign\Logs;
 use App\Http\Controllers\Docusign\DocusignController;
 use App\Http\Controllers\Vendors\Admin\APerusahaanController;
 use App\Http\Controllers\Vendors\Admin\ATenderController;
-use App\Http\Controllers\Layar\LayarController;
 use App\Http\Controllers\Meeting\MeetingController;
 use App\Http\Controllers\Wa\SendMessageController;
 
@@ -263,11 +262,6 @@ Route::controller(MobilController::class)->group(function(){
      Route::get('mobil/available', 'getMobilAktifDanTidakDalamPemakaian')->middleware("role:Employee");
      Route::get('mobil/pengambilan-calendar', 'getPengambilanCalendar')->middleware("role:Employee");
      Route::get('mobil/bbm-laporan', 'getBBMLaporan')->middleware("role:Employee");
-});
-
-Route::controller(LayarController::class)->group(function(){
-    Route::post('lay/insert', 'insert')->middleware("role:Employee");
-    Route::get('lay', 'getLayar');
 });
 
 Route::controller(MeetingController::class)->group(function () {

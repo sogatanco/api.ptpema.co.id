@@ -132,20 +132,6 @@ return [
                 ],
             ]
         ],
-        'public_layar' => [
-            'driver' => 'local',
-            'root' => public_path(). '/layar',
-            'permissions' => [
-                'file' => [
-                    'public' => 0755,
-                    'private' => 0755,
-                ],
-                'dir' => [
-                    'public' => 0755,
-                    'private' => 0755,
-                ],
-            ]
-        ],
         'public_vendor' => [
             'driver' => 'local',
             'root' => public_path(). '/vendor_file',
