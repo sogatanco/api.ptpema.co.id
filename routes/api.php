@@ -173,6 +173,17 @@ Route::controller(TestingController::class)->group(function(){
 // Pengingat keamanan akun (ganti password): sekali seminggu, atau sehari sekali bila password tidak diubah dalam 30 hari
 Route::post('/keamanan/pengingat', [\App\Http\Controllers\Keamanan\PengingatController::class, 'pengingat'])->middleware("role:Employee");
 
+// Halaman Setting (hanya role SuperAdmin): role dan user, saklar WhatsApp, daftar pengiriman notifikasi
+Route::prefix('pengaturan')->middleware('role:SuperAdmin')->controller(\App\Http\Controllers\Pengaturan\SuperAdminController::class)->group(function () {
+    Route::get('/role', 'roles');
+    Route::post('/role', 'tambahRole');
+    Route::get('/user', 'users');
+    Route::put('/user/{id}/role', 'ubahRoleUser');
+    Route::get('/wa', 'wa');
+    Route::post('/wa', 'ubahWa');
+    Route::get('/pengiriman', 'pengiriman');
+});
+
 // Notification routes
 Route::controller(NotificationController::class)->group(function(){
     Route::get('/notification', "get")->middleware("role:Employee");

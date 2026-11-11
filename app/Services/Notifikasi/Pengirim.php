@@ -35,8 +35,8 @@ class Pengirim
     // WhatsApp lewat gateway yang sama dengan notifikasi konsumsi rapat
     private static function wa(Notifikasi $n): void
     {
-        if (!config('notifikasi.wa.aktif')) {
-            Hub::catatPengiriman($n->id, 'wa', 'skipped', null, 'NOTIF_WA_AKTIF belum true (atau config masih ter-cache)');
+        if (!Pengaturan::waAktif()) {
+            Hub::catatPengiriman($n->id, 'wa', 'skipped', null, 'WhatsApp dinonaktifkan (halaman Setting Super Admin atau NOTIF_WA_AKTIF)');
 
             return;
         }
@@ -95,6 +95,13 @@ class Pengirim
             $menyerah = $d->attempts + 1 >= 3;
             (clone $tabel)->where('id', $d->id)->update(['status' => $menyerah ? 'failed' : 'pending', 'error' => mb_substr($e->getMessage(), 0, 500)]);
             Log::warning('WA notifikasi gagal', ['notif' => $n->id, 'percobaan' => $d->attempts + 1, 'error' => $e->getMessage()]);
+            // nomor tidak valid hanya masalah satu penerima; selebihnya (gateway mati, API key salah, sesi WA putus) perlu diketahui IT
+            if ($menyerah && stripos($e->getMessage(), 'Invalid WhatsApp number') === false) {
+                PeringatanWa::kirim('gagal', 'Pengiriman WhatsApp notifikasi gagal',
+                    "Pesan WhatsApp notifikasi gagal terkirim setelah 3 percobaan. Gateway WhatsApp kemungkinan bermasalah.\n\n"
+                    . "Notifikasi: {$n->judul} (#{$n->id}, event {$n->event})\nError: {$e->getMessage()}\n\n"
+                    . 'Pesan lain tetap mengantre dan dicoba satu per menit. Daftar lengkap: menu Setting > Daftar Notifikasi.', 60);
+            }
         }
 
         return true;

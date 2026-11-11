@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Notifikasi\Hub;
+use App\Services\Notifikasi\Pengaturan;
 use App\Services\Notifikasi\Pengirim;
 use Illuminate\Console\Command;
 
@@ -14,7 +15,7 @@ class KirimWaNotifikasiCommand extends Command
 
     public function handle(): int
     {
-        if (!Hub::aktif() || !config('notifikasi.wa.aktif')) {
+        if (!Hub::aktif() || !Pengaturan::waAktif()) {
             return self::SUCCESS;
         }
 
