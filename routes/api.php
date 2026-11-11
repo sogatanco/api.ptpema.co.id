@@ -182,6 +182,8 @@ Route::prefix('pengaturan')->middleware('role:SuperAdmin')->controller(\App\Http
     Route::get('/wa', 'wa');
     Route::post('/wa', 'ubahWa');
     Route::get('/pengiriman', 'pengiriman');
+    Route::post('/pengiriman/ulang-gagal', 'ulangGagal');
+    Route::post('/pengiriman/{id}/ulang', 'ulang');
 });
 
 // Notification routes

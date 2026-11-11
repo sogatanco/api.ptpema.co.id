@@ -46,8 +46,7 @@ class Pengirim
 
             return;
         }
-        $hp = (string) Structure::where('employe_id', $n->recipient)->value('phone_number');
-        $nomor = array_values(array_filter(preg_split('/[,;\/\s]+/', $hp), fn ($x) => preg_replace('/\D+/', '', $x) !== ''));
+        $nomor = self::nomorWa((string) $n->recipient);
         if (!$nomor) {
             Hub::catatPengiriman($n->id, 'wa', 'skipped', null, 'Nomor HP penerima kosong');
 
@@ -58,10 +57,59 @@ class Pengirim
             'notification_id' => $n->id,
             'channel' => 'wa',
             'status' => 'pending',
-            'target' => mb_substr($nomor[0], 0, 255),
+            'target' => mb_substr($nomor, 0, 255),
             'attempts' => 0,
             'created_at' => now(),
         ]);
+    }
+
+    /** nomor HP pertama penerima, atau null bila kosong */
+    public static function nomorWa(string $employeId): ?string
+    {
+        $hp = (string) Structure::where('employe_id', $employeId)->value('phone_number');
+        $nomor = array_values(array_filter(preg_split('/[,;\/\s]+/', $hp), fn ($x) => preg_replace('/\D+/', '', $x) !== ''));
+
+        return $nomor[0] ?? null;
+    }
+
+    /** Super Admin mengirim ulang satu pengiriman yang gagal/dilewati; mengembalikan pesan hasil atau melempar RuntimeException bila tidak bisa */
+    public static function kirimUlang(int $deliveryId): string
+    {
+        $tabel = DB::connection('notif')->table('notification_deliveries');
+        $d = (clone $tabel)->where('id', $deliveryId)->first();
+        if (!$d || !in_array($d->status, ['failed', 'skipped'], true)) {
+            throw new \RuntimeException('Hanya pengiriman yang gagal atau dilewati yang bisa dikirim ulang.');
+        }
+        $n = Notifikasi::find($d->notification_id);
+        if (!$n) {
+            throw new \RuntimeException('Notifikasi sudah tidak ada.');
+        }
+        if ($d->channel === 'wa') {
+            if (!Pengaturan::waAktif()) {
+                throw new \RuntimeException('WhatsApp sedang tidak aktif (gateway mati atau dijeda). Coba lagi setelah aktif.');
+            }
+            $nomor = self::nomorWa((string) $n->recipient);
+            if (!$nomor) {
+                throw new \RuntimeException('Nomor HP penerima masih kosong. Lengkapi dulu di data pegawai.');
+            }
+            // masuk antrean biasa (1 pesan per menit)
+            (clone $tabel)->where('id', $d->id)->update(['status' => 'pending', 'target' => mb_substr($nomor, 0, 255), 'attempts' => 0, 'error' => null, 'sent_at' => null]);
+
+            return 'Masuk antrean WhatsApp.';
+        }
+        if ($d->channel === 'webpush') {
+            // baris lama diganti hasil kirim yang baru
+            (clone $tabel)->where('id', $d->id)->delete();
+            try {
+                self::webpush($n);
+            } catch (\Throwable $e) {
+                Hub::catatPengiriman($n->id, 'webpush', 'failed', null, $e->getMessage());
+            }
+
+            return 'Push dikirim ulang, lihat hasilnya di daftar.';
+        }
+
+        throw new \RuntimeException('Kanal ini belum bisa dikirim ulang.');
     }
 
     /** dipanggil notifikasi:kirim-wa: kirim satu pesan WA yang antre; mengembalikan false bila antrean kosong */
@@ -110,12 +158,34 @@ class Pengirim
 
     private static function webpush(Notifikasi $n): void
     {
+        // library Web Push memicu peringatan "install GMP or BCMath" yang oleh Laravel diubah menjadi error dan membatalkan push;
+        // peringatan itu hanya soal kecepatan, jadi diabaikan. Error lain tetap diteruskan.
+        $lama = set_error_handler(function ($no, $pesan) use (&$lama) {
+            if (str_contains((string) $pesan, 'GMP or BCMath')) {
+                return true;
+            }
+
+            return $lama ? $lama(...func_get_args()) : false;
+        });
+        try {
+            self::webpushKirim($n);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    private static function webpushKirim(Notifikasi $n): void
+    {
         $cfg = config('notifikasi.webpush');
         if (empty($cfg['public_key']) || empty($cfg['private_key'])) {
+            Hub::catatPengiriman($n->id, 'webpush', 'skipped', null, 'Kunci VAPID belum diisi di server (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY)');
+
             return;
         }
         $langganan = PushSubscription::where('employe_id', $n->recipient)->get();
         if ($langganan->isEmpty()) {
+            Hub::catatPengiriman($n->id, 'webpush', 'skipped', null, 'Penerima belum mengaktifkan notifikasi push di browser');
+
             return;
         }
         $fabrik = new HttpFactory();

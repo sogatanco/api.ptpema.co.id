@@ -7,6 +7,7 @@ use App\Models\Employe;
 use App\Models\User;
 use App\Services\Notifikasi\Pengaturan;
 use App\Services\Notifikasi\PeringatanWa;
+use App\Services\Notifikasi\Pengirim;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -145,6 +146,40 @@ class SuperAdminController extends Controller
         Log::info('Jeda WhatsApp notifikasi diubah', ['dijeda' => $jeda, 'oleh' => Employe::employeId()]);
 
         return $this->wa();
+    }
+
+    public function ulang($id)
+    {
+        try {
+            $pesan = Pengirim::kirimUlang((int) $id);
+        } catch (\RuntimeException $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 422);
+        }
+        Log::info('Pengiriman notifikasi dikirim ulang Super Admin', ['delivery' => (int) $id, 'oleh' => Employe::employeId()]);
+
+        return response()->json(['status' => true, 'message' => $pesan], 200);
+    }
+
+    // kirim ulang semua yang berstatus gagal pada kanal tertentu (maksimal 100 sekali jalan)
+    public function ulangGagal(Request $request)
+    {
+        $kanal = $request->input('kanal');
+        $ids = DB::connection('notif')->table('notification_deliveries')->where('status', 'failed')
+            ->when(in_array($kanal, ['wa', 'webpush'], true), fn ($q) => $q->where('channel', $kanal))
+            ->orderBy('id')->limit(100)->pluck('id');
+        $ok = 0;
+        $gagal = [];
+        foreach ($ids as $id) {
+            try {
+                Pengirim::kirimUlang((int) $id);
+                $ok++;
+            } catch (\RuntimeException $e) {
+                $gagal[$e->getMessage()] = ($gagal[$e->getMessage()] ?? 0) + 1;
+            }
+        }
+        Log::info('Kirim ulang semua gagal oleh Super Admin', ['kanal' => $kanal, 'ok' => $ok, 'gagal' => $gagal, 'oleh' => Employe::employeId()]);
+
+        return response()->json(['status' => true, 'diulang' => $ok, 'tidak_bisa' => $gagal], 200);
     }
 
     // daftar pengiriman notifikasi per kanal: belum terkirim (pending), terkirim, gagal, dilewati

@@ -53,9 +53,13 @@ class User extends Authenticatable implements JWTSubject
     /** pegawai pemilik akun masih aktif; hasilnya disimpan semenit agar tidak menambah query di setiap request */
     public static function masihAktif(int $userId): bool
     {
-        return \Illuminate\Support\Facades\Cache::remember('akun_aktif:' . $userId, 60, function () use ($userId) {
-            return (int) \Illuminate\Support\Facades\DB::table('employees_hr')->where('user_id', $userId)->value('employe_active') === 1;
-        });
+        $cari = fn () => (int) \Illuminate\Support\Facades\DB::table('employees_hr')->where('user_id', $userId)->value('employe_active') === 1;
+        try {
+            return \Illuminate\Support\Facades\Cache::remember('akun_aktif:' . $userId, 60, $cari);
+        } catch (\Throwable $e) {
+            // cache tidak bisa ditulis (izin folder storage): jangan sampai menolak user, langsung cek database
+            return $cari();
+        }
     }
 
     public function employe(): HasOne

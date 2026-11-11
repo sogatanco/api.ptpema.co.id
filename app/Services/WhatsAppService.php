@@ -61,7 +61,7 @@ class WhatsAppService
      */
     public function health(): array
     {
-        return \Illuminate\Support\Facades\Cache::remember('wa_gateway_health', 15, function () {
+        $cari = function () {
             $apiKey = config('services.whatsapp.api_key');
             if (empty($apiKey)) {
                 return ['hidup' => false, 'terhubung' => null, 'http' => null, 'respons' => null, 'pesan' => 'API key gateway WhatsApp belum diisi di server.'];
@@ -83,7 +83,14 @@ class WhatsAppService
                 'respons' => mb_substr($isi, 0, 500),
                 'pesan' => $kode >= 200 && $kode < 300 ? null : "Gateway menjawab HTTP {$kode}",
             ];
-        });
+        };
+
+        try {
+            return \Illuminate\Support\Facades\Cache::remember('wa_gateway_health', 15, $cari);
+        } catch (\Throwable $e) {
+            // cache tidak bisa ditulis (izin folder storage): tetap cek langsung ke gateway
+            return $cari();
+        }
     }
 
     // cari penanda sesi tersambung di JSON health, apa pun bentuknya
