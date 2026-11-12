@@ -30,6 +30,8 @@ use App\Models\Sppd\ListApproval;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sppd\ListSppdRingan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use App\Models\Structure;
 use App\Models\Sppd\UnderReview;
 use App\Models\Sppd\LogPengajuan;
 use App\Models\Sppd\Proses;
@@ -55,6 +57,10 @@ class PengajuanController extends Controller
         $sppd->golongan_rate = $request->rate;
         $sppd->narasi_st = $request->narasi;
         $sppd->submitted_by = Employe::employeId();
+        // simpan divisi pengaju saat dibuat, supaya SPPD tetap di divisi ini walau pengajunya pindah/resign
+        if (Schema::connection('mysql4')->hasColumn('sppds', 'divisi_pengaju')) {
+            $sppd->divisi_pengaju = Employe::getEmployeDivision($sppd->submitted_by)->organization_id ?? null;
+        }
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
         $tujuans = $request->tujuan_sppd;
 
@@ -120,6 +126,8 @@ class PengajuanController extends Controller
         $voidIds = array_map('intval', array_keys($void));
         if ($request->ref == 'mine') {
             $data = ListSppdRingan::where('employe_id', Employe::employeId())->orderBy('id', 'DESC')->get();
+        } elseif ($request->ref == 'divisi') {
+            $data = $this->sppdDivisi();
         } elseif ($request->ref == 'review') {
             $data = UnderReview::where('current_reviewer', Employe::employeId())->whereNotIn('id', $voidIds)->orderBy('id', 'DESC')->get();
         } elseif ($request->ref == 'approved_by') {
@@ -151,10 +159,76 @@ class PengajuanController extends Controller
             $tempCollection = collect([$data1, $data2]);
             $data = $tempCollection->flatten(1);
         } else {
-            $data = ListSppdRingan::where('submitted_by', Employe::employeId())->orderBy('id', 'DESC')->get();
+            $data = $this->sppdSayaAjukan();
         }
 
         return new PostResource(true, $request->ref, $this->tandaiVoid($data, $void));
+    }
+
+    // SPPD yang saya ajukan di divisi saya saat ini. SPPD yang dulu saya ajukan di divisi lama
+    // (sebelum pindah) pindah ke tab "diajukan tim" admin divisi lama.
+    private function sppdSayaAjukan()
+    {
+        $me = Employe::employeId();
+        $q = ListSppdRingan::where('submitted_by', $me);
+        if (Schema::connection('mysql4')->hasColumn('sppds', 'divisi_pengaju')) {
+            $org = Employe::getEmployeDivision($me)->organization_id ?? null;
+            $q->whereIn('id', Sppd::where('submitted_by', $me)->where(function ($w) use ($org) {
+                $w->whereNull('divisi_pengaju')->orWhere('divisi_pengaju', $org);
+            })->select('id'));
+        }
+
+        return $q->orderBy('id', 'DESC')->get();
+    }
+
+    // SPPD yang diajukan admin lain di divisi yang sama (termasuk pengaju yang sudah resign/pindah divisi),
+    // untuk AdminSPPD pengganti. SPPD direksi/dirut hanya tampil bagi AdminSPPD berjabatan Sekretaris Direksi/Dirut.
+    private function sppdDivisi()
+    {
+        $me = Employe::employeId();
+        $roles = auth()->user()->roles ?? [];
+        if (!in_array('AdminSPPD', $roles, true)) {
+            return collect();
+        }
+        $org = Employe::getEmployeDivision($me)->organization_id ?? null;
+        if (!$org) {
+            return collect();
+        }
+
+        $posisi = (string) Structure::where('employe_id', $me)->value('position_name');
+        $sekdir = (bool) preg_match('/^sekretaris\s+(direksi|dirut|direktur\s+utama)/i', $posisi);
+        $direksi = Structure::whereIn('id_base', [3, 4])->pluck('employe_id')->map(fn ($v) => (string) $v)->all();
+
+        // pengaju yang saat ini berada di divisi ini (aktif lewat struktur, nonaktif lewat tabel HR)
+        $hr = config('database.connections.hr.database');
+        $sekarang = Structure::where('organization_id', $org)->pluck('employe_id')
+            ->merge(DB::table('employees_hr as e')
+                ->join($hr . '.positions as p', 'p.id', '=', 'e.position_id')
+                ->join($hr . '.divisions as d', 'd.id', '=', 'p.division_id')
+                ->where('d.id', $org)->pluck('e.employe_id'))
+            ->map(fn ($v) => (string) $v)->unique()->values()->all();
+
+        $punyaSnapshot = Schema::connection('mysql4')->hasColumn('sppds', 'divisi_pengaju');
+        $idSnapshot = $punyaSnapshot ? Sppd::where('divisi_pengaju', $org)->pluck('id')->all() : [];
+
+        $void = SppdVoid::peta();
+        $data = ListSppdRingan::where('submitted_by', '!=', $me)
+            ->where(function ($q) use ($idSnapshot, $sekarang, $punyaSnapshot) {
+                $q->whereIn('id', $idSnapshot);
+                $q->orWhere(function ($q2) use ($sekarang, $punyaSnapshot) {
+                    $q2->whereIn('submitted_by', $sekarang);
+                    if ($punyaSnapshot) {
+                        $q2->whereNotIn('id', Sppd::whereNotNull('divisi_pengaju')->select('id'));
+                    }
+                });
+            })->orderBy('id', 'DESC')->get();
+
+        $data = $data->filter(function ($d) use ($direksi, $sekdir) {
+            $milikDireksi = in_array((string) $d->employe_id, $direksi, true) || in_array((string) $d->submitted_by, $direksi, true);
+            return $sekdir ? true : !$milikDireksi;
+        })->values();
+
+        return $this->tandaiVoid($data, $void);
     }
 
     // Tandai SPPD void (belum atau sudah di-approve) dengan alasan; tidak bisa lagi setelah verifikasi realisasi selesai.
