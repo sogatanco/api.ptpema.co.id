@@ -14,6 +14,7 @@ use App\Models\Adm\CC;
 use App\Models\Adm\ListCC;
 use Illuminate\Http\Request;
 use App\Models\Adm\SuratMasuk as SM;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class SuratMasuk extends Controller
@@ -38,25 +39,34 @@ class SuratMasuk extends Controller
             $suratMasuk->via = $request->via;
             $suratMasuk->insert_by = Employe::employeId();
             $suratMasuk->tgl_surat = date('Y-m-d', strtotime($request->tglSurat));
-            if ($suratMasuk->save()) {
+            // nomor agenda dikunci saat surat dibuat: urut per tahun, reset tiap tahun, tidak berubah walau surat lain dihapus
+            $tahun = (int) date('Y');
+            $simpan = DB::connection('adm')->transaction(function () use ($suratMasuk, $tahun) {
+                $terakhir = DB::connection('adm')->table('surat_masuks')->where('agenda_tahun', $tahun)->lockForUpdate()->max('agenda_urut');
+                $suratMasuk->agenda_tahun = $tahun;
+                $suratMasuk->agenda_urut = ((int) $terakhir) + 1;
+
+                return $suratMasuk->save();
+            });
+            if ($simpan) {
                 return new PostResource(true, 'Berhasil', []);
             }
 
         }
     }
 
-    // Nomor agenda dihitung dari data surat masuk yang ada (tanpa kolom baru): urut per tahun masuk sistem berdasarkan id,
-    // contoh 0001/PEMA/AGD/XI/2026. Mengembalikan [id surat => nomor agenda].
+    // Nomor agenda tersimpan permanen (agenda_tahun + agenda_urut, reset tiap tahun), contoh 0001/PEMA/AGD/XI/2026.
+    // Mengembalikan [id surat => nomor agenda].
     private function petaNomorAgenda(): array
     {
         $romawi = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-        $urut = [];
         $peta = [];
-        foreach (SM::orderBy('id')->get(['id', 'created_at']) as $row) {
+        foreach (SM::orderBy('id')->get(['id', 'created_at', 'agenda_tahun', 'agenda_urut']) as $row) {
+            if (!$row->agenda_urut) {
+                continue;
+            }
             $waktu = $row->created_at ?: now();
-            $tahun = (int) $waktu->format('Y');
-            $urut[$tahun] = ($urut[$tahun] ?? 0) + 1;
-            $peta[$row->id] = sprintf('%04d/PEMA/AGD/%s/%d', $urut[$tahun], $romawi[(int) $waktu->format('n') - 1], $tahun);
+            $peta[$row->id] = sprintf('%04d/PEMA/AGD/%s/%d', $row->agenda_urut, $romawi[(int) $waktu->format('n') - 1], $row->agenda_tahun);
         }
 
         return $peta;
