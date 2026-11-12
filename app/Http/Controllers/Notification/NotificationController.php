@@ -47,6 +47,7 @@ class NotificationController extends Controller
                     'query_key' => null,
                     'entity' => strtoupper($n->modul),
                     'actor' => $n->actor_name ?: '-',
+                    'actor_id' => $n->actor,
                     'position' => $n->judul,
                 ])->all();
         } catch (\Throwable $e) {
@@ -85,6 +86,7 @@ class NotificationController extends Controller
                 'isi' => $n->isi,
                 'url' => $n->url,
                 'actor' => $n->actor_name ?: '-',
+                    'actor_id' => $n->actor,
                 'created_at' => $n->created_at,
                 'read_at' => $n->read_at,
             ])->all(),

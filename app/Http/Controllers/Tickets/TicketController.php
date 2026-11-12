@@ -96,7 +96,7 @@ class TicketController extends Controller
     {
         $employe = Employe::employeId();
 
-        $allTicket = Ticket::select('tickets.*', 'employees_hr.first_name AS pic', 'struktur_lengkap_oke.organization_name AS pic_division')
+        $allTicket = Ticket::select('tickets.*', 'tickets.pic AS pic_id', 'employees_hr.first_name AS pic', 'struktur_lengkap_oke.organization_name AS pic_division')
                     ->where('requester', $employe)
                     ->join('employees_hr', 'employees_hr.employe_id', '=', 'tickets.pic')
                     ->join('struktur_lengkap_oke', 'struktur_lengkap_oke.employe_id', '=', 'tickets.pic')
@@ -127,6 +127,8 @@ class TicketController extends Controller
 
             $allRequest = Ticket::select(
                             'tickets.*', 
+                            'tickets.requester AS requester_id',
+                            'tickets.pic AS pic_id',
                             'a.first_name AS requester', 
                             'b.first_name AS pic', 
                             'c.position_name AS pic_position', 

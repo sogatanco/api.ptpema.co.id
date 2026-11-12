@@ -752,7 +752,7 @@ class PengajuanController extends Controller
         $data['label'] = $rkap->pluck('renbis')->all();
         $data['value'] = $rkap->map(fn ($r) => $r->rkap ? $rillRkap->get($r->id, 0) / $r->rkap * 100 : null)->all();
 
-        $data['groupKar'] = $perKaryawan($verified, fn ($s) => $s->nama)->map(fn ($k) => collect($k)->except('employe_id')->all())->values();
+        $data['groupKar'] = $perKaryawan($verified, fn ($s) => $s->nama)->values();
         return new PostResource(true, 'dashboard', $data);
     }
 
