@@ -10,9 +10,6 @@ use App\Http\Controllers\MobilOp\MobilController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Da\DaCatController;
-use App\Http\Controllers\Da\DaActController;
-use App\Http\Controllers\Da\DaActivitController;
 use App\Http\Controllers\Asset\InvCat;
 use App\Http\Controllers\Asset\InvController;
 use App\Http\Controllers\eSign\Logs;
@@ -27,26 +24,6 @@ use App\Http\Controllers\Sppd\PengajuanController;
 use App\Http\Controllers\Verify\ScanVerif;
 use App\Http\Middleware\Role;
 use App\Http\Controllers\Kontrak\ContractController;
-
-Route::controller(DaCatController::class)->group(function () {
-     Route::get('/categories', 'index')->middleware("role:Employee");
-});
-
-Route::controller(DaActController::class)->group(function () {
-     Route::get('/activities', 'index')->middleware("role:Employee");
-});
-
-Route::controller(DaActivitController::class)->group(function () {
-     Route::post('/activit', 'store')->middleware("role:Employee");
-     Route::get('/myactivity/{filter}', 'index')->middleware("role:Employee");
-     Route::post('myactivity/update', 'updateMember')->middleware("role:Employee");
-     Route::post('myactivity/progress', 'updateProg')->middleware("role:Employee");
-     Route::post('myactivity/delete', 'deleteProg')->middleware("role:Employee");
-     Route::get('mustreview', 'getReview')->middleware("role:Employee");
-     Route::post('mustreview/review', 'changeStatus')->middleware("role:Employee");
-     Route::get('myteam/activities/{filter}', 'getTeamAct')->middleware("role:Employee");
-     Route::get('all/activities/{filter}', 'allActivit')->middleware("role:AllDaily");
-});
 
 Route::controller(InvCat::class)->group(function () {
      Route::get('inven/category', 'index')->middleware("role:Employee");
@@ -218,6 +195,8 @@ Route::controller(SuratMasuk::class)->group(function(){
      Route::post('adm/suratmasuk/delete/{id}', 'delete')->middleware('role:Employee');
      Route::get('adm/suratmasuk/riwayat/{id}', 'getRiwayat')->middleware('role:Employee');
      Route::post('adm/suratmasuk/read/{id_cc}', 'readCC')->middleware('role:Employee');
+     // Publik: status surat masuk dari QR nomor agenda
+     Route::get('adm/public/agenda/{token}', 'statusAgenda')->middleware('throttle:60,1');
 });
 
 // HR

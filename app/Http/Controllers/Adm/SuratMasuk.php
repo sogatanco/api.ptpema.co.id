@@ -45,6 +45,44 @@ class SuratMasuk extends Controller
         }
     }
 
+    // Nomor agenda dihitung dari data surat masuk yang ada (tanpa kolom baru): urut per tahun masuk sistem berdasarkan id,
+    // contoh 0001/AGD/XI/2026. Mengembalikan [id surat => nomor agenda].
+    private function petaNomorAgenda(): array
+    {
+        $romawi = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+        $urut = [];
+        $peta = [];
+        foreach (SM::orderBy('id')->get(['id', 'created_at']) as $row) {
+            $waktu = $row->created_at ?: now();
+            $tahun = (int) $waktu->format('Y');
+            $urut[$tahun] = ($urut[$tahun] ?? 0) + 1;
+            $peta[$row->id] = sprintf('%04d/AGD/%s/%d', $urut[$tahun], $romawi[(int) $waktu->format('n') - 1], $tahun);
+        }
+
+        return $peta;
+    }
+
+    // token QR: id surat + tanda tangan HMAC, supaya tautan publik tidak bisa ditebak dari nomor urut
+    public static function tokenAgenda($idSurat): string
+    {
+        return $idSurat . '-' . substr(hash_hmac('sha256', 'agenda:' . $idSurat, (string) config('app.key')), 0, 12);
+    }
+
+    // tambahkan nomor agenda dan token QR ke tiap baris daftar (kolom id surat berbeda antar daftar)
+    private function sertakanAgenda($data, string $kolomId)
+    {
+        if ($data->isEmpty()) {
+            return $data;
+        }
+        $peta = $this->petaNomorAgenda();
+        foreach ($data as $d) {
+            $d->nomor_agenda = $peta[$d->{$kolomId}] ?? null;
+            $d->agenda_token = self::tokenAgenda($d->{$kolomId});
+        }
+
+        return $data;
+    }
+
     public function getSM($what)
     {
         $data = [];
@@ -92,7 +130,48 @@ class SuratMasuk extends Controller
             $data=ListCC::where('live_cc', Employe::employeId())->latest('cc_at')->get();
         }
 
+        if ($data instanceof \Illuminate\Support\Collection || $data instanceof \Illuminate\Database\Eloquent\Collection) {
+            $data = $this->sertakanAgenda($data, $what === 'all' ? 'id' : 'id_surat');
+        }
+
         return new PostResource(true, 'data Surat Masuk', $data);
+    }
+
+    // Publik (tanpa login): status surat masuk dari QR nomor agenda. Hanya data ringkas, tanpa isi/berkas surat.
+    public function statusAgenda($token)
+    {
+        [$id, $tanda] = array_pad(explode('-', (string) $token, 2), 2, '');
+        if (!ctype_digit($id) || !hash_equals(substr(self::tokenAgenda($id), strlen($id) + 1), (string) $tanda)) {
+            return response()->json(['message' => 'Nomor agenda tidak valid'], 404);
+        }
+        $sm = SM::find($id);
+        if (!$sm) {
+            return response()->json(['message' => 'Surat tidak ditemukan'], 404);
+        }
+
+        $dispo = Disposisi::where('id_surat', $sm->id)->orderBy('id')->get();
+        $nama = fn ($r) => $r->dispo_to == 'position'
+            ? $this->positionName($r->id_penerima)
+            : Division::where('organization_id', $r->id_penerima)->value('organization_name');
+        $langkah = collect([['waktu' => $sm->created_at, 'keterangan' => 'Surat diterima dan dicatat di sistem']]);
+        foreach ($dispo as $r) {
+            $langkah->push(['waktu' => $r->created_at, 'keterangan' => 'Disampaikan kepada ' . ($nama($r) ?: '-')]);
+            if ($r->tindak_lanjut) {
+                $langkah->push(['waktu' => $r->updated_at, 'keterangan' => 'Ditindaklanjuti oleh ' . ($r->tinjut_by_position ?: '-')]);
+            }
+        }
+        $selesai = $dispo->isNotEmpty() && $dispo->every(fn ($r) => $r->tindak_lanjut !== null);
+
+        return response()->json(['data' => [
+            'nomor_agenda' => $this->petaNomorAgenda()[$sm->id] ?? null,
+            'nomor_surat' => $sm->nomor,
+            'pengirim' => $sm->pengirim,
+            'perihal' => $sm->perihal,
+            'tgl_surat' => $sm->tgl_surat,
+            'diterima' => $sm->created_at,
+            'status' => $selesai ? 'selesai' : 'diproses',
+            'langkah' => $langkah->values(),
+        ]]);
     }
 
     // Id jabatan di disposisi/cc/surat masuk adalah id jabatan HR (sama dengan struktur_lengkap_oke.position_id)
