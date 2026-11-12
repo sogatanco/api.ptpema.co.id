@@ -150,6 +150,13 @@ Route::controller(\App\Http\Controllers\Adm\SuratBackdateController::class)->gro
      Route::post('adm/backdate/{id}/tolak', 'tolak')->middleware("role:PICAdm");
 });
 
+Route::controller(\App\Http\Controllers\Adm\SuratDraftController::class)->group(function(){
+     Route::post('adm/draft/simpan', 'simpan')->middleware("role:AdminAdm");
+     Route::get('adm/draft/daftar', 'daftar')->middleware("role:AdminAdm");
+     Route::get('adm/draft/{id}', 'detail')->middleware("role:AdminAdm");
+     Route::post('adm/draft/{id}/hapus', 'hapus')->middleware("role:AdminAdm");
+});
+
 Route::controller(SuratController::class)->group(function(){
      Route::post('adm/insert', 'insert')->middleware("role:Employee");
      Route::get('adm/surat/{what}', 'getSurat')->middleware("role:Employee");
