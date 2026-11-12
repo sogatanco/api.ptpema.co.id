@@ -142,6 +142,14 @@ Route::controller(StaticAdmController::class)->group(function(){
      Route::get('adm/dashboard/{dt}', 'dashboard')->middleware('role:Employee');
 });
 
+Route::controller(\App\Http\Controllers\Sppd\RenbisController::class)->group(function(){
+     Route::get('renbis/akses', 'akses')->middleware("role:Employee");
+     Route::get('renbis', 'index')->middleware("role:Employee");
+     Route::post('renbis', 'store')->middleware("role:Employee");
+     Route::post('renbis/{id}/update', 'update')->middleware("role:Employee");
+     Route::post('renbis/{id}/hapus', 'destroy')->middleware("role:Employee");
+});
+
 Route::controller(\App\Http\Controllers\Adm\SuratBackdateController::class)->group(function(){
      Route::post('adm/backdate/ajukan', 'ajukan')->middleware("role:AdminAdm");
      Route::get('adm/backdate/daftar', 'daftar')->middleware("role:AdminAdm,PICAdm");
