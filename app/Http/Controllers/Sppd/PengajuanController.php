@@ -161,13 +161,19 @@ class PengajuanController extends Controller
         return new PostResource(true, $request->ref, $this->tandaiVoid($data, $void));
     }
 
-    // Divisi pengaju tiap SPPD pada saat SPPD dibuat, dari riwayat jabatan HR (employee_histories).
-    // Tanpa riwayat -> divisi terakhir/saat ini (struktur aktif, atau jabatan terakhir di tabel HR untuk yang sudah keluar).
-    // Mengembalikan [id sppd => id divisi].
+    // Jabatan sekretaris direksi/dirut: tidak dihitung sebagai anggota divisi, hanya saling melihat sesama sekretaris
+    private function jabatanSekretaris($namaJabatan)
+    {
+        return (bool) preg_match('/^sekretaris\s+(direksi|dirut|direktur\s+utama)/i', (string) $namaJabatan);
+    }
+
+    // Divisi dan status sekretaris pengaju tiap SPPD pada saat SPPD dibuat, dari riwayat jabatan HR (employee_histories).
+    // Tanpa riwayat -> jabatan terakhir/saat ini (struktur aktif, atau tabel HR untuk yang sudah keluar).
+    // Mengembalikan [id sppd => ['div' => id divisi|null, 'sek' => bool]].
     private function divisiPengajuPerSppd($baris)
     {
         $hr = config('database.connections.hr.database');
-        $divisiJabatan = DB::table("$hr.positions")->pluck('division_id', 'id');
+        $jabatan = DB::table("$hr.positions")->get(['id', 'division_id', 'position_name'])->keyBy('id');
 
         // jabatan utama saja (bukan penugasan PIC/PS), urut waktu
         $riwayat = DB::table("$hr.employee_histories")
@@ -185,23 +191,28 @@ class PengajuanController extends Controller
         foreach ($baris as $b) {
             $pengaju = (string) $b->submitted_by;
             $div = null;
+            $nama = null;
             $rows = $riwayat->get($pengaju);
             if ($rows && $rows->isNotEmpty()) {
                 $tgl = substr((string) $b->created_at, 0, 10);
                 $pakai = $rows->filter(fn ($r) => $r->start_date <= $tgl)->last() ?? $rows->first();
-                $div = $divisiJabatan[$pakai->position_id] ?? null;
+                $j = $jabatan->get($pakai->position_id);
+                $div = $j->division_id ?? null;
+                $nama = $j->position_name ?? null;
             }
             if (!$div) {
                 if ($sekarang === null) {
-                    $sekarang = Structure::pluck('organization_id', 'employe_id')->mapWithKeys(fn ($v, $k) => [(string) $k => $v]);
-                    $hrSekarang = DB::table('employees_hr as e')
+                    $struktur = Structure::get(['employe_id', 'organization_id', 'position_name'])
+                        ->mapWithKeys(fn ($r) => [(string) $r->employe_id => [$r->organization_id, $r->position_name]]);
+                    $dariHr = DB::table('employees_hr as e')
                         ->join("$hr.positions as p", 'p.id', '=', 'e.position_id')
-                        ->pluck('p.division_id', 'e.employe_id')->mapWithKeys(fn ($v, $k) => [(string) $k => $v]);
-                    $sekarang = collect($sekarang->all() + $hrSekarang->all()); // struktur aktif didahulukan; '+' menjaga id numerik
+                        ->get(['e.employe_id', 'p.division_id', 'p.position_name'])
+                        ->mapWithKeys(fn ($r) => [(string) $r->employe_id => [$r->division_id, $r->position_name]]);
+                    $sekarang = collect($struktur->all() + $dariHr->all()); // struktur aktif didahulukan; '+' menjaga id numerik
                 }
-                $div = $sekarang->get($pengaju);
+                [$div, $nama] = $sekarang->get($pengaju, [null, null]);
             }
-            $hasil[$b->id] = $div ? (int) $div : null;
+            $hasil[$b->id] = ['div' => $div ? (int) $div : null, 'sek' => $this->jabatanSekretaris($nama)];
         }
 
         return $hasil;
@@ -215,7 +226,7 @@ class PengajuanController extends Controller
         $org = Employe::getEmployeDivision($me)->organization_id ?? null;
         $baris = Sppd::where('submitted_by', $me)->get(['id', 'submitted_by', 'created_at']);
         $div = $this->divisiPengajuPerSppd($baris);
-        $ids = $baris->filter(fn ($b) => ($div[$b->id] ?? null) === null || (int) $div[$b->id] === (int) $org)->pluck('id')->all();
+        $ids = $baris->filter(fn ($b) => ($div[$b->id]['div'] ?? null) === null || (int) $div[$b->id]['div'] === (int) $org)->pluck('id')->all();
 
         return ListSppdRingan::whereIn('id', $ids)->orderBy('id', 'DESC')->get();
     }
@@ -235,18 +246,30 @@ class PengajuanController extends Controller
         }
 
         $posisi = (string) Structure::where('employe_id', $me)->value('position_name');
-        $sekdir = (bool) preg_match('/^sekretaris\s+(direksi|dirut|direktur\s+utama)/i', $posisi);
+        $sekdir = $this->jabatanSekretaris($posisi);
         $direksi = Structure::whereIn('id_base', [3, 4])->pluck('employe_id')->map(fn ($v) => (string) $v)->all();
 
         $baris = Sppd::where('submitted_by', '!=', $me)->get(['id', 'submitted_by', 'created_at']);
         $div = $this->divisiPengajuPerSppd($baris);
-        $ids = $baris->filter(fn ($b) => ($div[$b->id] ?? null) === (int) $org)->pluck('id')->all();
+        // sekretaris: hanya melihat SPPD yang diajukan sesama sekretaris (lintas divisi) dan SPPD direksi/dirut.
+        // admin lain: SPPD staf divisinya, tanpa SPPD sekretaris dan SPPD direksi/dirut.
+        $ids = $baris->filter(function ($b) use ($div, $org, $sekdir) {
+            $info = $div[$b->id] ?? ['div' => null, 'sek' => false];
+            return $sekdir ? $info['sek'] : (!$info['sek'] && $info['div'] === (int) $org);
+        })->pluck('id')->all();
 
         $data = ListSppdRingan::whereIn('id', $ids)->orderBy('id', 'DESC')->get();
-        $data = $data->filter(function ($d) use ($direksi, $sekdir) {
-            $milikDireksi = in_array((string) $d->employe_id, $direksi, true) || in_array((string) $d->submitted_by, $direksi, true);
-            return $sekdir ? true : !$milikDireksi;
-        })->values();
+        if ($sekdir) {
+            // tambah SPPD yang pemberangkat/pengajunya direksi
+            $tambahan = ListSppdRingan::where('submitted_by', '!=', $me)
+                ->where(function ($q) use ($direksi) {
+                    $q->whereIn('employe_id', $direksi)->orWhereIn('submitted_by', $direksi);
+                })->whereNotIn('id', $ids)->get();
+            $data = $data->concat($tambahan)->sortByDesc('id');
+        } else {
+            $data = $data->filter(fn ($d) => !in_array((string) $d->employe_id, $direksi, true) && !in_array((string) $d->submitted_by, $direksi, true));
+        }
+        $data = $data->values();
 
         return $this->tandaiVoid($data, SppdVoid::peta());
     }
