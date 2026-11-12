@@ -57,10 +57,6 @@ class PengajuanController extends Controller
         $sppd->golongan_rate = $request->rate;
         $sppd->narasi_st = $request->narasi;
         $sppd->submitted_by = Employe::employeId();
-        // simpan divisi pengaju saat dibuat, supaya SPPD tetap di divisi ini walau pengajunya pindah/resign
-        if (Schema::connection('mysql4')->hasColumn('sppds', 'divisi_pengaju')) {
-            $sppd->divisi_pengaju = Employe::getEmployeDivision($sppd->submitted_by)->organization_id ?? null;
-        }
         $sppd->ketetapan = KetetapanSppd::where('status', 'active')->first()->id;
         $tujuans = $request->tujuan_sppd;
 
@@ -165,20 +161,63 @@ class PengajuanController extends Controller
         return new PostResource(true, $request->ref, $this->tandaiVoid($data, $void));
     }
 
+    // Divisi pengaju tiap SPPD pada saat SPPD dibuat, dari riwayat jabatan HR (employee_histories).
+    // Tanpa riwayat -> divisi terakhir/saat ini (struktur aktif, atau jabatan terakhir di tabel HR untuk yang sudah keluar).
+    // Mengembalikan [id sppd => id divisi].
+    private function divisiPengajuPerSppd($baris)
+    {
+        $hr = config('database.connections.hr.database');
+        $divisiJabatan = DB::table("$hr.positions")->pluck('division_id', 'id');
+
+        // jabatan utama saja (bukan penugasan PIC/PS), urut waktu
+        $riwayat = DB::table("$hr.employee_histories")
+            ->where(function ($q) {
+                $q->whereNull('as_pic')->orWhere('as_pic', 0);
+            })
+            ->whereNotIn('contract_need', ['PIC', 'PS'])
+            ->whereNotNull('position_id')
+            ->orderBy('start_date')->orderBy('id')
+            ->get(['employe_id', 'position_id', 'start_date'])
+            ->groupBy(fn ($r) => (string) $r->employe_id);
+
+        $sekarang = null; // dimuat hanya bila ada pengaju tanpa riwayat
+        $hasil = [];
+        foreach ($baris as $b) {
+            $pengaju = (string) $b->submitted_by;
+            $div = null;
+            $rows = $riwayat->get($pengaju);
+            if ($rows && $rows->isNotEmpty()) {
+                $tgl = substr((string) $b->created_at, 0, 10);
+                $pakai = $rows->filter(fn ($r) => $r->start_date <= $tgl)->last() ?? $rows->first();
+                $div = $divisiJabatan[$pakai->position_id] ?? null;
+            }
+            if (!$div) {
+                if ($sekarang === null) {
+                    $sekarang = Structure::pluck('organization_id', 'employe_id')->mapWithKeys(fn ($v, $k) => [(string) $k => $v]);
+                    $hrSekarang = DB::table('employees_hr as e')
+                        ->join("$hr.positions as p", 'p.id', '=', 'e.position_id')
+                        ->pluck('p.division_id', 'e.employe_id')->mapWithKeys(fn ($v, $k) => [(string) $k => $v]);
+                    $sekarang = $hrSekarang->merge($sekarang); // struktur aktif didahulukan
+                }
+                $div = $sekarang->get($pengaju);
+            }
+            $hasil[$b->id] = $div ? (int) $div : null;
+        }
+
+        return $hasil;
+    }
+
     // SPPD yang saya ajukan di divisi saya saat ini. SPPD yang dulu saya ajukan di divisi lama
     // (sebelum pindah) pindah ke tab "diajukan tim" admin divisi lama.
     private function sppdSayaAjukan()
     {
         $me = Employe::employeId();
-        $q = ListSppdRingan::where('submitted_by', $me);
-        if (Schema::connection('mysql4')->hasColumn('sppds', 'divisi_pengaju')) {
-            $org = Employe::getEmployeDivision($me)->organization_id ?? null;
-            $q->whereIn('id', Sppd::where('submitted_by', $me)->where(function ($w) use ($org) {
-                $w->whereNull('divisi_pengaju')->orWhere('divisi_pengaju', $org);
-            })->select('id'));
-        }
+        $org = Employe::getEmployeDivision($me)->organization_id ?? null;
+        $baris = Sppd::where('submitted_by', $me)->get(['id', 'submitted_by', 'created_at']);
+        $div = $this->divisiPengajuPerSppd($baris);
+        $ids = $baris->filter(fn ($b) => ($div[$b->id] ?? null) === null || (int) $div[$b->id] === (int) $org)->pluck('id')->all();
 
-        return $q->orderBy('id', 'DESC')->get();
+        return ListSppdRingan::whereIn('id', $ids)->orderBy('id', 'DESC')->get();
     }
 
     // SPPD yang diajukan admin lain di divisi yang sama (termasuk pengaju yang sudah resign/pindah divisi),
@@ -199,36 +238,17 @@ class PengajuanController extends Controller
         $sekdir = (bool) preg_match('/^sekretaris\s+(direksi|dirut|direktur\s+utama)/i', $posisi);
         $direksi = Structure::whereIn('id_base', [3, 4])->pluck('employe_id')->map(fn ($v) => (string) $v)->all();
 
-        // pengaju yang saat ini berada di divisi ini (aktif lewat struktur, nonaktif lewat tabel HR)
-        $hr = config('database.connections.hr.database');
-        $sekarang = Structure::where('organization_id', $org)->pluck('employe_id')
-            ->merge(DB::table('employees_hr as e')
-                ->join($hr . '.positions as p', 'p.id', '=', 'e.position_id')
-                ->join($hr . '.divisions as d', 'd.id', '=', 'p.division_id')
-                ->where('d.id', $org)->pluck('e.employe_id'))
-            ->map(fn ($v) => (string) $v)->unique()->values()->all();
+        $baris = Sppd::where('submitted_by', '!=', $me)->get(['id', 'submitted_by', 'created_at']);
+        $div = $this->divisiPengajuPerSppd($baris);
+        $ids = $baris->filter(fn ($b) => ($div[$b->id] ?? null) === (int) $org)->pluck('id')->all();
 
-        $punyaSnapshot = Schema::connection('mysql4')->hasColumn('sppds', 'divisi_pengaju');
-        $idSnapshot = $punyaSnapshot ? Sppd::where('divisi_pengaju', $org)->pluck('id')->all() : [];
-
-        $void = SppdVoid::peta();
-        $data = ListSppdRingan::where('submitted_by', '!=', $me)
-            ->where(function ($q) use ($idSnapshot, $sekarang, $punyaSnapshot) {
-                $q->whereIn('id', $idSnapshot);
-                $q->orWhere(function ($q2) use ($sekarang, $punyaSnapshot) {
-                    $q2->whereIn('submitted_by', $sekarang);
-                    if ($punyaSnapshot) {
-                        $q2->whereNotIn('id', Sppd::whereNotNull('divisi_pengaju')->select('id'));
-                    }
-                });
-            })->orderBy('id', 'DESC')->get();
-
+        $data = ListSppdRingan::whereIn('id', $ids)->orderBy('id', 'DESC')->get();
         $data = $data->filter(function ($d) use ($direksi, $sekdir) {
             $milikDireksi = in_array((string) $d->employe_id, $direksi, true) || in_array((string) $d->submitted_by, $direksi, true);
             return $sekdir ? true : !$milikDireksi;
         })->values();
 
-        return $this->tandaiVoid($data, $void);
+        return $this->tandaiVoid($data, SppdVoid::peta());
     }
 
     // Tandai SPPD void (belum atau sudah di-approve) dengan alasan; tidak bisa lagi setelah verifikasi realisasi selesai.
