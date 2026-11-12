@@ -197,7 +197,7 @@ class PengajuanController extends Controller
                     $hrSekarang = DB::table('employees_hr as e')
                         ->join("$hr.positions as p", 'p.id', '=', 'e.position_id')
                         ->pluck('p.division_id', 'e.employe_id')->mapWithKeys(fn ($v, $k) => [(string) $k => $v]);
-                    $sekarang = $hrSekarang->merge($sekarang); // struktur aktif didahulukan
+                    $sekarang = collect($sekarang->all() + $hrSekarang->all()); // struktur aktif didahulukan; '+' menjaga id numerik
                 }
                 $div = $sekarang->get($pengaju);
             }
