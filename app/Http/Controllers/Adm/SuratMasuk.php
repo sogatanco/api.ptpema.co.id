@@ -46,7 +46,7 @@ class SuratMasuk extends Controller
     }
 
     // Nomor agenda dihitung dari data surat masuk yang ada (tanpa kolom baru): urut per tahun masuk sistem berdasarkan id,
-    // contoh 0001/AGD/XI/2026. Mengembalikan [id surat => nomor agenda].
+    // contoh 0001/PEMA/AGD/XI/2026. Mengembalikan [id surat => nomor agenda].
     private function petaNomorAgenda(): array
     {
         $romawi = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
@@ -56,7 +56,7 @@ class SuratMasuk extends Controller
             $waktu = $row->created_at ?: now();
             $tahun = (int) $waktu->format('Y');
             $urut[$tahun] = ($urut[$tahun] ?? 0) + 1;
-            $peta[$row->id] = sprintf('%04d/AGD/%s/%d', $urut[$tahun], $romawi[(int) $waktu->format('n') - 1], $tahun);
+            $peta[$row->id] = sprintf('%04d/PEMA/AGD/%s/%d', $urut[$tahun], $romawi[(int) $waktu->format('n') - 1], $tahun);
         }
 
         return $peta;
