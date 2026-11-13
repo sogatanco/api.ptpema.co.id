@@ -196,6 +196,16 @@ Route::prefix('pengaturan/alur')->middleware('role:SuperAdmin')->controller(\App
     Route::delete('/aturan/{id}', 'hapus');
 });
 
+// Setting > Biaya & Ketetapan SPPD: tarif SPPD per ketetapan (hanya role SuperAdmin)
+Route::prefix('pengaturan/biaya')->middleware('role:SuperAdmin')->controller(\App\Http\Controllers\Pengaturan\BiayaSppdController::class)->group(function () {
+    Route::get('/', 'index');
+    Route::post('/', 'store');
+    Route::get('/{id}', 'show')->whereNumber('id');
+    Route::put('/{id}', 'update')->whereNumber('id');
+    Route::post('/{id}/aktifkan', 'aktifkan')->whereNumber('id');
+    Route::delete('/{id}', 'destroy')->whereNumber('id');
+});
+
 // Notification routes
 Route::controller(NotificationController::class)->group(function(){
     Route::get('/notification', "get")->middleware("role:Employee");
