@@ -201,7 +201,7 @@ class AlurApprovalController extends Controller
                 $this->gagal("Langkah $no: aturan lewati tidak valid.");
             }
             $namaHr = !empty($l['nama_hr']) && $sumber === 'posisi' ? 1 : 0;
-            $notif = !empty($l['notif']) && $modul === 'sppd' ? 1 : 0;
+            $notif = 0; // notifikasi ditangani aplikasi (ptpemaco_notif), bukan trigger
 
             $langkah[] = [
                 'urutan' => $no,

@@ -7,14 +7,14 @@
 --   * ptpemaco_esign.alur_langkah  : langkah berurutan tiap aturan (verifikasi_biaya / paraf / sign) beserta sumber orangnya.
 --   * ptpemaco_esign.alur_cari     : mencari orang untuk satu langkah (jabatan tertentu, urutan ke-n pemegang id_base, PUK divisi,
 --                                    direktur divisi, atasan terkait/direktur terkait pengaju, penandatangan).
---   * ptpemaco_esign.bangun_alur   : membaca aturan lalu menulis ptpemaco_esign.verif_steps (dan notifikasi SPPD).
+--   * ptpemaco_esign.bangun_alur   : membaca aturan lalu menulis ptpemaco_esign.verif_steps. Tidak menulis notifikasi (ditangani aplikasi, db/notif/02).
 --   * 4 trigger memanggil bangun_alur:
 --       ptpemaco_sppdnew.add_step_verif_1 (BEFORE INSERT sppds)   ptpemaco_sppdnew.after_update1 (AFTER UPDATE sppds)
 --       ptpemaco_admnew.add_verif_doc_log2 (BEFORE INSERT surats) ptpemaco_admnew.after_update2 (BEFORE UPDATE surats)
---     Bagian lain trigger tidak berubah (notifikasi ke pegawai tujuan, log, hapus langkah lama, penyimpanan dokumen e-sign).
+--     Bagian lain trigger tidak berubah (log, hapus langkah lama, penyimpanan dokumen e-sign).
 --
 -- Aturan awal (seed) disalin dari percabangan trigger yang berlaku sekarang, sehingga hasil alurnya SAMA. Setelah ini alur diubah dari Setting.
--- PRASYARAT: 33, 39 (atau hanya 33), 51 dan 55 sudah dijalankan. Skrip memeriksa MD5 definisi keempat trigger dan berhenti
+-- PRASYARAT: 33, 39, 51, 55 dan db/notif/02 (notifikasi dipindah ke aplikasi) sudah dijalankan. Skrip memeriksa hash logika (tanpa komentar/spasi) keempat trigger dan berhenti
 --            (tanpa mengubah apa pun) bila berbeda, karena aturan awal hanya terjamin sama dengan definisi itu.
 -- Definisi lama disimpan di ptpemaco_esign.bak_trigger_defs_alur (dibuat tanpa IF NOT EXISTS: dijalankan dua kali berhenti di sini).
 -- WAJIB:  mysql --comments -u <user> -p < alur_approval.sql        Rollback: alur_approval_rollback.sql
@@ -31,12 +31,12 @@ CREATE PROCEDURE ptpemaco_esign.tmp_alur_precheck()
 BEGIN
   DECLARE v_ok INT;
   SELECT COUNT(*) INTO v_ok FROM information_schema.triggers
-   WHERE (trigger_schema = 'ptpemaco_sppdnew' AND trigger_name = 'add_step_verif_1' AND MD5(REPLACE(action_statement, CHAR(13), '')) = 'febf811ae91aa089fab47ea9d72c0c5f') OR
-      (trigger_schema = 'ptpemaco_sppdnew' AND trigger_name = 'after_update1' AND MD5(REPLACE(action_statement, CHAR(13), '')) IN ('4ff0c25c978fef05390e8404bcebe9bb', '6826cb5221fb45f475a1b28ffd277634')) OR
-      (trigger_schema = 'ptpemaco_admnew' AND trigger_name = 'add_verif_doc_log2' AND MD5(REPLACE(action_statement, CHAR(13), '')) = 'a254a607c6b9a7dce533528a73151cef') OR
-      (trigger_schema = 'ptpemaco_admnew' AND trigger_name = 'after_update2' AND MD5(REPLACE(action_statement, CHAR(13), '')) = '0c437a06f5b716d7e97d144a88934774');
+   WHERE (trigger_schema = 'ptpemaco_sppdnew' AND trigger_name = 'add_step_verif_1' AND MD5(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(action_statement, '(?s)/[*].*?[*]/', ''), '--.*', ''), '[[:space:]]+', '')) = 'e0b11bb0b2981c830a641fd5a2e8f87a')
+      OR (trigger_schema = 'ptpemaco_sppdnew' AND trigger_name = 'after_update1' AND MD5(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(action_statement, '(?s)/[*].*?[*]/', ''), '--.*', ''), '[[:space:]]+', '')) = '4abf66c7c6d09276b89c5b14aa6b3cae')
+      OR (trigger_schema = 'ptpemaco_admnew' AND trigger_name = 'add_verif_doc_log2' AND MD5(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(action_statement, '(?s)/[*].*?[*]/', ''), '--.*', ''), '[[:space:]]+', '')) = '69a5064cedb9c388142d37641dcfa2c7')
+      OR (trigger_schema = 'ptpemaco_admnew' AND trigger_name = 'after_update2' AND MD5(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(action_statement, '(?s)/[*].*?[*]/', ''), '--.*', ''), '[[:space:]]+', '')) = 'dbb8c5fb9d2d7f1a57436ce689fce2e6');
   IF v_ok <> 4 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Definisi trigger SPPD/surat di server berbeda dari hasil 33/39/51/55 (jalankan itu dulu, atau regenerasi skrip)';
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Logika trigger SPPD/surat di server berbeda dari yang diuji (hasil 33/39/51/55 dan db/notif/02)';
   END IF;
   SELECT COUNT(*) INTO v_ok FROM ptpemaco_apam.struktur_lengkap_oke WHERE position_id IN (1, 3, 6, 13, 51, 68);
   IF v_ok < 6 THEN
@@ -98,7 +98,7 @@ CREATE TABLE ptpemaco_esign.alur_aturan (
 -- lewati_jika_sama  : NULL | 'pengaju' | 'penandatangan' : langkah dilewati bila orangnya sama dengan pengaju/penandatangan
 -- lewati_ganda      : 1 = langkah dilewati bila orang itu sudah ada di alur dokumen yang sama
 -- nama_hr           : 1 = nama jabatan di langkah diambil dari master jabatan HR (bukan dari struktur_lengkap_oke); hanya untuk sumber posisi
--- notif             : 1 = orang di langkah ini diberi notifikasi pengajuan SPPD (tipe 32); surat tidak memakainya
+-- notif             : tidak dipakai lagi (trigger memanggil bangun_alur dengan p_notif = 0); notifikasi ditangani aplikasi
 CREATE TABLE ptpemaco_esign.alur_langkah (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   id_aturan INT UNSIGNED NOT NULL,
@@ -125,7 +125,7 @@ INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, create
 VALUES ('sppd', 'Komisaris Utama dan Komisaris', '1,2', 'Verifikasi Manajer Keuangan, paraf tiga direktur, ditandatangani Direktur Utama', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 1),
+  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 2, 'paraf', 'id_base', 4, 0, NULL, NULL, NULL, 0, 0, 0),
   (@a, 3, 'paraf', 'id_base', 4, 1, NULL, NULL, NULL, 0, 0, 0),
   (@a, 4, 'paraf', 'id_base', 4, 2, NULL, NULL, NULL, 0, 0, 0),
@@ -135,7 +135,7 @@ INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, create
 VALUES ('sppd', 'Direktur Utama', '3', 'Verifikasi Manajer Keuangan, paraf Sekretaris Komisaris, ditandatangani Komisaris Utama', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 1),
+  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 2, 'paraf', 'posisi', 68, 0, NULL, NULL, NULL, 0, 0, 0),
   (@a, 3, 'sign', 'posisi', 1, 0, NULL, NULL, NULL, 0, 0, 0);
 
@@ -143,7 +143,7 @@ INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, create
 VALUES ('sppd', 'Direktur', '4', 'Verifikasi Manajer Keuangan, paraf Direktur Umum dan Keuangan (dilewati bila pengaju sendiri), ditandatangani Direktur Utama', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 1),
+  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 2, 'paraf', 'posisi', 6, 0, NULL, NULL, 'pengaju', 0, 0, 0),
   (@a, 3, 'sign', 'posisi', 3, 0, NULL, NULL, NULL, 0, 0, 0);
 
@@ -151,7 +151,7 @@ INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, create
 VALUES ('sppd', 'Komite', '5', 'Verifikasi Manajer Keuangan, paraf Sekretaris Komisaris, ditandatangani Komisaris Utama', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 1),
+  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 2, 'paraf', 'posisi', 68, 0, NULL, NULL, NULL, 0, 0, 0),
   (@a, 3, 'sign', 'posisi', 1, 0, NULL, NULL, NULL, 0, 0, 0);
 
@@ -159,7 +159,7 @@ INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, create
 VALUES ('sppd', 'Manajer Eksekutif dan Manajer', '6,7', 'Verifikasi Manajer Keuangan, paraf direktur terkait (bila ada), paraf Direktur Umum dan Keuangan, ditandatangani Direktur Utama', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 1),
+  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 2, 'paraf', 'dir_terkait', NULL, 0, NULL, NULL, NULL, 1, 0, 0),
   (@a, 3, 'paraf', 'posisi', 6, 0, NULL, NULL, NULL, 1, 0, 0),
   (@a, 4, 'sign', 'posisi', 3, 0, NULL, NULL, NULL, 0, 0, 0);
@@ -168,7 +168,7 @@ INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, create
 VALUES ('sppd', 'Supervisor dan Staf', '8,9', 'Paraf PUK divisi, verifikasi Manajer Keuangan, ditandatangani direktur terkait (bila tidak ada: Direktur Utama)', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'paraf', 'puk', NULL, 0, NULL, NULL, NULL, 0, 0, 1),
+  (@a, 1, 'paraf', 'puk', NULL, 0, NULL, NULL, NULL, 0, 0, 0),
   (@a, 2, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 3, 'sign', 'dir_terkait', NULL, 0, 'posisi', 3, NULL, 0, 0, 0);
 
@@ -176,14 +176,14 @@ INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, create
 VALUES ('sppd', 'Tenaga Pendukung', '10', 'Verifikasi Manajer Keuangan, ditandatangani PUK divisi', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 1),
+  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 2, 'sign', 'puk', NULL, 0, NULL, NULL, NULL, 0, 0, 0);
 
 INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, keterangan, created_at, updated_at)
 VALUES ('sppd', 'SPPD tanpa pegawai tujuan', '-', 'Verifikasi Manajer Keuangan, paraf direktur terkait pengaju (bila tidak ada: Direktur Umum dan Keuangan), ditandatangani Direktur Utama', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 1),
+  (@a, 1, 'verifikasi_biaya', 'posisi', 13, 0, NULL, NULL, NULL, 0, 1, 0),
   (@a, 2, 'paraf', 'dir_terkait', NULL, 0, 'posisi', 6, NULL, 0, 0, 0),
   (@a, 3, 'sign', 'posisi', 3, 0, NULL, NULL, NULL, 0, 0, 0);
 
@@ -306,7 +306,7 @@ DELIMITER ;
 -- p_pengaju : sppd = pegawai tujuan (atau pengaju bila tanpa pegawai tujuan); dipakai untuk dir_terkait dan "lewati bila sama pengaju"
 -- p_ttd     : surat = penandatangan (sign_by)
 -- p_actor   : pembuat notifikasi SPPD
--- p_notif   : 1 = tulis notifikasi SPPD, 0 = tidak (simulasi di halaman Setting)
+-- p_notif   : 1 = tulis notifikasi ke ptpemaco_apam.notifications (lama), 0 = tidak. Trigger selalu memakai 0.
 DROP PROCEDURE IF EXISTS ptpemaco_esign.bangun_alur;
 DELIMITER $$
 CREATE PROCEDURE ptpemaco_esign.bangun_alur(
@@ -406,19 +406,15 @@ SET SESSION sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,N
 DROP TRIGGER IF EXISTS `ptpemaco_sppdnew`.`add_step_verif_1`;
 DELIMITER $$
 CREATE DEFINER=`ptpemaco`@`localhost` TRIGGER `ptpemaco_sppdnew`.`add_step_verif_1` BEFORE INSERT ON `ptpemaco_sppdnew`.`sppds` FOR EACH ROW BEGIN
-    -- Alur persetujuan SPPD dibangun dari aturan di ptpemaco_esign.alur_aturan / alur_langkah (diatur di halaman Setting)
+    -- Alur persetujuan SPPD dibangun dari aturan di ptpemaco_esign.alur_aturan / alur_langkah (diatur di halaman Setting).
+    -- Notifikasi tidak ditulis di sini: ditangani aplikasi lewat ptpemaco_notif (db/notif/02).
     IF NEW.employe_id != '-' THEN
-        INSERT INTO ptpemaco_apam.notifications
-            (actor, recipient, entity_type_id, entity_id)
-        VALUES
-            (NEW.submitted_by, NEW.employe_id, 30, '#2');
-
         CALL ptpemaco_esign.bangun_alur(
             'sppd', NEW.nomor_dokumen,
             (SELECT CAST(id_base AS CHAR) FROM ptpemaco_apam.struktur_lengkap_oke WHERE employe_id = NEW.employe_id LIMIT 1),
-            NULL, NEW.employe_id, NULL, NEW.submitted_by, 1);
+            NULL, NEW.employe_id, NULL, NEW.submitted_by, 0);
     ELSE
-        CALL ptpemaco_esign.bangun_alur('sppd', NEW.nomor_dokumen, '-', NULL, NEW.submitted_by, NULL, NEW.submitted_by, 1);
+        CALL ptpemaco_esign.bangun_alur('sppd', NEW.nomor_dokumen, '-', NULL, NEW.submitted_by, NULL, NEW.submitted_by, 0);
     END IF;
 END$$
 DELIMITER ;
@@ -442,19 +438,15 @@ CREATE DEFINER=`ptpemaco`@`localhost` TRIGGER `ptpemaco_sppdnew`.`after_update1`
     DELETE FROM ptpemaco_esign.verif_steps
     WHERE id_doc = NEW.nomor_dokumen;
 
-    -- Alur persetujuan SPPD dibangun ulang dari aturan di ptpemaco_esign.alur_aturan / alur_langkah
+    -- Alur persetujuan SPPD dibangun ulang dari aturan di ptpemaco_esign.alur_aturan / alur_langkah.
+    -- Notifikasi tidak ditulis di sini: ditangani aplikasi lewat ptpemaco_notif (db/notif/02).
     IF NEW.employe_id != '-' THEN
-        INSERT INTO ptpemaco_apam.notifications
-            (actor, recipient, entity_type_id, entity_id)
-        VALUES
-            (NEW.submitted_by, NEW.employe_id, 30, '#2');
-
         CALL ptpemaco_esign.bangun_alur(
             'sppd', NEW.nomor_dokumen,
             (SELECT CAST(id_base AS CHAR) FROM ptpemaco_apam.struktur_lengkap_oke WHERE employe_id = NEW.employe_id LIMIT 1),
-            NULL, NEW.employe_id, NULL, NEW.submitted_by, 1);
+            NULL, NEW.employe_id, NULL, NEW.submitted_by, 0);
     ELSE
-        CALL ptpemaco_esign.bangun_alur('sppd', NEW.nomor_dokumen, '-', NULL, NEW.submitted_by, NULL, NEW.submitted_by, 1);
+        CALL ptpemaco_esign.bangun_alur('sppd', NEW.nomor_dokumen, '-', NULL, NEW.submitted_by, NULL, NEW.submitted_by, 0);
     END IF;
 END$$
 DELIMITER ;
