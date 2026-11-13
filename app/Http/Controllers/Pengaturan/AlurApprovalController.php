@@ -25,8 +25,8 @@ class AlurApprovalController extends Controller
     ];
 
     // aturan tambahan SPPD (satu aturan per modul, hanya diubah): langkah ditambahkan ke dokumen SPPD yang sudah ada
-    // real_baru: pengajuan realisasi baru, real_ubah: perubahan realisasi, hotel30: klaim hotel 30%, tambah_hari: penambahan hari
-    private const TAMBAHAN = ['real_baru', 'real_ubah', 'hotel30', 'tambah_hari'];
+    // real_baru: pengajuan realisasi (baru dan perubahan, aturan sama), hotel30: klaim hotel 30%, tambah_hari: penambahan hari
+    private const TAMBAHAN = ['real_baru', 'hotel30', 'tambah_hari'];
 
     private const TIPE_TAMBAHAN = ['check_document', 'verif_document', 'verif_realisasi', 'pemohon', 'approval_hotel', 'extend'];
 

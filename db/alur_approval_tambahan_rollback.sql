@@ -1,8 +1,8 @@
 -- Rollback alur_approval_tambahan.sql: mengembalikan trigger insert doc, update, ss dan drafqw ke versi sebelum alur dinamis
 -- (insert doc/update/ss: versi db/notif/02 tanpa notifikasi; drafqw: versi asli) dan menghapus prosedur bangun_alur_tambahan.
 -- Definisi persis sebelum pemasangan juga ada di ptpemaco_esign.bak_trigger_defs_tambahan.
--- Aturan (modul real_baru, real_ubah, hotel30, tambah_hari), kolom hapus_tipe dan tabel backup DIBIARKAN; hapus manual bila perlu:
---   DELETE FROM ptpemaco_esign.alur_aturan WHERE modul IN ('real_baru', 'real_ubah', 'hotel30', 'tambah_hari');
+-- Aturan (modul real_baru, hotel30, tambah_hari), kolom hapus_tipe dan tabel backup DIBIARKAN; hapus manual bila perlu:
+--   DELETE FROM ptpemaco_esign.alur_aturan WHERE modul IN ('real_baru', 'hotel30', 'tambah_hari');
 -- Aman dijalankan ulang.
 -- WAJIB:  mysql --comments -u <user> -p < alur_approval_tambahan_rollback.sql
 -- ptpemaco_sppdnew.`insert doc`

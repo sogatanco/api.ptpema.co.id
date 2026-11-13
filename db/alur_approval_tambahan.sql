@@ -3,7 +3,7 @@
 -- aturan di tabel yang sama (alur_aturan / alur_langkah) dengan modul berikut (satu aturan per modul, id_base '*'):
 --   real_baru   : trigger ptpemaco_sppdnew.`insert doc` (BEFORE INSERT realisasi)  : hapus check_document, verif_realisasi, verif_document;
 --                 tambah check_document (jabatan 43 Supervisor Umum) + verif_document (PUK Divisi Umum, organization_id 20) dan verif_realisasi (jabatan 6)
---   real_ubah   : trigger `update` (AFTER UPDATE realisasi)                        : sama seperti real_baru. PERUBAHAN SENGAJA: trigger lama memakai pemegang jabatan 42
+--               trigger `update` (AFTER UPDATE realisasi) memakai aturan real_baru yang sama. PERUBAHAN SENGAJA: trigger lama memakai pemegang jabatan 42
 --                 (Manajer Umum) untuk check_document + verif_document; sekarang PUK Divisi Umum (organization_id 20), sama dengan real_baru
 --   hotel30     : trigger `drafqw` (BEFORE INSERT tigapuluhs)                      : tambah pemohon (pegawai SPPD) dan approval_hotel (penandatangan SPPD)
 --   tambah_hari : trigger `ss` (BEFORE INSERT ekstends)                            : hapus check_document, verif_realisasi, verif_document, extend; tambah extend (penandatangan SPPD)
@@ -75,15 +75,7 @@ ALTER TABLE ptpemaco_esign.alur_aturan ADD COLUMN hapus_tipe VARCHAR(120) NULL A
 -- ---------------------------------------------------------------- aturan awal (disalin dari trigger insert doc / update / ss / drafqw)
 -- sumber tambahan: puk_divisi (nilai = organization_id), ttd_dokumen (orang di langkah sign dokumen), pemohon_sppd (pegawai SPPD)
 INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, hapus_tipe, keterangan, created_at, updated_at)
-VALUES ('real_baru', 'Pengajuan realisasi SPPD (baru)', '*', 'check_document,verif_realisasi,verif_document', 'Cek dokumen oleh Supervisor Umum, verifikasi dokumen oleh PUK Divisi Umum, lalu verifikasi realisasi oleh Direktur Umum dan Keuangan', NOW(), NOW());
-SET @a = LAST_INSERT_ID();
-INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
-  (@a, 1, 'check_document', 'posisi', 43, 0, NULL, NULL, NULL, 0, 0, 0),
-  (@a, 2, 'verif_document', 'puk_divisi', 20, 0, NULL, NULL, NULL, 0, 0, 0),
-  (@a, 3, 'verif_realisasi', 'posisi', 6, 0, NULL, NULL, NULL, 0, 0, 0);
-
-INSERT INTO ptpemaco_esign.alur_aturan (modul, nama, id_base, hapus_tipe, keterangan, created_at, updated_at)
-VALUES ('real_ubah', 'Pengajuan realisasi SPPD (perubahan)', '*', 'check_document,verif_realisasi,verif_document', 'Cek dokumen oleh Supervisor Umum, verifikasi dokumen oleh PUK Divisi Umum, lalu verifikasi realisasi oleh Direktur Umum dan Keuangan', NOW(), NOW());
+VALUES ('real_baru', 'Pengajuan realisasi SPPD (baru dan perubahan)', '*', 'check_document,verif_realisasi,verif_document', 'Cek dokumen oleh Supervisor Umum, verifikasi dokumen oleh PUK Divisi Umum, lalu verifikasi realisasi oleh Direktur Umum dan Keuangan', NOW(), NOW());
 SET @a = LAST_INSERT_ID();
 INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai, urutan_sumber, cadangan_sumber, cadangan_nilai, lewati_jika_sama, lewati_ganda, nama_hr, notif) VALUES
   (@a, 1, 'check_document', 'posisi', 43, 0, NULL, NULL, NULL, 0, 0, 0),
@@ -104,7 +96,7 @@ INSERT INTO ptpemaco_esign.alur_langkah (id_aturan, urutan, tipe, sumber, nilai,
   (@a, 1, 'extend', 'ttd_dokumen', NULL, 0, NULL, NULL, NULL, 0, 0, 0);
 
 -- ---------------------------------------------------------------- pembangun langkah tambahan
--- p_modul   : real_baru | real_ubah | hotel30 | tambah_hari
+-- p_modul   : real_baru (dipakai realisasi baru dan perubahan) | hotel30 | tambah_hari
 -- p_doc     : nomor dokumen SPPD (kolom id_doc di verif_steps)
 -- p_pemohon, p_jabatan : pegawai SPPD dan jabatannya (hanya dipakai sumber pemohon_sppd, yaitu klaim hotel 30%)
 DROP PROCEDURE IF EXISTS ptpemaco_esign.bangun_alur_tambahan;
@@ -213,8 +205,8 @@ SET SESSION sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,N
 DROP TRIGGER IF EXISTS `ptpemaco_sppdnew`.`update`;
 DELIMITER $$
 CREATE DEFINER=`ptpemaco`@`localhost` TRIGGER `ptpemaco_sppdnew`.`update` AFTER UPDATE ON `ptpemaco_sppdnew`.`realisasi` FOR EACH ROW BEGIN
-    -- Langkah tambahan pembaruan realisasi dibangun dari aturan 'real_ubah' di ptpemaco_esign.alur_aturan / alur_langkah (diatur di halaman Setting)
-    CALL ptpemaco_esign.bangun_alur_tambahan('real_ubah', (SELECT nomor_dokumen FROM sppds WHERE id = NEW.id_sppd LIMIT 1), NULL, NULL);
+    -- Langkah tambahan pembaruan realisasi dibangun dari aturan 'real_baru' (sama untuk realisasi baru dan diubah) di ptpemaco_esign.alur_aturan / alur_langkah (diatur di halaman Setting)
+    CALL ptpemaco_esign.bangun_alur_tambahan('real_baru', (SELECT nomor_dokumen FROM sppds WHERE id = NEW.id_sppd LIMIT 1), NULL, NULL);
 
     INSERT INTO ptpemaco_esign.logs(employe_id, id_current_position, id_document, activity, created_at) VALUES(NEW.submitted_by, (SELECT position_name FROM ptpemaco_apam.struktur_lengkap_oke WHERE employe_id = NEW.submitted_by LIMIT 1), (SELECT nomor_dokumen FROM sppds WHERE id = NEW.id_sppd LIMIT 1), 'Update Laporan Realisasi', NEW.created_at);
 END$$
@@ -323,8 +315,8 @@ DELIMITER ;
 -- ---------------------------------------------------------------- laporan
 -- PERINGATAN: bila kolom pemegang bernilai 0, pengajuan yang memakai langkah itu akan GAGAL (sama seperti trigger lama), sampai ada pemegangnya
 -- atau aturannya diubah di Setting > Alur Approval.
-SELECT 'real_baru dan real_ubah: PUK divisi 20 (Divisi Umum)' AS sumber, COUNT(*) AS pemegang FROM ptpemaco_apam.divisions d JOIN ptpemaco_apam.struktur_lengkap_oke s ON s.employe_id = d.PUK WHERE d.organization_id = 20
-UNION ALL SELECT 'real_baru dan real_ubah: jabatan 6', COUNT(*) FROM ptpemaco_apam.struktur_lengkap_oke WHERE position_id = 6;
+SELECT 'real_baru: PUK divisi 20 (Divisi Umum)' AS sumber, COUNT(*) AS pemegang FROM ptpemaco_apam.divisions d JOIN ptpemaco_apam.struktur_lengkap_oke s ON s.employe_id = d.PUK WHERE d.organization_id = 20
+UNION ALL SELECT 'real_baru: jabatan 6', COUNT(*) FROM ptpemaco_apam.struktur_lengkap_oke WHERE position_id = 6;
 SELECT modul, COUNT(*) AS aturan FROM ptpemaco_esign.alur_aturan GROUP BY modul;
 SELECT trigger_name, action_order, LENGTH(action_statement) AS panjang FROM information_schema.triggers
  WHERE trigger_schema = 'ptpemaco_sppdnew' AND trigger_name IN ('insert doc', 'update', 'ss', 'drafqw') ORDER BY 1;
