@@ -61,6 +61,7 @@ class RekapSppdController extends Controller
                 'kategori' => $t->pluck('categori_sppd')->filter()->unique()->values()->all(),
                 'mulai' => $s->mulai_tugas,
                 'selesai' => $s->selesai_tugas,
+                'dibuat' => (string) $s->created_at,
                 'perkiraan_biaya' => isset($biaya[$s->id]) ? (float) $biaya[$s->id] : null,
                 'realisasi_status' => $s->realisasi_status,
                 'void' => $alasan !== null,
