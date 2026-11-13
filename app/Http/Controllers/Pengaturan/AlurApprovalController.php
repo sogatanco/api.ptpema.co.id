@@ -24,6 +24,14 @@ class AlurApprovalController extends Controller
         'surat' => ['posisi', 'id_base', 'puk', 'direktur_divisi', 'penandatangan'],
     ];
 
+    // aturan tambahan SPPD (satu aturan per modul, hanya diubah): langkah ditambahkan ke dokumen SPPD yang sudah ada
+    // real_baru: pengajuan realisasi baru, real_ubah: perubahan realisasi, hotel30: klaim hotel 30%, tambah_hari: penambahan hari
+    private const TAMBAHAN = ['real_baru', 'real_ubah', 'hotel30', 'tambah_hari'];
+
+    private const TIPE_TAMBAHAN = ['check_document', 'verif_document', 'verif_realisasi', 'pemohon', 'approval_hotel', 'extend'];
+
+    private const SUMBER_TAMBAHAN = ['posisi', 'id_base', 'puk_divisi', 'ttd_dokumen', 'pemohon_sppd'];
+
     private function db()
     {
         return DB::connection('esign');
@@ -36,7 +44,7 @@ class AlurApprovalController extends Controller
 
     private function cekModul(string $modul): void
     {
-        if (!in_array($modul, ['sppd', 'surat'], true)) {
+        if (!in_array($modul, array_merge(['sppd', 'surat'], self::TAMBAHAN), true)) {
             $this->gagal('Modul tidak dikenal.', 404);
         }
     }
@@ -70,7 +78,29 @@ class AlurApprovalController extends Controller
             'divisi' => (int) $p->organization_id,
         ])->values();
 
-        return response()->json(['status' => true, 'data' => compact('jabatan', 'base', 'divisi', 'pegawai')], 200);
+        // semua jabatan di master HR (termasuk yang sedang kosong), untuk aturan tambahan yang boleh menunjuk jabatan tanpa pemegang
+        $pemegang = $struktur->groupBy('position_id')->map(fn ($g) => $g->pluck('first_name')->filter()->values()->all());
+        $jabatanSemua = DB::table('ptpemaco_hr_production.positions')->orderBy('position_name')->get(['id', 'position_name'])->map(fn ($j) => [
+            'id' => (int) $j->id,
+            'nama' => $j->position_name,
+            'pemegang' => $pemegang[$j->id] ?? [],
+        ])->values();
+
+        // contoh SPPD untuk menguji alur tambahan
+        $sppdContoh = DB::connection('mysql4')->table('sppds')->orderByDesc('id')->limit(200)->get(['id', 'nomor_dokumen', 'nama'])->map(fn ($s) => [
+            'id' => (int) $s->id,
+            'nomor' => $s->nomor_dokumen,
+            'nama' => $s->nama,
+        ])->values();
+
+        return response()->json(['status' => true, 'data' => [
+            'jabatan' => $jabatan,
+            'jabatan_semua' => $jabatanSemua,
+            'base' => $base,
+            'divisi' => $divisi,
+            'pegawai' => $pegawai,
+            'sppd_contoh' => $sppdContoh,
+        ]], 200);
     }
 
     private function format($aturan, $langkah, array $divisi): array
@@ -82,6 +112,7 @@ class AlurApprovalController extends Controller
             'id_base' => array_values(array_filter(explode(',', (string) $aturan->id_base), fn ($v) => $v !== '')),
             'id_divisi' => $aturan->id_divisi === null ? null : (int) $aturan->id_divisi,
             'nama_divisi' => $aturan->id_divisi === null ? null : ($divisi[(int) $aturan->id_divisi] ?? ('Divisi ' . $aturan->id_divisi)),
+            'hapus_tipe' => array_values(array_filter(explode(',', (string) ($aturan->hapus_tipe ?? '')), fn ($v) => $v !== '')),
             'keterangan' => $aturan->keterangan,
             'aktif' => (bool) $aturan->aktif,
             'diubah_oleh' => $aturan->diubah_oleh,
@@ -128,6 +159,9 @@ class AlurApprovalController extends Controller
         $ket = trim((string) $request->input('keterangan'));
         if (mb_strlen($ket) > 255) {
             $this->gagal('Keterangan maksimal 255 karakter.');
+        }
+        if (in_array($modul, self::TAMBAHAN, true)) {
+            return $this->bersihkanTambahan($request, $modul, $nama, $ket);
         }
 
         // kelompok id_base
@@ -231,6 +265,81 @@ class AlurApprovalController extends Controller
         ], $langkah];
     }
 
+    /** validasi aturan tambahan SPPD: tidak ada jenjang/divisi, ada daftar tipe langkah yang dihapus, langkah tanpa aturan "satu tanda tangan" */
+    private function bersihkanTambahan(Request $request, string $modul, string $nama, string $ket): array
+    {
+        $hapus = array_values(array_unique(array_map('strval', (array) $request->input('hapus_tipe', []))));
+        foreach ($hapus as $h) {
+            if (!in_array($h, self::TIPE_TAMBAHAN, true)) {
+                $this->gagal('Jenis langkah yang dihapus tidak dikenal: ' . $h);
+            }
+        }
+        $semuaBase = DB::table('base_positions')->pluck('id')->map(fn ($v) => (string) $v)->all();
+        $divisiAda = DB::table('divisions')->pluck('organization_id')->map(fn ($v) => (int) $v)->all();
+        $mentah = array_values((array) $request->input('langkah', []));
+        if (count($mentah) < 1 || count($mentah) > 10) {
+            $this->gagal('Alur harus punya 1 sampai 10 langkah.');
+        }
+        $langkah = [];
+        foreach ($mentah as $i => $l) {
+            $no = $i + 1;
+            $l = (array) $l;
+            $tipe = (string) ($l['tipe'] ?? '');
+            if (!in_array($tipe, self::TIPE_TAMBAHAN, true)) {
+                $this->gagal("Langkah $no: jenis langkah tidak valid.");
+            }
+            $sumber = (string) ($l['sumber'] ?? '');
+            if (!in_array($sumber, self::SUMBER_TAMBAHAN, true) || ($sumber === 'pemohon_sppd' && $modul !== 'hotel30')) {
+                $this->gagal("Langkah $no: sumber orang tidak valid.");
+            }
+            $nilai = null;
+            $off = 0;
+            if ($sumber === 'posisi') {
+                // boleh jabatan yang sedang kosong: pengajuan akan gagal dengan pesan jelas sampai ada pemegangnya
+                if (!is_numeric($l['nilai'] ?? null) || !DB::table('ptpemaco_hr_production.positions')->where('id', (int) $l['nilai'])->exists()) {
+                    $this->gagal("Langkah $no: pilih jabatan.");
+                }
+                $nilai = (int) $l['nilai'];
+            } elseif ($sumber === 'id_base') {
+                if (!is_numeric($l['nilai'] ?? null) || !in_array((string) (int) $l['nilai'], $semuaBase, true)) {
+                    $this->gagal("Langkah $no: pilih jenjang.");
+                }
+                $off = (int) ($l['urutan_sumber'] ?? 0);
+                if ($off < 0 || $off > 20) {
+                    $this->gagal("Langkah $no: urutan pemegang jenjang harus 1 sampai 21.");
+                }
+                $nilai = (int) $l['nilai'];
+            } elseif ($sumber === 'puk_divisi') {
+                if (!is_numeric($l['nilai'] ?? null) || !in_array((int) $l['nilai'], $divisiAda, true)) {
+                    $this->gagal("Langkah $no: pilih divisi.");
+                }
+                $nilai = (int) $l['nilai'];
+            }
+            $langkah[] = [
+                'urutan' => $no,
+                'tipe' => $tipe,
+                'sumber' => $sumber,
+                'nilai' => $nilai,
+                'urutan_sumber' => $off,
+                'cadangan_sumber' => null,
+                'cadangan_nilai' => null,
+                'lewati_jika_sama' => null,
+                'lewati_ganda' => !empty($l['lewati_ganda']) ? 1 : 0,
+                'nama_hr' => !empty($l['nama_hr']) && $sumber === 'posisi' ? 1 : 0,
+                'notif' => 0,
+            ];
+        }
+
+        return [[
+            'nama' => $nama,
+            'id_base' => '*',
+            'id_divisi' => null,
+            'hapus_tipe' => $hapus ? implode(',', $hapus) : null,
+            'keterangan' => $ket === '' ? null : $ket,
+            'aktif' => $request->boolean('aktif', true) ? 1 : 0,
+        ], $langkah];
+    }
+
     /** @return array{0:string,1:?int,2:int} [sumber, nilai, urutan_sumber] */
     private function sumber(string $modul, $sumber, $nilai, $off, array $semuaBase, array $punyaPemegang, string $label): array
     {
@@ -271,6 +380,9 @@ class AlurApprovalController extends Controller
     public function tambah(Request $request, string $modul)
     {
         $this->cekModul($modul);
+        if (in_array($modul, self::TAMBAHAN, true)) {
+            $this->gagal('Aturan ini satu-satunya untuk alurnya: hanya bisa diubah, tidak bisa ditambah.');
+        }
         [$aturan, $langkah] = $this->bersihkan($request, $modul, null);
         $db = $this->db();
         $db->transaction(function () use ($db, $modul, $aturan, $langkah) {
@@ -312,6 +424,9 @@ class AlurApprovalController extends Controller
         if (!$lama) {
             $this->gagal('Aturan tidak ditemukan.', 404);
         }
+        if (in_array($lama->modul, self::TAMBAHAN, true)) {
+            $this->gagal('Aturan ini satu-satunya untuk alurnya: hanya bisa diubah atau dinonaktifkan, tidak bisa dihapus.');
+        }
         $db->table('alur_aturan')->where('id', $lama->id)->delete(); // langkah ikut terhapus (foreign key cascade)
 
         return response()->json(['status' => true, 'message' => 'Aturan alur dihapus', 'data' => $this->semua($lama->modul)], 200);
@@ -324,6 +439,9 @@ class AlurApprovalController extends Controller
     public function simulasi(Request $request, string $modul)
     {
         $this->cekModul($modul);
+        if (in_array($modul, self::TAMBAHAN, true)) {
+            return $this->simulasiTambahan($request, $modul);
+        }
         $doc = 'SIMULASI-' . bin2hex(random_bytes(6));
         if ($modul === 'sppd') {
             $employe = trim((string) $request->input('employe_id'));
@@ -353,13 +471,51 @@ class AlurApprovalController extends Controller
         } finally {
             $db->rollBack();
         }
+
+        return response()->json(['status' => true, 'data' => $this->rapikanLangkah($baris)], 200);
+    }
+
+    private function rapikanLangkah($baris): array
+    {
         $nama = DB::table('struktur_lengkap_oke')->whereIn('employe_id', $baris->pluck('id_employe')->all())->pluck('first_name', 'employe_id');
 
-        return response()->json(['status' => true, 'data' => $baris->map(fn ($b) => [
+        return $baris->map(fn ($b) => [
             'step' => (int) $b->step,
             'tipe' => $b->type,
             'nama' => $nama[$b->id_employe] ?? $b->id_employe,
             'jabatan' => $b->id_current_position,
-        ])->values()], 200);
+        ])->values()->all();
+    }
+
+    /**
+     * Uji alur tambahan pada SPPD yang sudah ada: bangun_alur_tambahan dijalankan di dalam transaksi lalu dibatalkan,
+     * jadi langkah dokumen itu tidak berubah. Mengembalikan langkah sebelum dan sesudah.
+     */
+    private function simulasiTambahan(Request $request, string $modul)
+    {
+        $sppd = DB::connection('mysql4')->table('sppds')->where('id', (int) $request->input('id_sppd'))->first(['nomor_dokumen', 'employe_id', 'jabatan']);
+        if (!$sppd) {
+            $this->gagal('Pilih SPPD contoh.');
+        }
+        $db = $this->db();
+        $ambil = fn () => $db->table('verif_steps')->where('id_doc', $sppd->nomor_dokumen)->orderBy('step')->orderBy('id')->get(['step', 'type', 'id_employe', 'id_current_position']);
+        $sebelum = $ambil();
+        $sesudah = collect();
+        $galat = null;
+        $db->beginTransaction();
+        try {
+            $db->statement('CALL ptpemaco_esign.bangun_alur_tambahan(?, ?, ?, ?)', [$modul, $sppd->nomor_dokumen, $sppd->employe_id, $sppd->jabatan]);
+            $sesudah = $ambil();
+        } catch (\Throwable $e) {
+            $galat = $e->getMessage();
+        } finally {
+            $db->rollBack();
+        }
+        if ($galat !== null) {
+            $pos = strpos($galat, 'Alur tambahan SPPD:');
+            $this->gagal($pos !== false ? trim(substr($galat, $pos, 200)) : 'Alur gagal dibentuk untuk SPPD ini.');
+        }
+
+        return response()->json(['status' => true, 'data' => ['sebelum' => $this->rapikanLangkah($sebelum), 'sesudah' => $this->rapikanLangkah($sesudah)]], 200);
     }
 }

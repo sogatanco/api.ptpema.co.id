@@ -788,6 +788,14 @@ class PengajuanController extends Controller
     function tgaPlhPersen(Request $request)
     {
 
+        // pelaksana bukan karyawan (employe_id '-'): persetujuannya lewat tautan email, jadi email wajib diisi
+        $sppdTujuan = DB::connection('mysql4')->table('tujuan_sppds as t')->join('sppds as s', 's.id', '=', 't.id_sppd')
+            ->where('t.id', $request->id_tujuan)->first(['s.employe_id']);
+        $tamu = $sppdTujuan && Hotel30TamuController::adalahTamu($sppdTujuan->employe_id);
+        if ($tamu) {
+            $request->validate(['email' => 'required|email|max:150']);
+        }
+
         $tp=new TigaPuluh();
         $tp->id_tujuan=$request->id_tujuan;
         $tp->submitted_by=Employe::employeId();
@@ -795,6 +803,12 @@ class PengajuanController extends Controller
         $tp->selesai=$request->end_date;
 
         if ($tp->save()) {
+            if ($tamu) {
+                [, $pesan] = app(Hotel30TamuController::class)->buatDanKirim((int) $request->id_tujuan, $request->input('email'));
+
+                return new PostResource(true, 'Pengajuan berhasil. ' . $pesan, []);
+            }
+
             return new PostResource(true, 'success', []);
         } else {
             return new PostResource(false, 'error', []);

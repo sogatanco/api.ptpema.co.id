@@ -197,6 +197,17 @@ Route::controller(DocusignController::class)->group(function () {
      });
 });
 
+// Klaim hotel 30% untuk pelaksana SPPD bukan karyawan: sisi pengaju (login) dan tautan email publik (token)
+Route::controller(\App\Http\Controllers\Sppd\Hotel30TamuController::class)->group(function () {
+    Route::get('sppd/tiga-puluh/{idTujuan}/pelaksana', 'info')->middleware('role:Employee');
+    Route::post('sppd/tiga-puluh/{idTujuan}/kirim', 'kirim')->middleware('role:Employee');
+    Route::post('sppd/tiga-puluh/{idTujuan}/manual', 'manual')->middleware('role:Employee');
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::get('sppd/public/hotel30/{token}', 'publikInfo');
+        Route::post('sppd/public/hotel30/{token}', 'publikJawab');
+    });
+});
+
 Route::controller(Logs::class)->group(function(){
      Route::get("eSign/logs/{id_doc}", "getLogs")->middleware(  "role:Employee");
      Route::get("eSign/approval/{id_doc}", "getApproval")->middleware("role:Employee");
