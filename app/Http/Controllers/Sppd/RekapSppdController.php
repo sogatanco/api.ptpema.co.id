@@ -43,11 +43,13 @@ class RekapSppdController extends Controller
             ->whereIn('t.id_sppd', $ids)->orderBy('t.waktu_berangkat')->get(['t.id_sppd', 't.detail_tujuan', 'c.categori_sppd'])->groupBy('id_sppd');
         // perkiraan biaya: jumlah total_biaya semua tujuan
         $biaya = $db->table('hitungan_biaya')->whereIn('id_sppd', $ids)->selectRaw('id_sppd, SUM(total_biaya) AS total')->groupBy('id_sppd')->pluck('total', 'id_sppd');
+        // biaya realisasi (rill): jumlah semua rincian realisasi; kosong bila realisasi belum diisi (sama dengan list_sppd.rill_biaya)
+        $rill = $db->table('realisasi_biaya')->whereIn('id_sppd', $ids)->selectRaw('id_sppd, SUM(jumlah_rill) AS total')->groupBy('id_sppd')->pluck('total', 'id_sppd');
         // divisi pegawai (non-karyawan: employe_id '-' tidak punya divisi)
         $divisi = DB::table('struktur_lengkap_oke')->whereIn('employe_id', $baris->pluck('employe_id')->filter()->unique()->all())
             ->pluck('organization_name', 'employe_id');
 
-        $rekap = $baris->map(function ($s) use ($tujuan, $biaya, $divisi, $void) {
+        $rekap = $baris->map(function ($s) use ($tujuan, $biaya, $rill, $divisi, $void) {
             $t = $tujuan->get($s->id, collect());
             $alasan = $void[$s->id] ?? null;
 
@@ -63,6 +65,7 @@ class RekapSppdController extends Controller
                 'selesai' => $s->selesai_tugas,
                 'dibuat' => (string) $s->created_at,
                 'perkiraan_biaya' => isset($biaya[$s->id]) ? (float) $biaya[$s->id] : null,
+                'realisasi_biaya' => isset($rill[$s->id]) ? (float) $rill[$s->id] : null,
                 'realisasi_status' => $s->realisasi_status,
                 'void' => $alasan !== null,
                 'alasan_void' => $alasan,
@@ -81,6 +84,8 @@ class RekapSppdController extends Controller
                 'jumlah_aktif' => $aktif->count(),
                 'jumlah_void' => $batal->count(),
                 'total_biaya_aktif' => (float) $aktif->sum('perkiraan_biaya'),
+                'total_realisasi_aktif' => (float) $aktif->sum('realisasi_biaya'),
+                'jumlah_realisasi_aktif' => $aktif->whereNotNull('realisasi_biaya')->count(),
             ],
         ]], 200);
     }
