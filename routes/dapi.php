@@ -197,6 +197,9 @@ Route::controller(DocusignController::class)->group(function () {
      });
 });
 
+// Rekap SPPD yang sudah di-approve (aktif dan void), per tahun
+Route::get('sppd/rekap', [\App\Http\Controllers\Sppd\RekapSppdController::class, 'index'])->middleware('role:AdminSPPD,UmumSppd,KeuanganSppd,Director');
+
 // Klaim hotel 30% untuk pelaksana SPPD bukan karyawan: sisi pengaju (login) dan tautan email publik (token)
 Route::controller(\App\Http\Controllers\Sppd\Hotel30TamuController::class)->group(function () {
     Route::get('sppd/tiga-puluh/{idTujuan}/pelaksana', 'info')->middleware('role:Employee');
