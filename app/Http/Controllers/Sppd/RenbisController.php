@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
 use App\Models\Sppd\Renbis;
+use App\Models\Sppd\ListSppdRingan;
+use App\Models\Sppd\SppdVoid;
 use App\Models\Sppd\TujuanSppd;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +50,36 @@ class RenbisController extends Controller
         ]);
     }
 
+    /**
+     * Pemakaian per renbis: [realisasi, pengajuan].
+     * realisasi  = jumlah biaya riil yang sudah dicatat (realisasi_biaya).
+     * pengajuan  = perkiraan biaya (hitungan_biaya) SPPD yang sudah approve (ditandatangani), tidak void, dan belum punya realisasi;
+     *              SPPD yang sudah punya realisasi dihitung lewat realisasinya saja supaya tidak terhitung dua kali.
+     */
+    private function pemakaian(array $ids): array
+    {
+        if (!$ids) {
+            return [collect(), collect()];
+        }
+        $db = DB::connection('mysql4');
+        $realisasi = $db->table('realisasi_biaya')->whereIn('id_rkap', $ids)->selectRaw('id_rkap, sum(jumlah_rill) as jumlah')->groupBy('id_rkap')->pluck('jumlah', 'id_rkap');
+
+        $sudahRealisasi = $db->table('realisasi_biaya')->distinct()->pluck('id_sppd')->map(fn ($v) => (int) $v)->all();
+        $void = SppdVoid::ids();
+        $disetujui = ListSppdRingan::where('current_status', 'signed')->pluck('id')->map(fn ($v) => (int) $v)
+            ->reject(fn ($v) => in_array($v, $sudahRealisasi, true) || in_array($v, $void, true))->values()->all();
+
+        $pengajuan = collect();
+        if ($disetujui) {
+            $pengajuan = $db->table('hitungan_biaya as h')
+                ->join('tujuan_sppds as t', 't.id', '=', 'h.id')
+                ->whereIn('t.rkap', $ids)->whereIn('h.id_sppd', $disetujui)
+                ->selectRaw('t.rkap as rkap, sum(h.total_biaya) as jumlah')->groupBy('t.rkap')->pluck('jumlah', 'rkap');
+        }
+
+        return [$realisasi, $pengajuan];
+    }
+
     // dipakai frontend untuk menampilkan atau menyembunyikan menu
     public function akses()
     {
@@ -60,25 +92,37 @@ class RenbisController extends Controller
         if (!$this->boleh()) {
             return $this->ditolak();
         }
-        $tahun = (int) ($request->tahun ?: date('Y'));
-        $tahunTersedia = Renbis::query()->distinct()->orderByDesc('tahun')->pluck('tahun')->map(fn ($t) => (int) $t)->all();
+        // tahun=tanpa: renbis yang belum punya tahun (kosong atau tidak valid), ditampilkan di tab terpisah
+        $tanpaTahun = $request->tahun === 'tanpa';
+        $tahun = $tanpaTahun ? null : (int) ($request->tahun ?: date('Y'));
+        $tahunTersedia = Renbis::query()->where('tahun', '>=', 2000)->distinct()->orderByDesc('tahun')->pluck('tahun')->map(fn ($t) => (int) $t)->all();
         if (!in_array((int) date('Y'), $tahunTersedia, true)) {
             $tahunTersedia[] = (int) date('Y');
             rsort($tahunTersedia);
         }
 
-        $rows = Renbis::where('tahun', $tahun)->orderBy('renbis')->get();
+        $tanpa = fn ($q) => $q->where(fn ($w) => $w->whereNull('tahun')->orWhere('tahun', '<', 2000));
+        $rows = ($tanpaTahun ? $tanpa(Renbis::query()) : Renbis::where('tahun', $tahun))->orderBy('renbis')->get();
         // jumlah pemakaian per renbis (SPPD), supaya kelihatan mana yang tidak bisa dihapus
         $dipakai = TujuanSppd::whereIn('rkap', $rows->pluck('id'))->selectRaw('rkap, count(*) as jml')->groupBy('rkap')->pluck('jml', 'rkap');
-        $data = $rows->map(fn ($r) => [
-            'id' => $r->id,
-            'renbis' => $r->renbis,
-            'tahun' => (int) $r->tahun,
-            'rkap' => (int) $r->rkap,
-            'dipakai' => (int) ($dipakai[$r->id] ?? 0),
-        ]);
+        [$realisasi, $pengajuan] = $this->pemakaian($rows->pluck('id')->all());
+        $data = $rows->map(function ($r) use ($dipakai, $realisasi, $pengajuan) {
+            $real = (float) ($realisasi[$r->id] ?? 0);
+            $aju = (float) ($pengajuan[$r->id] ?? 0);
 
-        return new PostResource(true, 'data renbis', ['tahun' => $tahun, 'tahun_tersedia' => $tahunTersedia, 'data' => $data]);
+            return [
+                'id' => $r->id,
+                'renbis' => $r->renbis,
+                'tahun' => (int) $r->tahun >= 2000 ? (int) $r->tahun : null,
+                'rkap' => (int) $r->rkap,
+                'dipakai' => (int) ($dipakai[$r->id] ?? 0),
+                'realisasi' => $real,
+                // realisasi + perkiraan biaya pengajuan yang sudah approve tetapi belum direalisasi
+                'realisasi_pengajuan' => $real + $aju,
+            ];
+        });
+
+        return new PostResource(true, 'data renbis', ['tahun' => $tanpaTahun ? 'tanpa' : $tahun, 'tahun_tersedia' => $tahunTersedia, 'jumlah_tanpa_tahun' => $tanpa(Renbis::query())->count(), 'data' => $data]);
     }
 
     public function store(Request $request)
