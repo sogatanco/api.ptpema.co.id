@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Rekap semua SPPD yang sudah di-approve (tanda tangan akhir selesai), semua kategori dan divisi,
- * dipisah antara yang aktif dan yang void. Tahun mengikuti tanggal berangkat (cadangan: tanggal dibuat).
+ * dipisah antara yang aktif dan yang void. Tahun mengikuti tanggal berangkat (cadangan: tanggal dibuat); urutan terbaru berdasarkan created_at.
  */
 class RekapSppdController extends Controller
 {
@@ -34,7 +34,7 @@ class RekapSppdController extends Controller
 
         $tahunTersedia = $semua->pluck('tahun')->filter()->unique()->sort()->reverse()->values();
         $baris = $tahun === 'all' ? $semua : $semua->where('tahun', $tahun);
-        $baris = $baris->sortByDesc(fn ($s) => sprintf('%s-%012d', $s->acuan, $s->id))->values();
+        $baris = $baris->sortByDesc(fn ($s) => sprintf('%s-%012d', $s->created_at, $s->id))->values();
         $ids = $baris->pluck('id')->all();
 
         $db = DB::connection('mysql4');
