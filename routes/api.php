@@ -186,6 +186,16 @@ Route::prefix('pengaturan')->middleware('role:SuperAdmin')->controller(\App\Http
     Route::post('/pengiriman/{id}/ulang', 'ulang');
 });
 
+// Setting > Alur Approval: aturan alur persetujuan SPPD dan surat (hanya role SuperAdmin)
+Route::prefix('pengaturan/alur')->middleware('role:SuperAdmin')->controller(\App\Http\Controllers\Pengaturan\AlurApprovalController::class)->group(function () {
+    Route::get('/opsi', 'opsi');
+    Route::get('/{modul}', 'daftar');
+    Route::post('/{modul}', 'tambah');
+    Route::post('/{modul}/simulasi', 'simulasi');
+    Route::put('/aturan/{id}', 'ubah');
+    Route::delete('/aturan/{id}', 'hapus');
+});
+
 // Notification routes
 Route::controller(NotificationController::class)->group(function(){
     Route::get('/notification', "get")->middleware("role:Employee");
