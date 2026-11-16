@@ -51,6 +51,9 @@ Route::controller(AuthController::class)->group(function(){
     Route::GET('/auth/forgot-password/{token}', 'checkToken');
 });
 
+// Pengguna yang sedang aktif (hanya SuperAdmin)
+Route::get('auth/user-aktif', [\App\Http\Controllers\UserAktifController::class, 'index'])->middleware(['auth:api', 'role:SuperAdmin']);
+
 // Kelola akses: perangkat yang sedang login ke akun sendiri
 Route::middleware('auth:api')->prefix('auth/sessions')->controller(\App\Http\Controllers\SesiAkunController::class)->group(function () {
     Route::get('/', 'index');
