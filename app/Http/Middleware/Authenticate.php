@@ -26,7 +26,8 @@ class Authenticate extends Middleware
         }
         if ($user && method_exists($user, 'versiKredensial')) {
             try {
-                $payload = \PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth::getPayload();
+                // payload dibaca dari guard yang baru saja mengautentikasi (facade JWTAuth tidak berbagi token dengan guard)
+                $payload = $this->auth->guard()->payload();
                 $pv = $payload->get('pv');
                 $sid = $payload->get('sid');
             } catch (\Throwable $e) {

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\UserSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 /**
  * Kelola akses: pengguna melihat perangkat (IP, browser) yang sedang login ke akunnya dan bisa mengeluarkannya.
@@ -21,7 +20,7 @@ class SesiAkunController extends Controller
     private function sidSaatIni(): int
     {
         try {
-            return (int) JWTAuth::getPayload()->get('sid');
+            return (int) Auth::payload()->get('sid');
         } catch (\Throwable $e) {
             return 0;
         }

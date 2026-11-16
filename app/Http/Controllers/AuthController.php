@@ -222,7 +222,7 @@ class AuthController extends Controller
     {
         // sesi perangkat ini ditandai selesai di daftar akses
         try {
-            $sid = (int) \PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth::getPayload()->get('sid');
+            $sid = (int) Auth::payload()->get('sid');
             $sesi = $sid ? \App\Models\UserSession::where('id', $sid)->where('user_id', Auth::id())->first() : null;
             if ($sesi) {
                 $sesi->cabut();

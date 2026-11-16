@@ -16,6 +16,8 @@ class UserSession extends Model
 
     protected $fillable = ['user_id', 'ip', 'user_agent', 'perangkat', 'aplikasi', 'last_active_at', 'revoked_at'];
 
+    protected $casts = ['last_active_at' => 'datetime', 'revoked_at' => 'datetime'];
+
     /** buat catatan login baru dari request yang sedang berjalan */
     public static function mulai(int $userId, Request $request): self
     {
