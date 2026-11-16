@@ -51,8 +51,12 @@ Route::controller(AuthController::class)->group(function(){
     Route::GET('/auth/forgot-password/{token}', 'checkToken');
 });
 
-// Pengguna yang sedang aktif (hanya SuperAdmin)
-Route::get('auth/user-aktif', [\App\Http\Controllers\UserAktifController::class, 'index'])->middleware(['auth:api', 'role:SuperAdmin']);
+// Pesan antar akun dan daftar pengguna online
+Route::middleware('auth:api')->prefix('chat')->controller(\App\Http\Controllers\ChatController::class)->group(function () {
+    Route::get('/users', 'users');
+    Route::get('/{userId}/messages', 'percakapan')->whereNumber('userId');
+    Route::post('/{userId}/messages', 'kirim')->whereNumber('userId')->middleware('throttle:40,1');
+});
 
 // Kelola akses: perangkat yang sedang login ke akun sendiri
 Route::middleware('auth:api')->prefix('auth/sessions')->controller(\App\Http\Controllers\SesiAkunController::class)->group(function () {

@@ -45,11 +45,11 @@ class UserSession extends Model
         }
     }
 
-    /** catat aktivitas terakhir (paling sering sekali per 5 menit) */
+    /** catat aktivitas terakhir (paling sering sekali per menit, agar status "aktif 2 menit terakhir" akurat) */
     public static function catatAktivitas(int $id, Request $request): void
     {
         try {
-            if (!Cache::add("sesi_tulis:$id", 1, 300)) {
+            if (!Cache::add("sesi_tulis:$id", 1, 60)) {
                 return;
             }
         } catch (\Throwable $e) {
