@@ -53,6 +53,8 @@ Route::controller(AuthController::class)->group(function(){
 
 // Pesan antar akun dan daftar pengguna online
 Route::middleware('auth:api')->prefix('chat')->controller(\App\Http\Controllers\ChatController::class)->group(function () {
+    Route::get('/keys/me', 'kunciSaya');
+    Route::post('/keys', 'simpanKunci')->middleware('throttle:10,1');
     Route::get('/users', 'users');
     Route::get('/unread', 'belumDibaca');
     Route::get('/{userId}/messages', 'percakapan')->whereNumber('userId');
