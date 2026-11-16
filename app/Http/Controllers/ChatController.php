@@ -21,20 +21,58 @@ class ChatController extends Controller
     // pesan maksimal 2000 karakter (UTF-8 hingga 4 byte per karakter) + tag 16 byte, dalam base64
     private const BATAS_CIPHERTEXT = 11200;
 
+    // ---- siapa yang memakai pesan ------------------------------------------------------------
+
+    /** id_base yang dikecualikan (mis. Tenaga Pendukung: supir, satpam, petugas kebersihan) */
+    private function dikecualikan(): array
+    {
+        return (array) config('chat.id_base_dikecualikan', []);
+    }
+
+    /** pegawai aktif dan bukan golongan yang dikecualikan */
+    private function layak(int $userId): bool
+    {
+        if (!$this->akunAktif($userId)) {
+            return false;
+        }
+        $base = DB::table('struktur_lengkap_oke')->where('user_id', $userId)->value('id_base');
+
+        return $base === null || !in_array((int) $base, $this->dikecualikan(), true);
+    }
+
+    private function akunAktif(int $userId): bool
+    {
+        return DB::table('employees_hr')->where('user_id', $userId)->where('employe_active', 1)->exists();
+    }
+
+    /** respons 403 bila akun yang login tidak termasuk pengguna pesan */
+    private function tolakBilaTidakLayak(int $saya)
+    {
+        return $this->layak($saya)
+            ? null
+            : response()->json(['status' => false, 'message' => 'Fitur pesan tidak tersedia untuk akun Anda.'], 403);
+    }
+
     // ---- kunci pesan ----------------------------------------------------------------------
 
     /** paket kunci milik saya (null bila belum pernah diaktifkan) */
     public function kunciSaya()
     {
         $saya = (int) Auth::id();
+        // akun yang dikecualikan: widget pesan tidak ditampilkan di frontend
+        if (!$this->layak($saya)) {
+            return response()->json(['status' => true, 'aktif' => false, 'user_id' => $saya, 'data' => null], 200);
+        }
         $k = DB::table('chat_keys')->where('user_id', $saya)->first();
 
-        return response()->json(['status' => true, 'user_id' => $saya, 'data' => $k ? [
+        return response()->json(['status' => true, 'aktif' => true, 'user_id' => $saya, 'data' => $k ? [
             'public_key' => $k->public_key,
             'wrapped_private' => $k->wrapped_private,
             'salt' => $k->salt,
             'iv' => $k->iv,
             'iterasi' => (int) $k->iterasi,
+            // true: masih memakai passphrase bawaan, pengguna diminta menggantinya
+            'bawaan' => (bool) $k->bawaan,
         ] : null], 200);
     }
 
@@ -49,24 +87,56 @@ class ChatController extends Controller
             'iterasi' => ['required', 'integer', 'min:100000', 'max:2000000'],
         ]);
         $saya = (int) Auth::id();
+        if ($tolak = $this->tolakBilaTidakLayak($saya)) {
+            return $tolak;
+        }
         $ada = DB::table('chat_keys')->where('user_id', $saya)->exists();
         // mengganti kunci yang sudah ada harus disengaja (reset)
         if ($ada && !$request->boolean('reset')) {
             return response()->json(['status' => false, 'message' => 'Kunci sudah ada.'], 409);
         }
 
-        DB::table('chat_keys')->updateOrInsert(['user_id' => $saya], $data + ['updated_at' => now(), 'created_at' => $ada ? DB::raw('created_at') : now()]);
+        DB::table('chat_keys')->updateOrInsert(['user_id' => $saya], $data + ['bawaan' => 0, 'updated_at' => now(), 'created_at' => $ada ? DB::raw('created_at') : now()]);
 
         return response()->json(['status' => true, 'message' => 'Kunci tersimpan.'], 200);
     }
 
+    /**
+     * Ganti passphrase: kunci privat yang sama dibungkus ulang di browser dengan passphrase baru.
+     * Kunci publik tidak boleh berubah lewat endpoint ini (supaya riwayat pesan tetap terbaca).
+     */
+    public function gantiPassphrase(Request $request)
+    {
+        $data = $request->validate([
+            'wrapped_private' => ['required', 'string', 'max:2000', 'regex:/^[A-Za-z0-9+\/=]+$/'],
+            'salt' => ['required', 'string', 'max:64', 'regex:/^[A-Za-z0-9+\/=]+$/'],
+            'iv' => ['required', 'string', 'max:32', 'regex:/^[A-Za-z0-9+\/=]+$/'],
+            'iterasi' => ['required', 'integer', 'min:100000', 'max:2000000'],
+        ]);
+        $saya = (int) Auth::id();
+        if ($tolak = $this->tolakBilaTidakLayak($saya)) {
+            return $tolak;
+        }
+        if (!DB::table('chat_keys')->where('user_id', $saya)->exists()) {
+            return response()->json(['status' => false, 'message' => 'Kunci belum dibuat.'], 404);
+        }
+        DB::table('chat_keys')->where('user_id', $saya)->update($data + ['bawaan' => 0, 'updated_at' => now()]);
+
+        return response()->json(['status' => true, 'message' => 'Passphrase diganti.'], 200);
+    }
     // ---- daftar pengguna ------------------------------------------------------------------
 
     /** semua pegawai aktif (kecuali diri sendiri), yang online di atas, lalu urut aktivitas terakhir */
     public function users()
     {
         $saya = (int) Auth::id();
+        if ($tolak = $this->tolakBilaTidakLayak($saya)) {
+            return $tolak;
+        }
+        // golongan yang dikecualikan (mis. Tenaga Pendukung) tidak ditampilkan di daftar
+        $dikecualikan = DB::table('struktur_lengkap_oke')->whereIn('id_base', $this->dikecualikan() ?: [0])->pluck('user_id')->all();
         $pegawai = DB::table('employees_hr')->where('employe_active', 1)->whereNotNull('user_id')->where('user_id', '!=', $saya)
+            ->when($dikecualikan, fn ($q) => $q->whereNotIn('user_id', $dikecualikan))
             ->get(['user_id', 'employe_id', 'first_name', 'last_name']);
         $ids = $pegawai->pluck('user_id')->all();
 
@@ -115,6 +185,9 @@ class ChatController extends Controller
     public function belumDibaca()
     {
         $saya = (int) Auth::id();
+        if ($tolak = $this->tolakBilaTidakLayak($saya)) {
+            return $tolak;
+        }
         $per = DB::table('chat_messages')->where('to_user_id', $saya)->whereNull('read_at')
             ->selectRaw('from_user_id, COUNT(*) AS jumlah, MAX(id) AS terakhir_id')->groupBy('from_user_id')->get();
         $isi = DB::table('chat_messages')->whereIn('id', $per->pluck('terakhir_id')->all())->get(['id', 'ciphertext', 'iv', 'created_at'])->keyBy('id');
@@ -149,6 +222,9 @@ class ChatController extends Controller
     public function percakapan(Request $request, int $userId)
     {
         $saya = (int) Auth::id();
+        if ($tolak = $this->tolakBilaTidakLayak($saya)) {
+            return $tolak;
+        }
         if (!$this->akunAda($userId) || $userId === $saya) {
             return response()->json(['status' => false, 'message' => 'Akun tidak ditemukan.'], 404);
         }
@@ -175,6 +251,9 @@ class ChatController extends Controller
     public function kirim(Request $request, int $userId)
     {
         $saya = (int) Auth::id();
+        if ($tolak = $this->tolakBilaTidakLayak($saya)) {
+            return $tolak;
+        }
         $request->validate([
             'ciphertext' => ['required', 'string', 'max:' . self::BATAS_CIPHERTEXT, 'regex:/^[A-Za-z0-9+\/=]+$/'],
             'iv' => ['required', 'string', 'size:16', 'regex:/^[A-Za-z0-9+\/=]+$/'], // 12 byte dalam base64
@@ -205,8 +284,9 @@ class ChatController extends Controller
         ]], 201);
     }
 
+    /** lawan bicara yang sah: pegawai aktif dan bukan golongan yang dikecualikan */
     private function akunAda(int $userId): bool
     {
-        return DB::table('employees_hr')->where('user_id', $userId)->where('employe_active', 1)->exists();
+        return $this->layak($userId);
     }
 }

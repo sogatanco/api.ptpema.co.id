@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `ptpemaco_apam`.`chat_keys` (
   `salt` VARCHAR(64) NOT NULL,
   `iv` VARCHAR(32) NOT NULL,
   `iterasi` INT UNSIGNED NOT NULL DEFAULT 310000,
+  `bawaan` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NULL DEFAULT NULL,
   `updated_at` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`user_id`)

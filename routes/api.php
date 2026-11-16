@@ -55,6 +55,7 @@ Route::controller(AuthController::class)->group(function(){
 Route::middleware('auth:api')->prefix('chat')->controller(\App\Http\Controllers\ChatController::class)->group(function () {
     Route::get('/keys/me', 'kunciSaya');
     Route::post('/keys', 'simpanKunci')->middleware('throttle:10,1');
+    Route::post('/keys/passphrase', 'gantiPassphrase')->middleware('throttle:10,1');
     Route::get('/users', 'users');
     Route::get('/unread', 'belumDibaca');
     Route::get('/{userId}/messages', 'percakapan')->whereNumber('userId');
