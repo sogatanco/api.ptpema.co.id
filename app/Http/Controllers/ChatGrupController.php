@@ -75,6 +75,18 @@ class ChatGrupController extends Controller
     /** dipakai juga oleh ChatController::belumDibaca untuk lencana dan notifikasi */
     public static function ringkasan(int $saya): array
     {
+        try {
+            return self::hitungRingkasan($saya);
+        } catch (\Throwable $e) {
+            // tabel grup belum dibuat (db/chat_grup.sql belum dijalankan): jangan sampai merusak chat pribadi dan lencana
+            \Illuminate\Support\Facades\Log::warning('Ringkasan grup chat gagal: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    private static function hitungRingkasan(int $saya): array
+    {
         $self = new self();
         $org = $self->orgSaya($saya);
         if ($org === null) {
