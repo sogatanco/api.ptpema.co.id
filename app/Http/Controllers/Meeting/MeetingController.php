@@ -137,11 +137,19 @@ class MeetingController extends Controller
             return new PostResource(false, 'topic and start_time are required', []);
         }
 
+        // Zoom hanya membaca waktu ISO 8601 lengkap dengan detik (yyyy-MM-ddTHH:mm:ss) bersama timezone;
+        // nilai dari input datetime-local ("2026-11-16T14:00") tidak terbaca sehingga rapat dijadwalkan di jam saat dibuat.
+        try {
+            $mulaiIso = Carbon::parse($startTime, $timezone ?: config('app.timezone', 'Asia/Jakarta'))->format('Y-m-d\TH:i:s');
+        } catch (\Exception $e) {
+            return new PostResource(false, 'Invalid start_time format', []);
+        }
+
         $payload = [
             'topic' => $topic,
             'type' => 2,
             'use_pmi' => true,
-            'start_time' => $startTime,
+            'start_time' => $mulaiIso,
             'duration' => $duration,
             'timezone' => $timezone,
             'agenda' => $agenda,
@@ -181,13 +189,18 @@ class MeetingController extends Controller
 
     protected function createZoomMeeting(string $topic, string $startTime, int $duration, ?string $agenda = null, ?string $timezone = null): array
     {
+        $zona = $timezone ?: config('app.timezone', 'Asia/Jakarta');
+        // Zoom hanya membaca waktu berformat ISO 8601 (yyyy-MM-ddTHH:mm:ss) bersama timezone;
+        // format dengan spasi diabaikan sehingga rapat langsung dijadwalkan "sekarang" (jam saat dibuat).
+        $mulaiIso = Carbon::parse($startTime, $zona)->format('Y-m-d\TH:i:s');
+
         $payload = [
             'topic' => $topic,
             'type' => 2,
             'use_pmi' => true,
-            'start_time' => $startTime,
+            'start_time' => $mulaiIso,
             'duration' => $duration,
-            'timezone' => $timezone ?? config('app.timezone', 'Asia/Jakarta'),
+            'timezone' => $zona,
             'agenda' => $agenda ?? $topic,
             'settings' => [
                 'host_video' => false,
