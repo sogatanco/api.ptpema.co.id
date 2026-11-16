@@ -23,21 +23,10 @@ class ChatController extends Controller
 
     // ---- siapa yang memakai pesan ------------------------------------------------------------
 
-    /** id_base yang dikecualikan (mis. Tenaga Pendukung: supir, satpam, petugas kebersihan) */
-    private function dikecualikan(): array
-    {
-        return (array) config('chat.id_base_dikecualikan', []);
-    }
-
-    /** pegawai aktif dan bukan golongan yang dikecualikan */
+    /** semua pegawai aktif boleh chat pribadi (termasuk Tenaga Pendukung); pembatasan golongan hanya berlaku untuk grup divisi */
     private function layak(int $userId): bool
     {
-        if (!$this->akunAktif($userId)) {
-            return false;
-        }
-        $base = DB::table('struktur_lengkap_oke')->where('user_id', $userId)->value('id_base');
-
-        return $base === null || !in_array((int) $base, $this->dikecualikan(), true);
+        return $this->akunAktif($userId);
     }
 
     private function akunAktif(int $userId): bool
@@ -59,7 +48,7 @@ class ChatController extends Controller
     public function kunciSaya()
     {
         $saya = (int) Auth::id();
-        // akun yang dikecualikan: widget pesan tidak ditampilkan di frontend
+        // akun nonaktif: widget pesan tidak ditampilkan di frontend
         if (!$this->layak($saya)) {
             return response()->json(['status' => true, 'aktif' => false, 'user_id' => $saya, 'data' => null], 200);
         }
@@ -133,10 +122,7 @@ class ChatController extends Controller
         if ($tolak = $this->tolakBilaTidakLayak($saya)) {
             return $tolak;
         }
-        // golongan yang dikecualikan (mis. Tenaga Pendukung) tidak ditampilkan di daftar
-        $dikecualikan = DB::table('struktur_lengkap_oke')->whereIn('id_base', $this->dikecualikan() ?: [0])->pluck('user_id')->all();
         $pegawai = DB::table('employees_hr')->where('employe_active', 1)->whereNotNull('user_id')->where('user_id', '!=', $saya)
-            ->when($dikecualikan, fn ($q) => $q->whereNotIn('user_id', $dikecualikan))
             ->get(['user_id', 'employe_id', 'first_name', 'last_name']);
         $ids = $pegawai->pluck('user_id')->all();
 
@@ -213,7 +199,15 @@ class ChatController extends Controller
             ];
         })->sortByDesc('terakhir_id')->values();
 
-        return response()->json(['status' => true, 'total' => (int) $data->sum('jumlah'), 'data' => $data], 200);
+        // pesan belum dibaca di grup divisi ikut dihitung untuk lencana dan notifikasi
+        $grup = collect(ChatGrupController::ringkasan($saya))->filter(fn ($g) => $g['belum_dibaca'] > 0)->values();
+
+        return response()->json([
+            'status' => true,
+            'total' => (int) $data->sum('jumlah') + (int) $grup->sum('belum_dibaca'),
+            'data' => $data,
+            'grup' => $grup,
+        ], 200);
     }
 
     // ---- percakapan -----------------------------------------------------------------------
@@ -284,7 +278,7 @@ class ChatController extends Controller
         ]], 201);
     }
 
-    /** lawan bicara yang sah: pegawai aktif dan bukan golongan yang dikecualikan */
+    /** lawan bicara yang sah: pegawai aktif */
     private function akunAda(int $userId): bool
     {
         return $this->layak($userId);

@@ -53,6 +53,12 @@ Route::controller(AuthController::class)->group(function(){
 
 // Pesan antar akun dan daftar pengguna online
 Route::middleware('auth:api')->prefix('chat')->controller(\App\Http\Controllers\ChatController::class)->group(function () {
+    // grup chat per divisi (didaftarkan sebelum '/{userId}/messages' agar tidak bentrok)
+    Route::get('/groups', [\App\Http\Controllers\ChatGrupController::class, 'daftar']);
+    Route::get('/groups/{org}/info', [\App\Http\Controllers\ChatGrupController::class, 'info'])->whereNumber('org');
+    Route::post('/groups/{org}/keys', [\App\Http\Controllers\ChatGrupController::class, 'simpanKunci'])->whereNumber('org')->middleware('throttle:20,1');
+    Route::get('/groups/{org}/messages', [\App\Http\Controllers\ChatGrupController::class, 'pesan'])->whereNumber('org');
+    Route::post('/groups/{org}/messages', [\App\Http\Controllers\ChatGrupController::class, 'kirim'])->whereNumber('org')->middleware('throttle:40,1');
     Route::get('/keys/me', 'kunciSaya');
     Route::post('/keys', 'simpanKunci')->middleware('throttle:10,1');
     Route::post('/keys/passphrase', 'gantiPassphrase')->middleware('throttle:10,1');
