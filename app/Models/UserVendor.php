@@ -43,7 +43,14 @@ class UserVendor extends Authenticatable implements JWTSubject
         return [
             'id' => $this->id,
             'email' => $this->email,
-            "roles" => $this->roles
+            "roles" => $this->roles,
+            'pv' => $this->versiKredensial(),
         ];
+    }
+
+    /** penanda versi password: berubah saat password diganti, sehingga token lama tidak berlaku lagi */
+    public function versiKredensial(): string
+    {
+        return substr(hash_hmac('sha256', (string) $this->getRawOriginal('password'), (string) config('app.key')), 0, 20);
     }
  }

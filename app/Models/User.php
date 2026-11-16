@@ -46,6 +46,12 @@ class User extends Authenticatable implements JWTSubject
         static::saved(function (User $u) {
             if (!$u->wasRecentlyCreated && $u->wasChanged('password')) {
                 \App\Services\PengingatKeamanan::catatPasswordDiubah($u->employe_id);
+                // semua perangkat dikeluarkan (token lama sudah tidak sah karena versi password berubah)
+                try {
+                    \App\Models\UserSession::cabutSemua((int) $u->id);
+                } catch (\Throwable $e) {
+                    // tabel belum dibuat: jangan gagalkan penggantian password
+                }
             }
         });
     }
@@ -77,7 +83,14 @@ class User extends Authenticatable implements JWTSubject
         return [
             'id' => $this->id,
             'email' => $this->email,
-            "roles" => $this->roles
+            "roles" => $this->roles,
+            'pv' => $this->versiKredensial(),
         ];
+    }
+
+    /** penanda versi password: berubah saat password diganti, sehingga token lama tidak berlaku lagi */
+    public function versiKredensial(): string
+    {
+        return substr(hash_hmac('sha256', (string) $this->getRawOriginal('password'), (string) config('app.key')), 0, 20);
     }
  }

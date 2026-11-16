@@ -90,6 +90,7 @@ class AuthController extends Controller
         }
 
         // checking & generate token
+        \App\Services\SesiToken::terapkanTtl($request);
         $token = Auth::attempt(['email' => $request->email, 'password' => $request->password]);
 
         if(!$token){
@@ -115,6 +116,10 @@ class AuthController extends Controller
         // if(is_null(CryptoService::getPublicKey($userData->employe_id))){
         //     CryptoService::generateKeys($userData->employe_id);
         // }
+
+        // catat perangkat ini di daftar akses, lalu terbitkan ulang token yang membawa id sesinya
+        $sesi = \App\Models\UserSession::mulai((int) $user->id, $request);
+        $token = Auth::claims(['sid' => $sesi->id])->login($user);
 
         $user->employe_id = $userData->employe_id;
         $user->first_name = $userData->first_name;
@@ -193,10 +198,10 @@ class AuthController extends Controller
             ], 400));
         }
         
-        Auth::login($user);
-        
-        $token = Auth::login($user);
-        
+        \App\Services\SesiToken::terapkanTtl($request);
+        $sesi = \App\Models\UserSession::mulai((int) $user->id, $request);
+        $token = Auth::claims(['sid' => $sesi->id])->login($user);
+
         $user->employe_id = $userData->employe_id ?? null;
         $user->first_name = $userData->first_name ?? null;
         $user->public_key = $userData->public_key ?? null;
@@ -215,6 +220,16 @@ class AuthController extends Controller
 
     public function logout()
     {
+        // sesi perangkat ini ditandai selesai di daftar akses
+        try {
+            $sid = (int) \PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth::getPayload()->get('sid');
+            $sesi = $sid ? \App\Models\UserSession::where('id', $sid)->where('user_id', Auth::id())->first() : null;
+            if ($sesi) {
+                $sesi->cabut();
+            }
+        } catch (\Throwable $e) {
+            // tetap lanjut logout
+        }
         Auth::logout();
 
         return response()->json([
@@ -225,11 +240,23 @@ class AuthController extends Controller
 
     public function refresh()
     {
-        if (Auth::user() && !User::masihAktif((int) Auth::id())) {
+        // token lama (sebelum password diganti) tidak boleh diperpanjang
+        $user = \App\Services\SesiToken::pemilik(request(), User::class);
+        if (!$user) {
+            return response()->json(["status" => false, "message" => "Sesi berakhir, silakan login kembali."], 401);
+        }
+        if (!User::masihAktif((int) $user->id)) {
             return response()->json(["status" => false, "message" => "Your account has been deactivated."], 401);
         }
-        $token = Auth::refresh();
-        $user = Auth::user();
+        // klaim dibuat ulang agar peran dan versi password terbaru ikut masuk token baru
+        // sesi (perangkat) ini harus masih terdaftar dan belum dikeluarkan
+        $sid = (int) (\App\Services\SesiToken::$klaim['sid'] ?? 0);
+        if (!$sid || !\App\Models\UserSession::aktif($sid, (int) $user->id)) {
+            return response()->json(["status" => false, "message" => "Sesi telah diakhiri, silakan login kembali."], 401);
+        }
+        \App\Models\UserSession::catatAktivitas($sid, request());
+        \App\Services\SesiToken::terapkanTtl(request());
+        $token = Auth::claims($user->getJWTCustomClaims() + ['sid' => $sid])->refresh();
 
         return response()->json([
             "status" => true,
@@ -249,7 +276,15 @@ class AuthController extends Controller
     }
 
     public function changePas(Request $request){
+        $request->validate([
+            'oldpas' => ['required', 'string'],
+            'newpas' => ['required', 'string', 'min:8', 'max:100', 'different:oldpas'],
+        ]);
         $u=User::find(Auth::user()->id);
+        // password lama wajib benar: token yang tercuri saja tidak cukup untuk mengambil alih akun
+        if (!Hash::check($request->oldpas, $u->getRawOriginal('password'))) {
+            return response()->json(["status" => false, "message" => "Password lama salah."], 422);
+        }
         $u->password = Hash::make($request->newpas);
         if($u->save()){
             return response()->json([

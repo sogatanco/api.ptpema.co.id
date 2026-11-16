@@ -89,7 +89,11 @@ return [
     |
     */
 
-    'ttl' => env('JWT_TTL', 7200), // umur token 5 hari
+    // aplikasi HR (asal permintaan di hr_origins) memakai token 1 hari (menit)
+    'ttl_hr' => env('JWT_TTL_HR', 1440),
+    'hr_origins' => env('JWT_HR_ORIGINS', 'https://hr.pema.co.id'),
+
+    'ttl' => env('JWT_TTL', 15), // umur access token (menit); diperpanjang otomatis lewat refresh
 
     /*
     |--------------------------------------------------------------------------
@@ -108,7 +112,7 @@ return [
     |
     */
 
-    'refresh_ttl' => env('JWT_REFRESH_TTL', 20160),
+    'refresh_ttl' => env('JWT_REFRESH_TTL', 10080),
 
     /*
     |--------------------------------------------------------------------------
@@ -122,7 +126,7 @@ return [
     |
     */
 
-    'algo' => env('JWT_ALGO', 'HS256'),
+    'algo' => env('JWT_ALGO', 'HS512'),
 
     /*
     |--------------------------------------------------------------------------
@@ -223,7 +227,7 @@ return [
     |
     */
 
-    'blacklist_grace_period' => env('JWT_BLACKLIST_GRACE_PERIOD', 0),
+    'blacklist_grace_period' => env('JWT_BLACKLIST_GRACE_PERIOD', 15),
 
     /*
     |--------------------------------------------------------------------------
@@ -234,7 +238,7 @@ return [
     |
     */
 
-    'show_black_list_exception' => env('JWT_SHOW_BLACKLIST_EXCEPTION', true),
+    'show_black_list_exception' => env('JWT_SHOW_BLACKLIST_EXCEPTION', false),
 
     /*
     |--------------------------------------------------------------------------

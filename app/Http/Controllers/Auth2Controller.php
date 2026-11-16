@@ -154,8 +154,12 @@ class Auth2Controller extends Controller
 
     public function refresh()
     {
-        $token = Auth::refresh();
-        $user = Auth::user();
+        // token lama (sebelum password diganti) tidak boleh diperpanjang
+        $user = \App\Services\SesiToken::pemilik(request(), \App\Models\UserVendor::class);
+        if (!$user) {
+            return response()->json(["status" => false, "message" => "Sesi berakhir, silakan login kembali."], 401);
+        }
+        $token = Auth::claims($user->getJWTCustomClaims())->refresh();
 
         return response()->json([
             "status" => true,

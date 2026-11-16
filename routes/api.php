@@ -51,6 +51,13 @@ Route::controller(AuthController::class)->group(function(){
     Route::GET('/auth/forgot-password/{token}', 'checkToken');
 });
 
+// Kelola akses: perangkat yang sedang login ke akun sendiri
+Route::middleware('auth:api')->prefix('auth/sessions')->controller(\App\Http\Controllers\SesiAkunController::class)->group(function () {
+    Route::get('/', 'index');
+    Route::post('/logout-lainnya', 'keluarkanLainnya');
+    Route::post('/{id}/logout', 'keluarkan')->whereNumber('id');
+});
+
 Route::controller(Auth2Controller::class)->group(function(){
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('/auth2/register', 'register');
