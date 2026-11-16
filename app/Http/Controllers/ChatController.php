@@ -63,6 +63,33 @@ class ChatController extends Controller
         ], 200);
     }
 
+    /** ringkasan pesan belum dibaca per pengirim (ringan, dipanggil berkala untuk lencana dan notifikasi) */
+    public function belumDibaca()
+    {
+        $saya = (int) Auth::id();
+        $per = DB::table('chat_messages')->where('to_user_id', $saya)->whereNull('read_at')
+            ->selectRaw('from_user_id, COUNT(*) AS jumlah, MAX(id) AS terakhir_id')->groupBy('from_user_id')->get();
+        $isi = DB::table('chat_messages')->whereIn('id', $per->pluck('terakhir_id')->all())->get(['id', 'body', 'created_at'])->keyBy('id');
+        $pegawai = DB::table('employees_hr')->whereIn('user_id', $per->pluck('from_user_id')->all())
+            ->get(['user_id', 'employe_id', 'first_name', 'last_name'])->keyBy('user_id');
+
+        $data = $per->map(function ($r) use ($isi, $pegawai) {
+            $p = $pegawai->get($r->from_user_id);
+            $m = $isi->get($r->terakhir_id);
+
+            return [
+                'user_id' => (int) $r->from_user_id,
+                'employe_id' => $p->employe_id ?? null,
+                'nama' => $p ? trim($p->first_name . ' ' . $p->last_name) : 'Pengguna #' . $r->from_user_id,
+                'jumlah' => (int) $r->jumlah,
+                'terakhir_id' => (int) $r->terakhir_id,
+                'pesan_terakhir' => $m ? mb_strimwidth((string) $m->body, 0, 90, '…') : '',
+                'waktu' => $m ? \Carbon\Carbon::parse($m->created_at)->toIso8601String() : null,
+            ];
+        })->sortByDesc('terakhir_id')->values();
+
+        return response()->json(['status' => true, 'total' => (int) $data->sum('jumlah'), 'data' => $data], 200);
+    }
     /** percakapan dengan satu akun; pesan masuk dari akun itu ditandai sudah dibaca */
     public function percakapan(Request $request, int $userId)
     {

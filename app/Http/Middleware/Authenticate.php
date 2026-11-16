@@ -34,7 +34,14 @@ class Authenticate extends Middleware
                 $pv = null;
                 $sid = null;
             }
-            if (!is_string($pv) || !hash_equals($user->versiKredensial(), $pv)) {
+            if (!is_string($pv)) {
+                // token terbitan sebelum fitur sesi (tanpa penanda versi): wajib login ulang
+                throw new HttpResponseException(response([
+                    'status' => false,
+                    'message' => 'Sesi lama telah berakhir, silakan login kembali.',
+                ], 401));
+            }
+            if (!hash_equals($user->versiKredensial(), $pv)) {
                 throw new HttpResponseException(response([
                     'status' => false,
                     'message' => 'Sesi berakhir, password telah diubah. Silakan login kembali.',
