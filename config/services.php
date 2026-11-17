@@ -52,6 +52,18 @@ return [
     // database GeoLite2-City lokal untuk perkiraan lokasi dari IP (Setting > Lokasi User)
     'geoip' => [
         'db' => env('GEOIP_DB', storage_path('app/geoip/GeoLite2-City.mmdb')),
+        // database ASN (nama jaringan/ISP), opsional; kosong = cari berkas *asn*.mmdb di folder yang sama
+        'asn_db' => env('GEOIP_ASN_DB', ''),
+    ],
+
+    // titik kantor untuk Setting > Lokasi User. KANTOR_IPS = IP publik kantor (dipisah koma, boleh CIDR mis. 203.0.113.0/28):
+    // pengguna yang mengakses dari IP itu ditempatkan tepat di titik kantor. Tanpa KANTOR_IPS, IP kantor dikenali otomatis
+    // dari laporan lokasi browser pengguna yang berada di sekitar titik kantor.
+    'kantor' => [
+        'nama' => env('KANTOR_NAMA', 'Kantor PT Pema'),
+        'lat' => (float) env('KANTOR_LAT', 5.5558619),
+        'lng' => (float) env('KANTOR_LNG', 95.323522),
+        'ips' => env('KANTOR_IPS', ''),
     ],
 
 ];

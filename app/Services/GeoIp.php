@@ -15,6 +15,56 @@ use Illuminate\Support\Facades\Cache;
 class GeoIp
 {
     private static $reader = null;
+    private static $readerAsn = null;
+
+    /** file ASN (nama jaringan/ISP): GEOIP_ASN_DB, atau berkas *asn*.mmdb pertama di folder yang sama dengan database kota */
+    public static function pathAsn(): ?string
+    {
+        $diatur = (string) config('services.geoip.asn_db');
+        if ($diatur !== '') {
+            return is_file($diatur) ? $diatur : null;
+        }
+        $ada = glob(dirname(self::path()) . DIRECTORY_SEPARATOR . '*asn*.mmdb') ?: [];
+
+        return $ada[0] ?? null;
+    }
+
+    /** @return string seluler|isp|cloud */
+    private static function jenisJaringan(string $org): string
+    {
+        if (preg_match('/telekomunikasi selular|telkomsel|indosat|ooredoo|excelcom|xl axiata|smartfren|smart telecom|hutchison|hutchinson|three|axis/i', $org)) {
+            return 'seluler';
+        }
+        if (preg_match('/amazon|google|microsoft|azure|cloudflare|digitalocean|ovh|linode|vultr|alibaba|tencent|hetzner|oracle|datacamp|vpn|proxy|hosting|datacenter|data center/i', $org)) {
+            return 'cloud';
+        }
+
+        return 'isp';
+    }
+
+    /** @return array{asn:int,org:string,jenis:string}|null  jaringan (ISP/operator) pemilik IP */
+    public static function jaringan(?string $ip): ?array
+    {
+        $file = self::pathAsn();
+        if (!$ip || !$file || !class_exists(\GeoIp2\Database\Reader::class) || !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return null;
+        }
+
+        return Cache::remember('geoip_asn:' . $ip, 86400, function () use ($ip, $file) {
+            try {
+                self::$readerAsn ??= new \GeoIp2\Database\Reader($file);
+                $r = self::$readerAsn->asn($ip);
+                $org = (string) $r->autonomousSystemOrganization;
+                if ($org === '') {
+                    return null;
+                }
+
+                return ['asn' => (int) $r->autonomousSystemNumber, 'org' => $org, 'jenis' => self::jenisJaringan($org)];
+            } catch (\Throwable $e) {
+                return null;
+            }
+        });
+    }
 
     public static function path(): string
     {
