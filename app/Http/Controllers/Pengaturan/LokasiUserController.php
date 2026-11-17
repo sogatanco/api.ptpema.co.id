@@ -97,7 +97,7 @@ class LokasiUserController extends Controller
         $sesi = UserSession::where('last_active_at', '>=', now()->subDays(90))
             ->orderByDesc('last_active_at')
             ->get()
-            ->unique('user_id')
+            ->unique('user_id', true)
             ->values();
 
         // kalibrasi: lokasi browser pengguna lain di IP yang sama (mis. jaringan kantor) dipakai untuk pengguna yang belum mengizinkan lokasi
@@ -115,7 +115,7 @@ class LokasiUserController extends Controller
         $pegawai = DB::table('struktur_lengkap_oke')
             ->whereIn('employe_id', $user->pluck('employe_id')->filter()->all())
             ->get(['employe_id', 'first_name', 'position_name'])
-            ->unique('employe_id')->keyBy('employe_id');
+            ->unique('employe_id', true)->keyBy('employe_id');
 
         $data = $sesi->map(function ($s) use ($user, $pegawai, $batasLive, $kalibrasi, $kantor, $ipKantor) {
             $employeId = $user[$s->user_id]->employe_id ?? null;
