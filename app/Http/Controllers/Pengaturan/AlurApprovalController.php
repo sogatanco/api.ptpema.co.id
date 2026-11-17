@@ -20,8 +20,8 @@ class AlurApprovalController extends Controller
     private const TIPE = ['verifikasi_biaya', 'paraf', 'sign'];
 
     private const SUMBER = [
-        'sppd' => ['posisi', 'id_base', 'puk', 'direktur_divisi', 'dir_terkait'],
-        'surat' => ['posisi', 'id_base', 'puk', 'direktur_divisi', 'penandatangan'],
+        'sppd' => ['posisi', 'id_base', 'puk', 'direktur_divisi', 'dir_terkait', 'role'],
+        'surat' => ['posisi', 'id_base', 'puk', 'direktur_divisi', 'penandatangan', 'role'],
     ];
 
     // aturan tambahan SPPD (satu aturan per modul, hanya diubah): langkah ditambahkan ke dokumen SPPD yang sudah ada
@@ -31,6 +31,23 @@ class AlurApprovalController extends Controller
     private const TIPE_TAMBAHAN = ['check_document', 'verif_document', 'verif_realisasi', 'pemohon', 'approval_hotel', 'extend'];
 
     private const SUMBER_TAMBAHAN = ['posisi', 'id_base', 'puk_divisi', 'ttd_dokumen', 'pemohon_sppd'];
+
+    /** role akses sistem yang dipakai pengguna (users.roles berisi array JSON) */
+    private function daftarRole(): array
+    {
+        $role = [];
+        foreach (DB::table('users')->pluck('roles') as $r) {
+            $arr = is_string($r) ? json_decode($r, true) : $r;
+            foreach ((array) $arr as $nama) {
+                if (is_string($nama) && $nama !== '') {
+                    $role[$nama] = ($role[$nama] ?? 0) + 1;
+                }
+            }
+        }
+        ksort($role, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return collect($role)->map(fn ($jumlah, $nama) => ['nama' => (string) $nama, 'jumlah' => $jumlah])->values()->all();
+    }
 
     private function db()
     {
@@ -100,6 +117,7 @@ class AlurApprovalController extends Controller
             'divisi' => $divisi,
             'pegawai' => $pegawai,
             'sppd_contoh' => $sppdContoh,
+            'role' => $this->daftarRole(),
         ]], 200);
     }
 
@@ -119,8 +137,10 @@ class AlurApprovalController extends Controller
             'updated_at' => $aturan->updated_at,
             'langkah' => $langkah->map(fn ($l) => [
                 'tipe' => $l->tipe,
+                'nama_step' => $l->nama_step ?? null,
                 'sumber' => $l->sumber,
                 'nilai' => $l->nilai === null ? null : (int) $l->nilai,
+                'nilai_teks' => $l->nilai_teks ?? null,
                 'urutan_sumber' => (int) $l->urutan_sumber,
                 'cadangan_sumber' => $l->cadangan_sumber,
                 'cadangan_nilai' => $l->cadangan_nilai === null ? null : (int) $l->cadangan_nilai,
@@ -201,6 +221,7 @@ class AlurApprovalController extends Controller
 
         // langkah
         $punyaPemegang = DB::table('struktur_lengkap_oke')->distinct()->pluck('position_id')->map(fn ($v) => (int) $v)->all();
+        $roleAda = $this->daftarRole();
         $mentah = array_values((array) $request->input('langkah', []));
         if (count($mentah) < 1 || count($mentah) > 15) {
             $this->gagal('Alur harus punya 1 sampai 15 langkah.');
@@ -213,7 +234,22 @@ class AlurApprovalController extends Controller
             if (!in_array($tipe, self::TIPE, true) || ($tipe === 'verifikasi_biaya' && $modul !== 'sppd')) {
                 $this->gagal("Langkah $no: jenis langkah tidak valid.");
             }
+            $namaStep = trim((string) ($l['nama_step'] ?? ''));
+            if (mb_strlen($namaStep) > 100) {
+                $this->gagal("Langkah $no: nama langkah maksimal 100 karakter.");
+            }
             [$sumber, $nilai, $off] = $this->sumber($modul, $l['sumber'] ?? null, $l['nilai'] ?? null, $l['urutan_sumber'] ?? 0, $semuaBase, $punyaPemegang, "Langkah $no");
+            $teks = null;
+            if ($sumber === 'role') {
+                $teks = trim((string) ($l['nilai_teks'] ?? ''));
+                if (!in_array($teks, array_column($roleAda, 'nama'), true)) {
+                    $this->gagal("Langkah $no: pilih role yang ada.");
+                }
+                $off = (int) ($l['urutan_sumber'] ?? 0);
+                if ($off < 0 || $off > 20) {
+                    $this->gagal("Langkah $no: urutan pemegang role harus 1 sampai 21.");
+                }
+            }
 
             $cadS = $l['cadangan_sumber'] ?? null;
             $cadN = null;
@@ -222,7 +258,7 @@ class AlurApprovalController extends Controller
                     $this->gagal("Langkah $no: pengganti hanya dipakai bila sumber utama \"direktur terkait\".");
                 }
                 [$cadS, $cadN] = $this->sumber($modul, $cadS, $l['cadangan_nilai'] ?? null, 0, $semuaBase, $punyaPemegang, "Langkah $no (pengganti)");
-                if (in_array($cadS, ['dir_terkait'], true)) {
+                if (in_array($cadS, ['dir_terkait', 'role'], true)) {
                     $this->gagal("Langkah $no: pengganti tidak boleh sama dengan sumber utama.");
                 }
             } else {
@@ -240,8 +276,10 @@ class AlurApprovalController extends Controller
             $langkah[] = [
                 'urutan' => $no,
                 'tipe' => $tipe,
+                'nama_step' => $namaStep === '' ? null : $namaStep,
                 'sumber' => $sumber,
                 'nilai' => $nilai,
+                'nilai_teks' => $teks,
                 'urutan_sumber' => $off,
                 'cadangan_sumber' => $cadS,
                 'cadangan_nilai' => $cadN,
@@ -318,8 +356,10 @@ class AlurApprovalController extends Controller
             $langkah[] = [
                 'urutan' => $no,
                 'tipe' => $tipe,
+                'nama_step' => null,
                 'sumber' => $sumber,
                 'nilai' => $nilai,
+                'nilai_teks' => null,
                 'urutan_sumber' => $off,
                 'cadangan_sumber' => null,
                 'cadangan_nilai' => null,
