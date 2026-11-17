@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Setting > Lokasi User (hanya role SuperAdmin): pengguna di peta menurut lokasi akses terakhirnya.
  * Live = sesi belum dicabut dan aktif dalam 5 menit terakhir. Selain itu ditampilkan di lokasi sesi terakhirnya.
- * Lokasi diperkirakan dari IP (GeoLite2 lokal), jadi hanya akurat sampai level kota.
+ * Lokasi: dari browser bila pengguna sudah mengizinkan lokasi (kolom gps_* di user_sessions, db/user_sessions_gps.sql),
+ * selain itu perkiraan dari IP (GeoIP lokal), yang hanya akurat sampai level kota.
  */
 class LokasiUserController extends Controller
 {
@@ -37,7 +38,9 @@ class LokasiUserController extends Controller
 
         $data = $sesi->map(function ($s) use ($user, $pegawai, $batasLive) {
             $employeId = $user[$s->user_id]->employe_id ?? null;
-            $lokasi = GeoIp::cari($s->ip);
+            // lokasi dari browser (pengguna sudah mengizinkan) didahulukan; tanpa itu perkiraan dari IP
+            $gps = $s->gps_lat !== null && $s->gps_lng !== null;
+            $lokasi = $gps ? null : GeoIp::cari($s->ip);
 
             return [
                 'user_id' => (int) $s->user_id,
@@ -49,8 +52,10 @@ class LokasiUserController extends Controller
                 'aplikasi' => $s->aplikasi,
                 'terakhir_aktif' => optional($s->last_active_at)->toDateTimeString(),
                 'live' => $s->revoked_at === null && $s->last_active_at !== null && $s->last_active_at >= $batasLive,
-                'lat' => $lokasi['lat'] ?? null,
-                'lng' => $lokasi['lng'] ?? null,
+                'sumber' => $gps ? 'browser' : ($lokasi ? 'ip' : null),
+                'akurasi' => $gps ? $s->gps_akurasi : null,
+                'lat' => $gps ? (float) $s->gps_lat : ($lokasi['lat'] ?? null),
+                'lng' => $gps ? (float) $s->gps_lng : ($lokasi['lng'] ?? null),
                 'kota' => $lokasi['kota'] ?? null,
                 'negara' => $lokasi['negara'] ?? null,
             ];

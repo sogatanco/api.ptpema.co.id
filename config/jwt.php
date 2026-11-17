@@ -112,7 +112,7 @@ return [
     |
     */
 
-    'refresh_ttl' => env('JWT_REFRESH_TTL', 10080),
+    'refresh_ttl' => env('JWT_REFRESH_TTL', 4320), // 3 hari tidak aktif baru wajib login ulang (jendela bergeser tiap token diperpanjang)
 
     /*
     |--------------------------------------------------------------------------

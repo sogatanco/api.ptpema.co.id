@@ -71,6 +71,7 @@ Route::middleware('auth:api')->prefix('chat')->controller(\App\Http\Controllers\
 // Kelola akses: perangkat yang sedang login ke akun sendiri
 Route::middleware('auth:api')->prefix('auth/sessions')->controller(\App\Http\Controllers\SesiAkunController::class)->group(function () {
     Route::get('/', 'index');
+    Route::post('/lokasi', 'lokasi');
     Route::post('/logout-lainnya', 'keluarkanLainnya');
     Route::post('/{id}/logout', 'keluarkan')->whereNumber('id');
 });

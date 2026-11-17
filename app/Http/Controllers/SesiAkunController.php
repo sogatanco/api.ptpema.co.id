@@ -47,6 +47,31 @@ class SesiAkunController extends Controller
         return response()->json(['status' => true, 'data' => $daftar->values()], 200);
     }
 
+    /**
+     * Lokasi dari browser untuk sesi ini. Hanya dikirim browser yang penggunanya sudah mengizinkan lokasi;
+     * dipakai Setting > Lokasi User (tanpa ini peta memakai perkiraan lokasi dari IP).
+     */
+    public function lokasi(Request $request)
+    {
+        $data = $request->validate([
+            'lat' => 'required|numeric|between:-90,90',
+            'lng' => 'required|numeric|between:-180,180',
+            'akurasi' => 'nullable|numeric|min:0|max:1000000',
+        ]);
+        $sid = $this->sidSaatIni();
+        if (!$sid || !\Illuminate\Support\Facades\Schema::hasColumn('user_sessions', 'gps_lat')) {
+            return response()->json(['status' => false], 200);
+        }
+        UserSession::where('id', $sid)->where('user_id', Auth::id())->whereNull('revoked_at')->update([
+            'gps_lat' => round((float) $data['lat'], 6),
+            'gps_lng' => round((float) $data['lng'], 6),
+            'gps_akurasi' => isset($data['akurasi']) ? (int) round($data['akurasi']) : null,
+            'gps_at' => now(),
+        ]);
+
+        return response()->json(['status' => true], 200);
+    }
+
     public function keluarkan(int $id)
     {
         $sesi = UserSession::where('id', $id)->where('user_id', Auth::id())->whereNull('revoked_at')->first();
