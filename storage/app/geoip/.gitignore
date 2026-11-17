@@ -1,0 +1,4 @@
+# hanya arsip DB-IP ini yang ikut git (file .mmdb 121 MB melebihi batas 100 MB GitHub); ekstrak di server dengan: gunzip -k dbip-city-lite-2026-11.mmdb.gz
+*
+!.gitignore
+!dbip-city-lite-2026-11.mmdb.gz
