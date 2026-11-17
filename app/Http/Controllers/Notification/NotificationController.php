@@ -62,6 +62,8 @@ class NotificationController extends Controller
     {
         $q = NotifikasiBaru::where('recipient', Employe::employeId());
         $belum = (clone $q)->whereNull('read_at')->count();
+        // hanya modul yang benar-benar punya notifikasi untuk pengguna ini yang ditawarkan di filter
+        $modulAda = (clone $q)->distinct()->orderBy('modul')->pluck('modul')->filter()->values()->all();
         if ($request->status === 'belum') {
             $q->whereNull('read_at');
         } elseif ($request->status === 'sudah') {
@@ -75,6 +77,7 @@ class NotificationController extends Controller
         return response()->json([
             'status' => true,
             'belum_dibaca' => $belum,
+            'modul_tersedia' => $modulAda,
             'total' => $hal->total(),
             'halaman' => $hal->currentPage(),
             'halaman_terakhir' => $hal->lastPage(),

@@ -19,8 +19,41 @@ use Illuminate\Support\Facades\Storage;
 
 class SuratMasuk extends Controller
 {
+    /** kontak pengirim menurut via: WhatsApp (nomor), Email (alamat), Surat Fisik (nomor, opsional) */
+    private function kontakDariRequest(Request $request): ?string
+    {
+        $via = (string) $request->via;
+        $kontak = trim((string) $request->kontak);
+        if ($via === 'Whatapps') {
+            $nomor = preg_replace('/[\s.\-()]/', '', $kontak);
+            if (!preg_match('/^\+?\d{8,15}$/', $nomor)) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json(['message' => 'Nomor WhatsApp pengirim tidak valid (8-15 digit).'], 422));
+            }
+
+            return $nomor;
+        }
+        if ($via === 'Email') {
+            if ($kontak === '' || mb_strlen($kontak) > 100 || !filter_var($kontak, FILTER_VALIDATE_EMAIL)) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json(['message' => 'Email pengirim tidak valid.'], 422));
+            }
+
+            return $kontak;
+        }
+        if ($via === 'Surat Fisik' && $kontak !== '') {
+            $nomor = preg_replace('/[\s.\-()]/', '', $kontak);
+            if (!preg_match('/^\+?\d{6,15}$/', $nomor)) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json(['message' => 'Nomor yang bisa dihubungi tidak valid (6-15 digit).'], 422));
+            }
+
+            return $nomor;
+        }
+
+        return null;
+    }
+
     public function insert(Request $request)
     {
+        $kontak = $this->kontakDariRequest($request);
         $now = new \DateTime();
         $uniqueCode = $now->format('YmdHis') . '-' . substr(microtime(), 2, 6);
 
@@ -37,6 +70,9 @@ class SuratMasuk extends Controller
             $suratMasuk->perihal = $request->perihal;
             $suratMasuk->id_direksi = $request->dir;
             $suratMasuk->via = $request->via;
+            if ($kontak !== null && \Illuminate\Support\Facades\Schema::connection('adm')->hasColumn('surat_masuks', 'kontak')) {
+                $suratMasuk->kontak = $kontak;
+            }
             $suratMasuk->insert_by = Employe::employeId();
             $suratMasuk->tgl_surat = date('Y-m-d', strtotime($request->tglSurat));
             // nomor agenda dikunci saat surat dibuat: urut per tahun, reset tiap tahun, tidak berubah walau surat lain dihapus

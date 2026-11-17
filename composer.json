@@ -12,6 +12,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "chillerlan/php-qrcode": "^6.0",
         "firebase/php-jwt": "^6.10",
+        "geoip2/geoip2": "^3.4",
         "guzzlehttp/guzzle": "^7.9",
         "laravel/framework": "^10.10",
         "laravel/helpers": "^1.7",

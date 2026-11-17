@@ -48,4 +48,10 @@ return [
         'secret' => env('SSO_SHARED_SECRET'),
     ],
 
+
+    // database GeoLite2-City lokal untuk perkiraan lokasi dari IP (Setting > Lokasi User)
+    'geoip' => [
+        'db' => env('GEOIP_DB', storage_path('app/geoip/GeoLite2-City.mmdb')),
+    ],
+
 ];

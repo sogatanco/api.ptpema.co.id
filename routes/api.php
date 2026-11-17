@@ -210,6 +210,9 @@ Route::prefix('pengaturan')->middleware('role:SuperAdmin')->controller(\App\Http
     Route::post('/pengiriman/{id}/ulang', 'ulang');
 });
 
+// Setting > Lokasi User: peta pengguna menurut lokasi akses terakhir (hanya role SuperAdmin)
+Route::get('pengaturan/lokasi-user', [\App\Http\Controllers\Pengaturan\LokasiUserController::class, 'index'])->middleware('role:SuperAdmin');
+
 // Setting > Alur Approval: aturan alur persetujuan SPPD dan surat (hanya role SuperAdmin)
 Route::prefix('pengaturan/alur')->middleware('role:SuperAdmin')->controller(\App\Http\Controllers\Pengaturan\AlurApprovalController::class)->group(function () {
     Route::get('/opsi', 'opsi');
