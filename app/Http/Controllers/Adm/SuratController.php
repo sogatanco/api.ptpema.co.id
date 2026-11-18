@@ -412,10 +412,11 @@ class SuratController extends Controller
         $verif->status = $request->status;
         $verif->ket = $request->catatan_persetujuan;
         $verif->signature=$signature;
+        // hash rantai ikut disimpan dalam satu UPDATE (UPDATE kedua memicu trigger log lagi, log persetujuan jadi ganda)
+        if ($request->status === 'approve' && ($hash = SuratTteService::chainUntukSimpan($verif, SuratTteService::contentHash($id_doc))) !== null) {
+            $verif->chain_sha256 = $hash;
+        }
         if ($verif->save()) {
-            if ($request->status === 'approve') {
-                SuratTteService::recordChain($verif, SuratTteService::contentHash($id_doc));
-            }
             return new PostResource(true, 'success', $document);
         }
 

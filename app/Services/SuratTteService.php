@@ -163,8 +163,25 @@ class SuratTteService
     public static function recordChain($verif, ?string $contentHash): void
     {
         try {
+            $hash = self::chainUntukSimpan($verif, $contentHash);
+            if ($hash !== null) {
+                VerifStep::where('id', $verif->id)->update(['chain_sha256' => $hash]);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * Hash rantai langkah yang sedang disetujui, dihitung SEBELUM $verif->save() lalu disimpan dalam UPDATE yang sama.
+     * Jangan memakai UPDATE kedua pada verif_steps setelah save(): trigger after_review2 berjalan di setiap UPDATE,
+     * sehingga log persetujuan tercatat ganda (recordChain() hanya untuk pemanggil lama di luar alur persetujuan).
+     */
+    public static function chainUntukSimpan($verif, ?string $contentHash): ?string
+    {
+        try {
             if (!self::hasChainColumn() || !$verif->signature || $verif->status !== 'approve') {
-                return;
+                return null;
             }
             $prev = (string) VerifStep::where('id_doc', $verif->id_doc)
                 ->where('status', 'approve')
@@ -173,9 +190,11 @@ class SuratTteService
                 ->orderByDesc('step')
                 ->value('chain_sha256');
 
-            VerifStep::where('id', $verif->id)->update(['chain_sha256' => self::chainOf($prev, $contentHash, $verif)]);
+            return self::chainOf($prev, $contentHash, $verif);
         } catch (\Throwable $e) {
             report($e);
+
+            return null;
         }
     }
 

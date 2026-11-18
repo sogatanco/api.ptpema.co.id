@@ -109,6 +109,8 @@ Route::controller(PengajuanController::class)->group(function(){
     Route::post('sppd/pengajuan/sign-pdf/{id}', 'signPdf')->middleware("role:Employee");
      Route::post('sppd/pengajuan/realisasi', 'submitRealisasi')->middleware("role:Employee");
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
+     Route::post('sppd/pengajuan/umum/ubah', 'ubahUmum')->middleware("role:UmumSppd");
+     Route::post('sppd/pengajuan/termin/bukti', 'uploadBuktiTermin')->middleware("role:KeuanganSppd");
      Route::post('sppd/pengajuan/{id}/void', 'void')->middleware("role:Employee");
      Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
      Route::get('sppd/dashboard', 'dataDashboard')->middleware("role:Employee");
@@ -198,7 +200,7 @@ Route::controller(DocusignController::class)->group(function () {
 });
 
 // Rekap SPPD yang sudah di-approve (aktif dan void), per tahun
-Route::get('sppd/rekap', [\App\Http\Controllers\Sppd\RekapSppdController::class, 'index'])->middleware('role:AdminSPPD,UmumSppd,KeuanganSppd,Director');
+Route::get('sppd/rekap', [\App\Http\Controllers\Sppd\RekapSppdController::class, 'index'])->middleware('role:RekapSppd');
 
 // Klaim hotel 30% untuk pelaksana SPPD bukan karyawan: sisi pengaju (login) dan tautan email publik (token)
 Route::controller(\App\Http\Controllers\Sppd\Hotel30TamuController::class)->group(function () {

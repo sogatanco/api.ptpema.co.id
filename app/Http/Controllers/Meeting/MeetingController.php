@@ -482,8 +482,12 @@ class MeetingController extends Controller
             ->orderBy('start_time', 'asc')
             ->get();
 
+        // satu query untuk semua nama pembuat (sebelumnya satu query per rapat, dua kali)
+        $namaPembuat = Employe::whereIn('employe_id', $bookings->pluck('created_by')->filter()->unique()->values())
+            ->pluck('first_name', 'employe_id');
+
         foreach ($bookings as $booking) {
-            $booking->created_by_name = Employe::where('employe_id', $booking->created_by)->value('first_name');
+            $booking->created_by_name = $namaPembuat->get($booking->created_by);
             $booking->zoom_details = null;
 
             if ($booking->zoom) {
@@ -493,10 +497,6 @@ class MeetingController extends Controller
                     'password' => $booking->zoom->password,
                 ];
             }
-        }
-
-        foreach ($bookings as $booking) {
-            $booking->created_by_name = Employe::where('employe_id', $booking->created_by)->value('first_name');
         }
 
         return new PostResource(true, 'success', $bookings);

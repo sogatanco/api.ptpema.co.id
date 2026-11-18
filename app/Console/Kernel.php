@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         // satu pesan WA notifikasi per menit
         $schedule->command('notifikasi:kirim-wa')->everyMinute()->withoutOverlapping();
         $schedule->command('sppd:ingatkan-void')->dailyAt('08:00')->withoutOverlapping();
+        $schedule->command('sppd:ingatkan-termin')->dailyAt('08:00')->withoutOverlapping();
     }
 
     /**
