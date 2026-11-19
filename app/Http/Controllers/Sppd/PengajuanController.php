@@ -38,6 +38,7 @@ use App\Models\Sppd\Proses;
 use App\Models\Sppd\ProsesTiket;
 use App\Models\Sppd\ProsesTermin;
 use App\Services\Sppd\UangMuka;
+use App\Services\Sppd\EkstendProses;
 use App\Models\Sppd\Realisasi;
 use App\Models\Sppd\RealisasiBiaya;
 use App\Models\Sppd\RealisasiRkap;
@@ -151,6 +152,8 @@ class PengajuanController extends Controller
                 $d->pengaju_hp = $this->kontakWa($hp->get($d->submitted_by));
                 $d->pengaju_jabatan = $jabatan->get($d->submitted_by);
             }
+            // extend (tambah hari / tujuan baru) yang sudah disetujui dan perlu tiket: satu baris per SPPD, diproses terpisah dari SPPD awalnya
+            $data = $data->concat($this->barisEkstend('umum', $voidIds))->sortByDesc('id')->values();
         } elseif ($request->ref == 'by_umum_selesai') {
             // SPPD yang sudah diproses UmumSppd, terbaru di atas; tiket tetap bisa diubah/ditambah walau KeuanganSppd sudah memproses (tiket pulang sering diupload belakangan)
             if (!in_array('UmumSppd', (array) auth()->user()->roles, true)) {
@@ -197,9 +200,10 @@ class PengajuanController extends Controller
             }
             $data = $data->sortByDesc('id')->values();
         } elseif ($request->ref == 'by_keuangan') {
-            // KeuanganSppd baru menerima SPPD setelah UmumSppd selesai memprosesnya (by_umum = 1)
-            // atau langsung bila SPPD tidak memerlukan tiket (tidak lewat UmumSppd)
-            $siapKeuangan = fn ($q) => $q->where('by_umum', 1)->orWhere(fn ($w) => $this->perluTiketQuery($w, false));
+            // SPPD baru (dibuat sejak config sppd.proses_paralel_mulai): divisi keuangan dan divisi umum bekerja bersamaan, uang muka bisa
+            // diproses begitu SPPD disetujui tanpa menunggu tiket. SPPD lama tetap: setelah divisi umum selesai (by_umum = 1) atau tanpa tiket.
+            $siapKeuangan = fn ($q) => $q->where('created_at', '>=', config('sppd.proses_paralel_mulai'))
+                ->orWhere('by_umum', 1)->orWhere(fn ($w) => $this->perluTiketQuery($w, false));
             $data1 = ListSppdRingan::where('uangmuka', 0)->where($siapKeuangan)->where('current_status', 'signed')->whereNotIn('id', $voidIds)->get();
 
             $data1 = $data1->map(function ($d1) {
@@ -218,13 +222,39 @@ class PengajuanController extends Controller
                 return $d2array;
             });
             $tempCollection = collect([$data1, $data2]);
-            $data = $tempCollection->flatten(1)->sortByDesc('id')->values(); // terbaru di atas
+            $data = $tempCollection->flatten(1)
+                ->concat($this->barisEkstend('keuangan', $voidIds)->map(fn ($d) => ['id_unique' => $d->id_unique] + $d->toArray()))
+                ->sortByDesc('id')->values(); // terbaru di atas
             $data = $this->tandaiProgresTermin($data);
         } else {
             $data = $this->sppdSayaAjukan();
         }
 
-        return new PostResource(true, $request->ref, $this->tandaiVoid($data, $void));
+        return new PostResource(true, $request->ref, $this->tandaiEkstend($this->tandaiVoid($data, $void)));
+    }
+
+    /** jumlah extend yang pernah diajukan per SPPD (jumlah_ekstend), agar daftar bisa menandai SPPD yang sudah extend */
+    private function tandaiEkstend($data)
+    {
+        $data = collect($data);
+        $ids = $data->map(fn ($d) => (int) (is_array($d) ? ($d['id'] ?? 0) : $d->id))->filter()->unique()->values();
+        $peta = $ids->isEmpty() ? collect() : DB::connection('mysql4')->table('ekstends')
+            ->join('tujuan_sppds', 'tujuan_sppds.id', '=', 'ekstends.id_tujuan')
+            ->whereIn('tujuan_sppds.id_sppd', $ids)
+            ->when(EkstendProses::adaNoUrut(), fn ($q) => $q->whereNull('ekstends.dibatalkan_at'))
+            ->selectRaw('tujuan_sppds.id_sppd as id_sppd, count(*) as jumlah')
+            ->groupBy('tujuan_sppds.id_sppd')->pluck('jumlah', 'id_sppd');
+
+        return $data->map(function ($d) use ($peta) {
+            $id = (int) (is_array($d) ? ($d['id'] ?? 0) : $d->id);
+            $n = (int) ($peta[$id] ?? 0);
+            if (is_array($d)) {
+                return $d + ['jumlah_ekstend' => $n];
+            }
+            $d->jumlah_ekstend = $n;
+
+            return $d;
+        })->values();
     }
 
     // ---------- Perhitungan uang muka: aturannya ada di App\Services\Sppd\UangMuka ----------
@@ -261,6 +291,50 @@ class PengajuanController extends Controller
 
         return $q->{$perlu ? 'whereExists' : 'whereNotExists'}(fn ($s) => $s->select(DB::raw(1))->from('tujuan_sppds')
             ->whereColumn('tujuan_sppds.id_sppd', 'list_sppd_ringan.id')->where('tujuan_sppds.perlu_tiket', 1));
+    }
+
+    /**
+     * Baris daftar PERLU DIPROSES untuk extend yang sudah disetujui, satu baris per SPPD (mode_ekstend = true).
+     * 'umum'    : perlu tiket dan belum diproses divisi umum.
+     * 'keuangan': belum selesai uang mukanya (tidak menunggu divisi umum; keduanya bisa berjalan bersamaan).
+     */
+    private function barisEkstend(string $untuk, array $voidIds)
+    {
+        if (!EkstendProses::aktif()) {
+            return collect();
+        }
+        $daftar = EkstendProses::disetujui()->filter(function ($e) use ($untuk) {
+            return $untuk === 'umum'
+                ? (int) $e->perlu_tiket === 1 && (int) $e->by_umum === 0
+                : (int) $e->uangmuka === 0;
+        });
+        if ($daftar->isEmpty()) {
+            return collect();
+        }
+        $peta = [];
+        foreach ($daftar as $e) {
+            $idSppd = EkstendProses::idSppd($e);
+            if ($idSppd) {
+                $peta[$idSppd][] = $e;
+            }
+        }
+        $rows = ListSppdRingan::whereIn('id', array_keys($peta))->where('current_status', 'signed')->whereNotIn('id', $voidIds)->get();
+        $orang = $rows->pluck('employe_id')->merge($rows->pluck('submitted_by'))->filter()->unique()->values();
+        $hp = $rows->isEmpty() ? collect() : Structure::whereIn('employe_id', $orang)->pluck('phone_number', 'employe_id');
+        $jabatan = $rows->isEmpty() ? collect() : Structure::whereIn('employe_id', $orang)->pluck('position_name', 'employe_id');
+        foreach ($rows as $d) {
+            $items = collect($peta[$d->id]);
+            $d->type_proses = $untuk === 'umum' ? 'pemesanan_tiket' : 'uangmuka';
+            $d->mode_ekstend = true;
+            $d->ekstend_ids = $items->pluck('id')->map(fn ($v) => (int) $v)->all();
+            $d->ekstend_judul = $items->map(fn ($e) => EkstendProses::judul($e))->implode('; ');
+            $d->id_unique = 'ek-' . $untuk . '-' . $d->id;
+            $d->pelaksana_hp = $this->kontakWa($hp->get($d->employe_id));
+            $d->pengaju_hp = $this->kontakWa($hp->get($d->submitted_by));
+            $d->pengaju_jabatan = $jabatan->get($d->submitted_by);
+        }
+
+        return $rows;
     }
 
     // Nomor telepon (bisa lebih dari satu, dipisah koma/titik koma/spasi) -> [{tampil: '0812...', wa: '62812...'}]
@@ -491,10 +565,13 @@ class PengajuanController extends Controller
             unset($tm);
             $t->rincian_uang_muka = $rincian;
             $t->uang_muka = $rincian['total'];
+            // perkiraan biaya per tujuan: komponen yang kosong (tarif master belum ada) dihitung 0, bukan membuat seluruh total NULL/0
+            $t->total_biaya = round((float) $t->fix_um + (float) $t->fix_tl + (float) $t->fix_us + (float) $t->fix_tiket + (float) $t->fix_hotel + (float) $t->bbm, 2);
             $t->termin = array_map(fn ($x) => (object) $x, $rincian['termin']);
         }
         if ($data) {
             $data->uang_muka = round($tujuans->sum(fn ($t) => (float) $t->uang_muka), 2);
+            $data->perkiraan_total = round($tujuans->sum(fn ($t) => (float) $t->total_biaya), 2);
             $data->tiket_vendor = round($tujuans->sum(fn ($t) => (float) ($t->rincian_uang_muka['tiket']['jumlah'] ?? 0)), 2);
         }
         $rill = Realisasi::where('id_sppd', $id)->first();
@@ -504,6 +581,65 @@ class PengajuanController extends Controller
 
         $data['realisasi'] = $rill;
         $data['ekstend']=EkstendView::where('id_sppd', $id)->get();
+        // jenis extend (tambah hari / tujuan baru), kategori, dan perlu tiket untuk ditampilkan pada lembar persetujuan
+        if (EkstendProses::aktif() && $data['ekstend']->isNotEmpty()) {
+            $tambahan = Ekstend::whereIn('id', $data['ekstend']->pluck('id'))->get()->keyBy('id');
+            $kategori = DB::connection('mysql4')->table('categori_sppds')->pluck('categori_sppd', 'id');
+            foreach ($data['ekstend'] as $x) {
+                $e = $tambahan->get($x->id);
+                $x->tipe = $e->tipe ?? 'perpanjang';
+                $x->perlu_tiket = (int) ($e->perlu_tiket ?? 0);
+                $x->moda = $e->moda ?? null;
+                $x->kategori_nama = $e && $e->id_kategori ? ($kategori[$e->id_kategori] ?? null) : null;
+                $x->nama_tujuan_baru = $e->detail_tujuan ?? null;
+                $x->butuh_proses = (int) ($e->butuh_proses ?? 0);
+                $x->bbm = (float) ($e->bbm ?? 0);
+            }
+        }
+        // approval per extend (extend-1, extend-2, ...): nomor, status, langkah penyetuju, dan apakah masih bisa dibatalkan
+        if (EkstendProses::aktif() && EkstendProses::adaNoUrut() && $data['ekstend']->isNotEmpty()) {
+            $tambahan = Ekstend::whereIn('id', $data['ekstend']->pluck('id'))->get()->keyBy('id');
+            $langkahDoc = VerifStep::where('id_doc', $data->nomor_dokumen)->where('type', 'like', 'extend%')->orderBy('step')->get()->groupBy('type');
+            $nama = Employe::whereIn('employe_id', $langkahDoc->flatten()->pluck('id_employe')->unique()->all())->pluck('first_name', 'employe_id');
+            foreach ($data['ekstend'] as $x) {
+                $e = $tambahan->get($x->id);
+                $x->no_urut = $e && $e->no_urut ? (int) $e->no_urut : null;
+                $x->tipe_approval = $x->no_urut ? 'extend-' . $x->no_urut : 'extend';
+                $x->dibatalkan_at = $e->dibatalkan_at ?? null;
+                $x->alasan_batal = $e->alasan_batal ?? null;
+                $x->disetujui_at = $e->disetujui_at ?? null;
+                $langkah = $langkahDoc->get($x->tipe_approval, collect());
+                $x->langkah = $langkah->map(fn ($l) => [
+                    'step' => (int) $l->step,
+                    'id_employe' => $l->id_employe,
+                    'nama' => $nama[$l->id_employe] ?? $l->id_employe,
+                    'jabatan' => $l->id_current_position,
+                    'status' => $l->status,
+                    'ket' => $l->ket,
+                    'waktu' => (string) $l->updated_at,
+                ])->values();
+                $x->status_approval = $x->dibatalkan_at ? 'dibatalkan'
+                    : ($langkah->contains(fn ($l) => in_array($l->status, ['rejected', 'reject'], true)) ? 'ditolak'
+                    : ($e && $e->disetujui_at ? 'disetujui' : 'menunggu'));
+                $x->bisa_batal = !$x->dibatalkan_at && $e && $this->alasanTidakBisaBatalEkstend($e) === null;
+            }
+        }
+        // extend yang sudah disetujui: tiket dan uang muka (termin + bukti) terpisah dari tujuan SPPD awal
+        $data['ekstend_items'] = EkstendProses::disetujui((int) $id)->map(fn ($e) => [
+            'id' => (int) $e->id,
+            'tipe' => $e->tipe,
+            'judul' => EkstendProses::judul($e),
+            'nama_tujuan' => $e->tipe === 'tujuan_baru' ? $e->detail_tujuan : TujuanSppd::where('id', $e->id_tujuan)->value('detail_tujuan'),
+            'start' => (string) $e->start,
+            'end' => (string) $e->end,
+            'alasan' => $e->alasan,
+            'perlu_tiket' => (int) $e->perlu_tiket,
+            'by_umum' => (int) $e->by_umum,
+            'uangmuka' => (int) $e->uangmuka,
+            'sumber_tiket' => $e->sumber_tiket,
+            'rincian_uang_muka' => EkstendProses::rincian($e),
+            'tiket' => ProsesTiket::withoutGlobalScopes()->where('id_ekstend', $e->id)->orderBy('arah', 'DESC')->get(),
+        ])->values();
 
         $data['tujuan_sppd'] = $tujuans;
         $data['current_type']=UnderReview::where('id', $id)->first()->current_type ?? null;
@@ -603,7 +739,7 @@ class PengajuanController extends Controller
                 }
             }
         }
-        $verif = VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->limit(1)->first();
+        $verif = VerifStep::where('id_employe', Employe::employeId())->where('id_doc',  $id_doc)->where('status', NULL)->orderBy('step')->limit(1)->first();
         $verif->status = $request->status;
         $verif->ket = $request->catatan_persetujuan;
         $contentHash = null;
@@ -619,6 +755,9 @@ class PengajuanController extends Controller
             if ($request->status === 'approve') {
                 // paraf/TTE baru: PDF jenis ini dibuat ulang dari isi terbaru saat dibuka
                 SuratTteService::forgetStoredPdfs($id_doc, $verif->type);
+            }
+            if ($verif->type === 'extend' || str_starts_with((string) $verif->type, 'extend-')) {
+                $this->selesaikanEkstend((string) $id_doc, (string) $verif->type);
             }
             return new PostResource(true, 'success', []);
         }
@@ -796,9 +935,102 @@ class PengajuanController extends Controller
         }
     }
 
+    /** proses divisi umum untuk extend yang disetujui (tiket per extend); tidak menyentuh proses SPPD awal */
+    private function doneUmumEkstend(Request $request)
+    {
+        $request->validate([
+            'id_sppd' => 'required|integer',
+            'sumber_tiket' => 'required|in:umum,mandiri',
+            'tikets' => 'required_if:sumber_tiket,umum|array',
+            'tikets.*.id_ekstend' => 'required|integer',
+            'tikets.*.arah' => 'required|in:pergi,pulang',
+            'tikets.*.keterangan' => 'nullable|string|max:255',
+            'tikets.*.file' => 'required|string',
+            'tikets.*.harga' => 'required|numeric|min:0',
+        ]);
+        $idSppd = (int) $request->id_sppd;
+        $items = EkstendProses::disetujui($idSppd)->where('perlu_tiket', 1)->where('by_umum', 0)->keyBy('id');
+        if ($items->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada extend yang menunggu proses tiket pada SPPD ini'], 422);
+        }
+        $tikets = $request->sumber_tiket === 'umum' ? ($request->tikets ?? []) : [];
+        if ($request->sumber_tiket === 'umum' && count($tikets) === 0) {
+            return response()->json(['message' => 'Minimal satu tiket harus diisi'], 422);
+        }
+        foreach ($tikets as $t) {
+            if (!$items->has((int) $t['id_ekstend'])) {
+                return response()->json(['message' => 'Extend tidak valid atau sudah diproses'], 422);
+            }
+        }
+
+        $disk = Storage::disk('public_sppd');
+        $saved = [];
+        $me = Employe::employeId();
+        try {
+            DB::connection('mysql4')->transaction(function () use ($request, $idSppd, $tikets, $items, $disk, $me, &$saved) {
+                foreach ($tikets as $i => $t) {
+                    $raw = base64_decode(preg_replace('#^data:application/pdf;base64,#', '', $t['file']), true);
+                    if ($raw === false || $raw === '') {
+                        throw new \RuntimeException('File tiket tidak valid');
+                    }
+                    $name = 'proses/' . $idSppd . '/tiket-ek' . (int) $t['id_ekstend'] . '-' . ($i + 1) . '-' . $t['arah'] . '-' . uniqid() . '.pdf';
+                    if (!$disk->put($name, $raw)) {
+                        throw new \RuntimeException('Gagal menyimpan file tiket');
+                    }
+                    $saved[] = $name;
+
+                    $row = new ProsesTiket();
+                    $row->id_sppd = $idSppd;
+                    $row->id_tujuan = (int) $items[(int) $t['id_ekstend']]->id_tujuan;
+                    $row->id_ekstend = (int) $t['id_ekstend'];
+                    $row->arah = $t['arah'];
+                    $row->keterangan = $t['keterangan'] ?? null;
+                    $row->file = $name;
+                    $row->harga = $t['harga'];
+                    $row->uploaded_by = $me;
+                    $row->save();
+                }
+                Ekstend::whereIn('id', $items->keys()->all())->update(['by_umum' => 1, 'sumber_tiket' => $request->sumber_tiket]);
+            });
+        } catch (\Throwable $e) {
+            foreach ($saved as $f) {
+                $disk->delete($f);
+            }
+
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        $this->laporProsesUmumEkstend($idSppd, Ekstend::whereIn('id', $items->keys()->all())->get(), false);
+
+        return new PostResource(true, 'success', []);
+    }
+
+    /** log (satu baris) + notifikasi untuk proses/ubah tiket divisi umum pada extend */
+    private function laporProsesUmumEkstend(int $idSppd, $items, bool $ubah): void
+    {
+        try {
+            $tiket = ProsesTiket::withoutGlobalScopes()->whereIn('id_ekstend', $items->pluck('id')->all())->orderBy('id')->get();
+            $judul = $items->mapWithKeys(fn ($e) => [(int) $e->id => EkstendProses::judul($e)]);
+            $ringkas = $tiket->count() > 0 ? $tiket->count() . ' tiket, total ' . $this->rp($tiket->sum(fn ($t) => (float) $t->harga)) : 'tanpa tiket dari divisi umum';
+            $rinci = $tiket->map(fn ($t) => ucfirst((string) $t->arah) . ' ' . ($judul[(int) $t->id_ekstend] ?? '-') . ': ' . $this->rp($t->harga) . (trim((string) $t->keterangan) !== '' ? ' (' . $t->keterangan . ')' : ''))->implode('; ');
+            $sumber = $items->first()->sumber_tiket ?? null;
+            $baris = ($ubah ? 'Tiket extend diubah divisi umum' : 'Extend diproses divisi umum') . '. Sumber tiket: ' . $this->labelSumberTiket($sumber) . '; ' . $ringkas . ($rinci !== '' ? ' (' . $rinci . ')' : '');
+            $this->catatLogSppd($idSppd, [$this->potongLog($baris)]);
+            $sppd = Sppd::find($idSppd);
+            if ($sppd) {
+                Peristiwa::sppdProsesUmum($sppd, $ubah ? 'tiket_diubah' : 'diproses', 'Extend: ' . $items->map(fn ($e) => EkstendProses::judul($e))->implode('; ') . '. ' . $ringkas . '.', Employe::employeId(), true);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Laporan proses divisi umum (extend) gagal', ['id_sppd' => $idSppd, 'error' => $e->getMessage()]);
+        }
+    }
+
     // Proses UmumSppd: pilih sumber tiket; bila diupload UmumSppd, tiket pergi/pulang per tujuan (bisa lebih dari satu)
     private function doneUmum(Request $request)
     {
+        if ($request->boolean('ekstend')) {
+            return $this->doneUmumEkstend($request);
+        }
         $request->validate([
             'id_sppd' => 'required|integer',
             'sumber_tiket' => 'required|in:umum,mandiri',
@@ -1162,7 +1394,25 @@ class PengajuanController extends Controller
         if (!$this->adaTabelTermin()) {
             return $data;
         }
-        $ids = $data->filter(fn ($d) => ($d['type_proses'] ?? null) === 'uangmuka')->pluck('id')->all();
+        // extend: progres termin dihitung per extend (bukan dari termin SPPD awal)
+        $data = $data->map(function ($d) {
+            if (!empty($d['mode_ekstend']) && ($d['type_proses'] ?? null) === 'uangmuka') {
+                $sudah = 0;
+                $total = 0;
+                foreach (Ekstend::whereIn('id', $d['ekstend_ids'] ?? [])->get() as $e) {
+                    $r = EkstendProses::rincian($e);
+                    $total += count($r['termin'] ?? []);
+                    $sudah += ProsesTermin::withoutGlobalScopes()->where('id_ekstend', $e->id)->count();
+                }
+                if ($sudah > 0) {
+                    $d['termin_terbukti'] = $sudah;
+                    $d['termin_total'] = $total;
+                }
+            }
+
+            return $d;
+        });
+        $ids = $data->filter(fn ($d) => ($d['type_proses'] ?? null) === 'uangmuka' && empty($d['mode_ekstend']))->pluck('id')->all();
         if (!$ids) {
             return $data;
         }
@@ -1175,7 +1425,7 @@ class PengajuanController extends Controller
 
         return $data->map(function ($d) use ($terbukti, $tujuan, $tiket) {
             $n = $terbukti->get($d['id'] ?? 0);
-            if (($d['type_proses'] ?? null) === 'uangmuka' && $n) {
+            if (($d['type_proses'] ?? null) === 'uangmuka' && empty($d['mode_ekstend']) && $n) {
                 $total = $tujuan->get($d['id'], collect())->sum(fn ($t) => count($this->rincianUangMuka($t, (float) ($tiket[$t->id] ?? 0))['termin']));
                 $d['termin_terbukti'] = (int) $n;
                 $d['termin_total'] = (int) $total;
@@ -1183,6 +1433,12 @@ class PengajuanController extends Controller
 
             return $d;
         });
+    }
+
+    /** SPPD dibuat sejak config sppd.proses_paralel_mulai: divisi umum dan divisi keuangan bekerja bersamaan */
+    private function prosesParalel($baris): bool
+    {
+        return $baris && $baris->created_at && strtotime((string) $baris->created_at) >= strtotime((string) config('sppd.proses_paralel_mulai'));
     }
 
     private function adaTabelTermin(): bool
@@ -1226,8 +1482,127 @@ class PengajuanController extends Controller
      * Uang muka dianggap selesai diproses (baris proses 'uangmuka') setelah semua termin semua tujuan punya bukti.
      * Payload: id_sppd, bukti[] = {id_tujuan, termin, file (data URL pdf/jpg/png)}
      */
+    /** bukti transfer termin uang muka untuk extend (bukti[].id_ekstend + termin); extend selesai bila semua terminnya terbukti */
+    private function uploadBuktiTerminEkstend(Request $request)
+    {
+        $request->validate([
+            'id_sppd' => 'required|integer',
+            'bukti' => 'required|array|min:1',
+            'bukti.*.id_ekstend' => 'required|integer',
+            'bukti.*.termin' => 'required|integer|min:1',
+            'bukti.*.file' => 'required|string',
+        ]);
+        if (!EkstendProses::aktif() || !$this->adaTabelTermin()) {
+            return response()->json(['message' => 'Tabel extend belum dibuat (jalankan db/2026-11-18/ekstend_proses.sql)'], 422);
+        }
+        $idSppd = (int) $request->id_sppd;
+        $baris = ListSppdRingan::find($idSppd);
+        if (!$baris || $baris->current_status !== 'signed') {
+            return response()->json(['message' => 'SPPD tidak ditemukan atau belum disetujui'], 422);
+        }
+        if (array_key_exists($idSppd, SppdVoid::peta())) {
+            return response()->json(['message' => 'SPPD ini sudah di-void'], 422);
+        }
+        $items = EkstendProses::disetujui($idSppd)->where('uangmuka', 0)->keyBy('id');
+
+        $jadwal = [];
+        $rincian = [];
+        foreach ($items as $e) {
+            $r = EkstendProses::rincian($e);
+            $rincian[$e->id] = $r;
+            foreach ($r['termin'] ?? [] as $x) {
+                $jadwal[$e->id . ':' . $x['no']] = ['id_ekstend' => (int) $e->id, 'id_tujuan' => (int) $e->id_tujuan, 'no' => (int) $x['no'], 'tgl' => $x['tgl_bayar'], 'jumlah' => (float) $x['jumlah']];
+            }
+        }
+        $sudah = ProsesTermin::withoutGlobalScopes()->where('id_ekstend', '<>', 0)->where('id_sppd', $idSppd)->get()->keyBy(fn ($r) => $r->id_ekstend . ':' . $r->termin);
+
+        $pilih = [];
+        foreach ($request->bukti as $b) {
+            $kunci = (int) $b['id_ekstend'] . ':' . (int) $b['termin'];
+            if (!isset($jadwal[$kunci])) {
+                return response()->json(['message' => 'Termin tidak ditemukan pada extend yang menunggu uang muka'], 422);
+            }
+            if ($sudah->has($kunci) || isset($pilih[$kunci])) {
+                return response()->json(['message' => 'Bukti transfer termin ' . $jadwal[$kunci]['no'] . ' sudah ada'], 409);
+            }
+            try {
+                $pilih[$kunci] = $this->bacaBukti((string) $b['file']);
+            } catch (\RuntimeException $e) {
+                return response()->json(['message' => 'Termin ' . $jadwal[$kunci]['no'] . ': ' . $e->getMessage()], 422);
+            }
+        }
+
+        $disk = Storage::disk('public_sppd');
+        $baru = [];
+        $me = Employe::employeId();
+        try {
+            DB::connection('mysql4')->transaction(function () use ($pilih, $jadwal, $idSppd, $disk, $me, &$baru) {
+                foreach ($pilih as $kunci => [$ext, $isi]) {
+                    $j = $jadwal[$kunci];
+                    $nama = 'proses/' . $idSppd . '/termin-ek' . $j['id_ekstend'] . '-' . $j['no'] . '-' . uniqid() . '.' . $ext;
+                    if (!$disk->put($nama, $isi)) {
+                        throw new \RuntimeException('Gagal menyimpan bukti transfer');
+                    }
+                    $baru[] = $nama;
+                    $row = new ProsesTermin();
+                    $row->id_sppd = $idSppd;
+                    $row->id_tujuan = $j['id_tujuan'];
+                    $row->id_ekstend = $j['id_ekstend'];
+                    $row->termin = $j['no'];
+                    $row->tgl_bayar = $j['tgl'];
+                    $row->jumlah = $j['jumlah'];
+                    $row->file = $nama;
+                    $row->diproses_oleh = $me;
+                    $row->save();
+                }
+            });
+        } catch (\Throwable $e) {
+            foreach ($baru as $f) {
+                $disk->delete($f);
+            }
+
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        // extend yang seluruh terminnya sudah dibuktikan => uang mukanya selesai
+        $selesaiIds = [];
+        foreach ($rincian as $idEk => $r) {
+            if (ProsesTermin::withoutGlobalScopes()->where('id_ekstend', $idEk)->count() >= count($r['termin'] ?? [])) {
+                $selesaiIds[] = $idEk;
+            }
+        }
+        if ($selesaiIds) {
+            Ekstend::whereIn('id', $selesaiIds)->update(['uangmuka' => 1]);
+        }
+        $semuaSelesai = EkstendProses::disetujui($idSppd)->where('uangmuka', 0)->isEmpty();
+        $this->laporBuktiTerminEkstend($idSppd, $pilih ? array_map(fn ($k) => $jadwal[$k], array_keys($pilih)) : [], $items, $semuaSelesai);
+
+        return new PostResource(true, 'success', ['selesai' => $semuaSelesai]);
+    }
+
+    private function laporBuktiTerminEkstend(int $idSppd, array $termin, $items, bool $selesai): void
+    {
+        try {
+            $judul = $items->mapWithKeys(fn ($e) => [(int) $e->id => EkstendProses::judul($e)]);
+            $daftar = collect($termin)->map(fn ($j) => 'termin ' . $j['no'] . ' ' . ($judul[$j['id_ekstend']] ?? '') . ' ' . $this->rp($j['jumlah']) . ' (jatuh tempo ' . date('d-m-Y', strtotime($j['tgl'])) . ')')->implode('; ');
+            $sudahTermin = ProsesTermin::withoutGlobalScopes()->whereIn('id_ekstend', $items->pluck('id')->all())->count();
+            $totalTermin = (int) $items->sum(fn ($e) => count((EkstendProses::rincian($e)['termin'] ?? [])));
+            $baris = 'Bukti transfer uang muka extend diupload divisi keuangan: ' . $daftar . '. Progres ' . $sudahTermin . '/' . $totalTermin . ' termin extend' . ($selesai ? '; uang muka extend selesai diproses' : '');
+            $this->catatLogSppd($idSppd, [$this->potongLog($baris)]);
+            $sppd = Sppd::find($idSppd);
+            if ($sppd) {
+                Peristiwa::sppdBuktiTermin($sppd, 'Extend: ' . $daftar, $sudahTermin, $totalTermin, $selesai, Employe::employeId());
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Laporan bukti termin extend gagal', ['id_sppd' => $idSppd, 'error' => $e->getMessage()]);
+        }
+    }
+
     function uploadBuktiTermin(Request $request)
     {
+        if ($request->boolean('ekstend')) {
+            return $this->uploadBuktiTerminEkstend($request);
+        }
         $request->validate([
             'id_sppd' => 'required|integer',
             'bukti' => 'required|array|min:1',
@@ -1250,7 +1625,8 @@ class PengajuanController extends Controller
         if ((int) $baris->uangmuka === 1) {
             return response()->json(['message' => 'Uang muka SPPD ini sudah selesai diproses'], 409);
         }
-        if ((int) $baris->by_umum === 0 && $this->perluTiketQuery(ListSppdRingan::where('id', $idSppd), true)->exists()) {
+        // SPPD lama: tetap menunggu divisi umum; SPPD baru (sejak proses_paralel_mulai) boleh bersamaan
+        if (!$this->prosesParalel($baris) && (int) $baris->by_umum === 0 && $this->perluTiketQuery(ListSppdRingan::where('id', $idSppd), true)->exists()) {
             return response()->json(['message' => 'SPPD ini belum diproses UmumSppd'], 409);
         }
 
@@ -1409,33 +1785,376 @@ class PengajuanController extends Controller
         return new PostResource(true, 'dashboard', $data);
     }
 
+    /**
+     * Total hari extend yang masih aktif pada satu SPPD (menunggu atau disetujui; yang dibatalkan atau ditolak tidak dihitung).
+     * Satu extend = (tanggal akhir - tanggal mulai + 1) hari. $kecualiIds: extend yang sedang diganti pengajuan baru.
+     */
+    private function hariEkstendTerpakai(int $idSppd, array $kecualiIds = []): int
+    {
+        if (!EkstendProses::aktif()) {
+            return 0;
+        }
+        $q = Ekstend::where('butuh_proses', 1)->whereIn('id_tujuan', TujuanSppd::where('id_sppd', $idSppd)->pluck('id'));
+        if (EkstendProses::adaNoUrut()) {
+            $q->whereNull('dibatalkan_at');
+        }
+        if ($kecualiIds) {
+            $q->whereNotIn('id', $kecualiIds);
+        }
+
+        return (int) $q->get(['start', 'end'])->sum(fn ($e) => max(0, (int) floor((strtotime((string) $e->end) - strtotime((string) $e->start)) / 86400) + 1));
+    }
+
+    /** batas tanggal akhir extend: hari terakhir SPPD (tanggal kembali terakhir seluruh tujuan awal) + maks_hari_extend hari; null bila SPPD tak punya tujuan */
+    private function batasAkhirEkstend(int $idSppd): ?string
+    {
+        $akhir = TujuanSppd::where('id_sppd', $idSppd)->max('waktu_kembali');
+
+        return $akhir ? date('Y-m-d', strtotime(date('Y-m-d', strtotime((string) $akhir)) . ' +' . (int) config('sppd.maks_hari_extend', 5) . ' days')) : null;
+    }
+
     function getTujuanById($id)
     {
         $data = TujuanSppd::where('id_sppd', $id)->get();
         $tigaPuluh = TigaPuluh::whereIn('id_tujuan', $data->pluck('id'))->get()->unique('id_tujuan')->keyBy('id_tujuan');
+        $ekstendAkhir = EkstendProses::aktif()
+            ? Ekstend::whereIn('id_tujuan', $data->pluck('id'))->where('tipe', 'perpanjang')->whereNotNull('disetujui_at')->selectRaw('id_tujuan, max(`end`) as akhir, count(*) as banyak')->groupBy('id_tujuan')->get()->keyBy('id_tujuan')
+            : collect();
+        $maksHari = (int) config('sppd.maks_hari_extend', 5);
+        $hariTerpakai = $this->hariEkstendTerpakai((int) $id);
+        $batasAkhir = $this->batasAkhirEkstend((int) $id);
+        // extend yang sudah diajukan (untuk ditandai di kalender form extend): menunggu, disetujui, dan extend lama; yang dibatalkan/ditolak tidak ditampilkan
+        $terajukan = collect();
+        if (EkstendProses::aktif()) {
+            $adaNo = EkstendProses::adaNoUrut();
+            $terajukan = Ekstend::whereIn('id_tujuan', $data->pluck('id'))
+                ->when($adaNo, fn ($q) => $q->whereNull('dibatalkan_at'))->orderBy('id')->get()
+                ->filter(fn ($e) => !($adaNo && $e->no_urut && (int) $e->butuh_proses === 0 && !$e->disetujui_at))
+                ->map(fn ($e) => [
+                    'id' => (int) $e->id,
+                    'no_urut' => $adaNo && $e->no_urut ? (int) $e->no_urut : null,
+                    'tipe' => $e->tipe ?: 'perpanjang',
+                    'judul' => EkstendProses::judul($e),
+                    'alasan' => $e->alasan,
+                    'id_tujuan' => (int) $e->id_tujuan,
+                    'perlu_tiket' => (int) $e->perlu_tiket,
+                    'id_kategori' => $e->id_kategori ? (int) $e->id_kategori : null,
+                    'nama_tujuan_baru' => $e->detail_tujuan,
+                    'moda' => $e->moda,
+                    'bbm' => (float) ($e->bbm ?? 0),
+                    'start' => date('Y-m-d', strtotime((string) $e->start)),
+                    'end' => date('Y-m-d', strtotime((string) $e->end)),
+                    'status' => $e->disetujui_at ? 'disetujui' : ((int) $e->butuh_proses === 1 ? 'menunggu' : 'lama'),
+                ])->values();
+        }
         foreach ($data as $t) {
+            $t->ekstend_terajukan = $terajukan;
+            $t->ekstend_hari_maks = $maksHari;
+            $t->ekstend_hari_terpakai = $hariTerpakai;
+            $t->ekstend_batas_akhir = $batasAkhir;
             $t->tigapuluh = $tigaPuluh->get($t->id);
+            // extend sebelumnya yang sudah disetujui (extend boleh berulang): akhir terakhir dan jumlahnya
+            $t->ekstend_akhir = $ekstendAkhir->get($t->id)->akhir ?? null;
+            $t->ekstend_banyak = (int) ($ekstendAkhir->get($t->id)->banyak ?? 0);
         }
         return new PostResource(true, 'success', $data);
     }
 
+    /**
+     * Pengajuan extend: tambah hari pada tujuan yang ada (tipe perpanjang) atau tujuan baru (tipe tujuan_baru).
+     * Setelah semua persetujuan selesai, extend masuk proses divisi umum (bila perlu tiket) lalu divisi keuangan (uang muka).
+     */
     function insertEkstend(Request $request)
     {
-        // Hapus ekstend dengan id_tujuan yang sama sebelum insert
-        Ekstend::where('id_tujuan', $request->id_tujuan)->delete();
+        $ekstendAktif = EkstendProses::aktif();
+        $tipe = $ekstendAktif && $request->input('tipe') === 'tujuan_baru' ? 'tujuan_baru' : 'perpanjang';
+        $aturan = [
+            'alasan' => 'required|string',
+            'start' => 'required|date',
+            'end' => 'required|date|after_or_equal:start',
+            'bbm' => 'nullable|numeric|min:0',
+        ];
+        if ($tipe === 'tujuan_baru') {
+            $aturan += [
+                'id_sppd' => 'required|integer',
+                'detail_tujuan' => 'required|string|max:255',
+                'id_kategori' => 'required|integer',
+                'moda' => 'nullable|string|max:50',
+            ];
+        } else {
+            $aturan['id_tujuan'] = 'required|integer';
+        }
+        $request->validate($aturan);
+
+        $idTujuan = (int) $request->id_tujuan;
+        if ($tipe === 'tujuan_baru') {
+            // tujuan acuan: tujuan pertama SPPD (menentukan golongan/tarif, porsi biaya, dan SPPD-nya)
+            $idTujuan = (int) TujuanSppd::where('id_sppd', (int) $request->id_sppd)->orderBy('id')->value('id');
+            if (!$idTujuan) {
+                return response()->json(['message' => 'SPPD tidak ditemukan'], 422);
+            }
+            if (!DB::connection('mysql4')->table('categori_sppds')->where('id', (int) $request->id_kategori)->exists()) {
+                return response()->json(['message' => 'Kategori tujuan tidak valid'], 422);
+            }
+        }
+
+        // extend boleh dilakukan beberapa kali: tanggal mulai perpanjangan berikutnya harus setelah extend sebelumnya yang sudah disetujui
+        if ($ekstendAktif && $tipe === 'perpanjang') {
+            $akhir = Ekstend::where('id_tujuan', $idTujuan)->where('tipe', 'perpanjang')->whereNotNull('disetujui_at')->max('end');
+            if ($akhir && strtotime((string) $request->start) <= strtotime((string) $akhir)) {
+                return response()->json(['message' => 'Tanggal mulai harus setelah extend sebelumnya (sampai ' . date('d-m-Y', strtotime((string) $akhir)) . ')'], 422);
+            }
+        }
+
+        // ganti hanya pengajuan baru yang belum selesai disetujui untuk tujuan/jenis yang sama; data extend yang sudah ada sebelumnya
+        // (butuh_proses = 0) dan yang sudah disetujui/diproses tidak disentuh. Tanpa kolom baru, perilaku lama tetap berlaku.
+        $ganti = Ekstend::where('id_tujuan', $idTujuan)->when($ekstendAktif, fn ($q) => $q->where('butuh_proses', 1)->whereNull('disetujui_at')->where('tipe', $tipe));
+        if ($tipe === 'tujuan_baru') {
+            $ganti->where('detail_tujuan', $request->detail_tujuan);
+        }
+
+        // masih ada extend yang menunggu persetujuan pada SPPD ini: pengajuan ini MENGEDIT extend tersebut (tidak membuat extend baru)
+        $sedangMenunggu = null;
+        if ($ekstendAktif) {
+            $sedangMenunggu = Ekstend::whereIn('id_tujuan', TujuanSppd::where('id_sppd', (int) TujuanSppd::where('id', $idTujuan)->value('id_sppd'))->pluck('id'))
+                ->where('butuh_proses', 1)->whereNull('disetujui_at')
+                ->when(EkstendProses::adaNoUrut(), fn ($q) => $q->whereNull('dibatalkan_at'))->orderBy('id')->first();
+        }
+
+        // batas total hari extend per SPPD; pengajuan menunggu yang akan diganti tidak dihitung
+        if ($ekstendAktif) {
+            // extend hanya untuk SPPD yang sudah di-approve (tanda tangan akhir selesai)
+            if (!ListSppdRingan::where('id', (int) TujuanSppd::where('id', $idTujuan)->value('id_sppd'))->where('current_status', 'signed')->exists()) {
+                return response()->json(['success' => false, 'message' => 'Extend hanya bisa diajukan untuk SPPD yang sudah di-approve.'], 422);
+            }
+            $maks = (int) config('sppd.maks_hari_extend', 5);
+            $idSppdEx = (int) TujuanSppd::where('id', $idTujuan)->value('id_sppd');
+            $terpakai = $this->hariEkstendTerpakai($idSppdEx, $sedangMenunggu ? [(int) $sedangMenunggu->id] : (clone $ganti)->pluck('id')->all());
+            $hariBaru = (int) floor((strtotime((string) $request->end) - strtotime((string) $request->start)) / 86400) + 1;
+            $batasAkhir = $this->batasAkhirEkstend($idSppdEx);
+            $akhirSppd = TujuanSppd::where('id_sppd', $idSppdEx)->max('waktu_kembali');
+            if ($akhirSppd && date('Y-m-d', strtotime((string) $request->start)) <= date('Y-m-d', strtotime((string) $akhirSppd))) {
+                return response()->json(['success' => false, 'message' => 'Tanggal mulai extend harus setelah hari terakhir SPPD (' . date('d-m-Y', strtotime((string) $akhirSppd)) . ').'], 422);
+            }
+            if ($batasAkhir && date('Y-m-d', strtotime((string) $request->end)) > $batasAkhir) {
+                return response()->json(['success' => false, 'message' => "Tanggal akhir extend maksimal {$maks} hari setelah hari terakhir SPPD, yaitu sampai " . date('d-m-Y', strtotime($batasAkhir)) . '.'], 422);
+            }
+            if ($terpakai + $hariBaru > $maks) {
+                $sisa = max(0, $maks - $terpakai);
+
+                return response()->json(['success' => false, 'message' => "Total extend maksimal {$maks} hari per SPPD. Sudah dipakai {$terpakai} hari (sisa {$sisa} hari), pengajuan ini {$hariBaru} hari. Batalkan extend sebelumnya bila ingin menambah."], 422);
+            }
+        }
+        // pengajuan yang diganti: langkah approval-nya (extend-<no_urut>) ikut dihapus supaya tidak menggantung
+        if (!$sedangMenunggu && $ekstendAktif && EkstendProses::adaNoUrut()) {
+            $nomorDoc = Sppd::where('id', TujuanSppd::where('id', $idTujuan)->value('id_sppd'))->value('nomor_dokumen');
+            $tipeLama = (clone $ganti)->whereNotNull('no_urut')->pluck('no_urut')->map(fn ($n) => 'extend-' . $n)->all();
+            if ($nomorDoc && $tipeLama) {
+                VerifStep::where('id_doc', $nomorDoc)->whereIn('type', $tipeLama)->whereNull('status')->delete();
+            }
+        }
+        if ($sedangMenunggu) {
+            return $this->ubahEkstendMenunggu($sedangMenunggu, $request, $tipe, $idTujuan);
+        }
+        $ganti->delete();
 
         $ekstend = new Ekstend();
-        $ekstend->id_tujuan = $request->id_tujuan;
+        $ekstend->id_tujuan = $idTujuan;
         $ekstend->alasan = $request->alasan;
         $ekstend->start = $request->start;
         $ekstend->end = $request->end;
         $ekstend->submitted_by = Employe::employeId();
+        if ($ekstendAktif) {
+            $ekstend->tipe = $tipe;
+            $ekstend->perlu_tiket = filter_var($request->input('perlu_tiket', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            $ekstend->butuh_proses = 1;
+            if (EkstendProses::adaBbm()) {
+                $ekstend->bbm = (float) $request->input('bbm', 0);
+            }
+            if ($tipe === 'tujuan_baru') {
+                $ekstend->id_kategori = (int) $request->id_kategori;
+                $ekstend->detail_tujuan = $request->detail_tujuan;
+                $ekstend->moda = $request->moda ?: null;
+            }
+        }
 
         if ($ekstend->save()) {
             return new PostResource(true, 'success', []);
         } else {
             return new PostResource(false, 'error', []);
         }
+    }
+
+    /**
+     * Mengedit extend yang masih menunggu persetujuan (nomor dan identitasnya tetap). Karena isinya berubah, approval diulang dari awal:
+     * status, catatan dan tanda tangan langkahnya dikosongkan.
+     */
+    private function ubahEkstendMenunggu(Ekstend $e, Request $request, string $tipe, int $idTujuan)
+    {
+        $e->id_tujuan = $idTujuan;
+        $e->alasan = $request->alasan;
+        $e->start = $request->start;
+        $e->end = $request->end;
+        $e->submitted_by = Employe::employeId();
+        $e->tipe = $tipe;
+        $e->perlu_tiket = filter_var($request->input('perlu_tiket', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+        if (EkstendProses::adaBbm()) {
+            $e->bbm = (float) $request->input('bbm', 0);
+        }
+        $e->id_kategori = $tipe === 'tujuan_baru' ? (int) $request->id_kategori : null;
+        $e->detail_tujuan = $tipe === 'tujuan_baru' ? $request->detail_tujuan : null;
+        $e->moda = $tipe === 'tujuan_baru' ? ($request->moda ?: null) : null;
+        $e->save();
+
+        $sppd = Sppd::find(EkstendProses::idSppd($e));
+        $tipeLangkah = $e->no_urut ? 'extend-' . $e->no_urut : 'extend';
+        if ($sppd) {
+            $reset = ['status' => null, 'ket' => null, 'signature' => null];
+            if (Schema::connection('esign')->hasColumn('verif_steps', 'chain_sha256')) {
+                $reset['chain_sha256'] = null;
+            }
+            VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', $tipeLangkah)->update($reset);
+            SuratTteService::forgetStoredPdfs($sppd->nomor_dokumen, $tipeLangkah);
+            $this->catatLogSppd((int) $sppd->id, [$this->potongLog(($e->no_urut ? 'Extend-' . $e->no_urut : 'Extend') . ' diubah (belum disetujui): ' . EkstendProses::judul($e) . '. Approval diulang.')]);
+        }
+        Peristiwa::sppdExtendDiubah($e);
+
+        return new PostResource(true, ($e->no_urut ? 'Extend ' . $e->no_urut : 'Extend') . ' yang masih menunggu persetujuan diperbarui.', []);
+    }
+
+    /**
+     * Dipanggil setelah satu langkah persetujuan 'extend' tersimpan: bila seluruh langkah sudah disetujui, extend yang menunggu
+     * ditandai disetujui (masuk proses divisi umum/keuangan); bila ada yang menolak, extend yang menunggu tidak diproses.
+     */
+    private function selesaikanEkstend(string $idDoc, string $tipeLangkah = 'extend'): void
+    {
+        if (!EkstendProses::aktif()) {
+            return;
+        }
+        try {
+            $langkah = VerifStep::where('id_doc', $idDoc)->where('type', $tipeLangkah)->get();
+            if ($langkah->isEmpty()) {
+                return;
+            }
+            $sppd = Sppd::where('nomor_dokumen', $idDoc)->first();
+            if (!$sppd) {
+                return;
+            }
+            $menunggu = Ekstend::where('butuh_proses', 1)->whereNull('disetujui_at')
+                ->whereIn('id_tujuan', TujuanSppd::where('id_sppd', $sppd->id)->pluck('id'));
+            if (preg_match('/^extend-(\d+)$/', $tipeLangkah, $m)) {
+                // approval per extend: hanya extend bernomor itu yang terpengaruh
+                $menunggu->where('no_urut', (int) $m[1]);
+            } elseif (EkstendProses::adaNoUrut()) {
+                // langkah 'extend' lama: hanya extend lama (tanpa nomor urut)
+                $menunggu->whereNull('no_urut');
+            }
+            if ($langkah->contains(fn ($l) => $l->status === 'rejected' || $l->status === 'reject')) {
+                $ditolak = (clone $menunggu)->get();
+                $menunggu->update(['butuh_proses' => 0]);
+                if ($ditolak->isNotEmpty()) {
+                    $this->catatLogSppd((int) $sppd->id, [$this->potongLog('Extend ditolak: ' . $ditolak->map(fn ($x) => ($x->no_urut ? 'Extend-' . $x->no_urut . ' ' : '') . EkstendProses::judul($x))->implode('; '))]);
+                }
+
+                return;
+            }
+            if ($langkah->every(fn ($l) => $l->status === 'approve')) {
+                $ids = (clone $menunggu)->pluck('id')->all();
+                if ($ids) {
+                    Ekstend::whereIn('id', $ids)->update(['disetujui_at' => now()]);
+                    Peristiwa::sppdExtendSiapDiproses($sppd, Ekstend::whereIn('id', $ids)->get(), Employe::employeId());
+                    $this->catatLogSppd((int) $sppd->id, [$this->potongLog('Extend disetujui: ' . Ekstend::whereIn('id', $ids)->get()->map(fn ($e) => ($e->no_urut ? 'Extend-' . $e->no_urut . ' ' : '') . EkstendProses::judul($e))->implode('; ') . '. Masuk proses ' . (Ekstend::whereIn('id', $ids)->where('perlu_tiket', 1)->exists() ? 'divisi umum (tiket) lalu divisi keuangan (uang muka)' : 'divisi keuangan (uang muka)'))]);
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Penyelesaian extend gagal', ['id_doc' => $idDoc, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Batalkan extend (admin SPPD atau pengaju SPPD). Hanya extend dengan approval per pengajuan (no_urut terisi) yang belum diproses
+     * divisi umum maupun keuangan. Data tetap tersimpan (dibatalkan_at); langkah approval yang belum final (menunggu / ditolak) dihapus.
+     */
+    function batalEkstend(Request $request, $id)
+    {
+        if (!EkstendProses::adaNoUrut()) {
+            return response()->json(['success' => false, 'message' => 'Fitur batal extend belum aktif di database: jalankan db/2026-11-19/ekstend_per_pengajuan.sql terlebih dulu.'], 422);
+        }
+        $e = Ekstend::find($id);
+        if (!$e) {
+            return response()->json(['success' => false, 'message' => 'Extend tidak ditemukan.'], 404);
+        }
+        $idSppd = EkstendProses::idSppd($e);
+        $sppd = $idSppd ? Sppd::find($idSppd) : null;
+        if (!$sppd) {
+            return response()->json(['success' => false, 'message' => 'SPPD extend ini tidak ditemukan.'], 404);
+        }
+        $me = Employe::employeId();
+        if (!in_array('AdminSPPD', auth()->user()->roles ?? [], true) && (string) $sppd->submitted_by !== (string) $me) {
+            return response()->json(['success' => false, 'message' => 'Hanya admin SPPD atau pengaju SPPD yang bisa membatalkan extend.'], 403);
+        }
+        if ($tolak = $this->tolakBilaVoid($sppd)) {
+            return $tolak;
+        }
+        $alasan = trim((string) $request->alasan);
+        if (mb_strlen($alasan) < 5) {
+            return response()->json(['success' => false, 'message' => 'Alasan pembatalan wajib diisi (minimal 5 karakter).'], 422);
+        }
+        if ($e->dibatalkan_at) {
+            return response()->json(['success' => false, 'message' => 'Extend ini sudah dibatalkan.'], 422);
+        }
+        if ($tolakProses = $this->alasanTidakBisaBatalEkstend($e)) {
+            return response()->json(['success' => false, 'message' => $tolakProses], 422);
+        }
+
+        $tipeLangkahBatal = $e->no_urut ? 'extend-' . $e->no_urut : 'extend';
+        $penyetujuMenunggu = VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', $tipeLangkahBatal)->whereNull('status')->pluck('id_employe')->unique()->values()->all();
+        DB::connection('mysql4')->transaction(function () use ($e, $me, $alasan) {
+            $e->butuh_proses = 0;
+            $e->dibatalkan_at = now();
+            $e->dibatalkan_oleh = $me;
+            $e->alasan_batal = mb_substr($alasan, 0, 255);
+            $e->save();
+        });
+        // langkah approval di database lain (esign): hapus yang belum final supaya tidak menahan antrean review atau menandai SPPD ditolak.
+        // Extend lama (tanpa nomor) memakai langkah 'extend' yang dipakai bersama: dihapus hanya bila tidak ada extend lama lain yang masih menunggu.
+        $tipeLangkah = $e->no_urut ? 'extend-' . $e->no_urut : 'extend';
+        $masihAdaLain = !$e->no_urut && Ekstend::where('id', '<>', $e->id)->whereNull('no_urut')->where('butuh_proses', 1)->whereNull('disetujui_at')
+            ->whereIn('id_tujuan', TujuanSppd::where('id_sppd', $sppd->id)->pluck('id'))->exists();
+        if (!$masihAdaLain) {
+            VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', $tipeLangkah)
+                ->where(fn ($q) => $q->whereNull('status')->orWhereIn('status', ['rejected', 'reject']))->delete();
+        }
+        SuratTteService::forgetStoredPdfs($sppd->nomor_dokumen, $tipeLangkah);
+        $nama = $e->no_urut ? 'Extend-' . $e->no_urut : 'Extend';
+        $this->catatLogSppd((int) $sppd->id, [$this->potongLog($nama . ' dibatalkan: ' . EkstendProses::judul($e) . '. Alasan: ' . $alasan)]);
+
+        Peristiwa::sppdExtendDibatalkan($sppd, $e, $alasan, $me, $penyetujuMenunggu);
+
+        return new PostResource(true, $nama . ' dibatalkan.', []);
+    }
+
+    /** null bila extend masih boleh dibatalkan; selain itu pesan alasannya */
+    private function alasanTidakBisaBatalEkstend(Ekstend $e): ?string
+    {
+        if ($e->dibatalkan_at) {
+            return 'Extend ini sudah dibatalkan.';
+        }
+        // extend bernomor yang sudah ditolak tidak aktif lagi (butuh_proses dikosongkan saat ditolak)
+        if ($e->no_urut && (int) $e->butuh_proses === 0 && !$e->disetujui_at) {
+            return 'Extend ini sudah ditolak sehingga tidak perlu dibatalkan.';
+        }
+        // extend lama (tanpa nomor) hanya bisa dibatalkan selama masih pengajuan baru yang belum disetujui; data sebelum fitur proses tidak diubah
+        if (!$e->no_urut && ((int) $e->butuh_proses !== 1 || $e->disetujui_at)) {
+            return 'Extend lama yang sudah selesai tidak bisa dibatalkan.';
+        }
+        if ((int) $e->by_umum === 1 || (int) $e->uangmuka === 1
+            || ProsesTiket::withoutGlobalScopes()->where('id_ekstend', $e->id)->exists()
+            || ($this->adaTabelTermin() && ProsesTermin::withoutGlobalScopes()->where('id_ekstend', $e->id)->exists())) {
+            return 'Extend ini sudah diproses divisi umum/keuangan sehingga tidak bisa dibatalkan.';
+        }
+
+        return null;
     }
 
     function tgaPlhPersen(Request $request)

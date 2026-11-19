@@ -164,10 +164,12 @@ class Peristiwa
             return;
         }
         $laporan = in_array($v->type, ['check_document', 'verif_realisasi'], true);
-        $objek = $laporan ? 'laporan realisasi SPPD' : 'SPPD';
+        $ekstendLangkah = self::tipeEkstend((string) $v->type);
+        $noEks = $ekstendLangkah && preg_match('/^extend-(\d+)$/', (string) $v->type, $mm) ? (int) $mm[1] : null;
+        $objek = $laporan ? 'laporan realisasi SPPD' : ($ekstendLangkah ? 'penambahan hari (' . ($noEks ? 'extend ' . $noEks : 'extend') . ') SPPD' : 'SPPD');
         $pesan = [
             'modul' => 'sppd',
-            'event' => ($laporan ? 'sppd.laporan_' : 'sppd.') . ($setuju ? 'disetujui' : 'ditolak'),
+            'event' => ($laporan ? 'sppd.laporan_' : ($ekstendLangkah ? 'sppd.extend_' : 'sppd.')) . ($setuju ? 'disetujui' : 'ditolak'),
             'judul' => ucfirst($objek) . ($setuju ? ' disetujui' : ' ditolak'),
             'isi' => "{$pelaku} " . ($setuju ? 'menyetujui' : 'menolak') . " {$objek} a.n. {$sppd->nama} (nomor {$sppd->nomor_sppd}).{$catatan}",
             'ref' => $v->id_doc,
@@ -178,11 +180,12 @@ class Peristiwa
             Hub::kirim($sppd->employe_id, $v->id_employe, $pesan + ['url' => self::urlSppd($v->id_doc, 2)]);
         }
         if ($setuju) {
-            $berikut = VerifStep::where('id_doc', $v->id_doc)->where('step', '>', $v->step)->orderBy('step')->value('id_employe');
+            // extend: langkah berikutnya hanya dari extend yang sama (tiap extend punya approval sendiri)
+            $berikut = VerifStep::where('id_doc', $v->id_doc)->where('step', '>', $v->step)->when($ekstendLangkah, fn ($q) => $q->where('type', $v->type))->orderBy('step')->value('id_employe');
             if ($berikut) {
-                self::reviewSppd($sppd, $berikut, $sppd->submitted_by, $laporan ? 'laporan realisasi SPPD' : 'dokumen SPPD');
+                self::reviewSppd($sppd, $berikut, $sppd->submitted_by, $laporan ? 'laporan realisasi SPPD' : ($ekstendLangkah ? $objek : 'dokumen SPPD'));
             }
-            // langkah 'sign' = tanda tangan akhir: SPPD resmi disetujui (current_status 'signed') dan masuk tab PERLU DIPROSES UmumSppd
+            // langkah 'sign' = tanda tangan akhir: SPPD resmi disetujui (current_status 'signed') dan masuk tab PERLU DIPROSES divisi umum
             if (!$laporan && $v->type === 'sign') {
                 self::sppdSiapDiproses($sppd, $v->id_employe);
             }
@@ -190,10 +193,10 @@ class Peristiwa
     }
 
     /**
-     * UmumSppd selesai memproses SPPD ($kejadian 'diproses') atau mengubah tiketnya ('tiket_diubah').
-     * Pelaksana dan admin pengaju dikabari; KeuanganSppd juga, karena SPPD ini sekarang masuk (atau berubah di) daftar Perlu Diproses mereka.
+     * divisi umum selesai memproses SPPD ($kejadian 'diproses') atau mengubah tiketnya ('tiket_diubah').
+     * Pelaksana dan admin pengaju dikabari; divisi keuangan juga, karena SPPD ini sekarang masuk (atau berubah di) daftar Perlu Diproses mereka.
      */
-    public static function sppdProsesUmum(Sppd $s, string $kejadian, string $detail, ?string $actor): void
+    public static function sppdProsesUmum(Sppd $s, string $kejadian, string $detail, ?string $actor, bool $ekstend = false): void
     {
         $diubah = $kejadian === 'tiket_diubah';
         $pelaku = self::nama($actor);
@@ -201,8 +204,8 @@ class Peristiwa
         $pesan = [
             'modul' => 'sppd',
             'event' => $diubah ? 'sppd.tiket_diubah' : 'sppd.proses_umum',
-            'judul' => ($diubah ? 'Tiket SPPD diperbarui UmumSppd: ' : 'Tiket SPPD diproses UmumSppd: ') . $s->nomor_sppd,
-            'isi' => "{$pelaku} (UmumSppd) " . ($diubah ? 'memperbarui' : 'memproses') . " tiket untuk SPPD {$ringkas}. {$detail}",
+            'judul' => ($diubah ? 'Tiket SPPD diperbarui divisi umum: ' : 'Tiket SPPD diproses divisi umum: ') . $s->nomor_sppd,
+            'isi' => "{$pelaku} (divisi umum) " . ($diubah ? 'memperbarui' : 'memproses') . " tiket untuk SPPD {$ringkas}. {$detail}",
             'ref' => $s->nomor_dokumen,
         ];
         // pengaju melihatnya di tab pengajuan (#1), pelaksana di tab SPPD saya (#2)
@@ -211,26 +214,28 @@ class Peristiwa
             Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 2)]);
         }
 
+        $paralel = $s->created_at && strtotime((string) $s->created_at) >= strtotime((string) config('sppd.proses_paralel_mulai'));
         $keuangan = Structure::where('roles', 'like', '%KeuanganSppd%')->pluck('employe_id')->all();
         Hub::kirim($keuangan, $actor, [
             'modul' => 'sppd',
             'event' => $diubah ? 'sppd.tiket_diubah' : 'sppd.proses_umum',
-            'judul' => ($diubah ? 'Tiket SPPD diubah UmumSppd: ' : 'SPPD siap diproses KeuanganSppd: ') . $s->nomor_sppd,
-            'isi' => "SPPD {$ringkas} " . ($diubah ? "tiketnya diperbarui oleh {$pelaku} (UmumSppd), belum diproses KeuanganSppd. " : "telah diproses UmumSppd ({$pelaku}) dan siap diproses KeuanganSppd. ") . $detail,
+            // SPPD lama: pemberitahuan ini yang menandai SPPD masuk daftar divisi keuangan (aturan lama); SPPD baru: hanya informasi
+            'judul' => ($diubah ? 'Tiket SPPD diubah divisi umum: ' : ($paralel ? 'Tiket SPPD diproses divisi umum: ' : 'SPPD siap diproses divisi keuangan: ')) . $s->nomor_sppd,
+            'isi' => "SPPD {$ringkas} " . ($diubah ? "tiketnya diperbarui oleh {$pelaku} (divisi umum). " : ($paralel ? "tiketnya telah diproses divisi umum ({$pelaku}). " : "telah diproses divisi umum ({$pelaku}) dan siap diproses divisi keuangan. ")) . $detail,
             // tab PERLU DIPROSES (#4) dan membuka detail SPPD-nya
-            'url' => self::urlSppd((string) $s->nomor_dokumen, 4),
+            'url' => self::urlSppd((string) $s->nomor_dokumen, 4, true, $ekstend),
             'ref' => $s->nomor_dokumen,
         ]);
     }
 
-    /** KeuanganSppd mengupload bukti transfer uang muka per termin: kabari pelaksana dan admin pengaju (progres, dan selesai bila semua termin sudah) */
+    /** divisi keuangan mengupload bukti transfer uang muka per termin: kabari pelaksana dan admin pengaju (progres, dan selesai bila semua termin sudah) */
     public static function sppdBuktiTermin(Sppd $s, string $daftarTermin, int $sudah, int $total, bool $selesai, ?string $actor): void
     {
         $pesan = [
             'modul' => 'sppd',
             'event' => 'sppd.uangmuka_termin',
             'judul' => $selesai ? 'Uang muka SPPD selesai ditransfer: ' . $s->nomor_sppd : "Uang muka SPPD ditransfer (termin {$sudah}/{$total}): " . $s->nomor_sppd,
-            'isi' => self::nama($actor) . ' (KeuanganSppd) telah mentransfer uang muka SPPD ' . self::ringkasSppd($s) . ": {$daftarTermin}. Bukti transfer sudah diupload."
+            'isi' => self::nama($actor) . ' (divisi keuangan) telah mentransfer uang muka SPPD ' . self::ringkasSppd($s) . ": {$daftarTermin}. Bukti transfer sudah diupload."
                 . ($selesai ? ' Seluruh termin uang muka telah ditransfer.' : " Progres {$sudah} dari {$total} termin."),
             'ref' => $s->nomor_dokumen,
         ];
@@ -240,7 +245,7 @@ class Peristiwa
         }
     }
 
-    /** KeuanganSppd memproses uang muka ($jenis 'uangmuka') atau pembayaran realisasi ('realisasi'): kabari pelaksana dan admin pengaju */
+    /** divisi keuangan memproses uang muka ($jenis 'uangmuka') atau pembayaran realisasi ('realisasi'): kabari pelaksana dan admin pengaju */
     public static function sppdProsesKeuangan(Sppd $s, string $jenis, bool $adaLampiran, ?string $actor): void
     {
         $uangMuka = $jenis === 'uangmuka';
@@ -248,8 +253,8 @@ class Peristiwa
         $pesan = [
             'modul' => 'sppd',
             'event' => $uangMuka ? 'sppd.proses_uangmuka' : 'sppd.proses_realisasi',
-            'judul' => ucfirst($label) . ' SPPD diproses KeuanganSppd: ' . $s->nomor_sppd,
-            'isi' => self::nama($actor) . " (KeuanganSppd) telah memproses {$label} SPPD " . self::ringkasSppd($s) . '. ' . ($adaLampiran ? 'Bukti bayar dilampirkan.' : 'Tanpa lampiran bukti bayar.'),
+            'judul' => ucfirst($label) . ' SPPD diproses divisi keuangan: ' . $s->nomor_sppd,
+            'isi' => self::nama($actor) . " (divisi keuangan) telah memproses {$label} SPPD " . self::ringkasSppd($s) . '. ' . ($adaLampiran ? 'Bukti bayar dilampirkan.' : 'Tanpa lampiran bukti bayar.'),
             'ref' => $s->nomor_dokumen,
         ];
         Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 1)]);
@@ -258,13 +263,13 @@ class Peristiwa
         }
     }
 
-    /** SPPD sudah disetujui penuh: kabari semua user UmumSppd agar memproses tiket (konfirmasi ke pelaksana dan admin pengaju) */
+    /** SPPD sudah disetujui penuh: kabari semua user divisi umum agar memproses tiket (konfirmasi ke pelaksana dan admin pengaju) */
     public static function sppdSiapDiproses(Sppd $s, ?string $actor): void
     {
         if (array_key_exists((int) $s->id, SppdVoid::peta())) {
             return;
         }
-        // tidak ada tujuan yang perlu tiket: tidak lewat UmumSppd, langsung ke KeuanganSppd
+        // tidak ada tujuan yang perlu tiket: tidak lewat divisi umum, langsung ke divisi keuangan
         $perluTiket = true;
         try {
             if (\Illuminate\Support\Facades\Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'perlu_tiket')) {
@@ -273,17 +278,19 @@ class Peristiwa
         } catch (\Throwable $e) {
             $perluTiket = true;
         }
+        // SPPD baru: divisi keuangan (uang muka) dan divisi umum (tiket) bekerja bersamaan, keduanya dikabari begitu SPPD disetujui.
+        // SPPD lama (dibuat sebelum config sppd.proses_paralel_mulai): hanya divisi keuangan bila tanpa tiket, selebihnya divisi umum dulu.
+        $paralel = $s->created_at && strtotime((string) $s->created_at) >= strtotime((string) config('sppd.proses_paralel_mulai'));
+        if ($paralel || !$perluTiket) Hub::kirim(Structure::where('roles', 'like', '%KeuanganSppd%')->pluck('employe_id')->all(), $actor, [
+            'modul' => 'sppd',
+            'event' => 'sppd.siap_keuangan',
+            'judul' => 'SPPD disetujui, siap diproses divisi keuangan: ' . $s->nomor_sppd,
+            'isi' => 'SPPD ' . self::ringkasSppd($s) . ' telah disetujui. Mohon proses uang muka' . ($perluTiket ? ' (tiket diproses divisi umum secara bersamaan).' : ' (tidak memerlukan tiket).'),
+            'url' => self::urlSppd((string) $s->nomor_dokumen, 4, true),
+            'ref' => $s->nomor_dokumen,
+            'data' => ['nomor_sppd' => $s->nomor_sppd],
+        ]);
         if (!$perluTiket) {
-            Hub::kirim(Structure::where('roles', 'like', '%KeuanganSppd%')->pluck('employe_id')->all(), $actor, [
-                'modul' => 'sppd',
-                'event' => 'sppd.siap_keuangan',
-                'judul' => 'SPPD disetujui, siap diproses KeuanganSppd: ' . $s->nomor_sppd,
-                'isi' => 'SPPD ' . self::ringkasSppd($s) . ' telah disetujui dan tidak memerlukan tiket, sehingga langsung masuk ke KeuanganSppd. Mohon proses uang muka.',
-                'url' => self::urlSppd((string) $s->nomor_dokumen, 4),
-                'ref' => $s->nomor_dokumen,
-                'data' => ['nomor_sppd' => $s->nomor_sppd],
-            ]);
-
             return;
         }
         $umum = Structure::where('roles', 'like', '%UmumSppd%')->pluck('employe_id')->all();
@@ -294,7 +301,7 @@ class Peristiwa
             'isi' => 'SPPD ' . self::ringkasSppd($s) . ' telah disetujui. Mohon proses tiket perjalanan: hubungi pelaksana SPPD (' . self::nama($s->employe_id)
                 . ') dan admin pengaju (' . self::nama($s->submitted_by) . '), lalu tandai selesai di tab Perlu Diproses.',
             // tab PERLU DIPROSES (#4) dan membuka detail SPPD-nya
-            'url' => self::urlSppd((string) $s->nomor_dokumen, 4),
+            'url' => self::urlSppd((string) $s->nomor_dokumen, 4, true),
             'ref' => $s->nomor_dokumen,
             'data' => ['nomor_sppd' => $s->nomor_sppd],
         ]);
@@ -423,10 +430,58 @@ class Peristiwa
         ]);
     }
 
-    /** halaman SPPD dengan tab (1 pengajuan, 2 SPPD saya, 3 review) dan dokumen yang dibuka otomatis */
-    private static function urlSppd(string $nomorDokumen, int $tab): string
+    /**
+     * Extend (tambah hari / tujuan baru) selesai disetujui: bila perlu tiket masuk proses divisi umum, bila tidak langsung ke divisi keuangan (uang muka).
+     * @param \Illuminate\Support\Collection $daftar kumpulan model Ekstend yang baru disetujui
+     */
+    public static function sppdExtendSiapDiproses(Sppd $s, $daftar, ?string $actor): void
     {
-        return 'sppd?dok=' . rawurlencode($nomorDokumen) . '#' . $tab;
+        self::aman(function () use ($s, $daftar, $actor) {
+            $ringkas = fn ($rows) => $rows->map(fn ($e) => self::labelEkstend($e) . ' - ' . \App\Services\Sppd\EkstendProses::judul($e))->implode('; ');
+            $perlu = $daftar->where('perlu_tiket', 1);
+            if ($perlu->isNotEmpty()) {
+                Hub::kirim(Structure::where('roles', 'like', '%UmumSppd%')->pluck('employe_id')->all(), $actor, [
+                    'modul' => 'sppd',
+                    'event' => 'sppd.extend_proses_tiket',
+                    'judul' => 'Extend SPPD disetujui, mohon proses tiket ' . $s->nomor_sppd,
+                    'isi' => 'Extend SPPD ' . self::ringkasSppd($s) . ' telah disetujui: ' . $ringkas($perlu) . '. Mohon proses tiket perjalanan: hubungi pelaksana SPPD ('
+                        . self::nama($s->employe_id) . ') dan admin pengaju (' . self::nama($s->submitted_by) . ').',
+                    'url' => self::urlSppd((string) $s->nomor_dokumen, 4, true, true),
+                    'ref' => $s->nomor_dokumen,
+                    'data' => ['nomor_sppd' => $s->nomor_sppd],
+                ]);
+            }
+            if ($daftar->isNotEmpty()) {
+                Hub::kirim(Structure::where('roles', 'like', '%KeuanganSppd%')->pluck('employe_id')->all(), $actor, [
+                    'modul' => 'sppd',
+                    'event' => 'sppd.extend_siap_keuangan',
+                    'judul' => 'Extend SPPD disetujui, siap diproses divisi keuangan: ' . $s->nomor_sppd,
+                    'isi' => 'Extend SPPD ' . self::ringkasSppd($s) . ' telah disetujui: ' . $ringkas($daftar) . '. Mohon proses uang muka' . ($perlu->isNotEmpty() ? ' (tiket diproses divisi umum secara bersamaan).' : ' (tidak memerlukan tiket).') . ($daftar->sum(fn ($e) => (float) ($e->bbm ?? 0)) > 0 ? ' Termasuk uang BBM Rp ' . number_format((float) $daftar->sum(fn ($e) => (float) ($e->bbm ?? 0)), 0, ',', '.') . '.' : ''),
+                    'url' => self::urlSppd((string) $s->nomor_dokumen, 4, true, true),
+                    'ref' => $s->nomor_dokumen,
+                    'data' => ['nomor_sppd' => $s->nomor_sppd],
+                ]);
+            }
+        });
+    }
+
+    /** halaman SPPD dengan tab (1 pengajuan, 2 SPPD saya, 3 review) dan dokumen yang dibuka otomatis */
+    /** $proses = true: tautan cepat yang langsung membuka lembar proses (divisi umum/divisi keuangan) pada tab PERLU DIPROSES */
+    private static function urlSppd(string $nomorDokumen, int $tab, bool $proses = false, bool $ekstend = false): string
+    {
+        return 'sppd?dok=' . rawurlencode($nomorDokumen) . ($proses ? '&aksi=proses' : '') . ($proses && $ekstend ? '&jenis=extend' : '') . '#' . $tab;
+    }
+
+    /** 'Extend 2' untuk extend bernomor, 'Extend' untuk extend lama */
+    private static function labelEkstend($e): string
+    {
+        return !empty($e->no_urut) ? 'Extend ' . $e->no_urut : 'Extend';
+    }
+
+    /** langkah approval extend: extend-<n> (per pengajuan) atau extend (lama) */
+    private static function tipeEkstend(string $tipe): bool
+    {
+        return $tipe === 'extend' || str_starts_with($tipe, 'extend-');
     }
 
     /** SPPD di-void: pemilik, pengaju dan reviewer yang sedang menunggu diberi tahu beserta alasannya */
@@ -497,31 +552,73 @@ class Peristiwa
         ]);
     }
 
-    private static function ekstendDiajukan(Ekstend $e): void
+    private static function ekstendDiajukan(Ekstend $e, bool $diubah = false): void
     {
+        // nomor extend diisi trigger database saat insert: baca ulang supaya no_urut terisi
+        $e = Ekstend::find($e->id) ?? $e;
         $sppdId = DB::connection('mysql4')->table('tujuan_sppds')->where('id', $e->id_tujuan)->value('id_sppd');
         $sppd = $sppdId ? Sppd::find($sppdId) : null;
         if (!$sppd) {
             return;
         }
-        $penandatangan = VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', 'sign')->value('id_employe');
-        $isi = 'penambahan hari ' . self::tgl($e->start) . ' s.d. ' . self::tgl($e->end) . ' untuk SPPD ' . self::ringkasSppd($sppd) . ". Alasan: {$e->alasan}";
-        Hub::kirim($penandatangan, $e->submitted_by, [
+        $label = self::labelEkstend($e);
+        $tipeLangkah = !empty($e->no_urut) ? 'extend-' . $e->no_urut : 'extend';
+        // penyetuju extend ini (langkah pertama yang menunggu); cadangan: penandatangan SPPD
+        $penyetuju = VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', $tipeLangkah)->whereNull('status')->orderBy('step')->value('id_employe')
+            ?: VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', 'sign')->value('id_employe');
+        $rincian = \App\Services\Sppd\EkstendProses::judul($e) . ' (' . self::tgl($e->start) . ' s.d. ' . self::tgl($e->end) . ')'
+            . ($e->perlu_tiket ? ', perlu tiket' : ', tanpa tiket')
+            . ((float) ($e->bbm ?? 0) > 0 ? ', uang BBM Rp ' . number_format((float) $e->bbm, 0, ',', '.') : '');
+        $isi = 'penambahan hari (' . strtolower($label) . ') untuk SPPD ' . self::ringkasSppd($sppd) . ": {$rincian}. Alasan: {$e->alasan}";
+        $pengaju = $e->submitted_by;
+        Hub::kirim($penyetuju, $pengaju, [
             'modul' => 'sppd',
             'event' => 'sppd.review',
-            'judul' => 'Mohon review penambahan hari SPPD ' . $sppd->nomor_sppd,
-            'isi' => 'Mohon review ' . $isi . '. Diajukan oleh ' . self::nama($e->submitted_by) . '.',
+            'judul' => ($diubah ? 'Mohon review ulang ' : 'Mohon review ') . strtolower($label) . ' SPPD ' . $sppd->nomor_sppd,
+            'isi' => 'Mohon review ' . $isi . '. ' . ($diubah ? 'Diubah' : 'Diajukan') . ' oleh ' . self::nama($pengaju) . '.',
             'url' => self::urlSppd($sppd->nomor_dokumen, 3),
             'ref' => $sppd->nomor_dokumen,
         ]);
-        Hub::kirim($sppd->employe_id, $e->submitted_by, [
+        // pemilik SPPD (tab SPPD saya) dan admin pengaju (tab pengajuan) tahu pengajuannya tercatat
+        $pesan = [
             'modul' => 'sppd',
-            'event' => 'sppd.ekstend_diajukan',
-            'judul' => 'Pengajuan penambahan hari SPPD',
-            'isi' => 'Pengajuan ' . $isi . '.',
-            'url' => self::urlSppd($sppd->nomor_dokumen, 2),
+            'event' => $diubah ? 'sppd.ekstend_diubah' : 'sppd.ekstend_diajukan',
+            'judul' => ($diubah ? $label . ' SPPD diubah ' : 'Pengajuan ' . strtolower($label) . ' SPPD ') . $sppd->nomor_sppd,
+            'isi' => 'Pengajuan ' . $isi . ($diubah ? '. Persetujuan diulang dari awal.' : '.'),
             'ref' => $sppd->nomor_dokumen,
-        ]);
+        ];
+        Hub::kirim($sppd->employe_id, $pengaju, $pesan + ['url' => self::urlSppd($sppd->nomor_dokumen, 2)]);
+        if ($sppd->submitted_by && $sppd->submitted_by !== $sppd->employe_id) {
+            Hub::kirim($sppd->submitted_by, $pengaju, $pesan + ['url' => self::urlSppd($sppd->nomor_dokumen, 1)]);
+        }
+    }
+
+    /** extend yang masih menunggu persetujuan diedit: penyetuju diminta review ulang */
+    public static function sppdExtendDiubah(Ekstend $e): void
+    {
+        self::aman(fn () => self::ekstendDiajukan($e, true));
+    }
+
+    /** extend dibatalkan admin/pengaju: pemilik, pengaju, dan penyetuju yang sedang menunggu diberi tahu beserta alasannya */
+    public static function sppdExtendDibatalkan(Sppd $s, Ekstend $e, string $alasan, ?string $actor, array $penyetujuMenunggu = []): void
+    {
+        self::aman(function () use ($s, $e, $alasan, $actor, $penyetujuMenunggu) {
+            $label = self::labelEkstend($e);
+            $pesan = [
+                'modul' => 'sppd',
+                'event' => 'sppd.ekstend_dibatalkan',
+                'judul' => $label . ' SPPD dibatalkan ' . $s->nomor_sppd,
+                'isi' => self::nama($actor) . ' membatalkan ' . strtolower($label) . ' SPPD ' . self::ringkasSppd($s) . ': ' . \App\Services\Sppd\EkstendProses::judul($e) . '. Alasan: ' . $alasan,
+                'ref' => $s->nomor_dokumen,
+            ];
+            Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd($s->nomor_dokumen, 2)]);
+            if ($s->submitted_by && $s->submitted_by !== $s->employe_id) {
+                Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd($s->nomor_dokumen, 1)]);
+            }
+            if ($penyetujuMenunggu) {
+                Hub::kirim($penyetujuMenunggu, $actor, $pesan + ['url' => self::urlSppd($s->nomor_dokumen, 3)]);
+            }
+        });
     }
 
     // ---------- Asset ----------

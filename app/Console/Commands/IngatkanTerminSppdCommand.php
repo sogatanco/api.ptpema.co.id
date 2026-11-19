@@ -17,15 +17,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Sehari sebelum jatuh tempo tiap termin uang muka, ingatkan KeuanganSppd agar memproses transfer dan mengupload bukti transfer.
+ * Sehari sebelum jatuh tempo tiap termin uang muka, ingatkan divisi keuangan agar memproses transfer dan mengupload bukti transfer.
  * Termin dibayar pada tanggal berangkat (termin 1) lalu tiap 4 hari. Pengingat hanya dikirim sekali per termin
- * dan hanya untuk termin yang belum punya bukti, pada SPPD yang sudah siap diproses KeuanganSppd.
+ * dan hanya untuk termin yang belum punya bukti, pada SPPD yang sudah siap diproses divisi keuangan.
  */
 class IngatkanTerminSppdCommand extends Command
 {
     protected $signature = 'sppd:ingatkan-termin {--besok= : tanggal jatuh tempo yang diingatkan (Y-m-d), bawaan: besok}';
 
-    protected $description = 'Ingatkan KeuanganSppd H-1 sebelum termin uang muka SPPD: proses transfer dan upload bukti transfer.';
+    protected $description = 'Ingatkan divisi keuangan H-1 sebelum termin uang muka SPPD: proses transfer dan upload bukti transfer.';
 
     public function handle(): int
     {
@@ -51,10 +51,10 @@ class IngatkanTerminSppdCommand extends Command
 
         $terkirim = 0;
         foreach ($sppds as $r) {
-            // yang perlu tiket baru bisa diproses KeuanganSppd setelah UmumSppd selesai
-            $perluTiket = DB::connection('mysql4')->table('tujuan_sppds')->where('id_sppd', $r->id)
-                ->when(Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'perlu_tiket'), fn ($q) => $q->where('perlu_tiket', 1))->exists();
-            if ((int) $r->by_umum === 0 && $perluTiket) {
+            // SPPD lama: baru bisa diproses divisi keuangan setelah divisi umum selesai (bila perlu tiket); SPPD baru bersamaan
+            if (strtotime((string) $r->created_at) < strtotime((string) config('sppd.proses_paralel_mulai')) && (int) $r->by_umum === 0
+                && DB::connection('mysql4')->table('tujuan_sppds')->where('id_sppd', $r->id)
+                    ->when(Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'perlu_tiket'), fn ($q) => $q->where('perlu_tiket', 1))->exists()) {
                 continue;
             }
             $sppd = Sppd::find($r->id);
@@ -81,7 +81,7 @@ class IngatkanTerminSppdCommand extends Command
                         'isi' => "Termin {$x['no']} uang muka SPPD {$r->nomor_sppd} a.n. {$r->nama} ({$t->detail_tujuan}) sebesar {$rp} jatuh tempo besok, {$tglIndo} ({$x['keterangan']}). "
                             . 'Mohon proses transfer dan upload bukti transfer hari ini.',
                         // tab PERLU DIPROSES (#4) dan membuka SPPD-nya
-                        'url' => 'sppd?dok=' . rawurlencode((string) $sppd->nomor_dokumen) . '#4',
+                        'url' => 'sppd?dok=' . rawurlencode((string) $sppd->nomor_dokumen) . '&aksi=proses#4',
                         'ref' => $ref,
                         'data' => ['id_sppd' => $r->id, 'id_tujuan' => $t->id, 'termin' => $x['no'], 'tgl_bayar' => $tgl, 'jumlah' => $x['jumlah']],
                     ]);
