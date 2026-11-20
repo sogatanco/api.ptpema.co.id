@@ -49,6 +49,12 @@ class BiayaSppdController extends Controller
         return (int) $this->db()->table('sppds')->where('ketetapan', $id)->count();
     }
 
+    /** kolom ketetapan_sppds.termin_aktif (db/2026-11-20/ketetapan_termin_aktif.sql) tersedia */
+    private function adaKolomTermin(): bool
+    {
+        return \Illuminate\Support\Facades\Schema::connection('mysql4')->hasColumn('ketetapan_sppds', 'termin_aktif');
+    }
+
     private function format($k): array
     {
         return [
@@ -57,6 +63,7 @@ class BiayaSppdController extends Controller
             'berlaku_mulai' => $k->berlaku_mulai,
             'status' => $k->status,
             'aktif' => $k->status === self::STATUS_AKTIF,
+            'termin_aktif' => (int) ($k->termin_aktif ?? 1) === 1,
             'jumlah_sppd' => $this->jumlahSppd((int) $k->id),
             'jumlah_biaya' => (int) $this->db()->table('biaya_sppds')->where('ketetapan', $k->id)->count(),
         ];
@@ -124,7 +131,7 @@ class BiayaSppdController extends Controller
                 'status' => self::STATUS_NONAKTIF,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ] + ($this->adaKolomTermin() ? ['termin_aktif' => (int) ($sumber->termin_aktif ?? 1)] : []));
             foreach ($db->table('biaya_sppds')->where('ketetapan', $sumber->id)->get() as $b) {
                 $db->table('biaya_sppds')->insert([
                     'id_golongan' => $b->id_golongan, 'id_category' => $b->id_category, 'ketetapan' => $id,
@@ -206,7 +213,8 @@ class BiayaSppdController extends Controller
         $db->transaction(function () use ($db, $k, $dasar, $request, $ubahBiaya, $ubahWaktu) {
             $db->table('ketetapan_sppds')->where('id', $k->id)->update([
                 'dasar_ketetapan' => $dasar, 'berlaku_mulai' => $request->input('berlaku_mulai'), 'updated_at' => now(),
-            ]);
+            ] + ($this->adaKolomTermin() && $request->has('termin_aktif') ? ['termin_aktif' => $request->boolean('termin_aktif') ? 1 : 0] : []));
+            \App\Services\Sppd\UangMuka::lupakanCacheTermin();
             foreach ($ubahBiaya as $bid => $nilai) {
                 $db->table('biaya_sppds')->where('id', $bid)->update($nilai + ['updated_at' => now()]);
             }

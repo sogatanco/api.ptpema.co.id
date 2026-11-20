@@ -263,6 +263,25 @@ class Peristiwa
         }
     }
 
+    /** KeuanganSppd menandai termin uang muka tidak dibayarkan di muka: pelaksana dan admin pengaju diberi tahu bahwa biayanya dibayar saat realisasi */
+    public static function sppdUangMukaAktual(Sppd $s, string $daftarTermin, string $alasan, ?string $actor, bool $ekstend = false): void
+    {
+        self::aman(function () use ($s, $daftarTermin, $alasan, $actor, $ekstend) {
+            $objek = $ekstend ? 'Uang muka extend SPPD' : 'Uang muka SPPD';
+            $pesan = [
+                'modul' => 'sppd',
+                'event' => 'sppd.uangmuka_aktual',
+                'judul' => $objek . ' tidak dibayarkan di muka: ' . $s->nomor_sppd,
+                'isi' => self::nama($actor) . ' (divisi keuangan) menandai ' . $daftarTermin . ' pada ' . strtolower($objek) . ' ' . self::ringkasSppd($s) . ' tidak dibayarkan di muka. Biayanya dibayarkan saat realisasi (aktual).' . ($alasan !== '' ? ' Alasan: ' . $alasan : ''),
+                'ref' => $s->nomor_dokumen,
+            ];
+            Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 1)]);
+            if ($s->employe_id && $s->employe_id !== $s->submitted_by) {
+                Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 2)]);
+            }
+        });
+    }
+
     /** SPPD sudah disetujui penuh: kabari semua user divisi umum agar memproses tiket (konfirmasi ke pelaksana dan admin pengaju) */
     public static function sppdSiapDiproses(Sppd $s, ?string $actor): void
     {
@@ -296,6 +315,8 @@ class Peristiwa
         $umum = Structure::where('roles', 'like', '%UmumSppd%')->pluck('employe_id')->all();
         Hub::kirim($umum, $actor, [
             'modul' => 'sppd',
+            // UmumSppd tetap diberi tahu walau penyetuju terakhir adalah dirinya sendiri (kalau tidak, tiket tidak ada yang memproses)
+            'termasuk_pelaku' => true,
             'event' => 'sppd.proses_tiket',
             'judul' => 'SPPD disetujui, mohon proses tiket ' . $s->nomor_sppd,
             'isi' => 'SPPD ' . self::ringkasSppd($s) . ' telah disetujui. Mohon proses tiket perjalanan: hubungi pelaksana SPPD (' . self::nama($s->employe_id)
@@ -442,6 +463,7 @@ class Peristiwa
             if ($perlu->isNotEmpty()) {
                 Hub::kirim(Structure::where('roles', 'like', '%UmumSppd%')->pluck('employe_id')->all(), $actor, [
                     'modul' => 'sppd',
+                    'termasuk_pelaku' => true, // UmumSppd tetap dikabari walau penyetuju terakhir adalah dirinya sendiri
                     'event' => 'sppd.extend_proses_tiket',
                     'judul' => 'Extend SPPD disetujui, mohon proses tiket ' . $s->nomor_sppd,
                     'isi' => 'Extend SPPD ' . self::ringkasSppd($s) . ' telah disetujui: ' . $ringkas($perlu) . '. Mohon proses tiket perjalanan: hubungi pelaksana SPPD ('

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Employe;
 use App\Models\Structure;
+use App\Models\Meeting\BlokirRuang;
 use App\Models\Meeting\BookingRoom;
 use App\Models\Meeting\Zoom;
 use App\Services\WhatsAppService;
@@ -14,6 +15,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class MeetingController extends Controller
 {
@@ -408,6 +410,18 @@ class MeetingController extends Controller
             $renbisId = null;
         }
 
+        // ruangan diblokir Sekretaris Direksi: tidak bisa dibooking pada rentang itu
+        $blokir = $this->getBlokirConflict($room, $normalizedStart, $normalizedEnd);
+
+        if ($blokir) {
+            return new PostResource(false, 'Ruangan ' . $room . ' diblokir pada ' . Carbon::parse($blokir->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($blokir->end_time)->format('d-m-Y H:i') . ($blokir->alasan ? ' (' . $blokir->alasan . ')' : '') . ', sehingga tidak bisa dibooking pada waktu tersebut.', [
+                'conflict_blokir_id' => $blokir->id,
+                'conflict_room' => $blokir->room,
+                'conflict_start_time' => $blokir->start_time,
+                'conflict_end_time' => $blokir->end_time,
+            ]);
+        }
+
         $roomConflict = $this->getRoomConflict($room, $normalizedStart, $normalizedEnd);
 
         if ($roomConflict) {
@@ -532,6 +546,133 @@ class MeetingController extends Controller
         }
 
         return new PostResource(true, 'Meeting booking canceled successfully', $booking);
+    }
+
+    /** ruangan yang bisa diblokir (sama dengan pilihan di form booking) */
+    private const RUANG_RAPAT = ['Growth', 'Harmoni', 'Kopiah', 'Internasional'];
+
+    /** tabel blokir (db/2026-11-20/blokir_ruang_rapat.sql) tersedia; bila belum, booking berjalan seperti biasa tanpa blokir */
+    protected function adaTabelBlokir(): bool
+    {
+        if (\Illuminate\Support\Facades\Cache::get('meeting_blokir_ada') === true) {
+            return true;
+        }
+        $ada = Schema::hasTable('meeting_blokir');
+        if ($ada) {
+            \Illuminate\Support\Facades\Cache::put('meeting_blokir_ada', true, 300);
+        }
+
+        return $ada;
+    }
+
+    /** hanya karyawan berjabatan Sekretaris Direksi yang boleh memblokir ruangan */
+    protected function adalahSekretarisDireksi(): bool
+    {
+        $me = Employe::employeId();
+
+        return $me && Structure::where('employe_id', $me)->where('position_name', 'like', 'Sekretaris Direksi%')->exists();
+    }
+
+    protected function getBlokirConflict(string $room, string $startTime, string $endTime, ?int $ignoreId = null): ?BlokirRuang
+    {
+        if (!$this->adaTabelBlokir()) {
+            return null;
+        }
+        $query = BlokirRuang::where('room', $room)->whereNull('canceled_at');
+        if (!is_null($ignoreId)) {
+            $query->where('id', '!=', $ignoreId);
+        }
+        foreach ($query->get() as $blokir) {
+            if ($this->timeRangesOverlap($startTime, $endTime, (string) $blokir->start_time, (string) $blokir->end_time)) {
+                return $blokir;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Blokir yang masih berlaku atau akan datang (untuk halaman booking rapat; TIDAK dipakai /jadwal-rapat) dan
+     * apakah pengguna ini boleh memblokir (Sekretaris Direksi).
+     */
+    public function listBlokir()
+    {
+        $boleh = $this->adalahSekretarisDireksi();
+        $data = collect();
+        if ($this->adaTabelBlokir()) {
+            $data = BlokirRuang::whereNull('canceled_at')->where('end_time', '>=', now())->orderBy('start_time')->get();
+            $nama = Employe::whereIn('employe_id', $data->pluck('created_by')->filter()->unique()->values())->pluck('first_name', 'employe_id');
+            foreach ($data as $b) {
+                $b->created_by_name = $nama->get($b->created_by);
+            }
+        }
+
+        return new PostResource(true, 'success', ['boleh_blokir' => $boleh, 'blokir' => $data->values()]);
+    }
+
+    /** Sekretaris Direksi memblokir ruangan dari jam sampai jam; ditolak bila bentrok dengan booking atau blokir lain. */
+    public function blokirRuang(Request $request)
+    {
+        if (!$this->adalahSekretarisDireksi()) {
+            return response()->json(['status' => false, 'message' => 'Hanya Sekretaris Direksi yang dapat memblokir ruang rapat.'], 403);
+        }
+        if (!$this->adaTabelBlokir()) {
+            return response()->json(['status' => false, 'message' => 'Fitur blokir belum aktif di database: jalankan db/2026-11-20/blokir_ruang_rapat.sql terlebih dulu.'], 422);
+        }
+        $request->validate([
+            'room' => 'required|string|in:' . implode(',', self::RUANG_RAPAT),
+            'start_time' => 'required',
+            'end_time' => 'required',
+            'alasan' => 'nullable|string|max:255',
+        ]);
+        $timezone = $request->input('timezone', config('app.timezone', 'Asia/Jakarta'));
+        $mulai = $this->normalizeDateTime($request->input('start_time'), $timezone);
+        $selesai = $this->normalizeDateTime($request->input('end_time'), $timezone);
+        if (empty($mulai) || empty($selesai)) {
+            return new PostResource(false, 'Format waktu mulai atau selesai tidak valid', []);
+        }
+        if (Carbon::parse($selesai)->lessThanOrEqualTo(Carbon::parse($mulai))) {
+            return new PostResource(false, 'Waktu selesai harus setelah waktu mulai', []);
+        }
+        $room = $request->input('room');
+
+        $booking = $this->getRoomConflict($room, $mulai, $selesai);
+        if ($booking) {
+            return new PostResource(false, 'Sudah ada booking "' . $booking->topic . '" pada ' . Carbon::parse($booking->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($booking->end_time)->format('d-m-Y H:i') . ' di ruangan ini. Batalkan bookingnya dulu atau pilih waktu lain.', ['conflict_booking_id' => $booking->id]);
+        }
+        $lain = $this->getBlokirConflict($room, $mulai, $selesai);
+        if ($lain) {
+            return new PostResource(false, 'Ruangan ini sudah diblokir pada ' . Carbon::parse($lain->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($lain->end_time)->format('d-m-Y H:i') . '.', ['conflict_blokir_id' => $lain->id]);
+        }
+
+        $blokir = BlokirRuang::create([
+            'room' => $room,
+            'start_time' => $mulai,
+            'end_time' => $selesai,
+            'alasan' => trim((string) $request->input('alasan')) ?: null,
+            'created_by' => Employe::employeId(),
+        ]);
+
+        return new PostResource(true, 'Ruangan ' . $room . ' diblokir.', $blokir);
+    }
+
+    /** Membatalkan blokir (Sekretaris Direksi). */
+    public function batalBlokir($id)
+    {
+        if (!$this->adalahSekretarisDireksi()) {
+            return response()->json(['status' => false, 'message' => 'Hanya Sekretaris Direksi yang dapat membatalkan blokir ruang rapat.'], 403);
+        }
+        $blokir = $this->adaTabelBlokir() ? BlokirRuang::find($id) : null;
+        if (!$blokir) {
+            return new PostResource(false, 'Blokir tidak ditemukan', []);
+        }
+        if (!is_null($blokir->canceled_at)) {
+            return new PostResource(false, 'Blokir sudah dibatalkan', []);
+        }
+        $blokir->canceled_at = now();
+        $blokir->save();
+
+        return new PostResource(true, 'Blokir dibatalkan.', $blokir);
     }
 
     protected function normalizeDateTime($value, ?string $timezone = null): ?string

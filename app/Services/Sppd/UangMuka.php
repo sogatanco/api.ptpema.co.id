@@ -17,6 +17,38 @@ class UangMuka
     /** satu termin dibayar untuk 4 hari perjalanan */
     public const HARI_TERMIN = 4;
 
+    /** hasil per ketetapan selama satu permintaan */
+    private static array $cacheTermin = [];
+
+    /**
+     * Apakah uang muka SPPD ini bertermin: pengaturan ketetapan_sppds.termin_aktif milik ketetapan SPPD-nya
+     * (Setting > Biaya & Ketetapan SPPD). Tanpa kolomnya atau tanpa data, bawaannya bertermin.
+     */
+    public static function terminAktif($t): bool
+    {
+        $idSppd = (int) ($t->id_sppd ?? 0);
+        if (!$idSppd) {
+            return true;
+        }
+        $db = \Illuminate\Support\Facades\DB::connection('mysql4');
+        $ket = $db->table('sppds')->where('id', $idSppd)->value('ketetapan');
+        if (!$ket) {
+            return true;
+        }
+        if (!array_key_exists($ket, self::$cacheTermin)) {
+            $ada = \Illuminate\Support\Facades\Cache::remember('ketetapan_has_termin_aktif', 300, fn () => \Illuminate\Support\Facades\Schema::connection('mysql4')->hasColumn('ketetapan_sppds', 'termin_aktif'));
+            self::$cacheTermin[$ket] = !$ada || (int) ($db->table('ketetapan_sppds')->where('id', $ket)->value('termin_aktif') ?? 1) === 1;
+        }
+
+        return self::$cacheTermin[$ket];
+    }
+
+    /** kosongkan cache (dipakai setelah pengaturan ketetapan diubah) */
+    public static function lupakanCacheTermin(): void
+    {
+        self::$cacheTermin = [];
+    }
+
     /**
      * @param object $t baris view hitungan_biaya (satu tujuan)
      * @return array{hari:int,malam:int,komponen:array,tiket:array,total:float,termin:array}
@@ -25,7 +57,9 @@ class UangMuka
     {
         $p = self::PERSEN;
         $hari = (int) $t->jumlah_hari;
-        $malam = max($hari - 1, 0);
+        // malam tambahan (extend yang bersambung dengan pengajuan sebelumnya) ikut biaya hotel; SPPD biasa tidak punya
+        $malamTambahan = (int) ($t->malam_tambahan ?? 0);
+        $malam = max($hari - 1, 0) + $malamTambahan;
 
         $komponen = [
             ['kode' => 'uang_makan', 'nama' => 'Uang makan', 'dasar' => (float) $t->fix_um, 'rate' => (float) $t->rate_um, 'porsi' => (float) $t->p_um, 'qty' => (float) $t->rate_hitung_hari, 'satuan' => 'hari'],
@@ -45,9 +79,17 @@ class UangMuka
         $total = round($total, 2);
 
         $tgl = fn (int $tambahHari) => date('Y-m-d', strtotime($t->waktu_berangkat . ' + ' . $tambahHari . ' days'));
-        $hr = self::HARI_TERMIN;
+        $terminAktif = self::terminAktif($t);
+        // tanpa termin: seluruh uang muka dibayar sekali (satu pembayaran, tetap dicatat sebagai pembayaran ke-1)
+        $hr = $terminAktif ? self::HARI_TERMIN : PHP_INT_MAX;
         if ($hari <= $hr) {
-            $termin = [['id' => 0, 'no' => 1, 'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat)), 'jumlah' => $total, 'keterangan' => 'Hari 1' . ($hari > 1 ? '-' . $hari : '')]];
+            $termin = [[
+                'id' => 0, 'no' => 1, 'tgl_bayar' => date('Y-m-d', strtotime($t->waktu_berangkat)), 'jumlah' => $total, 'keterangan' => 'Hari 1' . ($hari > 1 ? '-' . $hari : ''),
+                // rincian untuk dokumen keuangan (tabel standar biaya) per termin
+                'mulai' => date('Y-m-d', strtotime($t->waktu_berangkat)), 'selesai' => date('Y-m-d', strtotime($t->waktu_kembali)), 'malam' => $malam,
+                'mulai_hotel' => date('Y-m-d', strtotime($t->waktu_berangkat) - $malamTambahan * 86400),
+                'komponen' => array_map(fn ($k) => ['kode' => $k['kode'], 'nama' => $k['nama'], 'rate' => $k['rate'], 'qty' => $k['qty'], 'satuan' => $k['satuan'], 'porsi' => $k['porsi'], 'persen' => $k['persen'], 'jumlah' => $k['jumlah']], $komponen),
+            ]];
         } else {
             $termin = [];
             $jumlahTermin = (int) ceil($hari / $hr);
@@ -60,7 +102,9 @@ class UangMuka
                 for ($d = $awal; $d <= $akhir; $d++) {
                     $bobot += $d === 1 ? (float) $t->rate_wb : ($d === $hari ? (float) $t->rate_wt : 1.0);
                 }
-                $malamTermin = $akhir - $awal + 1 - ($akhir === $hari ? 1 : 0);
+                // hotel per termin: malam sebelum tiap hari termin kecuali hari pertama perjalanan (tidak ada malam sebelumnya),
+                // jadi termin 4 hari = 3 malam (termin pertama) dan jumlah malam seluruh termin = hari - 1; uang makan/transport tetap dihitung per hari
+                $malamTermin = $akhir - $awal + 1 - ($awal === 1 ? 1 : 0) + ($k === 0 ? $malamTambahan : 0);
                 if ($k === $jumlahTermin - 1) {
                     $jumlah = round($total - $terbayar, 2); // sisa, agar jumlah semua termin sama dengan total
                 } else {
@@ -74,7 +118,28 @@ class UangMuka
                     );
                 }
                 $terbayar += $jumlah;
-                $termin[] = ['id' => $k, 'no' => $k + 1, 'tgl_bayar' => $tgl($k * $hr), 'jumlah' => $jumlah, 'keterangan' => 'Hari ' . $awal . ($akhir > $awal ? '-' . $akhir : '')];
+                // rincian komponen termin ini: hari berbobot (uang makan/saku/transport), malam (hotel), BBM hanya di termin pertama
+                $baris = [
+                    ['kode' => 'uang_makan', 'nama' => 'Uang makan', 'rate' => (float) $t->rate_um, 'qty' => $bobot, 'satuan' => 'hari', 'porsi' => (float) $t->p_um, 'persen' => $p['uang_makan']],
+                    ['kode' => 'uang_saku', 'nama' => 'Uang saku', 'rate' => (float) $t->rate_us, 'qty' => $bobot, 'satuan' => 'hari', 'porsi' => (float) $t->p_us, 'persen' => $p['uang_saku']],
+                    ['kode' => 'transport_lokal', 'nama' => 'Transportasi lokal', 'rate' => (float) $t->rate_tr, 'qty' => $bobot, 'satuan' => 'hari', 'porsi' => (float) $t->p_tl, 'persen' => $p['transport_lokal']],
+                    ['kode' => 'hotel', 'nama' => 'Hotel', 'rate' => (float) $t->rate_hotel, 'qty' => (float) $malamTermin, 'satuan' => 'malam', 'porsi' => (float) $t->p_hotel, 'persen' => $p['hotel']],
+                ];
+                if ($k === 0) {
+                    $baris[] = ['kode' => 'bbm', 'nama' => 'BBM', 'rate' => null, 'qty' => 1.0, 'satuan' => 'paket', 'porsi' => 100.0, 'persen' => $p['bbm'], 'dasar' => (float) $t->bbm];
+                }
+                foreach ($baris as &$r) {
+                    $dasar = $r['dasar'] ?? ($r['rate'] * $r['qty'] * $r['porsi'] / 100);
+                    $r['jumlah'] = round($dasar * $r['persen'] / 100, 2);
+                    unset($r['dasar']);
+                }
+                unset($r);
+                $termin[] = [
+                    'id' => $k, 'no' => $k + 1, 'tgl_bayar' => $tgl($k * $hr), 'jumlah' => $jumlah, 'keterangan' => 'Hari ' . $awal . ($akhir > $awal ? '-' . $akhir : ''),
+                    'mulai' => $tgl($awal - 1), 'selesai' => $tgl($akhir - 1), 'malam' => $malamTermin, 'komponen' => $baris,
+                    // malam pertama hotel termin ini: malam hari sebelum termin (termin 1: malam hari pertama, dimajukan bila ada malam penyambung)
+                    'mulai_hotel' => $k === 0 ? date('Y-m-d', strtotime($t->waktu_berangkat) - $malamTambahan * 86400) : $tgl($awal - 2),
+                ];
             }
         }
 
@@ -98,6 +163,7 @@ class UangMuka
             'komponen' => $komponen,
             'tiket' => ['jumlah' => round($tiket, 2), 'ada' => $tiket > 0],
             'total' => $total,
+            'termin_aktif' => $terminAktif,
             'termin' => $termin,
         ];
     }

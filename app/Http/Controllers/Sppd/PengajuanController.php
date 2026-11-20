@@ -186,10 +186,14 @@ class PengajuanController extends Controller
             $tglUm = $um->isEmpty() ? collect() : Proses::whereIn('id_sppd', $um->pluck('id'))->where('as', 'uangmuka')->orderBy('id')->pluck('created_at', 'id_sppd');
             $tglRl = $rl->isEmpty() ? collect() : Proses::whereIn('id_sppd', $rl->pluck('id'))->where('as', 'realisasi')->orderBy('id')->pluck('created_at', 'id_sppd');
             $data = collect();
+            $aktualUm = ($um->isEmpty() || !$this->adaKolomAktual()) ? collect() : ProsesTermin::whereIn('id_sppd', $um->pluck('id'))->where('ditunda_aktual', 1)->orderBy('termin')->get()->groupBy('id_sppd');
             foreach ($um as $d) {
                 $d->type_proses = 'uangmuka';
                 $d->id_unique = $d->id . '-um';
                 $d->tgl_proses = (string) ($tglUm->get($d->id) ?? '');
+                $d->uangmuka_aktual = $aktualUm->has($d->id);
+                $d->termin_aktual = $aktualUm->has($d->id) ? $aktualUm->get($d->id)->pluck('termin')->unique()->values()->all() : [];
+                $d->catatan_aktual = $aktualUm->has($d->id) ? ($aktualUm->get($d->id)->pluck('catatan')->filter()->unique()->implode('; ') ?: null) : null;
                 $data->push($d);
             }
             foreach ($rl as $d) {
@@ -560,7 +564,9 @@ class PengajuanController extends Controller
             foreach ($rincian['termin'] as &$tm) {
                 $tm['id_tujuan'] = (int) $t->id;
                 $b = $buktiTermin->get($t->id . ':' . $tm['no']);
-                $tm['bukti'] = $b ? ['file' => $b->file, 'tgl_upload' => (string) $b->created_at, 'oleh' => Employe::where('employe_id', $b->diproses_oleh)->value('first_name')] : null;
+                $aktual = $b && (int) ($b->ditunda_aktual ?? 0) === 1;
+                $tm['bukti'] = $b && !$aktual ? ['file' => $b->file, 'tgl_upload' => (string) $b->created_at, 'oleh' => Employe::where('employe_id', $b->diproses_oleh)->value('first_name')] : null;
+                $tm['aktual'] = $aktual ? ['catatan' => $b->catatan, 'tgl' => (string) $b->created_at, 'oleh' => Employe::where('employe_id', $b->diproses_oleh)->value('first_name')] : null;
             }
             unset($tm);
             $t->rincian_uang_muka = $rincian;
@@ -627,6 +633,7 @@ class PengajuanController extends Controller
         // extend yang sudah disetujui: tiket dan uang muka (termin + bukti) terpisah dari tujuan SPPD awal
         $data['ekstend_items'] = EkstendProses::disetujui((int) $id)->map(fn ($e) => [
             'id' => (int) $e->id,
+            'no_urut' => $e->no_urut ? (int) $e->no_urut : null,
             'tipe' => $e->tipe,
             'judul' => EkstendProses::judul($e),
             'nama_tujuan' => $e->tipe === 'tujuan_baru' ? $e->detail_tujuan : TujuanSppd::where('id', $e->id_tujuan)->value('detail_tujuan'),
@@ -1523,7 +1530,7 @@ class PengajuanController extends Controller
                 return response()->json(['message' => 'Termin tidak ditemukan pada extend yang menunggu uang muka'], 422);
             }
             if ($sudah->has($kunci) || isset($pilih[$kunci])) {
-                return response()->json(['message' => 'Bukti transfer termin ' . $jadwal[$kunci]['no'] . ' sudah ada'], 409);
+                return response()->json(['message' => (($sudah->get($kunci)->ditunda_aktual ?? 0) ? 'Termin ' . $jadwal[$kunci]['no'] . ' sudah ditandai dibayar di aktual' : 'Bukti transfer termin ' . $jadwal[$kunci]['no'] . ' sudah ada')], 409);
             }
             try {
                 $pilih[$kunci] = $this->bacaBukti((string) $b['file']);
@@ -1648,7 +1655,7 @@ class PengajuanController extends Controller
                 return response()->json(['message' => 'Termin tidak ditemukan pada perhitungan uang muka SPPD ini'], 422);
             }
             if ($sudah->has($kunci) || isset($pilih[$kunci])) {
-                return response()->json(['message' => 'Bukti transfer termin ' . $jadwal[$kunci]['no'] . ' sudah ada'], 409);
+                return response()->json(['message' => (($sudah->get($kunci)->ditunda_aktual ?? 0) ? 'Termin ' . $jadwal[$kunci]['no'] . ' sudah ditandai dibayar di aktual' : 'Bukti transfer termin ' . $jadwal[$kunci]['no'] . ' sudah ada')], 409);
             }
             try {
                 $pilih[$kunci] = $this->bacaBukti((string) $b['file']);
@@ -1698,6 +1705,149 @@ class PengajuanController extends Controller
             $p->save();
         }
         $this->laporBuktiTermin($idSppd, array_map(fn ($k) => $jadwal[$k], array_keys($pilih)), count($jadwal), $namaTujuan, $selesai);
+
+        return new PostResource(true, 'success', ['selesai' => $selesai]);
+    }
+
+    /** kolom proses_termin.ditunda_aktual (db/2026-11-20/uangmuka_dibayar_aktual.sql) tersedia */
+    private function adaKolomAktual(): bool
+    {
+        if (\Illuminate\Support\Facades\Cache::get('proses_termin_has_ditunda_aktual') === true) {
+            return true;
+        }
+        $ada = $this->adaTabelTermin() && Schema::connection('mysql4')->hasColumn('proses_termin', 'ditunda_aktual');
+        if ($ada) {
+            \Illuminate\Support\Facades\Cache::put('proses_termin_has_ditunda_aktual', true, 300);
+        }
+
+        return $ada;
+    }
+
+    /**
+     * KeuanganSppd menandai SATU ATAU BEBERAPA TERMIN uang muka tidak dibayarkan di muka (mis. SPPD mendadak): termin itu dicatat tanpa bukti
+     * transfer dan dibayarkan saat realisasi (aktual). Termin lain tetap bisa dibayar dan dibuktikan seperti biasa; uang muka selesai bila
+     * seluruh termin sudah berbukti atau ditandai. termin[]: {id_tujuan, termin} (SPPD awal) atau {id_ekstend, termin} (ekstend = true).
+     */
+    function terminDiAktual(Request $request)
+    {
+        $request->validate([
+            'id_sppd' => 'required|integer',
+            'termin' => 'required|array|min:1',
+            'termin.*.termin' => 'required|integer|min:1',
+            'termin.*.id_tujuan' => 'nullable|integer',
+            'termin.*.id_ekstend' => 'nullable|integer',
+            'alasan' => 'nullable|string|max:255',
+        ]);
+        if (!$this->adaKolomAktual()) {
+            return response()->json(['message' => 'Fitur ini belum aktif di database: jalankan db/2026-11-20/uangmuka_dibayar_aktual.sql terlebih dulu.'], 422);
+        }
+        $idSppd = (int) $request->id_sppd;
+        $baris = ListSppdRingan::find($idSppd);
+        if (!$baris || $baris->current_status !== 'signed') {
+            return response()->json(['message' => 'SPPD tidak ditemukan atau belum disetujui'], 422);
+        }
+        if (array_key_exists($idSppd, SppdVoid::peta())) {
+            return response()->json(['message' => 'SPPD ini sudah di-void'], 422);
+        }
+        $ekstend = $request->boolean('ekstend');
+        $alasan = trim((string) $request->alasan);
+        $me = Employe::employeId();
+
+        // jadwal termin (kunci "<tujuan|extend>:<no>") dan termin yang sudah punya bukti / penanda
+        $jadwal = [];
+        $rincian = [];
+        $namaTujuan = [];
+        if ($ekstend) {
+            if (!EkstendProses::aktif()) {
+                return response()->json(['message' => 'Tabel extend belum dibuat (jalankan db/2026-11-18/ekstend_proses.sql)'], 422);
+            }
+            $items = EkstendProses::disetujui($idSppd)->where('uangmuka', 0)->keyBy('id');
+            foreach ($items as $e) {
+                $r = EkstendProses::rincian($e);
+                $rincian[$e->id] = $r;
+                $namaTujuan[$e->id] = EkstendProses::judul($e);
+                foreach ($r['termin'] ?? [] as $x) {
+                    $jadwal[$e->id . ':' . $x['no']] = ['id_ekstend' => (int) $e->id, 'id_tujuan' => (int) $e->id_tujuan, 'no' => (int) $x['no'], 'tgl' => $x['tgl_bayar'], 'jumlah' => (float) $x['jumlah']];
+                }
+            }
+            $sudah = ProsesTermin::withoutGlobalScopes()->where('id_ekstend', '<>', 0)->where('id_sppd', $idSppd)->get()->keyBy(fn ($r) => $r->id_ekstend . ':' . $r->termin);
+        } else {
+            if ((int) $baris->uangmuka === 1) {
+                return response()->json(['message' => 'Uang muka SPPD ini sudah selesai diproses'], 409);
+            }
+            foreach (HitunganBiaya::where('id_sppd', $idSppd)->get() as $t) {
+                $namaTujuan[$t->id] = $t->detail_tujuan;
+                foreach (UangMuka::rincian($t)['termin'] as $x) {
+                    $jadwal[$t->id . ':' . $x['no']] = ['id_ekstend' => 0, 'id_tujuan' => (int) $t->id, 'no' => (int) $x['no'], 'tgl' => $x['tgl_bayar'], 'jumlah' => (float) $x['jumlah']];
+                }
+            }
+            $sudah = ProsesTermin::where('id_sppd', $idSppd)->get()->keyBy(fn ($r) => $r->id_tujuan . ':' . $r->termin);
+        }
+
+        $pilih = [];
+        foreach ($request->termin as $x) {
+            $kunci = ($ekstend ? (int) ($x['id_ekstend'] ?? 0) : (int) ($x['id_tujuan'] ?? 0)) . ':' . (int) $x['termin'];
+            if (!isset($jadwal[$kunci])) {
+                return response()->json(['message' => 'Termin tidak ditemukan pada perhitungan uang muka SPPD ini'], 422);
+            }
+            if ($sudah->has($kunci) || isset($pilih[$kunci])) {
+                return response()->json(['message' => 'Termin ' . $jadwal[$kunci]['no'] . ' sudah punya bukti transfer atau sudah ditandai'], 409);
+            }
+            $pilih[$kunci] = $jadwal[$kunci];
+        }
+
+        DB::connection('mysql4')->transaction(function () use ($pilih, $idSppd, $me, $alasan) {
+            foreach ($pilih as $j) {
+                $row = new ProsesTermin();
+                $row->id_sppd = $idSppd;
+                $row->id_tujuan = $j['id_tujuan'];
+                $row->id_ekstend = $j['id_ekstend'];
+                $row->termin = $j['no'];
+                $row->tgl_bayar = $j['tgl'];
+                $row->jumlah = $j['jumlah'];
+                $row->file = ''; // tanpa bukti transfer: dibayar saat realisasi (aktual)
+                $row->ditunda_aktual = 1;
+                $row->catatan = $alasan !== '' ? $alasan : null;
+                $row->diproses_oleh = $me;
+                $row->save();
+            }
+        });
+
+        // uang muka selesai bila seluruh termin berbukti atau ditandai
+        $banyakTujuan = count($namaTujuan) > 1;
+        $daftar = collect($pilih)->map(fn ($j) => 'termin ' . $j['no'] . ($banyakTujuan ? ' ' . ($namaTujuan[$ekstend ? $j['id_ekstend'] : $j['id_tujuan']] ?? '') : '') . ' ' . $this->rp($j['jumlah']))->implode('; ');
+        if ($ekstend) {
+            $selesaiIds = [];
+            foreach ($rincian as $idEk => $r) {
+                if (ProsesTermin::withoutGlobalScopes()->where('id_ekstend', $idEk)->count() >= count($r['termin'] ?? [])) {
+                    $selesaiIds[] = $idEk;
+                }
+            }
+            if ($selesaiIds) {
+                Ekstend::whereIn('id', $selesaiIds)->update(['uangmuka' => 1]);
+            }
+            $selesai = EkstendProses::disetujui($idSppd)->where('uangmuka', 0)->isEmpty();
+            $this->catatLogSppd($idSppd, [$this->potongLog('Uang muka extend tidak dibayarkan di muka (dibayar saat realisasi/aktual) oleh KeuanganSppd: ' . $daftar . ($alasan !== '' ? '. Alasan: ' . $alasan : '') . ($selesai ? '; uang muka extend selesai diproses' : ''))]);
+        } else {
+            $selesai = ProsesTermin::where('id_sppd', $idSppd)->count() >= count($jadwal);
+            if ($selesai && !Proses::where('id_sppd', $idSppd)->where('as', 'uangmuka')->exists()) {
+                $p = new Proses();
+                $p->id_sppd = $idSppd;
+                $p->process_by = $me;
+                $p->as = 'uangmuka'; // trigger log menulis satu baris, diganti di bawah dengan rincian
+                $p->save();
+            }
+            $baris = 'Uang muka tidak dibayarkan di muka (dibayar saat realisasi/aktual) oleh KeuanganSppd: ' . $daftar . ($alasan !== '' ? '. Alasan: ' . $alasan : '');
+            if ($selesai) {
+                $this->gantiAtauCatatLog($idSppd, 'Uang muka SPPD sudah di proses oleh bagian keuangan', $this->potongLog($baris . '; uang muka selesai diproses'));
+            } else {
+                $this->catatLogSppd($idSppd, [$this->potongLog($baris)]);
+            }
+        }
+        $sppd = Sppd::find($idSppd);
+        if ($sppd) {
+            Peristiwa::sppdUangMukaAktual($sppd, $daftar, $alasan, $me, $ekstend);
+        }
 
         return new PostResource(true, 'success', ['selesai' => $selesai]);
     }
@@ -1803,6 +1953,62 @@ class PengajuanController extends Controller
         }
 
         return (int) $q->get(['start', 'end'])->sum(fn ($e) => max(0, (int) floor((strtotime((string) $e->end) - strtotime((string) $e->start)) / 86400) + 1));
+    }
+
+    /**
+     * Data untuk dokumen keuangan lembar proses (voucher pengeluaran kas dan tabel standar biaya): rekening pelaksana serta
+     * nama penandatangan dari sistem (pencetak = pengguna yang mengunduh, Manajer Keuangan, Direktur Umum dan Keuangan).
+     * Tanda tangan sendiri dikosongkan (ditandatangani basah setelah dicetak).
+     */
+    function dataDokumenKeuangan($id)
+    {
+        $sppd = Sppd::find($id);
+        if (!$sppd) {
+            return response()->json(['success' => false, 'message' => 'SPPD tidak ditemukan.'], 404);
+        }
+        $db = DB::connection('mysql4');
+        $orang = function (?string $employeId) use ($db) {
+            if (!$employeId) {
+                return null;
+            }
+            $r = $db->table('ptpemaco_apam.struktur_lengkap_oke')->where('employe_id', $employeId)->first(['employe_id', 'position_name']);
+            $nama = Employe::where('employe_id', $employeId)->value('first_name');
+
+            return $nama ? ['employe_id' => $employeId, 'nama' => trim($nama), 'jabatan' => $r->position_name ?? null] : null;
+        };
+        $pemegang = function (array $namaJabatan, ?int $posisiId = null) use ($db, $orang) {
+            $q = $db->table('ptpemaco_apam.struktur_lengkap_oke')->whereNotNull('employe_id');
+            $q->where(function ($w) use ($namaJabatan, $posisiId) {
+                foreach ($namaJabatan as $n) {
+                    $w->orWhereRaw('TRIM(position_name) = ?', [$n]);
+                }
+                if ($posisiId) {
+                    $w->orWhere('position_id', $posisiId);
+                }
+            });
+
+            return $orang($q->value('employe_id'));
+        };
+
+        $bank = $db->table('ptpemaco_hr_production.employee_bank_account')->where('employe_id', $sppd->employe_id)
+            ->orderByDesc('active')->orderByDesc('id')->first(['nama_bank', 'nomor_rekening', 'nama_akun_bank']);
+
+        return new PostResource(true, 'success', [
+            'pelaksana' => ['nama' => $sppd->nama, 'employe_id' => $sppd->employe_id, 'bank' => $bank ? [
+                'nama_bank' => trim((string) $bank->nama_bank),
+                'nomor_rekening' => trim((string) $bank->nomor_rekening),
+                'nama_akun_bank' => trim((string) $bank->nama_akun_bank),
+            ] : null],
+            'pencetak' => $orang(Employe::employeId()),
+            // pilihan Petugas Transaksi di voucher: seluruh staf dan supervisor keuangan yang aktif
+            'petugas' => $db->table('ptpemaco_apam.struktur_lengkap_oke as s')->join('ptpemaco_apam.employees as e', 'e.employe_id', '=', 's.employe_id')
+                ->where(fn ($w) => $w->where('s.position_name', 'like', 'Staf Keuangan%')->orWhere('s.position_name', 'like', 'Supervisor Keuangan%'))
+                ->orderBy('s.position_name')->orderBy('e.first_name')
+                ->get(['s.employe_id', 'e.first_name', 's.position_name'])
+                ->map(fn ($r) => ['employe_id' => $r->employe_id, 'nama' => trim($r->first_name), 'jabatan' => $r->position_name])->values(),
+            'manajer_keuangan' => $pemegang(['Manajer Keuangan']),
+            'dir_keuangan' => $pemegang(['Direktur Umum dan Keuangan'], 6),
+        ]);
     }
 
     /** batas tanggal akhir extend: hari terakhir SPPD (tanggal kembali terakhir seluruh tujuan awal) + maks_hari_extend hari; null bila SPPD tak punya tujuan */

@@ -111,6 +111,8 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/pengajuan/done', 'done')->middleware("role:Employee");
      Route::post('sppd/pengajuan/umum/ubah', 'ubahUmum')->middleware("role:UmumSppd");
      Route::post('sppd/pengajuan/termin/bukti', 'uploadBuktiTermin')->middleware("role:KeuanganSppd");
+     Route::get('sppd/pengajuan/{id}/dokumen-keuangan', 'dataDokumenKeuangan')->middleware("role:KeuanganSppd");
+     Route::post('sppd/pengajuan/termin/aktual', 'terminDiAktual')->middleware("role:KeuanganSppd");
      Route::post('sppd/pengajuan/{id}/void', 'void')->middleware("role:Employee");
      Route::get('sppd/listsharing', 'getNomorSppd')->middleware("role:Employee");
      Route::get('sppd/dashboard', 'dataDashboard')->middleware("role:Employee");
@@ -283,6 +285,10 @@ Route::controller(MeetingController::class)->group(function () {
     Route::post('meeting/room/book', 'bookMeetingRoom')->middleware("role:Employee");
     Route::get('meeting/room/list', 'listMeetingBookings');
     Route::post('meeting/room/cancel/{id}', 'cancelMeetingBooking')->middleware("role:Employee");
+    // blokir ruang rapat: hanya Sekretaris Direksi (dicek di controller); tidak tampil di daftar publik /jadwal-rapat
+    Route::get('meeting/room/blokir', 'listBlokir')->middleware("role:Employee");
+    Route::post('meeting/room/blokir', 'blokirRuang')->middleware("role:Employee");
+    Route::post('meeting/room/blokir/{id}/batal', 'batalBlokir')->middleware("role:Employee");
 });
 
 Route::get('send-message/first', [SendMessageController::class, 'getFirst']);

@@ -64,7 +64,9 @@ class IngatkanTerminSppdCommand extends Command
             $buktiAda = $ada ? ProsesTermin::where('id_sppd', $r->id)->get()->keyBy(fn ($x) => $x->id_tujuan . ':' . $x->termin) : collect();
 
             foreach (HitunganBiaya::where('id_sppd', $r->id)->get() as $t) {
-                foreach (UangMuka::rincian($t)['termin'] as $x) {
+                $rincianUm = UangMuka::rincian($t);
+                $bertermin = !empty($rincianUm['termin_aktif']);
+                foreach ($rincianUm['termin'] as $x) {
                     if ($x['tgl_bayar'] !== $tgl || $buktiAda->has($t->id . ':' . $x['no'])) {
                         continue;
                     }
@@ -77,8 +79,8 @@ class IngatkanTerminSppdCommand extends Command
                     Hub::kirim($keuangan, null, [
                         'modul' => 'sppd',
                         'event' => 'sppd.pengingat_termin',
-                        'judul' => "Besok jatuh tempo termin {$x['no']} uang muka SPPD {$r->nomor_sppd}",
-                        'isi' => "Termin {$x['no']} uang muka SPPD {$r->nomor_sppd} a.n. {$r->nama} ({$t->detail_tujuan}) sebesar {$rp} jatuh tempo besok, {$tglIndo} ({$x['keterangan']}). "
+                        'judul' => $bertermin ? "Besok jatuh tempo termin {$x['no']} uang muka SPPD {$r->nomor_sppd}" : "Besok jatuh tempo uang muka SPPD {$r->nomor_sppd}",
+                        'isi' => ($bertermin ? "Termin {$x['no']} uang muka" : 'Uang muka') . " SPPD {$r->nomor_sppd} a.n. {$r->nama} ({$t->detail_tujuan}) sebesar {$rp} jatuh tempo besok, {$tglIndo}" . ($bertermin ? " ({$x['keterangan']})" : '') . '. '
                             . 'Mohon proses transfer dan upload bukti transfer hari ini.',
                         // tab PERLU DIPROSES (#4) dan membuka SPPD-nya
                         'url' => 'sppd?dok=' . rawurlencode((string) $sppd->nomor_dokumen) . '&aksi=proses#4',

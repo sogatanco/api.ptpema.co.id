@@ -88,6 +88,33 @@ class EkstendProses
         return ($e->tipe === 'tujuan_baru' ? 'Tujuan baru: ' : 'Tambah hari: ') . $nama . ' (' . $tgl($e->start) . ' - ' . $tgl($e->end) . ')';
     }
 
+    /**
+     * 1 bila extend ini bersambung dengan pengajuan sebelumnya (SPPD atau extend aktif lain yang berakhir tepat sehari sebelum tanggal mulai).
+     * Malam di antara keduanya (malam hari terakhir pengajuan sebelumnya) menjadi biaya hotel extend ini, karena hotel pengajuan sebelumnya
+     * hanya mencakup malam di dalam rentang tanggalnya sendiri.
+     */
+    public static function malamPenyambung(Ekstend $e, int $idSppd): int
+    {
+        $mulai = date('Y-m-d', strtotime((string) $e->start));
+        $sehariSebelum = date('Y-m-d', strtotime($mulai) - 86400);
+        $db = DB::connection('mysql4');
+        // tanggal akhir pengajuan sebelumnya: tanggal kembali tujuan SPPD dan akhir extend aktif lain (bukan yang dibatalkan/ditolak)
+        $akhir = [];
+        foreach ($db->table('tujuan_sppds')->where('id_sppd', $idSppd)->pluck('waktu_kembali') as $w) {
+            $akhir[] = date('Y-m-d', strtotime((string) $w));
+        }
+        $lain = Ekstend::where('butuh_proses', 1)->where('id', '<>', $e->id)
+            ->whereIn('id_tujuan', $db->table('tujuan_sppds')->where('id_sppd', $idSppd)->pluck('id'));
+        if (self::adaNoUrut()) {
+            $lain->whereNull('dibatalkan_at');
+        }
+        foreach ($lain->pluck('end') as $w) {
+            $akhir[] = date('Y-m-d', strtotime((string) $w));
+        }
+
+        return in_array($sehariSebelum, $akhir, true) ? 1 : 0;
+    }
+
     /** baris biaya sintetis (bentuk sama dengan satu baris view hitungan_biaya) untuk sebuah extend */
     public static function baris(Ekstend $e): ?object
     {
@@ -111,6 +138,7 @@ class EkstendProses
         $rateWt = $waktu('23:59:00', 'rate_pulang');
 
         $selisih = (int) floor((strtotime(substr($kembali, 0, 10)) - strtotime(substr($berangkat, 0, 10))) / 86400);
+        $malamTambahan = self::malamPenyambung($e, (int) $acuan->id_sppd);
         $hariHitung = $selisih - 1 + (float) $rateWb + (float) $rateWt;
         $p = fn ($v) => $v === null ? 100.0 : (float) $v;
         $share = $acuan->share_with;
@@ -139,7 +167,8 @@ class EkstendProses
         $t->fix_tl = $rate('tr') === null ? null : $rate('tr') * $hariHitung * $p($acuan->p_tl) / 100;
         $t->fix_us = $rate('us') === null ? null : $rate('us') * $hariHitung * $p($acuan->p_us) / 100;
         $t->fix_tiket = 0;
-        $t->fix_hotel = $share === null && $mb ? $mb->hotel * $selisih * $p($acuan->p_hotel) / 100 : 0;
+        $t->malam_tambahan = $malamTambahan; // malam penyambung dengan pengajuan sebelumnya ikut biaya hotel extend ini
+        $t->fix_hotel = $share === null && $mb ? $mb->hotel * ($selisih + $malamTambahan) * $p($acuan->p_hotel) / 100 : 0;
         $t->bbm = self::adaBbm() ? (float) ($e->bbm ?? 0) : 0;
         $t->total_biaya = round((float) $t->fix_um + (float) $t->fix_tl + (float) $t->fix_us + (float) $t->fix_hotel + (float) $t->bbm, 2);
 
@@ -164,7 +193,9 @@ class EkstendProses
             $tm['id_tujuan'] = (int) $e->id_tujuan;
             $tm['id_ekstend'] = (int) $e->id;
             $b = $bukti->get($tm['no']);
-            $tm['bukti'] = $b ? ['file' => $b->file, 'tgl_upload' => (string) $b->created_at, 'oleh' => \App\Models\Employe::where('employe_id', $b->diproses_oleh)->value('first_name')] : null;
+            $aktual = $b && (int) ($b->ditunda_aktual ?? 0) === 1;
+            $tm['bukti'] = $b && !$aktual ? ['file' => $b->file, 'tgl_upload' => (string) $b->created_at, 'oleh' => \App\Models\Employe::where('employe_id', $b->diproses_oleh)->value('first_name')] : null;
+            $tm['aktual'] = $aktual ? ['catatan' => $b->catatan, 'tgl' => (string) $b->created_at, 'oleh' => \App\Models\Employe::where('employe_id', $b->diproses_oleh)->value('first_name')] : null;
         }
         unset($tm);
         $r['total_biaya'] = (float) $t->total_biaya;
