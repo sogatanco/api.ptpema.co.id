@@ -2019,6 +2019,34 @@ class PengajuanController extends Controller
         return $akhir ? date('Y-m-d', strtotime(date('Y-m-d', strtotime((string) $akhir)) . ' +' . (int) config('sppd.maks_hari_extend', 5) . ' days')) : null;
     }
 
+    /**
+     * Rentang tanggal yang boleh dipilih untuk klaim Hotel 30% pada satu tujuan: dari tanggal berangkat tujuan sampai tanggal kembali,
+     * diperpanjang sampai akhir extend yang SUDAH DISETUJUI (extend belum disetujui, ditolak, atau dibatalkan tidak dihitung).
+     * @return array{mulai:string,akhir:string,ekstend_akhir:?string}
+     */
+    private function jendelaHotel30(TujuanSppd $t, ?string $akhirEkstendDisetujui = null): array
+    {
+        $mulai = date('Y-m-d', strtotime((string) $t->waktu_berangkat));
+        $akhirSppd = date('Y-m-d', strtotime((string) $t->waktu_kembali));
+        $akhirEks = $akhirEkstendDisetujui ? date('Y-m-d', strtotime($akhirEkstendDisetujui)) : null;
+
+        return ['mulai' => $mulai, 'akhir' => $akhirEks && $akhirEks > $akhirSppd ? $akhirEks : $akhirSppd, 'ekstend_akhir' => $akhirEks];
+    }
+
+    /** akhir extend disetujui (aktif) per tujuan, untuk jendela Hotel 30% */
+    private function akhirEkstendDisetujuiPerTujuan(array $idTujuan)
+    {
+        if (!$idTujuan || !EkstendProses::aktif()) {
+            return collect();
+        }
+        $q = Ekstend::whereIn('id_tujuan', $idTujuan)->whereNotNull('disetujui_at')->where('butuh_proses', 1);
+        if (EkstendProses::adaNoUrut()) {
+            $q->whereNull('dibatalkan_at');
+        }
+
+        return $q->selectRaw('id_tujuan, max(`end`) as akhir')->groupBy('id_tujuan')->pluck('akhir', 'id_tujuan');
+    }
+
     function getTujuanById($id)
     {
         $data = TujuanSppd::where('id_sppd', $id)->get();
@@ -2053,7 +2081,13 @@ class PengajuanController extends Controller
                     'status' => $e->disetujui_at ? 'disetujui' : ((int) $e->butuh_proses === 1 ? 'menunggu' : 'lama'),
                 ])->values();
         }
+        $akhirEksPerTujuan = $this->akhirEkstendDisetujuiPerTujuan($data->pluck('id')->all());
         foreach ($data as $t) {
+            // rentang tanggal Hotel 30%: tanggal tujuan sampai akhir extend yang sudah disetujui
+            $j = $this->jendelaHotel30($t, $akhirEksPerTujuan->get($t->id));
+            $t->hotel30_mulai = $j['mulai'];
+            $t->hotel30_akhir = $j['akhir'];
+            $t->hotel30_ekstend_akhir = $j['ekstend_akhir'];
             $t->ekstend_terajukan = $terajukan;
             $t->ekstend_hari_maks = $maksHari;
             $t->ekstend_hari_terpakai = $hariTerpakai;
@@ -2365,6 +2399,47 @@ class PengajuanController extends Controller
 
     function tgaPlhPersen(Request $request)
     {
+        // Hotel 30% hanya setelah SPPD disetujui, dengan tanggal di dalam rentang tujuan + extend yang sudah disetujui
+        $request->validate([
+            'id_tujuan' => 'required|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+        $tujuanHotel = TujuanSppd::find((int) $request->id_tujuan);
+        if (!$tujuanHotel) {
+            return response()->json(['success' => false, 'message' => 'Tujuan tidak ditemukan.'], 422);
+        }
+        $barisHotel = ListSppdRingan::find((int) $tujuanHotel->id_sppd);
+        if (!$barisHotel || $barisHotel->current_status !== 'signed') {
+            return response()->json(['success' => false, 'message' => 'Hotel 30% hanya bisa diajukan setelah SPPD disetujui.'], 422);
+        }
+        if (array_key_exists((int) $tujuanHotel->id_sppd, SppdVoid::peta())) {
+            return response()->json(['success' => false, 'message' => 'SPPD ini sudah di-void.'], 422);
+        }
+        $j = $this->jendelaHotel30($tujuanHotel, $this->akhirEkstendDisetujuiPerTujuan([(int) $tujuanHotel->id])->get($tujuanHotel->id));
+        $dari = date('Y-m-d', strtotime((string) $request->start_date));
+        $hingga = date('Y-m-d', strtotime((string) $request->end_date));
+        if ($dari < $j['mulai'] || $hingga > $j['akhir']) {
+            $ket = 'SPPD ' . date('d-m-Y', strtotime($j['mulai'])) . ' s.d. ' . date('d-m-Y', strtotime((string) $tujuanHotel->waktu_kembali))
+                . ($j['ekstend_akhir'] ? ', extend disetujui sampai ' . date('d-m-Y', strtotime($j['ekstend_akhir'])) : '');
+
+            return response()->json(['success' => false, 'message' => 'Tanggal Hotel 30% harus dalam ' . date('d-m-Y', strtotime($j['mulai'])) . ' s.d. ' . date('d-m-Y', strtotime($j['akhir'])) . " ({$ket})."], 422);
+        }
+
+
+        // Hotel 30% hanya diajukan sekali per tujuan; pengajuan berikutnya hanya mengubah tanggal pengajuan sebelumnya
+        $sudahAda = TigaPuluh::where('id_tujuan', (int) $request->id_tujuan)->orderBy('id')->first();
+        if ($sudahAda) {
+            $dipakai = DB::connection('esign')->table('hotel30_tokens')->where('id_tujuan', (int) $request->id_tujuan)->whereNotNull('dipakai_at')->exists();
+            if ($dipakai) {
+                return response()->json(['success' => false, 'message' => 'Pengajuan Hotel 30% ini sudah dijawab pelaksana sehingga tidak bisa diubah.'], 422);
+            }
+            $sudahAda->mulai = $request->start_date;
+            $sudahAda->selesai = $request->end_date;
+            $sudahAda->save();
+
+            return new PostResource(true, 'Pengajuan Hotel 30% sebelumnya berhasil diubah.', []);
+        }
 
         // pelaksana bukan karyawan (employe_id '-'): persetujuannya lewat tautan email, jadi email wajib diisi
         $sppdTujuan = DB::connection('mysql4')->table('tujuan_sppds as t')->join('sppds as s', 's.id', '=', 't.id_sppd')
