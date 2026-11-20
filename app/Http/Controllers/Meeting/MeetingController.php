@@ -414,7 +414,7 @@ class MeetingController extends Controller
         $blokir = $this->getBlokirConflict($room, $normalizedStart, $normalizedEnd);
 
         if ($blokir) {
-            return new PostResource(false, 'Ruangan ' . $room . ' diblokir pada ' . Carbon::parse($blokir->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($blokir->end_time)->format('d-m-Y H:i') . ($blokir->alasan ? ' (' . $blokir->alasan . ')' : '') . ', sehingga tidak bisa dibooking pada waktu tersebut.', [
+            return new PostResource(false, 'Ruangan ' . $room . ' dipakai direksi pada ' . Carbon::parse($blokir->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($blokir->end_time)->format('d-m-Y H:i') . ($blokir->alasan ? ' (' . $blokir->alasan . ')' : '') . ', sehingga tidak bisa dibooking pada waktu tersebut.', [
                 'conflict_blokir_id' => $blokir->id,
                 'conflict_room' => $blokir->room,
                 'conflict_start_time' => $blokir->start_time,
@@ -614,10 +614,10 @@ class MeetingController extends Controller
     public function blokirRuang(Request $request)
     {
         if (!$this->adalahSekretarisDireksi()) {
-            return response()->json(['status' => false, 'message' => 'Hanya Sekretaris Direksi yang dapat memblokir ruang rapat.'], 403);
+            return response()->json(['status' => false, 'message' => 'Hanya Sekretaris Direksi yang dapat menandai ruang rapat dipakai direksi.'], 403);
         }
         if (!$this->adaTabelBlokir()) {
-            return response()->json(['status' => false, 'message' => 'Fitur blokir belum aktif di database: jalankan db/2026-11-20/blokir_ruang_rapat.sql terlebih dulu.'], 422);
+            return response()->json(['status' => false, 'message' => 'Fitur ruang dipakai direksi belum aktif di database: jalankan db/2026-11-20/blokir_ruang_rapat.sql terlebih dulu.'], 422);
         }
         $request->validate([
             'room' => 'required|string|in:' . implode(',', self::RUANG_RAPAT),
@@ -642,7 +642,7 @@ class MeetingController extends Controller
         }
         $lain = $this->getBlokirConflict($room, $mulai, $selesai);
         if ($lain) {
-            return new PostResource(false, 'Ruangan ini sudah diblokir pada ' . Carbon::parse($lain->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($lain->end_time)->format('d-m-Y H:i') . '.', ['conflict_blokir_id' => $lain->id]);
+            return new PostResource(false, 'Ruangan ini sudah ditandai dipakai direksi pada ' . Carbon::parse($lain->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($lain->end_time)->format('d-m-Y H:i') . '.', ['conflict_blokir_id' => $lain->id]);
         }
 
         $blokir = BlokirRuang::create([
@@ -653,26 +653,26 @@ class MeetingController extends Controller
             'created_by' => Employe::employeId(),
         ]);
 
-        return new PostResource(true, 'Ruangan ' . $room . ' diblokir.', $blokir);
+        return new PostResource(true, 'Ruangan ' . $room . ' ditandai dipakai direksi.', $blokir);
     }
 
     /** Membatalkan blokir (Sekretaris Direksi). */
     public function batalBlokir($id)
     {
         if (!$this->adalahSekretarisDireksi()) {
-            return response()->json(['status' => false, 'message' => 'Hanya Sekretaris Direksi yang dapat membatalkan blokir ruang rapat.'], 403);
+            return response()->json(['status' => false, 'message' => 'Hanya Sekretaris Direksi yang dapat membatalkan penandaan ruang dipakai direksi.'], 403);
         }
         $blokir = $this->adaTabelBlokir() ? BlokirRuang::find($id) : null;
         if (!$blokir) {
-            return new PostResource(false, 'Blokir tidak ditemukan', []);
+            return new PostResource(false, 'Data tidak ditemukan', []);
         }
         if (!is_null($blokir->canceled_at)) {
-            return new PostResource(false, 'Blokir sudah dibatalkan', []);
+            return new PostResource(false, 'Sudah dibatalkan sebelumnya', []);
         }
         $blokir->canceled_at = now();
         $blokir->save();
 
-        return new PostResource(true, 'Blokir dibatalkan.', $blokir);
+        return new PostResource(true, 'Pemakaian ruangan oleh direksi dibatalkan.', $blokir);
     }
 
     protected function normalizeDateTime($value, ?string $timezone = null): ?string
