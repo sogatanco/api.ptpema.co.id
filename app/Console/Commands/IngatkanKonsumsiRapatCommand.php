@@ -6,6 +6,7 @@ use App\Models\Employe;
 use App\Models\Meeting\BookingRoom;
 use App\Models\Structure;
 use App\Services\Notifikasi\Hub;
+use App\Services\Notifikasi\PicKonsumsi;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -48,7 +49,7 @@ class IngatkanKonsumsiRapatCommand extends Command
             return self::SUCCESS;
         }
 
-        $penerima = $this->picKonsumsi();
+        $penerima = PicKonsumsi::daftar();
 
         if ($this->option('kering')) {
             foreach ($daftar as $rapat) {
@@ -97,38 +98,5 @@ class IngatkanKonsumsiRapatCommand extends Command
         }
 
         return self::SUCCESS;
-    }
-
-    /** employe_id semua pengguna dengan role PICKonsumsi (sama dengan penerima notifikasi konsumsi saat rapat dibuat) */
-    private function picKonsumsi(): array
-    {
-        return Structure::query()
-            ->select('employe_id', 'roles')
-            ->whereNotNull('employe_id')
-            ->get()
-            ->filter(fn ($s) => in_array('PICKonsumsi', $this->peranUser($s->roles), true))
-            ->pluck('employe_id')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function peranUser($roles): array
-    {
-        if (is_array($roles)) {
-            return $roles;
-        }
-
-        if (is_string($roles) && $roles !== '') {
-            $dekode = json_decode($roles, true);
-
-            if (json_last_error() === JSON_ERROR_NONE && is_array($dekode)) {
-                return $dekode;
-            }
-
-            return array_values(array_filter(array_map('trim', explode(',', $roles))));
-        }
-
-        return [];
     }
 }

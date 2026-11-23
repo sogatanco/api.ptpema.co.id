@@ -10,6 +10,7 @@ use App\Models\Meeting\BlokirRuang;
 use App\Models\Meeting\BookingRoom;
 use App\Models\Meeting\Zoom;
 use App\Services\Notifikasi\Hub;
+use App\Services\Notifikasi\PicKonsumsi;
 use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -281,44 +282,53 @@ class MeetingController extends Controller
         return null;
     }
 
+    /**
+     * Notifikasi konsumsi rapat ke PIC Konsumsi (dibuat / diubah / dibatalkan).
+     * Lewat Hub: tersimpan di database notifikasi, terkirim sebagai bel + push + WhatsApp, dan pengiriman WhatsApp yang gagal
+     * bisa dikirim ulang dari Setting > Daftar Notifikasi.
+     */
     protected function sendConsumptionNotification(BookingRoom $booking, string $event = 'booked', ?string $catatan = null): void
     {
-        $recipients = $this->getConsumptionRecipientPhones();
+        $penerima = PicKonsumsi::daftar();
 
-        if ($recipients->isEmpty()) {
+        if (!$penerima) {
             return;
         }
 
         $creatorName = Employe::where('employe_id', $booking->created_by)->value('first_name') ?: '-';
-        $requesterPhoneRaw = (string) (Structure::where('employe_id', $booking->created_by)->value('phone_number') ?? '');
-        $requesterPhones = $this->extractPhoneNumbers($requesterPhoneRaw);
+        $requesterPhones = $this->extractPhoneNumbers((string) (Structure::where('employe_id', $booking->created_by)->value('phone_number') ?? ''));
         $requesterPhoneLabel = !empty($requesterPhones)
-            ? implode(', ', array_map(function ($phone) {
-                return preg_replace('/^62/', '0', (string) $phone);
-            }, $requesterPhones))
+            ? implode(', ', array_map(fn ($phone) => preg_replace('/^62/', '0', (string) $phone), $requesterPhones))
             : '-';
-        $eventLabel = ['canceled' => 'DIBATALKAN', 'changed' => 'DIUBAH'][$event] ?? 'DIBUAT';
-        $message = "Notifikasi Konsumsi Rapat ({$eventLabel})\n"
-            . ($catatan ? $catatan . "\n" : '')
+
+        $label = ['canceled' => 'DIBATALKAN', 'changed' => 'DIUBAH'][$event] ?? 'DIBUAT';
+        $kode = ['canceled' => 'dibatalkan', 'changed' => 'diubah'][$event] ?? 'dibuat';
+
+        $isi = ($catatan ? $catatan . "\n" : '')
             . "Topik: {$booking->topic}\n"
             . "Ruangan: {$booking->room}\n"
-            . "Waktu: {$booking->start_time} - {$booking->end_time}\n"
+            . 'Waktu: ' . $this->waktuRapat($booking->start_time, $booking->end_time) . "\n"
             . "Peserta: {$booking->participants}\n"
-            . "Detail Konsumsi: " . ($booking->consumption_detail ?: '-') . "\n"
-            . "Project / Renbis: " . ($booking->renbis_name ?: '-') . "\n"
+            . 'Detail Konsumsi: ' . ($booking->consumption_detail ?: '-') . "\n"
+            . 'Project / Renbis: ' . ($booking->renbis_name ?: '-') . "\n"
             . "No HP PIC: {$requesterPhoneLabel}\n"
             . "PIC: {$creatorName}";
 
-        foreach ($recipients as $number) {
-            try {
-                $this->whatsAppService->sendMessage((string) $number, $message);
-            } catch (\Throwable $e) {
-                Log::warning('Failed to send meeting consumption WA notification', [
-                    'booking_id' => $booking->id,
-                    'number' => $number,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+        try {
+            Hub::kirim($penerima, (string) $booking->created_by, [
+                'modul' => 'meeting',
+                'event' => 'meeting.konsumsi_' . $kode,
+                'judul' => "Konsumsi Rapat ({$label}): {$booking->topic}",
+                'isi' => $isi,
+                'url' => 'book-meeting',
+                'ref' => 'rapat-' . $booking->id,
+                'data' => ['rapat_id' => $booking->id, 'ruangan' => $booking->room, 'mulai' => $booking->start_time],
+                // PIC Konsumsi tetap menerima walau dialah yang membuat rapat
+                'termasuk_pelaku' => true,
+                'paksa' => true,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Notifikasi konsumsi rapat gagal', ['booking_id' => $booking->id, 'error' => $e->getMessage()]);
         }
     }
 
@@ -736,46 +746,6 @@ class MeetingController extends Controller
             'baru' => $jumlah,
             'undangan' => $undangan,
         ]);
-    }
-
-    protected function getConsumptionRecipientPhones()
-    {
-        return Structure::query()
-            ->select('roles', 'phone_number')
-            ->whereNotNull('phone_number')
-            ->get()
-            ->filter(function ($item) {
-                $roles = $this->parseRolesValue($item->roles);
-
-                return in_array('PICKonsumsi', $roles, true);
-            })
-            ->flatMap(function ($item) {
-                return $this->extractPhoneNumbers((string) $item->phone_number);
-            })
-            ->filter(function ($phone) {
-                return !empty($phone);
-            })
-            ->unique()
-            ->values();
-    }
-
-    protected function parseRolesValue($roles): array
-    {
-        if (is_array($roles)) {
-            return $roles;
-        }
-
-        if (is_string($roles) && $roles !== '') {
-            $decoded = json_decode($roles, true);
-
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return $decoded;
-            }
-
-            return array_values(array_filter(array_map('trim', explode(',', $roles))));
-        }
-
-        return [];
     }
 
     protected function extractPhoneNumbers(string $rawPhone): array
