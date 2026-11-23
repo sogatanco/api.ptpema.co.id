@@ -2000,9 +2000,14 @@ class PengajuanController extends Controller
                 'nama_akun_bank' => trim((string) $bank->nama_akun_bank),
             ] : null],
             'pencetak' => $orang(Employe::employeId()),
-            // pilihan Petugas Transaksi di voucher: seluruh staf dan supervisor keuangan yang aktif
+            // pilihan Petugas Transaksi di voucher: seluruh anggota Divisi Keuangan yang aktif, dari manajer, supervisor, sampai staf
             'petugas' => $db->table('ptpemaco_apam.struktur_lengkap_oke as s')->join('ptpemaco_apam.employees as e', 'e.employe_id', '=', 's.employe_id')
-                ->where(fn ($w) => $w->where('s.position_name', 'like', 'Staf Keuangan%')->orWhere('s.position_name', 'like', 'Supervisor Keuangan%'))
+                ->where('s.employe_active', 1)
+                ->where(fn ($w) => $w->where('s.organization_name', 'Divisi Keuangan')
+                    ->orWhere('s.position_name', 'like', 'Manajer Keuangan%')
+                    ->orWhere('s.position_name', 'like', 'Supervisor Keuangan%')
+                    ->orWhere('s.position_name', 'like', 'Staf Keuangan%'))
+                ->orderByRaw("CASE WHEN s.position_name LIKE 'Manajer%' THEN 1 WHEN s.position_name LIKE 'Supervisor%' THEN 2 ELSE 3 END")
                 ->orderBy('s.position_name')->orderBy('e.first_name')
                 ->get(['s.employe_id', 'e.first_name', 's.position_name'])
                 ->map(fn ($r) => ['employe_id' => $r->employe_id, 'nama' => trim($r->first_name), 'jabatan' => $r->position_name])->values(),
