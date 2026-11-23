@@ -325,7 +325,7 @@ class AuthController extends Controller
 
         $mailData = [
             'site_name' => 'Pema Information System',
-            'link' => 'https://sys.ptpema.co.id/auth/new-password?&key=' . $key,
+            'link' => rtrim(env('FRONTEND_URL', 'https://sys.pema.co.id'), '/') . '/auth/new-password?&key=' . $key,
             'email' => $request->email
         ];
 
