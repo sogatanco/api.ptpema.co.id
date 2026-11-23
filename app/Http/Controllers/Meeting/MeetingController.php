@@ -9,11 +9,13 @@ use App\Models\Structure;
 use App\Models\Meeting\BlokirRuang;
 use App\Models\Meeting\BookingRoom;
 use App\Models\Meeting\Zoom;
+use App\Services\Notifikasi\Hub;
 use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
@@ -183,6 +185,9 @@ class MeetingController extends Controller
         $zoom->created_by = Employe::employeId();
 
         if ($zoom->save()) {
+            // Zoom tanpa booking ruangan: kirim undangan rapat Zoom ke peserta yang dipilih
+            $this->tambahUndangan('zoom', (int) $zoom->id, $request->input('invitees', []), $zoom->topic ?: $topic, $zoom->start_time, $zoom->end_time, null, $zoom);
+
             return new PostResource(true, 'Zoom booked successfully', $zoom);
         }
 
@@ -316,6 +321,266 @@ class MeetingController extends Controller
         }
     }
 
+    protected function adaTabelUndangan(): bool
+    {
+        try {
+            return Schema::hasTable('meeting_undangan');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Undangan per rapat: [rapat_id => [['employe_id' => ..., 'nama' => ...], ...]].
+     * $tipe 'ruang' memakai meetings.id, 'zoom' memakai zooms.id.
+     */
+    protected function ambilUndangan(string $tipe, array $rapatIds): array
+    {
+        if (!$rapatIds || !$this->adaTabelUndangan()) {
+            return [];
+        }
+
+        $baris = DB::table('meeting_undangan')->where('tipe', $tipe)->whereIn('rapat_id', $rapatIds)->orderBy('id')->get();
+        $nama = Employe::whereIn('employe_id', $baris->pluck('employe_id')->unique()->values())->pluck('first_name', 'employe_id');
+
+        $hasil = [];
+        foreach ($baris as $b) {
+            $hasil[$b->rapat_id][] = ['employe_id' => $b->employe_id, 'nama' => $nama->get($b->employe_id) ?: $b->employe_id];
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Simpan peserta yang diundang lalu kirim undangan (notifikasi bel + push + WhatsApp lewat Hub) hanya ke yang baru.
+     * Rapat dengan Zoom menyertakan link, ID, dan passcode; Zoom tanpa ruangan dikirim sebagai undangan rapat Zoom.
+     * Kegagalan kirim tidak membatalkan booking. Mengembalikan jumlah peserta baru.
+     */
+    protected function tambahUndangan(string $tipe, int $rapatId, $undangan, string $topic, ?string $mulai, ?string $selesai, ?string $ruangan, ?Zoom $zoom): int
+    {
+        $daftar = array_values(array_unique(array_filter(array_map('strval', (array) $undangan), fn ($x) => $x !== '')));
+        $daftar = array_slice($daftar, 0, 300);
+        $pengundangId = Employe::employeId();
+
+        // pengundang tidak mengundang dirinya sendiri
+        $daftar = array_values(array_filter($daftar, fn ($x) => $x !== (string) $pengundangId));
+
+        if (!$daftar || !$this->adaTabelUndangan()) {
+            return 0;
+        }
+
+        try {
+            $sudah = DB::table('meeting_undangan')->where('tipe', $tipe)->where('rapat_id', $rapatId)->pluck('employe_id')->all();
+            // hanya karyawan yang benar-benar ada
+            $baru = array_values(Employe::whereIn('employe_id', array_diff($daftar, $sudah))->pluck('employe_id')->all());
+
+            if (!$baru) {
+                return 0;
+            }
+
+            DB::table('meeting_undangan')->insert(array_map(fn ($id) => [
+                'tipe' => $tipe,
+                'rapat_id' => $rapatId,
+                'employe_id' => $id,
+                'diundang_oleh' => $pengundangId,
+                'created_at' => now(),
+            ], $baru));
+
+            $pengundang = Employe::where('employe_id', $pengundangId)->value('first_name') ?: 'Rekan kerja';
+            $waktu = ($mulai ? Carbon::parse($mulai)->locale('id')->translatedFormat('l, d F Y H:i') : '-')
+                . ($selesai ? ' - ' . Carbon::parse($selesai)->format('H:i') : '');
+
+            $baris = [];
+            $baris[] = "{$pengundang} mengundang Anda ke rapat \"{$topic}\".";
+            $baris[] = 'Waktu: ' . $waktu . ' WIB';
+            if ($ruangan) {
+                $baris[] = 'Ruangan: ' . $ruangan;
+            }
+            if ($zoom && $zoom->link) {
+                $baris[] = 'Zoom: ' . $zoom->link;
+                if ($zoom->meeting_id) {
+                    $baris[] = 'Meeting ID: ' . $zoom->meeting_id;
+                }
+                if ($zoom->password) {
+                    $baris[] = 'Passcode: ' . $zoom->password;
+                }
+            }
+
+            Hub::kirim($baru, $pengundangId, [
+                'modul' => 'meeting',
+                'event' => 'meeting.undangan',
+                'judul' => ($ruangan ? 'Undangan Rapat: ' : 'Undangan Rapat Zoom: ') . $topic,
+                'isi' => implode("\n", $baris),
+                'url' => 'book-meeting',
+                'ref' => ($tipe === 'ruang' ? 'rapat-' : 'zoom-') . $rapatId,
+                'data' => ['ruangan' => $ruangan, 'zoom_link' => $zoom?->link, 'mulai' => $mulai, 'selesai' => $selesai],
+                'paksa' => true,
+            ]);
+
+            return count($baru);
+        } catch (\Throwable $e) {
+            Log::warning('Undangan rapat gagal disimpan/dikirim', ['topic' => $topic, 'error' => $e->getMessage()]);
+
+            return 0;
+        }
+    }
+
+    /** Beri tahu peserta yang diundang (mis. rapat dibatalkan). Kegagalan kirim tidak membatalkan proses utama. */
+    protected function kabarkanPeserta(array $employeIds, string $event, string $judul, string $isi, string $ref): void
+    {
+        $employeIds = array_values(array_unique(array_filter(array_map('strval', $employeIds))));
+
+        if (!$employeIds) {
+            return;
+        }
+
+        try {
+            Hub::kirim($employeIds, Employe::employeId(), [
+                'modul' => 'meeting',
+                'event' => $event,
+                'judul' => $judul,
+                'isi' => $isi,
+                'url' => 'book-meeting',
+                'ref' => $ref,
+                'paksa' => true,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Pemberitahuan rapat gagal dikirim', ['event' => $event, 'error' => $e->getMessage()]);
+        }
+    }
+
+    protected function waktuRapat(?string $mulai, ?string $selesai): string
+    {
+        return ($mulai ? Carbon::parse($mulai)->locale('id')->translatedFormat('l, d F Y H:i') : '-')
+            . ($selesai ? ' - ' . Carbon::parse($selesai)->format('H:i') : '') . ' WIB';
+    }
+
+    /** Peserta diundang pada rapat tertentu (employe_id saja). */
+    protected function idPesertaDiundang(string $tipe, int $rapatId): array
+    {
+        if (!$this->adaTabelUndangan()) {
+            return [];
+        }
+
+        return DB::table('meeting_undangan')->where('tipe', $tipe)->where('rapat_id', $rapatId)->pluck('employe_id')->all();
+    }
+
+    /** Pembuat rapat mencabut undangan satu peserta; peserta itu diberi tahu. */
+    public function hapusUndanganRuang($id, $employeId)
+    {
+        $booking = BookingRoom::find($id);
+
+        if (!$booking || !is_null($booking->canceled_at)) {
+            return new PostResource(false, 'Rapat tidak ditemukan atau sudah dibatalkan', []);
+        }
+
+        if ((string) $booking->created_by !== (string) Employe::employeId()) {
+            return new PostResource(false, 'Hanya pembuat rapat yang bisa mencabut undangan', []);
+        }
+
+        return $this->cabutUndangan('ruang', (int) $booking->id, (string) $employeId, $booking->topic, $booking->start_time, $booking->end_time);
+    }
+
+    public function hapusUndanganZoom($id, $employeId)
+    {
+        $zoom = Zoom::find($id);
+
+        if (!$zoom || !is_null($zoom->canceled_at)) {
+            return new PostResource(false, 'Zoom tidak ditemukan atau sudah dibatalkan', []);
+        }
+
+        if ((string) $zoom->created_by !== (string) Employe::employeId()) {
+            return new PostResource(false, 'Hanya pembuat rapat yang bisa mencabut undangan', []);
+        }
+
+        $booking = BookingRoom::where('zoom_id', $zoom->id)->whereNull('canceled_at')->first();
+
+        return $booking
+            ? $this->cabutUndangan('ruang', (int) $booking->id, (string) $employeId, $booking->topic, $booking->start_time, $booking->end_time)
+            : $this->cabutUndangan('zoom', (int) $zoom->id, (string) $employeId, $zoom->topic, $zoom->start_time, $zoom->end_time);
+    }
+
+    protected function cabutUndangan(string $tipe, int $rapatId, string $employeId, string $topic, ?string $mulai, ?string $selesai)
+    {
+        if (!$this->adaTabelUndangan()) {
+            return new PostResource(false, 'Tabel undangan belum dibuat di database (jalankan db/2026-11-23/meeting_undangan.sql)', []);
+        }
+
+        $terhapus = DB::table('meeting_undangan')->where('tipe', $tipe)->where('rapat_id', $rapatId)->where('employe_id', $employeId)->delete();
+
+        if ($terhapus) {
+            $this->kabarkanPeserta(
+                [$employeId],
+                'meeting.undangan_dicabut',
+                'Undangan Rapat Dicabut: ' . $topic,
+                'Undangan Anda ke rapat "' . $topic . '" (' . $this->waktuRapat($mulai, $selesai) . ') dicabut oleh pembuat rapat.',
+                ($tipe === 'ruang' ? 'rapat-' : 'zoom-') . $rapatId
+            );
+        }
+
+        return new PostResource(true, $terhapus ? 'Undangan dicabut' : 'Peserta tidak ada dalam daftar undangan', [
+            'undangan' => $this->ambilUndangan($tipe, [$rapatId])[$rapatId] ?? [],
+        ]);
+    }
+
+    /** Pembuat rapat menambah undangan (tag karyawan lagi) pada rapat yang sudah dibuat. */
+    public function tambahUndanganRuang(Request $request, $id)
+    {
+        $booking = BookingRoom::with('zoom')->find($id);
+
+        if (!$booking || !is_null($booking->canceled_at)) {
+            return new PostResource(false, 'Rapat tidak ditemukan atau sudah dibatalkan', []);
+        }
+
+        if ((string) $booking->created_by !== (string) Employe::employeId()) {
+            return new PostResource(false, 'Hanya pembuat rapat yang bisa menambah undangan', []);
+        }
+
+        if (!$this->adaTabelUndangan()) {
+            return new PostResource(false, 'Tabel undangan belum dibuat di database (jalankan db/2026-11-23/meeting_undangan.sql)', []);
+        }
+
+        $jumlah = $this->tambahUndangan('ruang', (int) $booking->id, $request->input('invitees', []), $booking->topic, $booking->start_time, $booking->end_time, $booking->room, $booking->zoom);
+
+        return new PostResource(true, $jumlah > 0 ? "Undangan dikirim ke {$jumlah} peserta" : 'Tidak ada peserta baru untuk diundang', [
+            'baru' => $jumlah,
+            'undangan' => $this->ambilUndangan('ruang', [(int) $booking->id])[$booking->id] ?? [],
+        ]);
+    }
+
+    /** Pembuat Zoom menambah undangan. Zoom yang melekat pada booking ruangan memakai daftar undangan booking itu. */
+    public function tambahUndanganZoom(Request $request, $id)
+    {
+        $zoom = Zoom::find($id);
+
+        if (!$zoom || !is_null($zoom->canceled_at)) {
+            return new PostResource(false, 'Zoom tidak ditemukan atau sudah dibatalkan', []);
+        }
+
+        if ((string) $zoom->created_by !== (string) Employe::employeId()) {
+            return new PostResource(false, 'Hanya pembuat rapat yang bisa menambah undangan', []);
+        }
+
+        if (!$this->adaTabelUndangan()) {
+            return new PostResource(false, 'Tabel undangan belum dibuat di database (jalankan db/2026-11-23/meeting_undangan.sql)', []);
+        }
+
+        $booking = BookingRoom::where('zoom_id', $zoom->id)->whereNull('canceled_at')->first();
+
+        if ($booking) {
+            $jumlah = $this->tambahUndangan('ruang', (int) $booking->id, $request->input('invitees', []), $booking->topic, $booking->start_time, $booking->end_time, $booking->room, $zoom);
+            $undangan = $this->ambilUndangan('ruang', [(int) $booking->id])[$booking->id] ?? [];
+        } else {
+            $jumlah = $this->tambahUndangan('zoom', (int) $zoom->id, $request->input('invitees', []), $zoom->topic, $zoom->start_time, $zoom->end_time, null, $zoom);
+            $undangan = $this->ambilUndangan('zoom', [(int) $zoom->id])[$zoom->id] ?? [];
+        }
+
+        return new PostResource(true, $jumlah > 0 ? "Undangan dikirim ke {$jumlah} peserta" : 'Tidak ada peserta baru untuk diundang', [
+            'baru' => $jumlah,
+            'undangan' => $undangan,
+        ]);
+    }
+
     protected function getConsumptionRecipientPhones()
     {
         return Structure::query()
@@ -434,6 +699,7 @@ class MeetingController extends Controller
         }
 
         $zoomId = null;
+        $zoomUndangan = null;
 
         if ($zoomRequired) {
             $zoomConflict = $this->getZoomConflict($normalizedStart, $normalizedEnd);
@@ -462,6 +728,7 @@ class MeetingController extends Controller
                 ]);
 
                 $zoomId = $zoom->id;
+                $zoomUndangan = $zoom;
             } catch (GuzzleException | \RuntimeException $e) {
                 return new PostResource(false, 'Failed to create Zoom meeting: ' . $e->getMessage(), []);
             }
@@ -486,6 +753,9 @@ class MeetingController extends Controller
             $this->sendConsumptionNotification($booking);
         }
 
+        // undangan ke peserta yang dipilih (link Zoom ikut dikirim bila rapat memakai Zoom)
+        $this->tambahUndangan('ruang', (int) $booking->id, $request->input('invitees', []), $topic, $normalizedStart, $normalizedEnd, $room, $zoomUndangan);
+
         return new PostResource(true, 'Meeting booked successfully', $booking);
     }
 
@@ -500,8 +770,11 @@ class MeetingController extends Controller
         $namaPembuat = Employe::whereIn('employe_id', $bookings->pluck('created_by')->filter()->unique()->values())
             ->pluck('first_name', 'employe_id');
 
+        $undanganRuang = $this->ambilUndangan('ruang', $bookings->pluck('id')->all());
+
         foreach ($bookings as $booking) {
             $booking->created_by_name = $namaPembuat->get($booking->created_by);
+            $booking->undangan = $undanganRuang[$booking->id] ?? [];
             $booking->zoom_details = null;
 
             if ($booking->zoom) {
@@ -544,6 +817,15 @@ class MeetingController extends Controller
         if ((int) $booking->consumption_required === 1) {
             $this->sendConsumptionNotification($booking, 'canceled');
         }
+
+        // peserta yang diundang diberi tahu bahwa rapat dibatalkan
+        $this->kabarkanPeserta(
+            $this->idPesertaDiundang('ruang', (int) $booking->id),
+            'meeting.dibatalkan',
+            'Rapat Dibatalkan: ' . $booking->topic,
+            'Rapat "' . $booking->topic . '" (' . $this->waktuRapat($booking->start_time, $booking->end_time) . ', ruangan ' . $booking->room . ') dibatalkan.',
+            'rapat-' . $booking->id
+        );
 
         return new PostResource(true, 'Meeting booking canceled successfully', $booking);
     }
@@ -717,8 +999,16 @@ class MeetingController extends Controller
             ->orderBy('start_time', 'asc')
             ->get();
 
+        // Zoom yang melekat pada booking ruangan memakai undangan booking itu; Zoom tanpa ruangan punya undangan sendiri
+        $bookingPerZoom = BookingRoom::whereIn('zoom_id', $data->pluck('id'))->whereNull('canceled_at')->pluck('id', 'zoom_id');
+        $undanganRuang = $this->ambilUndangan('ruang', $bookingPerZoom->values()->all());
+        $undanganZoom = $this->ambilUndangan('zoom', $data->pluck('id')->all());
+
         foreach ($data as $item) {
             $item->created_by_name = Employe::where('employe_id', $item->created_by)->value('first_name');
+            $item->undangan = $bookingPerZoom->has($item->id)
+                ? ($undanganRuang[$bookingPerZoom->get($item->id)] ?? [])
+                : ($undanganZoom[$item->id] ?? []);
         }
 
         return new PostResource(true, 'success', $data);
@@ -749,6 +1039,27 @@ class MeetingController extends Controller
         $zoom->canceled_at = now();
 
         if ($zoom->save()) {
+            // Zoom tanpa ruangan: rapat dibatalkan; Zoom milik booking ruangan: hanya link Zoom-nya yang batal
+            $booking = BookingRoom::where('zoom_id', $zoom->id)->whereNull('canceled_at')->first();
+
+            if ($booking) {
+                $this->kabarkanPeserta(
+                    $this->idPesertaDiundang('ruang', (int) $booking->id),
+                    'meeting.zoom_dibatalkan',
+                    'Link Zoom Dibatalkan: ' . $booking->topic,
+                    'Link Zoom untuk rapat "' . $booking->topic . '" (' . $this->waktuRapat($booking->start_time, $booking->end_time) . ') dibatalkan. Informasi pengganti akan disampaikan oleh pembuat rapat.',
+                    'rapat-' . $booking->id
+                );
+            } else {
+                $this->kabarkanPeserta(
+                    $this->idPesertaDiundang('zoom', (int) $zoom->id),
+                    'meeting.dibatalkan',
+                    'Rapat Zoom Dibatalkan: ' . $zoom->topic,
+                    'Rapat Zoom "' . $zoom->topic . '" (' . $this->waktuRapat($zoom->start_time, $zoom->end_time) . ') dibatalkan.',
+                    'zoom-' . $zoom->id
+                );
+            }
+
             return new PostResource(true, 'Zoom canceled successfully', $zoom);
         }
 

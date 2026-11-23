@@ -20,11 +20,12 @@ class Hub
 
     /**
      * @param string|array|null $penerima employe_id atau daftar employe_id
-     * @param array $p modul, event, judul, isi, url?, ref?, data?
+     * @param array $p modul, event, judul, isi, url?, ref?, data?, paksa? (true = kirim walau NOTIF_BARU_AKTIF=false)
      */
     public static function kirim($penerima, ?string $actor, array $p): void
     {
-        if (!self::aktif()) {
+        // 'paksa': fitur baru (mis. undangan rapat) tidak punya trigger lama, jadi tidak bergantung pada NOTIF_BARU_AKTIF
+        if (!self::aktif() && empty($p['paksa'])) {
             return;
         }
 

@@ -15,6 +15,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('contract:reminder')->daily();
         // satu pesan WA notifikasi per menit
         $schedule->command('notifikasi:kirim-wa')->everyMinute()->withoutOverlapping();
+        // pengingat untuk PIC Konsumsi 1 jam sebelum rapat yang meminta konsumsi
+        $schedule->command('meeting:ingatkan-konsumsi')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('sppd:ingatkan-void')->dailyAt('08:00')->withoutOverlapping();
         $schedule->command('sppd:ingatkan-termin')->dailyAt('08:00')->withoutOverlapping();
     }
