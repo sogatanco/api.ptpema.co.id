@@ -197,6 +197,7 @@ class Hotel30TamuController extends Controller
             'tujuan' => $sppd->detail_tujuan ?? null,
             'mulai' => $tp->mulai ?? null,
             'selesai' => $tp->selesai ?? null,
+            'rentang' => $tp ? $tp->daftarRentang() : [],
             'sudah_dipakai' => $t->dipakai_at !== null,
             'hasil' => $t->hasil,
             'kedaluwarsa' => $t->dipakai_at === null && now()->gt($t->expires_at),

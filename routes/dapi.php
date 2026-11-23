@@ -120,6 +120,7 @@ Route::controller(PengajuanController::class)->group(function(){
      Route::post('sppd/ekstend', 'insertEkstend')->middleware("role:Employee");
      Route::post('sppd/ekstend/{id}/batal', 'batalEkstend')->middleware("role:Employee");
      Route::post('sppd/tiga-puluh', 'tgaPlhPersen')->middleware("role:Employee");
+     Route::post('sppd/tiga-puluh/{idTujuan}/batal', 'batalTigaPuluh')->middleware("role:Employee");
 });
 
 // Tambahkan route untuk kontrak

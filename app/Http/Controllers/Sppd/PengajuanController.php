@@ -248,14 +248,22 @@ class PengajuanController extends Controller
             ->when(EkstendProses::adaNoUrut(), fn ($q) => $q->whereNull('ekstends.dibatalkan_at'))
             ->selectRaw('tujuan_sppds.id_sppd as id_sppd, count(*) as jumlah')
             ->groupBy('tujuan_sppds.id_sppd')->pluck('jumlah', 'id_sppd');
+        // jumlah tujuan yang sudah mengajukan Hotel 30% per SPPD (jumlah_hotel30), untuk tanda di daftar
+        $hotel30 = $ids->isEmpty() ? collect() : DB::connection('mysql4')->table('tigapuluhs')
+            ->join('tujuan_sppds', 'tujuan_sppds.id', '=', 'tigapuluhs.id_tujuan')
+            ->whereIn('tujuan_sppds.id_sppd', $ids)
+            ->selectRaw('tujuan_sppds.id_sppd as id_sppd, count(distinct tigapuluhs.id_tujuan) as jumlah')
+            ->groupBy('tujuan_sppds.id_sppd')->pluck('jumlah', 'id_sppd');
 
-        return $data->map(function ($d) use ($peta) {
+        return $data->map(function ($d) use ($peta, $hotel30) {
             $id = (int) (is_array($d) ? ($d['id'] ?? 0) : $d->id);
             $n = (int) ($peta[$id] ?? 0);
+            $h = (int) ($hotel30[$id] ?? 0);
             if (is_array($d)) {
-                return $d + ['jumlah_ekstend' => $n];
+                return $d + ['jumlah_ekstend' => $n, 'jumlah_hotel30' => $h];
             }
             $d->jumlah_ekstend = $n;
+            $d->jumlah_hotel30 = $h;
 
             return $d;
         })->values();
@@ -554,6 +562,9 @@ class PengajuanController extends Controller
                 $t->base64_undangan = '-';
             }
             $t->tigapuluh = in_array($t->id, $tigaPuluhIds) ? TigaPuluh::where('id_tujuan', $t->id)->first() : null;
+            if ($t->tigapuluh) {
+                $t->tigapuluh->setAttribute('rentang', $t->tigapuluh->daftarRentang());
+            }
             if ($t->tigapuluh === null) {
                 $data['tigap']=false;
             }else{
@@ -664,7 +675,24 @@ class PengajuanController extends Controller
             unset($r->sum_rill_biaya, $r->sum_rill_tiket);
         }
         $data['realisasi_biaya'] = $rb;
-        $data['approval'] = ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
+        $approval = ListApproval::where('id_sppd', $id)->orderBy('step', 'ASC')->get();
+        // view list_approval hanya memuat penanda tangan yang karyawan; langkah pelaksana tamu (employe_id '-') ditambahkan di sini
+        // dengan nama dan jabatan pelaksana SPPD, supaya tanda tangan pemohon di dokumen tidak kosong ('undefined')
+        $adaLangkah = $approval->map(fn ($x) => $x->step . '|' . $x->type)->all();
+        $langkahTamu = VerifStep::where('id_doc', $data->nomor_dokumen)->orderBy('step')->get()
+            ->filter(fn ($v) => !in_array($v->step . '|' . $v->type, $adaLangkah, true))
+            ->map(fn ($v) => (new ListApproval())->forceFill([
+                'id_sppd' => (int) $id,
+                'nomor_dokumen' => $data->nomor_dokumen,
+                'step' => $v->step,
+                'type' => $v->type,
+                'status' => $v->status,
+                'updated_at' => $v->updated_at,
+                'id_employe' => $v->id_employe,
+                'first_name' => $v->type === 'pemohon' ? $data->nama : ($v->id_current_position ?: $v->id_employe),
+                'position_name' => $v->type === 'pemohon' ? ($v->id_current_position ?: $data->jabatan) : $v->id_current_position,
+            ]));
+        $data['approval'] = $approval->concat($langkahTamu)->sortBy('step')->values();
         $data['log_pengajuan'] = LogPengajuan::where('id_sppd', $id)->orderBy('created_at', 'ASC')->get();
         $data['proses'] = Proses::where('id_sppd', $id)->get();
         $data['proses_tiket'] = ProsesTiket::where('id_sppd', $id)->orderBy('id_tujuan')->orderBy('arah', 'DESC')->get();
@@ -2098,6 +2126,9 @@ class PengajuanController extends Controller
             $t->ekstend_hari_terpakai = $hariTerpakai;
             $t->ekstend_batas_akhir = $batasAkhir;
             $t->tigapuluh = $tigaPuluh->get($t->id);
+            if ($t->tigapuluh) {
+                $t->tigapuluh->setAttribute('rentang', $t->tigapuluh->daftarRentang());
+            }
             // extend sebelumnya yang sudah disetujui (extend boleh berulang): akhir terakhir dan jumlahnya
             $t->ekstend_akhir = $ekstendAkhir->get($t->id)->akhir ?? null;
             $t->ekstend_banyak = (int) ($ekstendAkhir->get($t->id)->banyak ?? 0);
@@ -2385,6 +2416,10 @@ class PengajuanController extends Controller
         if ($e->dibatalkan_at) {
             return 'Extend ini sudah dibatalkan.';
         }
+        // extend yang sudah di-approve tidak bisa dibatalkan lagi
+        if ($e->disetujui_at) {
+            return 'Extend ini sudah di-approve sehingga tidak bisa dibatalkan lagi.';
+        }
         // extend bernomor yang sudah ditolak tidak aktif lagi (butuh_proses dikosongkan saat ditolak)
         if ($e->no_urut && (int) $e->butuh_proses === 0 && !$e->disetujui_at) {
             return 'Extend ini sudah ditolak sehingga tidak perlu dibatalkan.';
@@ -2402,13 +2437,96 @@ class PengajuanController extends Controller
         return null;
     }
 
+    /** extend SPPD ini yang masih menunggu persetujuan (belum disetujui, tidak dibatalkan, tidak ditolak) */
+    private function ekstendBelumDisetujui(int $idSppd)
+    {
+        if (!EkstendProses::aktif()) {
+            return collect();
+        }
+        $q = Ekstend::whereIn('id_tujuan', TujuanSppd::where('id_sppd', $idSppd)->pluck('id'))
+            ->where('butuh_proses', 1)->whereNull('disetujui_at');
+        if (EkstendProses::adaNoUrut()) {
+            $q->whereNull('dibatalkan_at');
+        }
+
+        return $q->orderBy('id')->get();
+    }
+
+    /**
+     * Batalkan pengajuan Hotel 30% satu tujuan (pengaju atau admin SPPD). Tidak bisa bila pelaksana (non-karyawan) sudah menjawab
+     * atau persetujuan sudah selesai. Langkah approval klaim yang belum final dihapus bila tidak ada klaim Hotel 30% lain pada SPPD itu.
+     */
+    function batalTigaPuluh($idTujuan)
+    {
+        $tujuan = TujuanSppd::find((int) $idTujuan);
+        $klaim = $tujuan ? TigaPuluh::where('id_tujuan', (int) $idTujuan)->orderBy('id')->get() : collect();
+        if (!$tujuan || $klaim->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Pengajuan Hotel 30% untuk tujuan ini tidak ditemukan.'], 404);
+        }
+        $sppd = Sppd::find((int) $tujuan->id_sppd);
+        if (!$sppd) {
+            return response()->json(['success' => false, 'message' => 'SPPD tidak ditemukan.'], 404);
+        }
+        $me = Employe::employeId();
+        $pengaju = $klaim->contains(fn ($k) => (string) $k->submitted_by === (string) $me);
+        if (!$pengaju && !in_array('AdminSPPD', auth()->user()->roles ?? [], true)) {
+            return response()->json(['success' => false, 'message' => 'Hanya pengaju klaim atau admin SPPD yang bisa membatalkan Hotel 30%.'], 403);
+        }
+        if ($tolak = $this->tolakBilaVoid($sppd)) {
+            return $tolak;
+        }
+        $dijawab = DB::connection('esign')->table('hotel30_tokens')->where('id_tujuan', (int) $idTujuan)->whereNotNull('dipakai_at')->exists();
+        if ($dijawab) {
+            return response()->json(['success' => false, 'message' => 'Pengajuan Hotel 30% ini sudah dijawab pelaksana sehingga tidak bisa dibatalkan.'], 422);
+        }
+        $selesai = VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', 'approval_hotel')->where('status', 'approve')->exists();
+        if ($selesai) {
+            return response()->json(['success' => false, 'message' => 'Hotel 30% sudah disetujui sehingga tidak bisa dibatalkan.'], 422);
+        }
+
+        $ids = $klaim->pluck('id')->all();
+        DB::connection('mysql4')->transaction(function () use ($ids, $idTujuan) {
+            if (TigaPuluh::adaTabelRentang()) {
+                DB::connection('mysql4')->table('tigapuluh_rentang')->whereIn('id_tigapuluh', $ids)->delete();
+            }
+            TigaPuluh::whereIn('id', $ids)->delete();
+        });
+        // permintaan persetujuan lewat email (pelaksana non-karyawan) yang belum dijawab ikut dihapus
+        DB::connection('esign')->table('hotel30_tokens')->where('id_tujuan', (int) $idTujuan)->whereNull('dipakai_at')->delete();
+
+        // langkah approval dokumen dibuat per pengajuan (trigger); dihapus hanya bila tidak ada klaim Hotel 30% lain pada SPPD ini
+        $masihAda = TigaPuluh::whereIn('id_tujuan', TujuanSppd::where('id_sppd', $sppd->id)->pluck('id'))->exists();
+        if (!$masihAda) {
+            $langkahHotel = VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', 'approval_hotel')
+                ->where(fn ($q) => $q->whereNull('status')->orWhereIn('status', ['rejected', 'reject']))->get();
+            foreach ($langkahHotel as $lh) {
+                // langkah pelaksana ('pemohon') tepat sebelumnya ikut dihapus bila belum final
+                VerifStep::where('id_doc', $sppd->nomor_dokumen)->where('type', 'pemohon')->where('step', (int) $lh->step - 1)
+                    ->where(fn ($q) => $q->whereNull('status')->orWhereIn('status', ['rejected', 'reject']))->delete();
+                $lh->delete();
+            }
+            SuratTteService::forgetStoredPdfs($sppd->nomor_dokumen, 'approval_hotel');
+        }
+        $this->catatLogSppd((int) $sppd->id, [$this->potongLog('Pengajuan Hotel 30% dibatalkan: ' . $tujuan->detail_tujuan)]);
+
+        return new PostResource(true, 'Pengajuan Hotel 30% untuk ' . $tujuan->detail_tujuan . ' dibatalkan.', []);
+    }
+
     function tgaPlhPersen(Request $request)
     {
         // Hotel 30% hanya setelah SPPD disetujui, dengan tanggal di dalam rentang tujuan + extend yang sudah disetujui
         $request->validate([
             'id_tujuan' => 'required|integer',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'required_without:rentang|nullable|date',
+            'end_date' => 'required_without:rentang|nullable|date|after:start_date',
+            // beberapa rentang terpisah pada satu tujuan, mis. tanggal 1-2 dan 5-6
+            'rentang' => 'nullable|array|min:1|max:20',
+            'rentang.*.start_date' => 'required|date',
+            'rentang.*.end_date' => 'required|date|after:rentang.*.start_date',
+        ], [
+            // Hotel 30% dihitung per malam: 15 s.d. 16 = 1 malam, 15 s.d. 15 tidak punya malam
+            'end_date.after' => 'Tanggal hingga harus setelah tanggal mulai. Hotel 30% dihitung per malam (15 s.d. 16 = 1 malam).',
+            'rentang.*.end_date.after' => 'Tanggal hingga harus setelah tanggal mulai. Hotel 30% dihitung per malam (15 s.d. 16 = 1 malam).',
         ]);
         $tujuanHotel = TujuanSppd::find((int) $request->id_tujuan);
         if (!$tujuanHotel) {
@@ -2421,9 +2539,28 @@ class PengajuanController extends Controller
         if (array_key_exists((int) $tujuanHotel->id_sppd, SppdVoid::peta())) {
             return response()->json(['success' => false, 'message' => 'SPPD ini sudah di-void.'], 422);
         }
+        $menunggu = $this->ekstendBelumDisetujui((int) $tujuanHotel->id_sppd);
+        if ($menunggu->isNotEmpty()) {
+            $daftarExt = $menunggu->map(fn ($e) => ($e->no_urut ? 'Extend ' . $e->no_urut : 'Extend') . ' (' . EkstendProses::judul($e) . ')')->implode('; ');
+
+            return response()->json(['success' => false, 'message' => 'Hotel 30% tidak bisa diajukan karena masih ada pengajuan extend yang belum di-approve: ' . $daftarExt . '. Batalkan extend tersebut, atau tunggu sampai disetujui.'], 422);
+        }
         $j = $this->jendelaHotel30($tujuanHotel, $this->akhirEkstendDisetujuiPerTujuan([(int) $tujuanHotel->id])->get($tujuanHotel->id));
-        $dari = date('Y-m-d', strtotime((string) $request->start_date));
-        $hingga = date('Y-m-d', strtotime((string) $request->end_date));
+        // rentang tanggal: bentuk lama (start_date + end_date) menjadi satu rentang
+        $daftarRentang = $request->filled('rentang')
+            ? collect($request->input('rentang'))->map(fn ($r) => ['mulai' => date('Y-m-d', strtotime((string) $r['start_date'])), 'selesai' => date('Y-m-d', strtotime((string) $r['end_date']))])->sortBy('mulai')->values()->all()
+            : [['mulai' => date('Y-m-d', strtotime((string) $request->start_date)), 'selesai' => date('Y-m-d', strtotime((string) $request->end_date))]];
+        if (count($daftarRentang) > 1 && !TigaPuluh::adaTabelRentang()) {
+            return response()->json(['success' => false, 'message' => 'Beberapa rentang tanggal belum aktif di database: jalankan db/2026-11-23/tigapuluh_rentang.sql terlebih dulu.'], 422);
+        }
+        for ($i = 1; $i < count($daftarRentang); $i++) {
+            // rentang dihitung per malam: malam rentang berikutnya tidak boleh sama dengan malam rentang sebelumnya
+            if ($daftarRentang[$i]['mulai'] < $daftarRentang[$i - 1]['selesai']) {
+                return response()->json(['success' => false, 'message' => 'Rentang tanggal tidak boleh saling tumpang tindih.'], 422);
+            }
+        }
+        $dari = $daftarRentang[0]['mulai'];
+        $hingga = collect($daftarRentang)->max('selesai');
         if ($dari < $j['mulai'] || $hingga > $j['akhir']) {
             $ket = 'SPPD ' . date('d-m-Y', strtotime($j['mulai'])) . ' s.d. ' . date('d-m-Y', strtotime((string) $tujuanHotel->waktu_kembali))
                 . ($j['ekstend_akhir'] ? ', extend disetujui sampai ' . date('d-m-Y', strtotime($j['ekstend_akhir'])) : '');
@@ -2439,9 +2576,7 @@ class PengajuanController extends Controller
             if ($dipakai) {
                 return response()->json(['success' => false, 'message' => 'Pengajuan Hotel 30% ini sudah dijawab pelaksana sehingga tidak bisa diubah.'], 422);
             }
-            $sudahAda->mulai = $request->start_date;
-            $sudahAda->selesai = $request->end_date;
-            $sudahAda->save();
+            $sudahAda->simpanRentang($daftarRentang);
 
             return new PostResource(true, 'Pengajuan Hotel 30% sebelumnya berhasil diubah.', []);
         }
@@ -2457,10 +2592,11 @@ class PengajuanController extends Controller
         $tp=new TigaPuluh();
         $tp->id_tujuan=$request->id_tujuan;
         $tp->submitted_by=Employe::employeId();
-        $tp->mulai=$request->start_date;
-        $tp->selesai=$request->end_date;
+        $tp->mulai = $dari;
+        $tp->selesai = $hingga;
 
         if ($tp->save()) {
+            $tp->simpanRentang($daftarRentang);
             if ($tamu) {
                 [, $pesan] = app(Hotel30TamuController::class)->buatDanKirim((int) $request->id_tujuan, $request->input('email'));
 
