@@ -194,7 +194,7 @@ class Peristiwa
 
     /**
      * divisi umum selesai memproses SPPD ($kejadian 'diproses') atau mengubah tiketnya ('tiket_diubah').
-     * Pelaksana dan admin pengaju dikabari; divisi keuangan juga, karena SPPD ini sekarang masuk (atau berubah di) daftar Perlu Diproses mereka.
+     * Pelaksana dan admin pengaju dikabari; divisi keuangan tidak diberi pemberitahuan dari proses ini.
      */
     public static function sppdProsesUmum(Sppd $s, string $kejadian, string $detail, ?string $actor, bool $ekstend = false): void
     {
@@ -209,23 +209,20 @@ class Peristiwa
             'ref' => $s->nomor_dokumen,
         ];
         // pengaju melihatnya di tab pengajuan (#1), pelaksana di tab SPPD saya (#2)
-        Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 1)]);
-        if ($s->employe_id && $s->employe_id !== $s->submitted_by) {
-            Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 2)]);
-        }
+        self::kabariPelaksanaDanPengaju($s, $actor, $pesan);
+    }
 
-        $paralel = $s->created_at && strtotime((string) $s->created_at) >= strtotime((string) config('sppd.proses_paralel_mulai'));
-        $keuangan = Structure::where('roles', 'like', '%KeuanganSppd%')->pluck('employe_id')->all();
-        Hub::kirim($keuangan, $actor, [
-            'modul' => 'sppd',
-            'event' => $diubah ? 'sppd.tiket_diubah' : 'sppd.proses_umum',
-            // SPPD lama: pemberitahuan ini yang menandai SPPD masuk daftar divisi keuangan (aturan lama); SPPD baru: hanya informasi
-            'judul' => ($diubah ? 'Tiket SPPD diubah divisi umum: ' : ($paralel ? 'Tiket SPPD diproses divisi umum: ' : 'SPPD siap diproses divisi keuangan: ')) . $s->nomor_sppd,
-            'isi' => "SPPD {$ringkas} " . ($diubah ? "tiketnya diperbarui oleh {$pelaku} (divisi umum). " : ($paralel ? "tiketnya telah diproses divisi umum ({$pelaku}). " : "telah diproses divisi umum ({$pelaku}) dan siap diproses divisi keuangan. ")) . $detail,
-            // tab PERLU DIPROSES (#4) dan membuka detail SPPD-nya
-            'url' => self::urlSppd((string) $s->nomor_dokumen, 4, true, $ekstend),
-            'ref' => $s->nomor_dokumen,
-        ]);
+    /**
+     * Kabari pelaksana SPPD (tab SPPD Saya) dan admin pengaju (tab Pengajuan) tentang proses divisi umum atau divisi keuangan.
+     * Pelaksana selalu ikut dikabari; bila pelaksana sekaligus pengaju, ia menerima satu pemberitahuan.
+     */
+    private static function kabariPelaksanaDanPengaju(Sppd $s, ?string $actor, array $pesan): void
+    {
+        $nomor = (string) $s->nomor_dokumen;
+        Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd($nomor, 1)]);
+        if ($s->employe_id && $s->employe_id !== $s->submitted_by) {
+            Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd($nomor, 2)]);
+        }
     }
 
     /** divisi keuangan mengupload bukti transfer uang muka per termin: kabari pelaksana dan admin pengaju (progres, dan selesai bila semua termin sudah) */
@@ -239,10 +236,7 @@ class Peristiwa
                 . ($selesai ? ' Seluruh termin uang muka telah ditransfer.' : " Progres {$sudah} dari {$total} termin."),
             'ref' => $s->nomor_dokumen,
         ];
-        Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 1)]);
-        if ($s->employe_id && $s->employe_id !== $s->submitted_by) {
-            Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 2)]);
-        }
+        self::kabariPelaksanaDanPengaju($s, $actor, $pesan);
     }
 
     /** divisi keuangan memproses uang muka ($jenis 'uangmuka') atau pembayaran realisasi ('realisasi'): kabari pelaksana dan admin pengaju */
@@ -257,10 +251,7 @@ class Peristiwa
             'isi' => self::nama($actor) . " (divisi keuangan) telah memproses {$label} SPPD " . self::ringkasSppd($s) . '. ' . ($adaLampiran ? 'Bukti bayar dilampirkan.' : 'Tanpa lampiran bukti bayar.'),
             'ref' => $s->nomor_dokumen,
         ];
-        Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 1)]);
-        if ($s->employe_id && $s->employe_id !== $s->submitted_by) {
-            Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 2)]);
-        }
+        self::kabariPelaksanaDanPengaju($s, $actor, $pesan);
     }
 
     /** KeuanganSppd menandai termin uang muka tidak dibayarkan di muka: pelaksana dan admin pengaju diberi tahu bahwa biayanya dibayar saat realisasi */
@@ -275,10 +266,7 @@ class Peristiwa
                 'isi' => self::nama($actor) . ' (divisi keuangan) menandai ' . $daftarTermin . ' pada ' . strtolower($objek) . ' ' . self::ringkasSppd($s) . ' tidak dibayarkan di muka. Biayanya dibayarkan saat realisasi (aktual).' . ($alasan !== '' ? ' Alasan: ' . $alasan : ''),
                 'ref' => $s->nomor_dokumen,
             ];
-            Hub::kirim($s->submitted_by, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 1)]);
-            if ($s->employe_id && $s->employe_id !== $s->submitted_by) {
-                Hub::kirim($s->employe_id, $actor, $pesan + ['url' => self::urlSppd((string) $s->nomor_dokumen, 2)]);
-            }
+            self::kabariPelaksanaDanPengaju($s, $actor, $pesan);
         });
     }
 
