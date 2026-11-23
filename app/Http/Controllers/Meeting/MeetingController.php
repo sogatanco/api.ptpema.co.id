@@ -689,6 +689,10 @@ class MeetingController extends Controller
             return new PostResource(false, 'Tabel undangan belum dibuat di database (jalankan db/2026-11-23/meeting_undangan.sql)', []);
         }
 
+        if (Carbon::parse($booking->end_time)->lt(now())) {
+            return new PostResource(false, 'Rapat sudah selesai, undangan tidak bisa ditambah', []);
+        }
+
         $jumlah = $this->tambahUndangan('ruang', (int) $booking->id, $request->input('invitees', []), $booking->topic, $booking->start_time, $booking->end_time, $booking->room, $booking->zoom);
 
         return new PostResource(true, $jumlah > 0 ? "Undangan dikirim ke {$jumlah} peserta" : 'Tidak ada peserta baru untuk diundang', [
@@ -712,6 +716,10 @@ class MeetingController extends Controller
 
         if (!$this->adaTabelUndangan()) {
             return new PostResource(false, 'Tabel undangan belum dibuat di database (jalankan db/2026-11-23/meeting_undangan.sql)', []);
+        }
+
+        if (Carbon::parse($zoom->end_time)->lt(now())) {
+            return new PostResource(false, 'Rapat sudah selesai, undangan tidak bisa ditambah', []);
         }
 
         $booking = BookingRoom::where('zoom_id', $zoom->id)->whereNull('canceled_at')->first();
