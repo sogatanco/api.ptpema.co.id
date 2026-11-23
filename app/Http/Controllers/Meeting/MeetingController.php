@@ -281,7 +281,7 @@ class MeetingController extends Controller
         return null;
     }
 
-    protected function sendConsumptionNotification(BookingRoom $booking, string $event = 'booked'): void
+    protected function sendConsumptionNotification(BookingRoom $booking, string $event = 'booked', ?string $catatan = null): void
     {
         $recipients = $this->getConsumptionRecipientPhones();
 
@@ -297,8 +297,9 @@ class MeetingController extends Controller
                 return preg_replace('/^62/', '0', (string) $phone);
             }, $requesterPhones))
             : '-';
-        $eventLabel = $event === 'canceled' ? 'DIBATALKAN' : 'DIBUAT';
+        $eventLabel = ['canceled' => 'DIBATALKAN', 'changed' => 'DIUBAH'][$event] ?? 'DIBUAT';
         $message = "Notifikasi Konsumsi Rapat ({$eventLabel})\n"
+            . ($catatan ? $catatan . "\n" : '')
             . "Topik: {$booking->topic}\n"
             . "Ruangan: {$booking->room}\n"
             . "Waktu: {$booking->start_time} - {$booking->end_time}\n"
@@ -521,6 +522,154 @@ class MeetingController extends Controller
         return new PostResource(true, $terhapus ? 'Undangan dicabut' : 'Peserta tidak ada dalam daftar undangan', [
             'undangan' => $this->ambilUndangan($tipe, [$rapatId])[$rapatId] ?? [],
         ]);
+    }
+
+    /** Booking aktif di ruangan tertentu yang waktunya bersinggungan dengan rentang waktu. */
+    protected function bookingTerdampak(string $room, string $mulai, string $selesai, ?int $ignoreId = null)
+    {
+        $query = BookingRoom::where('room', $room)->whereNull('canceled_at');
+
+        if (!is_null($ignoreId)) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        return $query->orderBy('start_time')->get()->filter(
+            fn ($b) => $this->timeRangesOverlap($mulai, $selesai, (string) $b->start_time, (string) $b->end_time)
+        )->values();
+    }
+
+    /**
+     * Pembuat rapat mengganti ruangan dan/atau waktu rapat (mis. setelah ruangan diblokir direksi).
+     * Peserta undangan dan PIC Konsumsi (bila ada konsumsi) mendapat pemberitahuan ulang.
+     */
+    public function ubahJadwalRuang(Request $request, $id)
+    {
+        $booking = BookingRoom::with('zoom')->find($id);
+
+        if (!$booking || !is_null($booking->canceled_at)) {
+            return new PostResource(false, 'Rapat tidak ditemukan atau sudah dibatalkan', []);
+        }
+
+        if ((string) $booking->created_by !== (string) Employe::employeId()) {
+            return new PostResource(false, 'Hanya pembuat rapat yang bisa mengubah ruangan atau waktu', []);
+        }
+
+        $timezone = $request->input('timezone', config('app.timezone', 'Asia/Jakarta'));
+        $room = (string) $request->input('room', $booking->room);
+
+        if (!in_array($room, self::RUANG_RAPAT, true)) {
+            return new PostResource(false, 'Ruangan tidak valid', []);
+        }
+
+        $lamaMulai = Carbon::parse($booking->start_time)->format('Y-m-d H:i:s');
+        $lamaSelesai = Carbon::parse($booking->end_time)->format('Y-m-d H:i:s');
+        $mulai = $request->filled('start_time') ? $this->normalizeDateTime($request->input('start_time'), $timezone) : $lamaMulai;
+        $selesai = $request->filled('end_time') ? $this->normalizeDateTime($request->input('end_time'), $timezone) : $lamaSelesai;
+
+        if (empty($mulai) || empty($selesai)) {
+            return new PostResource(false, 'Format waktu mulai atau selesai tidak valid', []);
+        }
+
+        if (Carbon::parse($selesai)->lessThanOrEqualTo(Carbon::parse($mulai))) {
+            return new PostResource(false, 'Waktu selesai harus setelah waktu mulai', []);
+        }
+
+        $lamaRuang = (string) $booking->room;
+        $ruangBerubah = $room !== $lamaRuang;
+        $waktuBerubah = $mulai !== $lamaMulai || $selesai !== $lamaSelesai;
+
+        if (!$ruangBerubah && !$waktuBerubah) {
+            return new PostResource(false, 'Tidak ada perubahan ruangan atau waktu', []);
+        }
+
+        if ($waktuBerubah && Carbon::parse($mulai)->lessThan(now())) {
+            return new PostResource(false, 'Waktu mulai yang baru tidak boleh di masa lalu', []);
+        }
+
+        $blokir = $this->getBlokirConflict($room, $mulai, $selesai);
+
+        if ($blokir) {
+            return new PostResource(false, 'Ruangan ' . $room . ' dipakai direksi pada ' . Carbon::parse($blokir->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($blokir->end_time)->format('d-m-Y H:i') . ($blokir->alasan ? ' (' . $blokir->alasan . ')' : '') . '. Pilih ruangan atau waktu lain.', [
+                'conflict_blokir_id' => $blokir->id,
+            ]);
+        }
+
+        $bentrok = $this->getRoomConflict($room, $mulai, $selesai, (int) $booking->id);
+
+        if ($bentrok) {
+            return new PostResource(false, 'Ruangan ' . $room . ' sudah dibooking "' . $bentrok->topic . '" pada ' . Carbon::parse($bentrok->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($bentrok->end_time)->format('d-m-Y H:i') . '. Pilih ruangan atau waktu lain.', [
+                'conflict_booking_id' => $bentrok->id,
+            ]);
+        }
+
+        $zoom = $booking->zoom_required && $booking->zoom && is_null($booking->zoom->canceled_at) ? $booking->zoom : null;
+
+        if ($zoom && $waktuBerubah) {
+            $zoomBentrok = $this->getZoomConflict($mulai, $selesai, (int) $booking->id, (int) $zoom->id);
+
+            if ($zoomBentrok) {
+                return new PostResource(false, 'Waktu Zoom bentrok dengan rapat Zoom lain ("' . $zoomBentrok->topic . '"). Pilih waktu lain.', [
+                    'conflict_booking_id' => $zoomBentrok->id,
+                ]);
+            }
+
+            // jadwal Zoom ikut dipindah supaya link yang sudah dibagikan tetap berlaku
+            try {
+                $durasi = Carbon::parse($mulai, $timezone)->diffInMinutes(Carbon::parse($selesai, $timezone));
+                $this->zoomRequest('PATCH', 'meetings/' . $zoom->meeting_id, [
+                    'start_time' => Carbon::parse($mulai, $timezone)->format('Y-m-d\TH:i:s'),
+                    'duration' => $durasi,
+                    'timezone' => $timezone,
+                ]);
+            } catch (GuzzleException | \RuntimeException $e) {
+                return new PostResource(false, 'Gagal memindah jadwal Zoom: ' . $e->getMessage(), []);
+            }
+
+            $zoom->start_time = $mulai;
+            $zoom->end_time = $selesai;
+            $zoom->save();
+        }
+
+        $booking->room = $room;
+        $booking->start_time = $mulai;
+        $booking->end_time = $selesai;
+
+        // pengingat konsumsi 1 jam sebelum rapat dihitung ulang untuk waktu yang baru
+        if ($waktuBerubah && Schema::hasColumn('meetings', 'pengingat_konsumsi_at')) {
+            $booking->pengingat_konsumsi_at = null;
+        }
+
+        $booking->save();
+
+        $perubahan = [];
+        if ($ruangBerubah) {
+            $perubahan[] = 'Ruangan: ' . ($lamaRuang ?: '-') . ' -> ' . $room;
+        }
+        if ($waktuBerubah) {
+            $perubahan[] = 'Waktu: ' . $this->waktuRapat($lamaMulai, $lamaSelesai) . ' -> ' . $this->waktuRapat($mulai, $selesai);
+        }
+        $ringkas = implode("\n", $perubahan);
+
+        // peserta undangan
+        $isi = 'Rapat "' . $booking->topic . '" diubah oleh pembuatnya.' . "\n" . $ringkas . "\n"
+            . 'Jadwal sekarang: ' . $this->waktuRapat($mulai, $selesai) . ', ruangan ' . $room . '.';
+        if ($zoom && $zoom->link) {
+            $isi .= "\n" . 'Zoom: ' . $zoom->link;
+        }
+        $this->kabarkanPeserta(
+            $this->idPesertaDiundang('ruang', (int) $booking->id),
+            'meeting.dijadwal_ulang',
+            'Rapat Diubah: ' . $booking->topic,
+            $isi,
+            'rapat-' . $booking->id
+        );
+
+        // PIC Konsumsi diberi tahu ulang bila rapat ini meminta konsumsi
+        if ((int) $booking->consumption_required === 1) {
+            $this->sendConsumptionNotification($booking, 'changed', $ringkas);
+        }
+
+        return new PostResource(true, 'Ruangan/waktu rapat berhasil diubah dan pemberitahuan dikirim', $booking);
     }
 
     /** Pembuat rapat menambah undangan (tag karyawan lagi) pada rapat yang sudah dibuat. */
@@ -918,9 +1067,21 @@ class MeetingController extends Controller
         }
         $room = $request->input('room');
 
-        $booking = $this->getRoomConflict($room, $mulai, $selesai);
-        if ($booking) {
-            return new PostResource(false, 'Sudah ada booking "' . $booking->topic . '" pada ' . Carbon::parse($booking->start_time)->format('d-m-Y H:i') . ' s.d. ' . Carbon::parse($booking->end_time)->format('d-m-Y H:i') . ' di ruangan ini. Batalkan bookingnya dulu atau pilih waktu lain.', ['conflict_booking_id' => $booking->id]);
+        // booking yang sudah ada pada rentang ini tidak lagi menolak blokir: pembuatnya diminta mengganti ruangan atau waktu
+        $terdampak = $this->bookingTerdampak($room, $mulai, $selesai);
+        if ($terdampak->isNotEmpty() && !$request->boolean('konfirmasi')) {
+            $nama = Employe::whereIn('employe_id', $terdampak->pluck('created_by')->unique()->values())->pluck('first_name', 'employe_id');
+
+            return new PostResource(false, 'Sudah ada ' . $terdampak->count() . ' rapat yang dibooking pada rentang ini. Jika dilanjutkan, pembuat rapat akan diberi tahu agar mengganti ruangan atau waktu rapatnya.', [
+                'perlu_konfirmasi' => true,
+                'terdampak' => $terdampak->map(fn ($b) => [
+                    'id' => $b->id,
+                    'topic' => $b->topic,
+                    'start_time' => $b->start_time,
+                    'end_time' => $b->end_time,
+                    'pembuat' => $nama->get($b->created_by) ?: $b->created_by,
+                ])->values(),
+            ]);
         }
         $lain = $this->getBlokirConflict($room, $mulai, $selesai);
         if ($lain) {
@@ -935,7 +1096,19 @@ class MeetingController extends Controller
             'created_by' => Employe::employeId(),
         ]);
 
-        return new PostResource(true, 'Ruangan ' . $room . ' ditandai dipakai direksi.', $blokir);
+        // pembuat rapat yang bentrok diminta mengganti ruangan atau waktu
+        foreach ($terdampak as $b) {
+            $this->kabarkanPeserta(
+                [(string) $b->created_by],
+                'meeting.ruang_diblokir',
+                'Ganti Ruangan/Waktu Rapat: ' . $b->topic,
+                'Ruangan ' . $room . ' dipakai direksi pada ' . $this->waktuRapat($mulai, $selesai) . ($blokir->alasan ? ' (' . $blokir->alasan . ')' : '')
+                    . ', bentrok dengan rapat Anda "' . $b->topic . '" (' . $this->waktuRapat($b->start_time, $b->end_time) . "). Mohon ubah ruangan atau waktu rapat lewat menu Book Meeting > Detail Rapat > Ubah Ruangan/Waktu.",
+                'rapat-' . $b->id
+            );
+        }
+
+        return new PostResource(true, 'Ruangan ' . $room . ' ditandai dipakai direksi.' . ($terdampak->isNotEmpty() ? ' ' . $terdampak->count() . ' pembuat rapat diberi tahu untuk mengganti ruangan atau waktu.' : ''), $blokir);
     }
 
     /** Membatalkan blokir (Sekretaris Direksi). */

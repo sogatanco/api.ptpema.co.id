@@ -283,6 +283,7 @@ Route::controller(MeetingController::class)->group(function () {
     Route::post('meeting/zoom/cancel/{id}', 'cancelZoom')->middleware("role:Employee");
     Route::post('meeting/zoom/{id}/undangan', 'tambahUndanganZoom')->middleware("role:Employee");
     Route::post('meeting/room/{id}/undangan', 'tambahUndanganRuang')->middleware("role:Employee");
+    Route::post('meeting/room/{id}/ubah', 'ubahJadwalRuang')->middleware("role:Employee");
     Route::post('meeting/zoom/{id}/undangan/{employeId}/hapus', 'hapusUndanganZoom')->middleware("role:Employee");
     Route::post('meeting/room/{id}/undangan/{employeId}/hapus', 'hapusUndanganRuang')->middleware("role:Employee");
 
