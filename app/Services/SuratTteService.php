@@ -121,6 +121,10 @@ class SuratTteService
             $pick = fn (array $row, array $keys) => array_intersect_key($row, array_flip($keys));
             $tujuan = \App\Models\Sppd\TujuanSppd::where('id_sppd', $s->id)->orderBy('id')->get()->map(function ($t) use ($pick, $tujuanFields) {
                 $row = $pick($t->toArray(), $tujuanFields);
+                // RKAP "Lainnya" (tulisan manual) ikut terjaga isinya; hanya dimasukkan bila terisi agar hash dokumen lama tidak berubah
+                if (!empty($t->rkap_lainnya)) {
+                    $row['rkap_lainnya'] = $t->rkap_lainnya;
+                }
                 $file = $t->file_undangan;
                 $row['file_undangan_sha256'] = ($file && $file !== '-' && \Illuminate\Support\Facades\Storage::disk('public_sppd')->exists($file))
                     ? hash('sha256', \Illuminate\Support\Facades\Storage::disk('public_sppd')->get($file))

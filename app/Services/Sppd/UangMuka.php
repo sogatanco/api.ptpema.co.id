@@ -50,12 +50,44 @@ class UangMuka
     }
 
     /**
+     * Pilihan hotel dan transportasi lokal sebuah tujuan (tujuan_sppds.hotel_oleh / transport_lokal; skrip db/2026-11-26).
+     * Hotel dipesan admin dan transportasi lokal via vendor tidak masuk uang muka. Tanpa kolom/data: hotel sendiri, transport mandiri.
+     * Extend meminjam baris tujuan asalnya (id sama), jadi mengikuti pilihan tujuan itu.
+     *
+     * @return array{hotel_admin:bool,hotel_tidak:bool,transport_vendor:bool}
+     */
+    public static function pilihan($t): array
+    {
+        static $cache = [];
+        $id = (int) ($t->id ?? 0);
+        if (!$id) {
+            return ['hotel_admin' => false, 'hotel_tidak' => false, 'transport_vendor' => false];
+        }
+        if (!isset($cache[$id])) {
+            $db = \Illuminate\Support\Facades\DB::connection('mysql4');
+            $ada = \Illuminate\Support\Facades\Cache::remember('tujuan_sppds_has_hotel_transport', 300, fn () => \Illuminate\Support\Facades\Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'hotel_oleh')
+                && \Illuminate\Support\Facades\Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'transport_lokal'));
+            $row = $ada ? $db->table('tujuan_sppds')->where('id', $id)->first(['hotel_oleh', 'transport_lokal']) : null;
+            $cache[$id] = ['hotel_admin' => in_array($row->hotel_oleh ?? 'sendiri', ['admin', 'tidak'], true), 'hotel_tidak' => ($row->hotel_oleh ?? 'sendiri') === 'tidak', 'transport_vendor' => ($row->transport_lokal ?? 'mandiri') === 'vendor'];
+        }
+
+        return $cache[$id];
+    }
+
+    /**
      * @param object $t baris view hitungan_biaya (satu tujuan)
      * @return array{hari:int,malam:int,komponen:array,tiket:array,total:float,termin:array}
      */
     public static function rincian($t, float $tiket = 0): array
     {
         $p = self::PERSEN;
+        $pilihan = self::pilihan($t);
+        if ($pilihan['hotel_admin']) {
+            $p['hotel'] = 0; // hotel dipesan admin / tidak menginap: tidak termasuk uang muka
+        }
+        if ($pilihan['transport_vendor']) {
+            $p['transport_lokal'] = 0; // transportasi lokal via vendor: tidak termasuk uang muka
+        }
         $hari = (int) $t->jumlah_hari;
         // malam tambahan (extend yang bersambung dengan pengajuan sebelumnya) ikut biaya hotel; SPPD biasa tidak punya
         $malamTambahan = (int) ($t->malam_tambahan ?? 0);
@@ -75,8 +107,13 @@ class UangMuka
             $total += $k['jumlah'];
         }
         unset($k);
-        $komponen[3]['catatan'] = $malam . ' malam';
+        $komponen[3]['catatan'] = $malam . ' malam' . ($pilihan['hotel_tidak'] ? ' (tidak menginap)' : ($pilihan['hotel_admin'] ? ' (dipesan admin, tidak masuk uang muka)' : ''));
+        if ($pilihan['transport_vendor']) {
+            $komponen[2]['catatan'] = 'Vendor, tidak masuk uang muka';
+        }
         $total = round($total, 2);
+        // hotel dipesan admin (bukan "tidak menginap"): biayanya dibayar terpisah ke admin, tidak masuk total uang muka
+        $hotelAdminTerpisah = $pilihan['hotel_admin'] && !$pilihan['hotel_tidak'];
 
         $tgl = fn (int $tambahHari) => date('Y-m-d', strtotime($t->waktu_berangkat . ' + ' . $tambahHari . ' days'));
         $terminAktif = self::terminAktif($t);
@@ -88,6 +125,8 @@ class UangMuka
                 // rincian untuk dokumen keuangan (tabel standar biaya) per termin
                 'mulai' => date('Y-m-d', strtotime($t->waktu_berangkat)), 'selesai' => date('Y-m-d', strtotime($t->waktu_kembali)), 'malam' => $malam,
                 'mulai_hotel' => date('Y-m-d', strtotime($t->waktu_berangkat) - $malamTambahan * 86400),
+                // hotel dipesan admin: biayanya (tidak masuk uang muka) dibayarkan ke rekening admin, dicatat per termin untuk voucher
+                'hotel_admin' => $hotelAdminTerpisah ? round($komponen[3]['dasar'], 2) : 0,
                 'komponen' => array_map(fn ($k) => ['kode' => $k['kode'], 'nama' => $k['nama'], 'rate' => $k['rate'], 'qty' => $k['qty'], 'satuan' => $k['satuan'], 'porsi' => $k['porsi'], 'persen' => $k['persen'], 'jumlah' => $k['jumlah']], $komponen),
             ]];
         } else {
@@ -139,6 +178,7 @@ class UangMuka
                     'mulai' => $tgl($awal - 1), 'selesai' => $tgl($akhir - 1), 'malam' => $malamTermin, 'komponen' => $baris,
                     // malam pertama hotel termin ini: malam hari sebelum termin (termin 1: malam hari pertama, dimajukan bila ada malam penyambung)
                     'mulai_hotel' => $k === 0 ? date('Y-m-d', strtotime($t->waktu_berangkat) - $malamTambahan * 86400) : $tgl($awal - 2),
+                    'hotel_admin' => $hotelAdminTerpisah ? round($malamTermin * (float) $t->rate_hotel * (float) $t->p_hotel / 100, 2) : 0,
                 ];
             }
         }
@@ -163,6 +203,7 @@ class UangMuka
             'komponen' => $komponen,
             'tiket' => ['jumlah' => round($tiket, 2), 'ada' => $tiket > 0],
             'total' => $total,
+            'hotel_admin' => round(array_sum(array_column($termin, 'hotel_admin')), 2),
             'termin_aktif' => $terminAktif,
             'termin' => $termin,
         ];

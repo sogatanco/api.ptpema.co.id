@@ -83,7 +83,7 @@ class PengajuanController extends Controller
                     'file_undangan' => $file_undangan,
                     'klasifikasi' => $tujuans[$i]['klasifikasi'],
                     'sumber' => $tujuans[$i]['sumber_biaya'],
-                    'rkap' => $tujuans[$i]['renbis'],
+                    'rkap' => !empty(trim((string) ($tujuans[$i]['rkap_lainnya'] ?? ''))) && $this->adaKolomRkapLainnya() ? null : $tujuans[$i]['renbis'],
                     'p_tiket' => $tujuans[$i]['p_tiket'],
                     'p_um' => $tujuans[$i]['p_um'],
                     'p_tl' => $tujuans[$i]['p_tl'],
@@ -98,6 +98,8 @@ class PengajuanController extends Controller
                     'bbm' => $tujuans[$i]['ubbm'],
                     'share_with' => $tujuans[$i]['shareWith'],
                     ...$this->kolomPerluTiket($tujuans[$i]),
+                    ...$this->kolomHotelTransport($tujuans[$i]),
+                    ...$this->kolomRkapLainnya($tujuans[$i]),
 
                 ]);
             }
@@ -291,7 +293,43 @@ class PengajuanController extends Controller
             return [];
         }
 
-        return ['perlu_tiket' => isset($tujuan['perlu_tiket']) ? ((int) filter_var($tujuan['perlu_tiket'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0) : 1];
+        // 1 = dipesan divisi umum, 2 = dipesan admin/mandiri, 0 = tidak perlu tiket (boolean lama: true = 1, false = 0)
+        $nilai = $tujuan['perlu_tiket'] ?? 1;
+        $tiket = in_array((string) $nilai, ['0', '1', '2'], true) ? (int) $nilai : ((int) filter_var($nilai, FILTER_VALIDATE_BOOLEAN) ? 1 : 0);
+
+        return ['perlu_tiket' => $tiket];
+    }
+
+    /** kolom tujuan_sppds.rkap_lainnya (skrip db/2026-11-26/tujuan_rkap_lainnya.sql); tanpa kolomnya, tulisan manual diabaikan */
+    private function adaKolomRkapLainnya(): bool
+    {
+        return \Illuminate\Support\Facades\Cache::remember('tujuan_sppds_has_rkap_lainnya', 300, fn () => Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'rkap_lainnya'));
+    }
+
+    /** RKAP "Lainnya": tulisan manual disimpan di rkap_lainnya dan pilihan RKAP (rkap) dikosongkan */
+    private function kolomRkapLainnya(array $tujuan): array
+    {
+        if (!$this->adaKolomRkapLainnya()) {
+            return [];
+        }
+        $teks = trim((string) ($tujuan['rkap_lainnya'] ?? ''));
+
+        return ['rkap_lainnya' => $teks !== '' ? mb_substr($teks, 0, 255) : null];
+    }
+
+    /** isian hotel_oleh (sendiri|admin) dan transport_lokal (mandiri|vendor) per tujuan; kosong bila kolomnya belum ada */
+    private function kolomHotelTransport(array $tujuan): array
+    {
+        $ada = \Illuminate\Support\Facades\Cache::remember('tujuan_sppds_has_hotel_transport', 300, fn () => Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'hotel_oleh')
+            && Schema::connection('mysql4')->hasColumn('tujuan_sppds', 'transport_lokal'));
+        if (!$ada) {
+            return [];
+        }
+
+        return [
+            'hotel_oleh' => in_array($tujuan['hotel_oleh'] ?? 'sendiri', ['admin', 'tidak'], true) ? $tujuan['hotel_oleh'] : 'sendiri',
+            'transport_lokal' => ($tujuan['transport_lokal'] ?? 'mandiri') === 'vendor' ? 'vendor' : 'mandiri',
+        ];
     }
 
     /** batasi query list_sppd_ringan: SPPD yang punya minimal satu tujuan perlu tiket ($perlu true) atau yang tidak punya sama sekali ($perlu false) */
@@ -552,10 +590,19 @@ class PengajuanController extends Controller
         $tigaPuluhIds = TigaPuluh::whereIn('id_tujuan', $tujuans->pluck('id'))->pluck('id_tujuan')->all();
         // isian "Perlu tiket" per tujuan (view hitungan_biaya tidak memuatnya); tanpa kolom/data = perlu tiket
         $perluTiket = $this->adaKolomPerluTiket() ? TujuanSppd::where('id_sppd', $id)->pluck('perlu_tiket', 'id') : collect();
+        $pilihanTujuan = $this->kolomHotelTransport([]) ? TujuanSppd::where('id_sppd', $id)->get(['id', 'hotel_oleh', 'transport_lokal'])->keyBy('id') : collect();
+        $rkapLainnya = $this->adaKolomRkapLainnya() ? TujuanSppd::where('id_sppd', $id)->pluck('rkap_lainnya', 'id') : collect();
         $buktiTermin = $this->adaTabelTermin() ? ProsesTermin::where('id_sppd', $id)->get()->keyBy(fn ($r) => $r->id_tujuan . ':' . $r->termin) : collect();
         $tiketPerTujuan = ProsesTiket::where('id_sppd', $id)->selectRaw('id_tujuan, sum(harga) as total')->groupBy('id_tujuan')->pluck('total', 'id_tujuan');
         foreach ($tujuans as $t) {
             $t->perlu_tiket = (int) ($perluTiket[$t->id] ?? 1);
+            // RKAP "Lainnya": tulisan manual menggantikan nama RKAP di seluruh tampilan (ST, detail, review, rincian)
+            $t->rkap_lainnya = $rkapLainnya[$t->id] ?? null;
+            if ($t->rkap_lainnya !== null && $t->rkap_lainnya !== '') {
+                $t->renbis = $t->rkap_lainnya;
+            }
+            $t->hotel_oleh = $pilihanTujuan[$t->id]->hotel_oleh ?? 'sendiri';
+            $t->transport_lokal = $pilihanTujuan[$t->id]->transport_lokal ?? 'mandiri';
             if ($withFile && $t->file_undangan !== '-') {
                 $t->base64_undangan = base64_encode(Storage::disk('public_sppd')->get($t->file_undangan));
             } else {
@@ -583,7 +630,7 @@ class PengajuanController extends Controller
             $t->rincian_uang_muka = $rincian;
             $t->uang_muka = $rincian['total'];
             // perkiraan biaya per tujuan: komponen yang kosong (tarif master belum ada) dihitung 0, bukan membuat seluruh total NULL/0
-            $t->total_biaya = round((float) $t->fix_um + (float) $t->fix_tl + (float) $t->fix_us + (float) $t->fix_tiket + (float) $t->fix_hotel + (float) $t->bbm, 2);
+            $t->total_biaya = round((float) $t->fix_um + (float) $t->fix_tl + (float) $t->fix_us + (float) $t->fix_tiket + ($t->hotel_oleh === 'tidak' ? 0 : (float) $t->fix_hotel) + (float) $t->bbm, 2);
             $t->termin = array_map(fn ($x) => (object) $x, $rincian['termin']);
         }
         if ($data) {
@@ -732,7 +779,7 @@ class PengajuanController extends Controller
                     'file_undangan' => $file_undangan,
                     'klasifikasi' => $tujuans[$i]['klasifikasi'],
                     'sumber' => $tujuans[$i]['sumber_biaya'] || null,
-                    'rkap' => $tujuans[$i]['renbis'],
+                    'rkap' => !empty(trim((string) ($tujuans[$i]['rkap_lainnya'] ?? ''))) && $this->adaKolomRkapLainnya() ? null : $tujuans[$i]['renbis'],
                     'p_tiket' => $tujuans[$i]['p_tiket'],
                     'p_um' => $tujuans[$i]['p_um'],
                     'p_tl' => $tujuans[$i]['p_tl'],
@@ -747,6 +794,8 @@ class PengajuanController extends Controller
                     'bbm' => $tujuans[$i]['ubbm'],
                     'share_with' => $tujuans[$i]['shareWith'],
                     ...$this->kolomPerluTiket($tujuans[$i]),
+                    ...$this->kolomHotelTransport($tujuans[$i]),
+                    ...$this->kolomRkapLainnya($tujuans[$i]),
                 ]);
             }
             // isi SPPD berubah: PDF bertanda tangan yang tersimpan sebelumnya sudah tidak berlaku
@@ -2021,7 +2070,18 @@ class PengajuanController extends Controller
         $bank = $db->table('ptpemaco_hr_production.employee_bank_account')->where('employe_id', $sppd->employe_id)
             ->orderByDesc('active')->orderByDesc('id')->first(['nama_bank', 'nomor_rekening', 'nama_akun_bank']);
 
+        // admin yang mengajukan SPPD: penerima biaya hotel yang dipesannya (baris tersendiri di voucher)
+        $idAdmin = $sppd->submitted_by;
+        $bankAdmin = $idAdmin ? $db->table('ptpemaco_hr_production.employee_bank_account')->where('employe_id', $idAdmin)
+            ->orderByDesc('active')->orderByDesc('id')->first(['nama_bank', 'nomor_rekening', 'nama_akun_bank']) : null;
+        $admin = $idAdmin ? ['employe_id' => $idAdmin, 'nama' => trim((string) Employe::where('employe_id', $idAdmin)->value('first_name')), 'bank' => $bankAdmin ? [
+            'nama_bank' => trim((string) $bankAdmin->nama_bank),
+            'nomor_rekening' => trim((string) $bankAdmin->nomor_rekening),
+            'nama_akun_bank' => trim((string) $bankAdmin->nama_akun_bank),
+        ] : null] : null;
+
         return new PostResource(true, 'success', [
+            'admin' => $admin,
             'pelaksana' => ['nama' => $sppd->nama, 'employe_id' => $sppd->employe_id, 'bank' => $bank ? [
                 'nama_bank' => trim((string) $bank->nama_bank),
                 'nomor_rekening' => trim((string) $bank->nomor_rekening),
